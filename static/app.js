@@ -11,10 +11,27 @@ createApp({
 		const editorRef = ref(null)
 		const previewRef = ref(null)
 		const viewMode = ref('split') // 'split', 'edit', 'preview'
+		const isDarkMode = ref(false)
 		let debounceTimer = null
 
 		const toggleSidebar = () => {
 			isSidebarOpen.value = !isSidebarOpen.value
+		}
+
+		const toggleDarkMode = () => {
+			isDarkMode.value = !isDarkMode.value
+			const themeLink = document.getElementById('github-theme')
+			const highlightLink = document.getElementById('highlight-theme')
+			if (themeLink) {
+				themeLink.href = isDarkMode.value
+					? 'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-dark.min.css'
+					: 'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-light.min.css'
+			}
+			if (highlightLink) {
+				highlightLink.href = isDarkMode.value
+					? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css'
+					: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css'
+			}
 		}
 
 		const cycleViewMode = () => {
@@ -176,7 +193,11 @@ createApp({
 			if (!selectedNote.value || !selectedNote.value.content) return ''
 			return marked.parse(selectedNote.value.content, {
 				gfm: true,
-				breaks: true
+				breaks: true,
+				highlight: function (code, lang) {
+					const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+					return hljs.highlight(code, { language }).value;
+				}
 			})
 		})
 
@@ -215,7 +236,9 @@ createApp({
 			previewRef,
 			handleScroll,
 			viewMode,
-			cycleViewMode
+			cycleViewMode,
+			isDarkMode,
+			toggleDarkMode
 		}
 	}
 }).mount('#app')
