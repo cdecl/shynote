@@ -57,6 +57,9 @@ class FolderBase(BaseModel):
 class FolderCreate(FolderBase):
     pass
 
+class FolderUpdate(FolderBase):
+    pass
+
 class SmartEditRequest(BaseModel):
     action: str
     text: str

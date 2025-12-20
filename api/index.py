@@ -90,6 +90,26 @@ def delete_folder(
     db.commit()
     return {"message": "Folder deleted successfully"}
 
+@app.put("/api/folders/{folder_id}", response_model=schemas.Folder)
+def update_folder(
+    folder_id: int,
+    folder: schemas.FolderUpdate,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(utils.get_current_user)
+):
+    db_folder = db.query(models.Folder).filter(
+        models.Folder.id == folder_id,
+        models.Folder.user_id == current_user.id
+    ).first()
+    if db_folder is None:
+        raise HTTPException(status_code=404, detail="Folder not found")
+    
+    db_folder.name = folder.name
+    db.commit()
+    db.refresh(db_folder)
+    return db_folder
+
+
 @app.post("/api/notes", response_model=schemas.Note)
 def create_note(
     note: schemas.NoteCreate, 
