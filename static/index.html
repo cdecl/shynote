@@ -188,6 +188,36 @@
                             placeholder="Note Title">
                     </div>
                     <div class="flex items-center gap-2 flex-shrink-0">
+                        <!-- Smart Edit Button -->
+                        <div class="relative">
+                            <button @click="toggleSmartMenu"
+                                class="p-1 rounded text-purple-600 bg-purple-50 hover:bg-purple-100 transition-colors flex items-center justify-center"
+                                title="Smart Edit">
+                                <span class="material-symbols-rounded text-[20px]">auto_awesome</span>
+                            </button>
+                            <!-- Smart Dropdown -->
+                            <div v-if="isSmartMenuOpen"
+                                class="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 z-50 overflow-hidden transform origin-top-right transition-all">
+                                <div class="py-1">
+                                    <button @click="processSmartEdit('proofread')"
+                                        class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors flex items-center">
+                                        <span class="material-symbols-rounded text-[16px] mr-2">spellcheck</span>
+                                        Proofread
+                                    </button>
+                                    <button @click="processSmartEdit('summarize')"
+                                        class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors flex items-center">
+                                        <span class="material-symbols-rounded text-[16px] mr-2">summarize</span>
+                                        Summarize
+                                    </button>
+                                    <button @click="processSmartEdit('improve')"
+                                        class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors flex items-center">
+                                        <span class="material-symbols-rounded text-[16px] mr-2">auto_fix_high</span>
+                                        Improve Writing
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
                         <span class="text-xs text-gray-400 min-w-[60px] text-right">{{ statusMessage }}</span>
                         <div class="flex bg-gray-100 rounded-lg p-1 gap-1">
                             <button @click="viewMode = 'edit'"
@@ -247,7 +277,7 @@
             </div>
         </main>
     </div>
-    <script src="/static/app.js"></script>
+    <script src="/static/app.js?v=3"></script>
 </body>
 
 </html>

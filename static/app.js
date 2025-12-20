@@ -13,6 +13,7 @@ createApp({
 		const viewMode = ref('split') // 'split', 'edit', 'preview'
 		const isDarkMode = ref(false)
 		const isAuthenticated = ref(false)
+		const isSmartMenuOpen = ref(false)
 
 		const renameState = ref({
 			id: null,
@@ -344,6 +345,55 @@ createApp({
 			}
 		}
 
+
+
+		const toggleSmartMenu = () => {
+			isSmartMenuOpen.value = !isSmartMenuOpen.value
+		}
+
+		const processSmartEdit = async (action) => {
+			isSmartMenuOpen.value = false
+			if (!selectedNote.value) return
+
+			statusMessage.value = 'Thinking...'
+			try {
+				const response = await authenticatedFetch('/api/smart/process', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						action: action,
+						text: selectedNote.value.content,
+						context: { title: selectedNote.value.title }
+					})
+				})
+
+				if (response && response.ok) {
+					const data = await response.json()
+					if (data.result) {
+						// For now, just append the result or replace based on action
+						// In a real app we might show a diff or confirmation
+						if (action === 'proofread' || action === 'improve') {
+							if (confirm("Apply changes?\n\n" + data.result)) {
+								selectedNote.value.content = data.result
+								updateNote()
+							}
+						} else {
+							// Summary, just append
+							selectedNote.value.content = data.result + "\n\n" + selectedNote.value.content
+							updateNote()
+						}
+						statusMessage.value = 'Done!'
+						setTimeout(() => statusMessage.value = 'Saved', 2000)
+					}
+				} else {
+					statusMessage.value = 'Error'
+				}
+			} catch (e) {
+				console.error("Smart Edit failed", e)
+				statusMessage.value = 'Error'
+			}
+		}
+
 		const debouncedUpdate = () => {
 			statusMessage.value = 'Typing...'
 			if (debounceTimer) clearTimeout(debounceTimer)
@@ -408,9 +458,10 @@ createApp({
 			cycleViewMode,
 			isDarkMode,
 			toggleDarkMode,
-			toggleDarkMode,
-			initGoogleAuth,
-			toggleDarkMode,
+			isSmartMenuOpen,
+			toggleSmartMenu,
+			processSmartEdit,
+
 			initGoogleAuth,
 			isAuthenticated,
 			renameState,

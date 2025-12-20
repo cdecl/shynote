@@ -175,3 +175,23 @@ def delete_note(
     db.delete(db_note)
     db.commit()
     return {"message": "Note deleted successfully"}
+
+@app.post("/api/smart/process")
+def process_smart_edit(
+    request: schemas.SmartEditRequest,
+    current_user: models.User = Depends(utils.get_current_user)
+):
+    import time
+    time.sleep(1) # Simulate AI processing delay
+    
+    text = request.text
+    action = request.action
+    
+    if action == "proofread":
+        return {"result": text + "\n\n[Proofread: No errors found (Mock)]"}
+    elif action == "summarize":
+        return {"result": f"**Summary**: This note is about {len(text)} characters long. (Mock)"}
+    elif action == "improve":
+        return {"result": text + "\n\n[Improved: Flow adjusted (Mock)]"}
+    
+    return {"result": text}

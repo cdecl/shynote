@@ -8,3 +8,8 @@
 - [x] **Critical**: Configure valid Google Client ID <!-- id: 5 -->
 - [x] Verify Google Login Flow <!-- id: 6 -->
 - [ ] Verify Data Isolation <!-- id: 7 -->
+- [x] Implement Smart Editing Features <!-- id: 9 -->
+    - [x] Plan & Design UI/UX
+    - [x] Implement Frontend Toolbar & Menu
+    - [x] Implement Backend Endpoint (Mock/Stub)
+

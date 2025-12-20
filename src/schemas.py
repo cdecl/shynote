@@ -57,6 +57,11 @@ class FolderBase(BaseModel):
 class FolderCreate(FolderBase):
     pass
 
+class SmartEditRequest(BaseModel):
+    action: str
+    text: str
+    context: Optional[dict] = {}
+
 class Folder(FolderBase):
     id: int
     user_id: int
