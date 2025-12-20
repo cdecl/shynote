@@ -7,7 +7,12 @@ createApp({
 		const selectedNote = ref(null)
 		const loading = ref(false)
 		const statusMessage = ref('Ready')
+		const isSidebarOpen = ref(true)
 		let debounceTimer = null
+
+		const toggleSidebar = () => {
+			isSidebarOpen.value = !isSidebarOpen.value
+		}
 
 		const fetchFolders = async () => {
 			try {
@@ -124,6 +129,25 @@ createApp({
 			}
 		}
 
+
+		const deleteFolder = async (id) => {
+			if (!confirm("Are you sure you want to delete this folder and all its notes?")) return
+
+			try {
+				const response = await fetch(`/api/folders/${id}`, { method: 'DELETE' })
+				if (response.ok) {
+					folders.value = folders.value.filter(f => f.id !== id)
+					// Also remove notes that were in this folder from local state
+					notes.value = notes.value.filter(n => n.folder_id !== id)
+					if (selectedNote.value && selectedNote.value.folder_id === id) {
+						selectedNote.value = null
+					}
+				}
+			} catch (e) {
+				console.error("Failed to delete folder", e)
+			}
+		}
+
 		const debouncedUpdate = () => {
 			statusMessage.value = 'Typing...'
 			if (debounceTimer) clearTimeout(debounceTimer)
@@ -159,10 +183,13 @@ createApp({
 			createNoteInFolder,
 			selectNote,
 			deleteNote,
+			deleteFolder,
 			debouncedUpdate,
 			previewContent,
 			rootNotes,
-			getFolderNotes
+			getFolderNotes,
+			isSidebarOpen,
+			toggleSidebar
 		}
 	}
 }).mount('#app')

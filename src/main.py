@@ -30,6 +30,19 @@ def read_folders(skip: int = 0, limit: int = 100, db: Session = Depends(database
     folders = db.query(models.Folder).offset(skip).limit(limit).all()
     return folders
 
+@app.delete("/api/folders/{folder_id}")
+def delete_folder(folder_id: int, db: Session = Depends(database.get_db)):
+    db_folder = db.query(models.Folder).filter(models.Folder.id == folder_id).first()
+    if db_folder is None:
+        raise HTTPException(status_code=404, detail="Folder not found")
+    
+    # Optional: Delete notes inside folder manually if cascade isn't set
+    db.query(models.Note).filter(models.Note.folder_id == folder_id).delete()
+    
+    db.delete(db_folder)
+    db.commit()
+    return {"message": "Folder deleted successfully"}
+
 # CRUD Operations - Notes
 @app.post("/api/notes", response_model=schemas.Note)
 def create_note(note: schemas.NoteCreate, db: Session = Depends(database.get_db)):

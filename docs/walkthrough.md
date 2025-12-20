@@ -17,6 +17,10 @@ I have updated the project to align with `GEMINI.md` requirements, introducing F
 - **Split View**: Implemented a side-by-side Editor and Markdown Preview.
 - **Markdown**: Integrated `marked.js` for real-time markdown rendering.
 
+### UI Improvements
+- **Material Icons**: Integrated genuine **VS Code Material Icon Theme** SVGs for directories and Markdown files, providing a familiar and high-quality visual hierarchy.
+- **Sidebar Toggle**: Added a collapsible sidebar feature with smooth transitions, controllable via a toggle button in the editor toolbar.
+
 ## Verification
 
 ### Browser Automation
