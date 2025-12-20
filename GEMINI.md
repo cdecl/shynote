@@ -1,14 +1,14 @@
-# Shynotes 프로젝트 문서
+# SHYNOTE 프로젝트 문서
 
 ## 1. 프로젝트 개요
-**Shynotes**는 Obsidian과 유사한 사용자 경험을 제공하는 Markdown 및 텍스트 기반의 노트 필기 애플리케이션입니다. 폴더 기반의 탐색 시스템과 Split View(에디터/미리보기) 기능을 특징으로 합니다.
+**SHYNOTE**는 Obsidian과 유사한 사용자 경험을 제공하는 Markdown 및 텍스트 기반의 노트 필기 애플리케이션입니다. 폴더 기반의 탐색 시스템과 Split View(에디터/미리보기) 기능을 특징으로 합니다.
 
 ## 2. 기술 스택 (Technology Stack)
 
 ### Server Side
 - **Framework**: FastAPI (Python)
 - **Database**: 
-  - 개발(Dev): SQLite (`shynotes.db`)
+  - 개발(Dev): SQLite (`SHYNOTE.db`)
   - 배포(Prod): PostgreSQL (예정)
 - **ORM**: SQLAlchemy
 - **Execution**: Uvicorn

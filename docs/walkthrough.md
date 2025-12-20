@@ -49,7 +49,7 @@ The `run.sh` script has been updated to run as a background service.
 ./run.sh start
 ```
 *   Starts the server in the background (Port 8000).
-*   Logs are written to `shynotes.log`.
+*   Logs are written to `SHYNOTE.log`.
 
 ### Stop Server
 ```bash
@@ -63,6 +63,6 @@ The `run.sh` script has been updated to run as a background service.
 
 **Note**: The database schema has been updated. If you encounter errors, you may need to reset the database:
 ```bash
-rm shynotes.db
+rm SHYNOTE.db
 ./run.sh start
 ```

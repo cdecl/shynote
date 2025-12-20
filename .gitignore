@@ -3,7 +3,7 @@ __pycache__/
 *$py.class
 .env
 .venv/
-shynotes.db
+SHYNOTE.db
 *.pem
 
 # Byte-compiled / optimized / DLL files

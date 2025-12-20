@@ -3,8 +3,8 @@
 APP_MODULE="src.main:app"
 HOST="0.0.0.0"
 PORT="8000"
-PID_FILE="shynotes.pid"
-LOG_FILE="shynotes.log"
+PID_FILE="shynote.pid"
+LOG_FILE="shynote.log"
 
 start() {
     if [ -f "$PID_FILE" ]; then
@@ -18,7 +18,7 @@ start() {
         fi
     fi
 
-    echo "Starting Shynotes..."
+    echo "Starting SHYNOTE..."
     nohup uv run uvicorn "$APP_MODULE" --host "$HOST" --port "$PORT" --reload > "$LOG_FILE" 2>&1 &
     
     PID=$!
@@ -35,7 +35,7 @@ stop() {
 
     PID=$(cat "$PID_FILE")
     if ps -p "$PID" > /dev/null 2>&1; then
-        echo "Stopping Shynotes (PID $PID)..."
+        echo "Stopping SHYNOTE (PID $PID)..."
         kill "$PID"
         
         # Wait for process to exit
