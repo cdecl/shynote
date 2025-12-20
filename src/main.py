@@ -6,7 +6,12 @@ from typing import List
 from . import models, schemas, database
 from .auth import manager, utils
 
-models.Base.metadata.create_all(bind=database.engine)
+try:
+    models.Base.metadata.create_all(bind=database.engine)
+except Exception as e:
+    print(f"Error creating database tables: {e}")
+    # Continue running app even if DB fails, to allow Vercel logs to show the error
+    pass
 
 app = FastAPI()
 
