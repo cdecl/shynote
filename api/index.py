@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -6,7 +7,12 @@ from typing import List
 from . import models, schemas, database
 from .auth import manager, utils
 
+# Get the directory of the current file to resolve static paths correctly
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(os.path.dirname(BASE_DIR), "static")
+
 app = FastAPI()
+
 
 @app.on_event("startup")
 def on_startup():
@@ -18,11 +24,16 @@ def on_startup():
 
 
 # Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+if os.path.exists(STATIC_DIR):
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.get("/")
 def read_root():
-    return FileResponse("static/index.html")
+    index_path = os.path.join(STATIC_DIR, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return {"error": "Static files not found", "path": index_path}
+
 
 # --- Auth Endpoints ---
 @app.get("/auth/config")
@@ -203,5 +214,5 @@ def process_smart_edit(
     
     return {"result": text}
 
-# Vercel looks for 'app' or 'handler'.
-handler = app
+# Vercel will look for 'app' by default for ASGI.
+
