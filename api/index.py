@@ -6,14 +6,16 @@ from typing import List
 from . import models, schemas, database
 from .auth import manager, utils
 
-try:
-    models.Base.metadata.create_all(bind=database.engine)
-except Exception as e:
-    print(f"Error creating database tables: {e}")
-    # Continue running app even if DB fails, to allow Vercel logs to show the error
-    pass
-
 app = FastAPI()
+
+@app.on_event("startup")
+def on_startup():
+    try:
+        models.Base.metadata.create_all(bind=database.engine)
+    except Exception as e:
+        print(f"Error creating database tables during startup: {e}")
+        # Application continues; logs will show the issue.
+
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
