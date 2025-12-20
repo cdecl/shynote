@@ -19,9 +19,10 @@ textarea {
 .markdown-body {
     box-sizing: border-box;
     min-width: 200px;
-    max-width: 980px;
-    margin: 0 auto;
-    padding: 45px;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    width: 100% !important;
 }
 
 @media (max-width: 767px) {

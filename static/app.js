@@ -13,6 +13,13 @@ createApp({
 		const viewMode = ref('split') // 'split', 'edit', 'preview'
 		const isDarkMode = ref(false)
 		const isAuthenticated = ref(false)
+
+		const renameState = ref({
+			id: null,
+			type: null, // 'folder' | 'note'
+			name: ''
+		})
+
 		let debounceTimer = null
 
 		const checkAuth = () => {
@@ -262,6 +269,63 @@ createApp({
 		}
 
 
+
+		const startRename = (item, type) => {
+			renameState.value = {
+				id: item.id,
+				type: type,
+				name: type === 'folder' ? item.name : item.title
+			}
+			// Focus input next tick
+			setTimeout(() => {
+				const input = document.getElementById(`rename-input-${type}-${item.id}`)
+				if (input) input.focus()
+			}, 50)
+		}
+
+		const saveRename = async () => {
+			const { id, type, name } = renameState.value
+			if (!id || !name.trim()) {
+				renameState.value = { id: null, type: null, name: '' }
+				return
+			}
+
+			try {
+				if (type === 'folder') {
+					await authenticatedFetch(`/api/folders/${id}`, {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ name: name })
+					})
+					// Update local
+					const f = folders.value.find(f => f.id === id)
+					if (f) f.name = name
+				} else {
+					// Update note
+					const n = notes.value.find(n => n.id === id)
+					if (n) {
+						await authenticatedFetch(`/api/notes/${id}`, {
+							method: 'PUT',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({
+								title: name,
+								content: n.content,
+								folder_id: n.folder_id
+							})
+						})
+						n.title = name
+						if (selectedNote.value && selectedNote.value.id === id) {
+							selectedNote.value.title = name
+						}
+					}
+				}
+			} catch (e) {
+				console.error("Rename failed", e)
+			} finally {
+				renameState.value = { id: null, type: null, name: '' }
+			}
+		}
+
 		const deleteFolder = async (id) => {
 			if (!confirm("Are you sure you want to delete this folder and all its notes?")) return
 
@@ -346,7 +410,12 @@ createApp({
 			toggleDarkMode,
 			toggleDarkMode,
 			initGoogleAuth,
-			isAuthenticated
+			toggleDarkMode,
+			initGoogleAuth,
+			isAuthenticated,
+			renameState,
+			startRename,
+			saveRename
 		}
 	}
 }).mount('#app')
