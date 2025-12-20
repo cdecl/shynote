@@ -7,7 +7,9 @@ from ...config import GOOGLE_CLIENT_ID
 def verify_google_token(token: str) -> dict:
     try:
         # Specify the CLIENT_ID of the app that accesses the backend:
-        id_info = id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_CLIENT_ID)
+        # Specify the CLIENT_ID of the app that accesses the backend:
+        # Allow 10 seconds of clock skew to prevent "Token used too early" errors
+        id_info = id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_CLIENT_ID, clock_skew_in_seconds=10)
 
         # Or, if multiple clients access the backend:
         # id_info = id_token.verify_oauth2_token(token, requests.Request())
@@ -23,4 +25,6 @@ def verify_google_token(token: str) -> dict:
             "email": id_info['email']
         }
     except ValueError as e:
+        print(f"DEBUG: Validation Error: {e}")
+        print(f"DEBUG: Backend Expected Client ID: {GOOGLE_CLIENT_ID}")
         raise HTTPException(status_code=400, detail=f"Invalid Google Token: {str(e)}")
