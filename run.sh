@@ -1,6 +1,6 @@
 #!/bin/bash
 
-APP_MODULE="src.main:app"
+APP_MODULE="api.index:app"
 HOST="0.0.0.0"
 PORT="8000"
 PID_FILE="shynote.pid"
