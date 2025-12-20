@@ -2,6 +2,35 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional, List
 
+# --- Auth & User Schemas ---
+
+class UserBase(BaseModel):
+    email: str
+
+class UserCreate(UserBase):
+    provider: str
+    provider_id: str
+
+class User(UserBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    user_id: Optional[int] = None
+
+class AuthRequest(BaseModel):
+    provider: str
+    token: str
+
+# --- App Schemas ---
+
 class NoteBase(BaseModel):
     title: str
     content: Optional[str] = None
@@ -15,6 +44,7 @@ class NoteUpdate(NoteBase):
 
 class Note(NoteBase):
     id: int
+    user_id: int
     created_at: datetime
     updated_at: datetime
 
@@ -29,6 +59,7 @@ class FolderCreate(FolderBase):
 
 class Folder(FolderBase):
     id: int
+    user_id: int
     notes: List[Note] = []
 
     class Config:

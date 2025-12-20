@@ -12,7 +12,104 @@ createApp({
 		const previewRef = ref(null)
 		const viewMode = ref('split') // 'split', 'edit', 'preview'
 		const isDarkMode = ref(false)
+		const isAuthenticated = ref(false)
 		let debounceTimer = null
+
+		const checkAuth = () => {
+			const token = localStorage.getItem('access_token')
+			if (token) {
+				isAuthenticated.value = true
+				fetchFolders()
+				fetchNotes()
+			} else {
+				isAuthenticated.value = false
+			}
+		}
+
+
+		// Expose this globally for Google Callback
+		window.handleCredentialResponse = async (response) => {
+			try {
+				const res = await fetch('/auth/login', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						provider: 'google',
+						token: response.credential
+					})
+				})
+
+				if (res.ok) {
+					const data = await res.json()
+					localStorage.setItem('access_token', data.access_token)
+					isAuthenticated.value = true
+					fetchFolders()
+					fetchNotes()
+				} else {
+					console.error("Login failed")
+					alert("Login failed!")
+				}
+			} catch (e) {
+				console.error("Login Error", e)
+			}
+		}
+
+		const initGoogleAuth = async () => {
+			try {
+				const res = await fetch('/auth/config')
+				if (!res.ok) return
+				const config = await res.json()
+
+				if (window.google) {
+					window.google.accounts.id.initialize({
+						client_id: config.google_client_id,
+						callback: window.handleCredentialResponse,
+						auto_select: false,
+						cancel_on_tap_outside: false
+					});
+
+					// If we are showing the modal, render the button
+					if (!isAuthenticated.value) {
+						renderGoogleButton()
+					}
+				}
+			} catch (e) {
+				console.error("Failed to init Google Auth", e)
+			}
+		}
+
+		const renderGoogleButton = () => {
+			const btnDiv = document.getElementById("google-btn")
+			if (btnDiv && window.google) {
+				window.google.accounts.id.renderButton(
+					btnDiv,
+					{ theme: "outline", size: "large", width: "100%" }
+				);
+			}
+		}
+
+		const authenticatedFetch = async (url, options = {}) => {
+			const token = localStorage.getItem('access_token')
+			const headers = {
+				...options.headers,
+				'Authorization': `Bearer ${token}`
+			}
+
+			const response = await fetch(url, { ...options, headers })
+			if (response.status === 401) {
+				logout()
+				return null
+			}
+			return response
+		}
+
+		const logout = () => {
+			localStorage.removeItem('access_token')
+			isAuthenticated.value = false
+			notes.value = []
+			folders.value = []
+			selectedNote.value = null
+		}
 
 		const toggleSidebar = () => {
 			isSidebarOpen.value = !isSidebarOpen.value
@@ -51,8 +148,8 @@ createApp({
 
 		const fetchFolders = async () => {
 			try {
-				const response = await fetch('/api/folders')
-				if (response.ok) {
+				const response = await authenticatedFetch('/api/folders')
+				if (response && response.ok) {
 					folders.value = await response.json()
 				}
 			} catch (e) {
@@ -63,8 +160,8 @@ createApp({
 		const fetchNotes = async () => {
 			loading.value = true
 			try {
-				const response = await fetch('/api/notes')
-				if (response.ok) {
+				const response = await authenticatedFetch('/api/notes')
+				if (response && response.ok) {
 					notes.value = await response.json()
 				}
 			} catch (e) {
@@ -79,12 +176,12 @@ createApp({
 			if (!name) return
 
 			try {
-				const response = await fetch('/api/folders', {
+				const response = await authenticatedFetch('/api/folders', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ name })
 				})
-				if (response.ok) {
+				if (response && response.ok) {
 					fetchFolders()
 				}
 			} catch (e) {
@@ -98,12 +195,12 @@ createApp({
 
 		const createNoteInFolder = async (folderId) => {
 			try {
-				const response = await fetch('/api/notes', {
+				const response = await authenticatedFetch('/api/notes', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ title: '', content: '', folder_id: folderId })
 				})
-				if (response.ok) {
+				if (response && response.ok) {
 					const newNote = await response.json()
 					notes.value.unshift(newNote)
 					selectedNote.value = newNote
@@ -124,7 +221,7 @@ createApp({
 
 			statusMessage.value = 'Saving...'
 			try {
-				const response = await fetch(`/api/notes/${selectedNote.value.id}`, {
+				const response = await authenticatedFetch(`/api/notes/${selectedNote.value.id}`, {
 					method: 'PUT',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({
@@ -134,7 +231,7 @@ createApp({
 					})
 				})
 
-				if (response.ok) {
+				if (response && response.ok) {
 					// Update list item
 					const index = notes.value.findIndex(n => n.id === selectedNote.value.id)
 					if (index !== -1) {
@@ -154,8 +251,8 @@ createApp({
 			if (!confirm("Are you sure you want to delete this note?")) return
 
 			try {
-				const response = await fetch(`/api/notes/${id}`, { method: 'DELETE' })
-				if (response.ok) {
+				const response = await authenticatedFetch(`/api/notes/${id}`, { method: 'DELETE' })
+				if (response && response.ok) {
 					notes.value = notes.value.filter(n => n.id !== id)
 					selectedNote.value = null
 				}
@@ -169,8 +266,8 @@ createApp({
 			if (!confirm("Are you sure you want to delete this folder and all its notes?")) return
 
 			try {
-				const response = await fetch(`/api/folders/${id}`, { method: 'DELETE' })
-				if (response.ok) {
+				const response = await authenticatedFetch(`/api/folders/${id}`, { method: 'DELETE' })
+				if (response && response.ok) {
 					folders.value = folders.value.filter(f => f.id !== id)
 					// Also remove notes that were in this folder from local state
 					notes.value = notes.value.filter(n => n.folder_id !== id)
@@ -209,9 +306,17 @@ createApp({
 			return notes.value.filter(n => n.folder_id === folderId)
 		}
 
-		onMounted(() => {
-			fetchFolders()
-			fetchNotes()
+		onMounted(async () => {
+			checkAuth()
+			// Wait a bit for Google Script to load if async
+			setTimeout(initGoogleAuth, 500)
+		})
+
+		// Watch authentication state to re-render button if logout
+		Vue.watch(isAuthenticated, (newVal) => {
+			if (!newVal) {
+				setTimeout(renderGoogleButton, 100)
+			}
 		})
 
 		return {
@@ -238,7 +343,10 @@ createApp({
 			viewMode,
 			cycleViewMode,
 			isDarkMode,
-			toggleDarkMode
+			toggleDarkMode,
+			toggleDarkMode,
+			initGoogleAuth,
+			isAuthenticated
 		}
 	}
 }).mount('#app')

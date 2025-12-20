@@ -1,46 +1,85 @@
-# Implementation Plan - Sync with GEMINI.md
+# implementation_plan.md
 
-Goal: Update the project to match requirements in `GEMINI.md`:
-1.  Maintain artifacts in `docs/`.
-2.  Implement Obsidian-like Split View (Editor | Preview).
-3.  Implement Folder-based navigation.
+# Goal Description
+Implement an extensible JWT Authentication system (starting with Google, but designed for future providers) and enforce strict data isolation where Folders and Notes are stored and retrieved based on the authenticated User's ID.
 
 ## User Review Required
-> [!NOTE]
-> **Filesystem Sync**: I will copy the current `implementation_plan.md` and `walkthrough.md` to `docs/` in the repo.
-> **Markdown Rendering**: I will add `marked.js` via CDN for the preview pane.
+> [!IMPORTANT]
+> **Google Client ID**: You will need a Google Cloud Project with OAuth 2.0 credentials. You must replace `YOUR_GOOGLE_CLIENT_ID` in both the frontend code and backend configuration with your actual generic Client ID.
+
+> [!WARNING]
+> **Database Migration**: Adding `user_id` to existing `notes` and `folders` tables in SQLite requires a schema change. Existing data will need to be either assigned to a default user or the database will need to be reset. This plan assumes we will **attempt to preserve data** by adding the column as nullable initially, or the user can choose to delete `SHYNOTE.db` for valid clean slate.
 
 ## Proposed Changes
 
-## Status: Completed
+### Configuration & Dependencies
+#### [MODIFY] pyproject.toml
+- Add dependencies:
+    - `google-auth` (to verify Google ID tokens)
+    - `python-jose[cryptography]` (to generate internal session JWTs)
+    - `python-multipart` (for form parsing if needed)
 
-### Documentation
-- [x] Create `docs/implementation_plan.md`
-- [x] Create `docs/walkthrough.md`
+### Database & Models
+#### [MODIFY] src/models.py
+- **New `User` Model**:
+    - `id` (Integer, Primary Key)
+    - `email` (String, Unique, Index)
+    - `provider` (String, e.g., 'google') - *Supports multiple providers*
+    - `provider_id` (String, Index) - *The unique ID from the provider (e.g., Google 'sub')*
+    - `created_at` (DateTime)
+- **Update `Folder` and `Note` Models**:
+    - Add `user_id` (Integer, ForeignKey("users.id"), Index=True)
+    - Enforce relationship so notes/folders belong to a user.
 
-### Frontend (Split View)
-- [x] Add `marked` library script.
-- [x] Change right panel to grid/flex with two columns.
-- [x] Preview div shows `marked(content)`.
+#### [MODIFY] src/schemas.py
+- Add `UserCreate`, `UserResponse` schemas.
+- Update `Note` and `Folder` schemas to include `user_id`.
+- Add `AuthRequest` (provider, token) and `Token` (access_token, token_type) schemas.
 
-### Backend (Folder Support)
-- [x] Add `Folder` model and relationships.
-- [x] Update `Note` model with `folder_id`.
-- [x] Implement Folder CRUD API.
-- [x] Update frontend to organize notes by folder.
+#### [NEW] src/auth/
+- Refactor auth logic into a package or module to support multiple providers.
+- `src/auth/manager.py`: Handles generic login logic (get_user_by_provider -> create_if_missing -> mint_token).
+- `src/auth/providers/google.py`: Specific logic to verify Google ID tokens.
+- `src/auth/utils.py`: JWT utilities (create_access_token, decode_token).
 
-### UI Improvements (Added)
-- [x] **Material Design**: Integrated `Material Symbols Rounded`.
-- [x] **Icon Theme**: Implemented VS Code Material Icon Theme for folders/files (`.svg`).
-- [x] **Sidebar Toggle**: Added collapsible sidebar functionality.
-- [x] **Delete Actions**: Added delete buttons (trash icon) to folders and notes in the sidebar.
-- [x] **Branding**: Updated logo to "SHYNOTE" and added header action icons.
+### API Implementation
+#### [MODIFY] src/main.py
+- **New Auth Endpoint**: `POST /auth/login`
+    - Accepts `{ "provider": "google", "token": "..." }`
+    - Verifies token via provider specific logic.
+    - Returns internal JWT access token.
+- **Dependency**: `get_current_user`
+    - Validates internal JWT from `Authorization` header.
+    - Returns `User` model instance.
+- **Protect Routes**:
+    - Apply `Depends(get_current_user)` to all Note/Folder CRUD endpoints.
+    - **Crucial**: All DB queries must filter by `user.id`.
+        - `db.query(Note).filter(Note.user_id == current_user.id, ...)`
 
-### Deployment & Tools (Added)
-- [x] **Service Script**: Refactored `run.sh` to support `start|stop|restart` background execution.
+### Frontend
+#### [MODIFY] static/index.html
+- Add Google Sign-In script (GIS).
+- Add a generic Login UI that can be expanded for other providers later.
+
+#### [MODIFY] static/app.js
+- **Auth State Management**:
+    - Check for `access_token` in `localStorage`.
+    - If missing or invalid, show Login UI.
+- **Login Flow**:
+    - On Google Sign-In success, send ID token to `POST /auth/login`.
+    - Receive internal `access_token` and store it.
+    - Fetch initial data.
+- **API Requests**:
+    - Add `Authorization: Bearer <token>` header to all backend calls.
+    - Handle 401 response (auto-logout).
 
 ## Verification Plan
-1.  Verify `docs/` exists and contains markdown files. (Done)
-2.  Verify Split View renders markdown correctly. (Done)
-3.  Verify creating/deleting folders and listing notes within them. (Done)
-4.  Verify sidebar toggle and delete interactions. (Done)
+
+### Manual Verification
+1.  **Multi-Provider Design Check**: Verify code structure allows adding a 'github' provider easily in `src/auth/providers/`.
+2.  **Login Flow**: Test Google Sign-In. Verify backend returns internal JWT.
+3.  **Data Isolation**:
+    - Login as User A. Create "Secret Note A".
+    - Logout. Login as User B. Should NOT see "Secret Note A".
+    - Create "Secret Note B".
+    - Check DB: Ensure `user_id` columns match respective users.

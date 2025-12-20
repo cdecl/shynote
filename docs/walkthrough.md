@@ -1,8 +1,13 @@
 # Walkthrough - Sync with GEMINI.md
 
-I have updated the project to align with `GEMINI.md` requirements, introducing Folder support and a Split View editor.
+I have updated the project to align with `GEMINI.md` requirements, introducing Folder support, Split View editor, and **Google JWT Authentication**.
 
 ## Changes
+
+### Authentication
+- **Google Sign-In**: Implemented JWT-based authentication using Google OAuth 2.0.
+- **Data Isolation**: Notes and Folders are now strictly isolated per user.
+- **Configurable**: Client ID is managed via `config.json`, separating secrets from code.
 
 ### Documentation
 - Created `docs/` directory.
@@ -20,6 +25,31 @@ I have updated the project to align with `GEMINI.md` requirements, introducing F
 ### UI Improvements
 - **Material Icons**: Integrated genuine **VS Code Material Icon Theme** SVGs for directories and Markdown files, providing a familiar and high-quality visual hierarchy.
 - **Sidebar Toggle**: Added a collapsible sidebar feature with smooth transitions, controllable via a toggle button in the editor toolbar.
+
+## Authentication Setup (Google OAuth)
+To enable Google Sign-In, you need to configure a Google Cloud Project:
+
+1.  **Go to Google Cloud Console**:
+    -   Visit [Google Cloud Credentials](https://console.cloud.google.com/apis/credentials).
+2.  **Create Credentials**:
+    -   Click **Create Credentials** > **OAuth client ID**.
+    -   Application type: **Web application**.
+    -   Name: `Shynotes Local` (or any name).
+3.  **Configure Origins**:
+    -   Under **Authorized JavaScript origins**, add:
+        -   `http://localhost:8000`
+        -   `http://127.0.0.1:8000`
+    -   Click **CREATE**.
+4.  **Update Configuration**:
+    -   Copy the **Client ID** (e.g., `12345...apps.googleusercontent.com`).
+    -   Open `config.json` in the project root.
+    -   Paste your ID:
+        ```json
+        {
+          "GOOGLE_CLIENT_ID": "YOUR_CLIENT_ID_HERE"
+        }
+        ```
+    -   Restart the server: `./run.sh restart`.
 
 ## Verification
 
