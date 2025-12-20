@@ -11,8 +11,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <link id="github-theme" rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-light.min.css">
-    <link id="highlight-theme" rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <link id="highlight-theme" rel="stylesheet" href="https://unpkg.com/nord-highlightjs@0.1/dist/nord.css">
     <link
         href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap"
         rel="stylesheet">
@@ -252,18 +251,28 @@
                 <!-- Split View -->
                 <div class="flex-1 flex overflow-hidden">
                     <!-- Editor -->
-                    <div v-show="viewMode !== 'preview'" class="flex-1 flex flex-col border-r border-gray-100">
+                    <div v-show="viewMode !== 'preview'"
+                        class="flex-1 flex flex-col border-r border-gray-100 relative group"
+                        :class="isDarkMode ? 'border-[#434C5E]' : 'border-gray-100'">
+                        <span
+                            class="absolute top-2 left-6 text-[10px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 select-none text-gray-400">Editor</span>
                         <textarea ref="editorRef" @scroll="handleScroll" v-model="selectedNote.content"
                             @input="debouncedUpdate"
-                            class="flex-1 p-6 outline-none resize-none text-gray-700 leading-relaxed font-sans text-sm bg-white"
+                            :class="isDarkMode ? 'bg-[#2E3440] text-[#D8DEE9]' : 'bg-white text-gray-700'"
+                            class="flex-1 p-6 outline-none resize-none leading-relaxed font-sans text-sm"
                             placeholder="Type markdown here..."></textarea>
                     </div>
 
                     <!-- Preview -->
-                    <div v-show="viewMode !== 'edit'" ref="previewRef" @scroll="handleScroll"
-                        :class="isDarkMode ? 'bg-[#0d1117]' : 'bg-white'" class="flex-1 flex flex-col overflow-y-auto">
-                        <div class="p-0 markdown-body" :style="{ backgroundColor: 'transparent' }"
-                            v-html="previewContent"></div>
+                    <div v-show="viewMode !== 'edit'" class="flex-1 flex flex-col relative group overflow-hidden">
+                        <span
+                            class="absolute top-2 left-6 text-[10px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 select-none text-gray-400">Preview</span>
+                        <div ref="previewRef" @scroll="handleScroll"
+                            :class="isDarkMode ? 'bg-[#2E3440] nord-dark' : 'bg-white'"
+                            class="flex-1 flex flex-col overflow-y-auto">
+                            <div class="p-0 markdown-body" :style="{ backgroundColor: 'transparent' }"
+                                v-html="previewContent"></div>
+                        </div>
                     </div>
                 </div>
             </div>

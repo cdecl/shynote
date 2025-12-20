@@ -4,19 +4,28 @@ body {
 
 /* Editor Font Settings */
 textarea {
-    font-family: 'JetBrains Mono', monospace !important;
+    font-family: 'JetBrains Mono', 'Pretendard', monospace !important;
     font-size: 16px !important;
     line-height: 1.6;
+}
+
+.nord-dark textarea {
+    caret-color: #88C0D0;
+}
+
+.nord-dark textarea::placeholder {
+    color: #4C566A;
 }
 
 /* Preview Code Block Font */
 .markdown-body pre,
 .markdown-body code {
-    font-family: 'JetBrains Mono', monospace !important;
+    font-family: 'JetBrains Mono', 'Pretendard', monospace !important;
 }
 
 /* Adjustments for GitHub Markdown CSS */
 .markdown-body {
+    font-family: 'JetBrains Mono', 'Pretendard', sans-serif !important;
     box-sizing: border-box;
     min-width: 200px;
     max-width: none !important;
@@ -34,4 +43,53 @@ textarea {
 .material-symbols-rounded {
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     vertical-align: middle;
+}
+
+/* Nord Theme Overrides */
+.nord-dark .markdown-body {
+    background-color: transparent !important;
+    /* Let container bg show */
+    color: #D8DEE9 !important;
+    /* Nord4 */
+    --color-canvas-default: #2E3440;
+    --color-canvas-subtle: #3B4252;
+    --color-border-default: #434C5E;
+    --color-border-muted: #3B4252;
+    --color-fg-default: #D8DEE9;
+    --color-fg-muted: #D8DEE9;
+    --color-accent-fg: #88C0D0;
+    /* Nord8 - Links */
+}
+
+/* Force specific elements if variables miss some */
+.nord-dark .markdown-body h1,
+.nord-dark .markdown-body h2,
+.nord-dark .markdown-body h3,
+.nord-dark .markdown-body h4,
+.nord-dark .markdown-body h5,
+.nord-dark .markdown-body h6 {
+    color: #ECEFF4 !important;
+    /* Nord6 */
+    border-bottom-color: #434C5E !important;
+}
+
+.nord-dark .markdown-body a {
+    color: #88C0D0 !important;
+}
+
+.nord-dark .markdown-body blockquote {
+    color: #D8DEE9 !important;
+    border-left-color: #434C5E !important;
+}
+
+.nord-dark .markdown-body code,
+.nord-dark .markdown-body tt {
+    background-color: #3B4252 !important;
+    /* Nord1 */
+    color: #ECEFF4 !important;
+}
+
+.nord-dark .markdown-body pre {
+    background-color: #2E3440 !important;
+    /* Let highlightjs handle bg or match main */
 }

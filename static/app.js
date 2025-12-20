@@ -11,7 +11,7 @@ createApp({
 		const editorRef = ref(null)
 		const previewRef = ref(null)
 		const viewMode = ref('split') // 'split', 'edit', 'preview'
-		const isDarkMode = ref(false)
+		const isDarkMode = ref(true)
 		const isAuthenticated = ref(false)
 		const isSmartMenuOpen = ref(false)
 
@@ -134,7 +134,7 @@ createApp({
 			}
 			if (highlightLink) {
 				highlightLink.href = isDarkMode.value
-					? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css'
+					? 'https://unpkg.com/nord-highlightjs@0.1/dist/nord.css'
 					: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css'
 			}
 		}
