@@ -8,10 +8,28 @@ createApp({
 		const loading = ref(false)
 		const statusMessage = ref('Ready')
 		const isSidebarOpen = ref(true)
+		const editorRef = ref(null)
+		const previewRef = ref(null)
+		const viewMode = ref('split') // 'split', 'edit', 'preview'
 		let debounceTimer = null
 
 		const toggleSidebar = () => {
 			isSidebarOpen.value = !isSidebarOpen.value
+		}
+
+		const cycleViewMode = () => {
+			if (viewMode.value === 'split') viewMode.value = 'edit'
+			else if (viewMode.value === 'edit') viewMode.value = 'preview'
+			else viewMode.value = 'split'
+		}
+
+		const handleScroll = (e) => {
+			if (!editorRef.value || !previewRef.value) return
+			const source = e.target
+			const target = source === editorRef.value ? previewRef.value : editorRef.value
+
+			const percentage = source.scrollTop / (source.scrollHeight - source.clientHeight)
+			target.scrollTop = percentage * (target.scrollHeight - target.clientHeight)
 		}
 
 		const fetchFolders = async () => {
@@ -156,7 +174,10 @@ createApp({
 
 		const previewContent = computed(() => {
 			if (!selectedNote.value || !selectedNote.value.content) return ''
-			return marked.parse(selectedNote.value.content)
+			return marked.parse(selectedNote.value.content, {
+				gfm: true,
+				breaks: true
+			})
 		})
 
 		const rootNotes = computed(() => {
@@ -189,7 +210,12 @@ createApp({
 			rootNotes,
 			getFolderNotes,
 			isSidebarOpen,
-			toggleSidebar
+			toggleSidebar,
+			editorRef,
+			previewRef,
+			handleScroll,
+			viewMode,
+			cycleViewMode
 		}
 	}
 }).mount('#app')

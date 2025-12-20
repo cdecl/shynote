@@ -12,35 +12,35 @@ Goal: Update the project to match requirements in `GEMINI.md`:
 
 ## Proposed Changes
 
+## Status: Completed
+
 ### Documentation
-- Create `docs/implementation_plan.md` (Copy of this)
-- Create `docs/walkthrough.md` (Copy of existing)
+- [x] Create `docs/implementation_plan.md`
+- [x] Create `docs/walkthrough.md`
 
 ### Frontend (Split View)
-#### [MODIFY] [static/index.html](file:///Users/cdecl/dev/shynotes/static/index.html)
-- Add `marked` library script.
-- Change right panel to grid/flex with two columns: Textarea (Editor) + Div (Preview).
-- Preview div shows `marked(content)`.
-
-#### [MODIFY] [static/app.js](file:///Users/cdecl/dev/shynotes/static/app.js)
-- Compute `compiledMarkdown` property.
+- [x] Add `marked` library script.
+- [x] Change right panel to grid/flex with two columns.
+- [x] Preview div shows `marked(content)`.
 
 ### Backend (Folder Support)
-#### [MODIFY] [src/models.py](file:///Users/cdecl/dev/shynotes/src/models.py)
-- Add `Folder` class.
-- Update `Note` to add `folder_id` ForeignKey.
+- [x] Add `Folder` model and relationships.
+- [x] Update `Note` model with `folder_id`.
+- [x] Implement Folder CRUD API.
+- [x] Update frontend to organize notes by folder.
 
-#### [MODIFY] [src/schemas.py](file:///Users/cdecl/dev/shynotes/src/schemas.py)
-- Schema updates for Folder.
+### UI Improvements (Added)
+- [x] **Material Design**: Integrated `Material Symbols Rounded`.
+- [x] **Icon Theme**: Implemented VS Code Material Icon Theme for folders/files (`.svg`).
+- [x] **Sidebar Toggle**: Added collapsible sidebar functionality.
+- [x] **Delete Actions**: Added delete buttons (trash icon) to folders and notes in the sidebar.
+- [x] **Branding**: Updated logo to "SHYNOTE" and added header action icons.
 
-#### [MODIFY] [src/main.py](file:///Users/cdecl/dev/shynotes/src/main.py)
-- APIs for Folders (CRUD).
-
-#### [MODIFY] [static/app.js](file:///Users/cdecl/dev/shynotes/static/app.js)
-- Fetch folders.
-- Organize notes by folder in the Left Sidebar.
+### Deployment & Tools (Added)
+- [x] **Service Script**: Refactored `run.sh` to support `start|stop|restart` background execution.
 
 ## Verification Plan
-1.  Verify `docs/` exists and contains markdown files.
-2.  Verify Split View renders markdown correctly.
-3.  Verify creating/deleting folders and listing notes within them.
+1.  Verify `docs/` exists and contains markdown files. (Done)
+2.  Verify Split View renders markdown correctly. (Done)
+3.  Verify creating/deleting folders and listing notes within them. (Done)
+4.  Verify sidebar toggle and delete interactions. (Done)

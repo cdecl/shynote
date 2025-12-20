@@ -23,25 +23,46 @@ I have updated the project to align with `GEMINI.md` requirements, introducing F
 
 ## Verification
 
+### User Interaction
+1.  **Sidebar Actions**:
+    -   **Toggle**: Click the double-arrow icon in the toolbar to collapse/expand the sidebar.
+    -   **Delete**: Hover over any folder or note in the sidebar to reveal the **Trash** icon. Click to delete (with confirmation for folders).
+    -   **Create**: Use the styled icons in the header to create new Folders or Notes.
+
 ### Browser Automation
 I verified the following workflows:
 1.  **Folder Creation**: Created "Projects" and "Ideas" folders.
 2.  **Note Creation**: Created "ProjectPlan" inside "Projects".
 3.  **Editing**: Verified markdown content (Headers, Lists, Bold text).
 4.  **Preview**: Confirmed the Preview pane renders markdown correctly.
-5.  **Navigation**: Verifed sidebar structure matches the folder hierarchy.
+5.  **Navigation**: Verified sidebar structure matches the folder hierarchy.
 
 ![Folder and Split View Verification](file:///Users/cdecl/.gemini/antigravity/brain/1d220aa3-893b-4506-aa3f-6ff27a9e7687/folder_split_feature_verification_retry_1766207215745.webp)
 *Figure 1: Verification of Folders and Split View.*
 
 ## How to Run
 
+The `run.sh` script has been updated to run as a background service.
+
+### Start Server
 ```bash
-./run.sh
+./run.sh start
+```
+*   Starts the server in the background (Port 8000).
+*   Logs are written to `shynotes.log`.
+
+### Stop Server
+```bash
+./run.sh stop
+```
+
+### Restart Server
+```bash
+./run.sh restart
 ```
 
 **Note**: The database schema has been updated. If you encounter errors, you may need to reset the database:
 ```bash
 rm shynotes.db
-./run.sh
+./run.sh start
 ```
