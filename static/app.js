@@ -1111,11 +1111,26 @@ createApp({
 			if (el.selectionStart !== el.selectionEnd) {
 				const rect = el.getBoundingClientRect()
 				// Basic positioning: Above the mouse cursor
-				// Limit x to within bounds
+				// Clamp values to keep it on screen
+				// Assuming toolbar width ~280px, so half is 140px. Margin 10px.
+				const halfWidth = 140
+				const screenW = window.innerWidth
+
+				// Shift right by 40px as requested
+				let x = e.clientX + 40
+				// Prevent left overflow
+				if (x < halfWidth + 10) x = halfWidth + 10
+				// Prevent right overflow
+				if (x > screenW - halfWidth - 10) x = screenW - halfWidth - 10
+
+				let y = e.clientY - 50
+				// Prevent top overflow
+				if (y < 60) y = e.clientY + 30 // Show below if too close to top
+
 				toolbar.value = {
 					show: true,
-					x: e.clientX,
-					y: e.clientY - 50 // 50px above cursor
+					x: x,
+					y: y
 				}
 			} else {
 				hideToolbar()
