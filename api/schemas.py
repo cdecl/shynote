@@ -14,9 +14,15 @@ class UserCreate(UserBase):
 class User(UserBase):
     id: int
     created_at: datetime
+    is_dark_mode: bool = False
+    view_mode: str = "edit"
 
     class Config:
         from_attributes = True
+
+class UserProfileUpdate(BaseModel):
+    is_dark_mode: Optional[bool] = None
+    view_mode: Optional[str] = None
 
 class Token(BaseModel):
     access_token: str

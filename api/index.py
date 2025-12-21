@@ -49,6 +49,21 @@ def login(auth_request: schemas.AuthRequest, db: Session = Depends(database.get_
 def read_users_me(current_user: models.User = Depends(utils.get_current_user)):
     return current_user
 
+@app.patch("/auth/me", response_model=schemas.User)
+def update_user_profile(
+    profile_update: schemas.UserProfileUpdate,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(utils.get_current_user)
+):
+    if profile_update.is_dark_mode is not None:
+        current_user.is_dark_mode = profile_update.is_dark_mode
+    if profile_update.view_mode is not None:
+        current_user.view_mode = profile_update.view_mode
+    
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
 # --- CRUD Operations (Protected) ---
 
 @app.post("/api/folders", response_model=schemas.Folder)

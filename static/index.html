@@ -229,17 +229,17 @@
                             <span
                                 class="text-[10px] font-bold text-slate-400 dark:text-[#D8DEE9] uppercase tracking-widest select-none">View</span>
                             <div class="flex bg-slate-100 dark:bg-[#434C5E] rounded-lg p-1 gap-1">
-                                <button @click="viewMode = 'edit'"
+                                <button @click="setViewMode('edit')"
                                     :class="viewMode === 'edit' ? 'bg-white dark:bg-[#2E3440] text-blue-600 dark:text-[#88C0D0] shadow-sm' : 'text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600'"
                                     class="p-1 rounded transition-all" title="Editor Only">
                                     <span class="material-symbols-rounded text-[18px] block">edit_note</span>
                                 </button>
-                                <button @click="viewMode = 'split'"
+                                <button @click="setViewMode('split')"
                                     :class="viewMode === 'split' ? 'bg-white dark:bg-[#2E3440] text-blue-600 dark:text-[#88C0D0] shadow-sm' : 'text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600'"
                                     class="p-1 rounded transition-all" title="Split View">
                                     <span class="material-symbols-rounded text-[18px] block">vertical_split</span>
                                 </button>
-                                <button @click="viewMode = 'preview'"
+                                <button @click="setViewMode('preview')"
                                     :class="viewMode === 'preview' ? 'bg-white dark:bg-[#2E3440] text-blue-600 dark:text-[#88C0D0] shadow-sm' : 'text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600'"
                                     class="p-1 rounded transition-all" title="Preview Only">
                                     <span class="material-symbols-rounded text-[18px] block">preview</span>

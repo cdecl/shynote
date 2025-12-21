@@ -28,6 +28,7 @@ createApp({
 				isAuthenticated.value = true
 				fetchFolders()
 				fetchNotes()
+				fetchUserProfile()
 			} else {
 				isAuthenticated.value = false
 			}
@@ -50,6 +51,8 @@ createApp({
 					const data = await res.json()
 					localStorage.setItem('access_token', data.access_token)
 					isAuthenticated.value = true
+					isAuthenticated.value = true
+					fetchUserProfile()
 					fetchFolders()
 					fetchNotes()
 				} else {
@@ -122,8 +125,7 @@ createApp({
 			isSidebarOpen.value = !isSidebarOpen.value
 		}
 
-		const toggleDarkMode = () => {
-			isDarkMode.value = !isDarkMode.value
+		const applyTheme = () => {
 			const themeLink = document.getElementById('github-theme')
 			const highlightLink = document.getElementById('highlight-theme')
 			if (themeLink) {
@@ -145,10 +147,23 @@ createApp({
 			}
 		}
 
+		const toggleDarkMode = () => {
+			isDarkMode.value = !isDarkMode.value
+			applyTheme()
+			updateUserProfile({ is_dark_mode: isDarkMode.value })
+		}
+
 		const cycleViewMode = () => {
 			if (viewMode.value === 'split') viewMode.value = 'edit'
 			else if (viewMode.value === 'edit') viewMode.value = 'preview'
 			else viewMode.value = 'split'
+
+			updateUserProfile({ view_mode: viewMode.value })
+		}
+
+		const setViewMode = (mode) => {
+			viewMode.value = mode
+			updateUserProfile({ view_mode: mode })
 		}
 
 		const handleScroll = (e) => {
@@ -168,6 +183,37 @@ createApp({
 				}
 			} catch (e) {
 				console.error("Failed to fetch folders", e)
+			}
+		}
+
+		const fetchUserProfile = async () => {
+			try {
+				const response = await authenticatedFetch('/auth/me')
+				if (response && response.ok) {
+					const user = await response.json()
+					if (user.is_dark_mode !== undefined) {
+						isDarkMode.value = user.is_dark_mode
+						applyTheme()
+					}
+					if (user.view_mode) {
+						viewMode.value = user.view_mode
+					}
+				}
+			} catch (e) {
+				console.error("Failed to fetch user profile", e)
+			}
+		}
+
+		const updateUserProfile = async (updates) => {
+			if (!isAuthenticated.value) return
+			try {
+				await authenticatedFetch('/auth/me', {
+					method: 'PATCH',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(updates)
+				})
+			} catch (e) {
+				console.error("Failed to update profile", e)
 			}
 		}
 
@@ -846,6 +892,8 @@ createApp({
 			handleScroll,
 			viewMode,
 			cycleViewMode,
+			setViewMode,
+			isDarkMode,
 			isDarkMode,
 			toggleDarkMode,
 
