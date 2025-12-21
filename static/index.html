@@ -373,11 +373,11 @@
                         class="flex-1 flex flex-col border-r border-slate-100 dark:border-[#434C5E] relative group"
                         :class="isDarkMode ? 'dark' : ''">
                         <span
-                            class="absolute top-2 left-6 text-[10px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 select-none text-slate-300 dark:text-[#4C566A]">Editor</span>
+                            class="absolute top-2 right-6 text-[10px] font-bold uppercase tracking-widest pointer-events-none z-10 select-none text-slate-400 dark:text-slate-500 bg-slate-100/50 dark:bg-[#3B4252]/50 px-2 py-1 rounded backdrop-blur-sm">Editor</span>
                         <textarea ref="editorRef" @scroll="handleScroll" v-model="selectedNote.content"
                             @keydown="handleEditorKeyDown" @input="debouncedUpdate" @mouseup="handleMouseUp"
                             :style="'font-size: ' + fontSize + 'px !important'"
-                            class="flex-1 p-6 outline-none resize-none leading-relaxed font-sans bg-white dark:bg-[#2E3440] text-slate-700 dark:text-[#D8DEE9]"
+                            class="flex-1 p-6 pt-10 outline-none resize-none leading-relaxed font-sans bg-white dark:bg-[#2E3440] text-slate-700 dark:text-[#D8DEE9]"
                             placeholder="Type markdown here..."></textarea>
                     </div>
 
@@ -431,10 +431,10 @@
                     <!-- Preview -->
                     <div v-show="viewMode !== 'edit'" class="flex-1 flex flex-col relative group overflow-hidden">
                         <span
-                            class="absolute top-2 left-6 text-[10px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 select-none text-slate-300 dark:text-[#4C566A]">Preview</span>
+                            class="absolute top-2 right-6 text-[10px] font-bold uppercase tracking-widest pointer-events-none z-20 select-none text-slate-400 dark:text-slate-500 bg-slate-100/50 dark:bg-[#3B4252]/50 px-2 py-1 rounded backdrop-blur-sm">Preview</span>
                         <div ref="previewRef" @scroll="handleScroll" v-html="previewContent"
                             :style="'font-size: ' + fontSize + 'px !important'"
-                            class="markdown-body p-6 overflow-y-auto h-full bg-white dark:bg-[#2E3440] transition-colors">
+                            class="markdown-body p-6 pt-12 overflow-y-auto h-full bg-white dark:bg-[#2E3440] transition-colors">
                         </div>
                     </div>
                 </div>

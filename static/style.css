@@ -65,17 +65,60 @@ html.dark {
     /* Nord8 - Links */
 }
 
-/* Force specific elements if variables miss some */
-.dark .markdown-body h1,
-.dark .markdown-body h2,
-.dark .markdown-body h3,
-.dark .markdown-body h4,
-.dark .markdown-body h5,
-.dark .markdown-body h6 {
-    color: #ECEFF4 !important;
-    /* Nord6 */
-    border-bottom-color: #434C5E !important;
+/* Light Mode Header Colors */
+.markdown-body h1 {
+    color: #1e3a8a !important;
 }
+
+/* Blue 900 */
+.markdown-body h2 {
+    color: #1d4ed8 !important;
+}
+
+/* Blue 700 */
+.markdown-body h3 {
+    color: #2563eb !important;
+}
+
+/* Blue 600 */
+.markdown-body h4 {
+    color: #475569 !important;
+}
+
+/* Slate 600 */
+.markdown-body h5 {
+    color: #64748b !important;
+}
+
+/* Slate 500 */
+
+/* Dark Mode Header Colors overrides generic settings */
+.dark .markdown-body h1 {
+    color: #8FBCBB !important;
+}
+
+/* Nord7 */
+.dark .markdown-body h2 {
+    color: #88C0D0 !important;
+}
+
+/* Nord8 */
+.dark .markdown-body h3 {
+    color: #81A1C1 !important;
+}
+
+/* Nord9 */
+.dark .markdown-body h4 {
+    color: #5E81AC !important;
+}
+
+/* Nord10 */
+.dark .markdown-body h5 {
+    color: #ECEFF4 !important;
+}
+
+/* Nord6 */
+
 
 .dark .markdown-body a {
     color: #88C0D0 !important;
@@ -96,6 +139,55 @@ html.dark {
 .dark .markdown-body pre {
     background-color: #2E3440 !important;
 }
+
+/* List Item Highlighting */
+/* Light Mode */
+.markdown-body ul,
+.markdown-body ol {
+    color: #334155 !important;
+    /* Slate 700 */
+}
+
+.markdown-body li::marker {
+    color: #3b82f6 !important;
+    /* Blue 500 */
+    font-weight: bold;
+}
+
+/* Dark Mode */
+.dark .markdown-body ul,
+.dark .markdown-body ol {
+    color: #E5E9F0 !important;
+    /* Nord5 */
+}
+
+.dark .markdown-body li::marker {
+    color: #88C0D0 !important;
+    /* Nord8 */
+}
+
+/* Blockquote Styling */
+/* Light Mode */
+.markdown-body blockquote {
+    color: #475569 !important;
+    /* Slate 600 */
+    border-left-color: #3b82f6 !important;
+    /* Blue 500 */
+    background-color: #f8fafc !important;
+    /* Slate 50 */
+    padding: 0.5em 1em !important;
+}
+
+/* Dark Mode overrides */
+.dark .markdown-body blockquote {
+    color: #D8DEE9 !important;
+    /* Nord4 */
+    border-left-color: #88C0D0 !important;
+    /* Nord8 */
+    background-color: #3B4252 !important;
+    /* Nord1 */
+}
+
 
 /* Fade In Animation */
 @keyframes fadeInUp {
