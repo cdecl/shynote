@@ -49,6 +49,35 @@
             </div>
         </div>
 
+        <!-- Generic Modal -->
+        <div v-if="modalState.isOpen"
+            class="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center backdrop-blur-sm"
+            @click.self="closeModal">
+            <div
+                class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-2xl w-96 transform transition-all scale-100 border border-slate-200 dark:border-slate-700">
+                <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-2">{{ modalState.title }}</h3>
+                <p class="text-slate-600 dark:text-slate-300 text-sm mb-4">{{ modalState.message }}</p>
+
+                <!-- Input for Create Folder -->
+                <input v-if="modalState.type === 'create-folder'" id="modal-input" v-model="modalState.inputValue"
+                    @keyup.enter="confirmAction"
+                    class="w-full bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded px-3 py-2 text-sm outline-none focus:ring-2 ring-blue-500 mb-4 dark:text-white"
+                    placeholder="Folder Name">
+
+                <div class="flex justify-end gap-2">
+                    <button @click="closeModal"
+                        class="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
+                        {{ modalState.cancelText }}
+                    </button>
+                    <button @click="confirmAction"
+                        :class="modalState.type && modalState.type.includes('delete') ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-600 hover:bg-blue-700'"
+                        class="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors shadow-sm">
+                        {{ modalState.confirmText }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Sidebar -->
         <div :class="isSidebarOpen ? 'w-64' : 'w-0'"
             class="bg-slate-50 border-r border-slate-200 flex flex-col flex-shrink-0 transition-all duration-300 overflow-hidden">
@@ -103,7 +132,7 @@
                             <input v-if="renameState.id === note.id && renameState.type === 'note'"
                                 :id="'rename-input-note-' + note.id" v-model="renameState.name" @click.stop
                                 @blur="saveRename" @keyup.enter="saveRename"
-                                class="flex-1 bg-white border border-blue-300 rounded px-1 text-sm outline-none w-full">
+                                class="flex-1 bg-white border border-blue-400 rounded px-1 text-sm font-medium text-slate-900 outline-none w-full h-full shadow-inner">
                             <!-- Normal Title & Date -->
                             <div v-else class="flex flex-col flex-1 min-w-0" @dblclick.stop="startRename(note, 'note')">
                                 <div :class="selectedNote && selectedNote.id === note.id ? 'text-blue-900 font-bold' : 'text-slate-700'"
@@ -135,7 +164,7 @@
                             <input v-if="renameState.id === folder.id && renameState.type === 'folder'"
                                 :id="'rename-input-folder-' + folder.id" v-model="renameState.name" @click.stop
                                 @blur="saveRename" @keyup.enter="saveRename"
-                                class="flex-1 bg-white border border-blue-300 rounded px-1 text-sm outline-none">
+                                class="flex-1 bg-white border border-blue-400 rounded px-1 text-sm font-medium text-slate-900 outline-none h-full shadow-inner">
                             <!-- Normal Name -->
                             <span v-else @dblclick.stop="startRename(folder, 'folder')"
                                 class="truncate flex-1 select-none">{{ folder.name }}</span>
@@ -171,7 +200,7 @@
                                     <input v-if="renameState.id === note.id && renameState.type === 'note'"
                                         :id="'rename-input-note-' + note.id" v-model="renameState.name" @click.stop
                                         @blur="saveRename" @keyup.enter="saveRename"
-                                        class="flex-1 bg-white border border-blue-300 rounded px-1 text-sm outline-none w-full">
+                                        class="flex-1 bg-white border border-blue-400 rounded px-1 text-sm font-medium text-slate-900 outline-none w-full h-full shadow-inner">
                                     <!-- Normal Title & Date -->
                                     <div v-else class="flex flex-col flex-1 min-w-0"
                                         @dblclick.stop="startRename(note, 'note')">

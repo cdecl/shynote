@@ -20,6 +20,66 @@ createApp({
 			name: ''
 		})
 
+		// Modal State
+		const modalState = ref({
+			isOpen: false,
+			type: null,
+			title: '',
+			message: '',
+			inputValue: '',
+			targetId: null,
+			confirmText: 'Confirm',
+			cancelText: 'Cancel'
+		})
+
+		const openModal = (type, targetId = null) => {
+			modalState.value.type = type
+			modalState.value.targetId = targetId
+			modalState.value.isOpen = true
+			modalState.value.inputValue = ''
+
+			if (type === 'create-folder') {
+				modalState.value.title = 'New Folder'
+				modalState.value.message = 'Enter folder name:'
+				modalState.value.confirmText = 'Create'
+			} else if (type === 'delete-note') {
+				modalState.value.title = 'Delete Note'
+				modalState.value.message = 'Are you sure you want to delete this note?'
+				modalState.value.confirmText = 'Delete'
+			} else if (type === 'delete-folder') {
+				modalState.value.title = 'Delete Folder'
+				modalState.value.message = 'Are you sure you want to delete this folder and all its notes?'
+				modalState.value.confirmText = 'Delete'
+			}
+
+			if (type === 'create-folder') {
+				nextTick(() => {
+					const input = document.getElementById('modal-input')
+					if (input) input.focus()
+				})
+			}
+		}
+
+		const closeModal = () => {
+			modalState.value.isOpen = false
+			modalState.value.type = null
+			modalState.value.targetId = null
+		}
+
+		const confirmAction = async () => {
+			const { type, targetId, inputValue } = modalState.value
+
+			if (type === 'create-folder') {
+				if (!inputValue.trim()) return
+				await createFolderImpl(inputValue)
+			} else if (type === 'delete-note') {
+				await deleteNoteImpl(targetId)
+			} else if (type === 'delete-folder') {
+				await deleteFolderImpl(targetId)
+			}
+			closeModal()
+		}
+
 		let debounceTimer = null
 
 		const checkAuth = () => {
@@ -231,10 +291,11 @@ createApp({
 			}
 		}
 
-		const createFolder = async () => {
-			const name = prompt("Enter folder name:")
-			if (!name) return
+		const createFolder = () => {
+			openModal('create-folder')
+		}
 
+		const createFolderImpl = async (name) => {
 			try {
 				const response = await authenticatedFetch('/api/folders', {
 					method: 'POST',
@@ -312,9 +373,11 @@ createApp({
 			}
 		}
 
-		const deleteNote = async (id) => {
-			if (!confirm("Are you sure you want to delete this note?")) return
+		const deleteNote = (id) => {
+			openModal('delete-note', id)
+		}
 
+		const deleteNoteImpl = async (id) => {
 			try {
 				const response = await authenticatedFetch(`/api/notes/${id}`, { method: 'DELETE' })
 				if (response && response.ok) {
@@ -384,9 +447,11 @@ createApp({
 			}
 		}
 
-		const deleteFolder = async (id) => {
-			if (!confirm("Are you sure you want to delete this folder and all its notes?")) return
+		const deleteFolder = (id) => {
+			openModal('delete-folder', id)
+		}
 
+		const deleteFolderImpl = async (id) => {
 			try {
 				const response = await authenticatedFetch(`/api/folders/${id}`, { method: 'DELETE' })
 				if (response && response.ok) {
@@ -930,7 +995,10 @@ createApp({
 				const min = String(date.getMinutes()).padStart(2, '0')
 				const ss = String(date.getSeconds()).padStart(2, '0')
 				return `${yyyy}.${mm}.${dd} ${hh}:${min}:${ss}`
-			}
+			},
+			modalState,
+			closeModal,
+			confirmAction
 		}
 	}
 }).mount('#app')
