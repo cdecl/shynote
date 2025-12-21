@@ -1189,6 +1189,12 @@ createApp({
 			hideToolbar()
 		}
 
+		const focusEditor = () => {
+			if (editorRef.value) {
+				editorRef.value.focus()
+			}
+		}
+
 		return {
 			notes,
 			folders,
@@ -1263,7 +1269,8 @@ createApp({
 			// Drag & Drop
 			draggedNoteId,
 			handleDragStart,
-			handleDrop
+			handleDrop,
+			focusEditor
 		}
 	}
 }).mount('#app')
