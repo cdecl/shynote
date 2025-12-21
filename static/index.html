@@ -185,44 +185,50 @@
 
                 <!-- Folders & Notes -->
                 <div v-else>
-                    <!-- Uncategorized Notes (Root) -->
-                    <!-- Uncategorized Notes (Root) -->
-                    <div v-for="note in sortedRootNotes" :key="note.id" @click="selectNote(note)" :class="selectedNote && selectedNote.id === note.id 
+                    <!-- Root Drop Zone (Move to Root) -->
+                    <div @dragover.prevent @drop="handleDrop(null)" class="min-h-[2rem] pb-2 transition-colors rounded"
+                        :class="draggedNoteId ? 'bg-slate-50/50 border-2 border-dashed border-transparent hover:border-slate-300' : ''">
+                        <!-- Uncategorized Notes (Root) -->
+                        <div v-for="note in sortedRootNotes" :key="note.id" @click="selectNote(note)" :class="selectedNote && selectedNote.id === note.id 
                             ? 'bg-blue-200 border-blue-400 shadow-md' 
-                            : 'bg-white shadow-md border-slate-200 hover:shadow-lg hover:bg-blue-50'"
-                        class="text-sm h-10 p-2 mb-1 cursor-pointer border rounded-md flex items-center group justify-between transition-all">
-                        <div class="flex items-center min-w-0 flex-1">
-                            <img src="/static/icons/markdown.svg" class="w-5 h-5 mr-2 flex-shrink-0" alt="Markdown">
+                            : 'bg-white shadow-md border-slate-200 hover:shadow-lg hover:bg-blue-50'" draggable="true"
+                            @dragstart="handleDragStart(note)"
+                            class="text-sm h-10 p-2 mb-1 cursor-pointer border rounded-md flex items-center group justify-between transition-all">
+                            <div class="flex items-center min-w-0 flex-1">
+                                <img src="/static/icons/markdown.svg" class="w-5 h-5 mr-2 flex-shrink-0" alt="Markdown">
 
-                            <!-- Rename Input -->
-                            <input v-if="renameState.id === note.id && renameState.type === 'note'"
-                                :id="'rename-input-note-' + note.id" v-model="renameState.name" @click.stop
-                                @blur="saveRename" @keyup.enter="saveRename"
-                                class="flex-1 bg-white border border-blue-400 rounded px-1 text-sm font-medium text-slate-900 outline-none w-full h-full shadow-inner">
-                            <!-- Normal Title & Date -->
-                            <div v-else class="flex flex-col flex-1 min-w-0" @dblclick.stop="startRename(note, 'note')">
-                                <div :class="selectedNote && selectedNote.id === note.id ? 'text-blue-900 font-bold' : 'text-slate-700'"
-                                    class="text-sm truncate select-none leading-tight">{{ note.title || 'Untitled' }}
+                                <!-- Rename Input -->
+                                <input v-if="renameState.id === note.id && renameState.type === 'note'"
+                                    :id="'rename-input-note-' + note.id" v-model="renameState.name" @click.stop
+                                    @blur="saveRename" @keyup.enter="saveRename"
+                                    class="flex-1 bg-white border border-blue-400 rounded px-1 text-sm font-medium text-slate-900 outline-none w-full h-full shadow-inner">
+                                <!-- Normal Title & Date -->
+                                <div v-else class="flex flex-col flex-1 min-w-0"
+                                    @dblclick.stop="startRename(note, 'note')">
+                                    <div :class="selectedNote && selectedNote.id === note.id ? 'text-blue-900 font-bold' : 'text-slate-700'"
+                                        class="text-sm truncate select-none leading-tight">{{ note.title || 'Untitled'
+                                        }}
+                                    </div>
+                                    <div class="text-[9px] text-slate-400 leading-none mt-0.5">{{
+                                        formatDate(note.updated_at) }}</div>
                                 </div>
-                                <div class="text-[9px] text-slate-400 leading-none mt-0.5">{{
-                                    formatDate(note.updated_at) }}</div>
+                            </div>
+                            <div class="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button @click.stop="startRename(note, 'note')"
+                                    class="text-slate-500 hover:text-blue-700 p-1" title="Rename Note">
+                                    <span class="material-symbols-rounded text-[16px]">edit</span>
+                                </button>
+                                <button @click.stop="deleteNote(note.id)" class="text-slate-500 hover:text-red-600 p-1"
+                                    title="Delete Note">
+                                    <span class="material-symbols-rounded text-[16px]">delete</span>
+                                </button>
                             </div>
                         </div>
-                        <div class="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button @click.stop="startRename(note, 'note')"
-                                class="text-slate-500 hover:text-blue-700 p-1" title="Rename Note">
-                                <span class="material-symbols-rounded text-[16px]">edit</span>
-                            </button>
-                            <button @click.stop="deleteNote(note.id)" class="text-slate-500 hover:text-red-600 p-1"
-                                title="Delete Note">
-                                <span class="material-symbols-rounded text-[16px]">delete</span>
-                            </button>
-                        </div>
-                    </div>
+                    </div> <!-- End Root Drop Zone -->
 
                     <!-- Folders -->
                     <div v-for="folder in sortedFolders" :key="folder.id" class="mb-2">
-                        <div
+                        <div @dragover.prevent @drop="handleDrop(folder.id)"
                             class="flex items-center text-sm font-semibold h-10 text-slate-600 p-2 mb-1 group bg-white shadow-md border border-slate-200 hover:shadow-lg hover:bg-blue-50 rounded transition-all cursor-pointer">
                             <img :src="getSortedFolderNotes(folder.id).length > 0 ? '/static/icons/folder-open.svg' : '/static/icons/folder.svg'"
                                 class="w-5 h-5 mr-2 opacity-90" alt="Folder">
@@ -255,6 +261,7 @@
                                 @click="selectNote(note)" :class="selectedNote && selectedNote.id === note.id 
                                     ? 'bg-blue-200 border-blue-400 shadow-md' 
                                     : 'bg-white shadow-md border-slate-200 hover:shadow-lg hover:bg-blue-50'"
+                                draggable="true" @dragstart="handleDragStart(note)"
                                 class="text-sm h-10 p-2 mb-1 cursor-pointer border rounded-md flex items-center group justify-between transition-all relative">
                                 <!-- Tree Connector -->
                                 <div class="absolute -left-3 top-1/2 w-3 h-0.5 bg-slate-200 -translate-y-1/2"></div>

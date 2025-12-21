@@ -655,15 +655,54 @@ createApp({
 				const response = await authenticatedFetch(`/api/folders/${id}`, { method: 'DELETE' })
 				if (response && response.ok) {
 					folders.value = folders.value.filter(f => f.id !== id)
-					// Also remove notes that were in this folder from local state
-					notes.value = notes.value.filter(n => n.folder_id !== id)
-					if (selectedNote.value && selectedNote.value.folder_id === id) {
-						selectedNote.value = null
-					}
+					// Also remove notes or move them? Currently notes cascade delete or stay orphan?
+					// Backend usually handles cascade. But frontend should refresh notes.
+					fetchNotes()
 				}
 			} catch (e) {
 				console.error("Failed to delete folder", e)
 			}
+		}
+
+		// Drag and Drop Logic
+		const draggedNoteId = ref(null)
+
+		const handleDragStart = (note) => {
+			draggedNoteId.value = note.id
+		}
+
+		const handleDrop = async (targetFolderId) => {
+			const noteId = draggedNoteId.value
+			if (!noteId) return
+
+			const note = notes.value.find(n => n.id === noteId)
+			if (note && note.folder_id !== targetFolderId) {
+				// Optimistic Update
+				const originalFolderId = note.folder_id
+				note.folder_id = targetFolderId
+
+				try {
+					const response = await authenticatedFetch(`/api/notes/${noteId}`, {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							title: note.title,
+							content: note.content, // We need to send content too usually
+							folder_id: targetFolderId
+						})
+					})
+
+					if (!response || !response.ok) {
+						throw new Error("Failed to move note")
+					}
+				} catch (e) {
+					console.error("Move failed", e)
+					// Revert
+					note.folder_id = originalFolderId
+					alert("Failed to move note")
+				}
+			}
+			draggedNoteId.value = null
 		}
 
 		const handleEditorKeyDown = (e) => {
@@ -1220,7 +1259,11 @@ createApp({
 			fontSize,
 			setFontSize,
 			appVersion,
-			homeUrl
+			homeUrl,
+			// Drag & Drop
+			draggedNoteId,
+			handleDragStart,
+			handleDrop
 		}
 	}
 }).mount('#app')
