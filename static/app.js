@@ -23,7 +23,30 @@ createApp({
 			folders: []
 		}
 
-		// Font Size State
+
+		// App Version & Config
+		const appVersion = ref('...')
+		const fetchAppConfig = async () => {
+			try {
+				const res = await fetch('/static/config.json?v=' + Date.now())
+				if (res.ok) {
+					const config = await res.json()
+					appVersion.value = config.version
+				}
+			} catch (e) {
+				console.error("Failed to load config", e)
+			}
+		}
+
+		// Home URL (Dynamic based on current mode)
+		const homeUrl = computed(() => {
+			const params = new URLSearchParams(window.location.search)
+			if (params.get('mode') === 'guest') {
+				return '/?mode=guest'
+			}
+			return '/'
+		})
+
 		const fontSize = ref(localStorage.getItem('shynote_font_size') || '14')
 		const setFontSize = (size) => {
 			fontSize.value = size
@@ -149,8 +172,22 @@ createApp({
 			}
 		}
 
+		onMounted(() => {
+			checkAuth()
+			fetchAppConfig()
+			initGoogleAuth()
+
+			// Detect system theme preference initially if not set
+			if (!localStorage.getItem('shynote_dark_mode')) {
+				if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+					isDarkMode.value = true
+				}
+			}
+			if (isDarkMode.value) document.documentElement.classList.add('dark')
+		})
 
 		// Expose this globally for Google Callback
+
 		window.handleCredentialResponse = async (response) => {
 			try {
 				const res = await fetch('/auth/login', {
@@ -1181,7 +1218,9 @@ createApp({
 			closeSortMenu,
 			sortLabel,
 			fontSize,
-			setFontSize
+			setFontSize,
+			appVersion,
+			homeUrl
 		}
 	}
 }).mount('#app')
