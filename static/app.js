@@ -14,6 +14,15 @@ createApp({
 		const isDarkMode = ref(true)
 		const isAuthenticated = ref(false)
 
+		// Guest Store (InMemory DB)
+		const guestStore = {
+			user: { id: 'guest', email: 'guest@shynote.app', is_dark_mode: true, view_mode: 'split' },
+			notes: [
+				{ id: 999, title: 'Welcome to Guest Mode', content: '# Guest Mode\n\nChanges here are **temporary** (in-memory) and will be lost on refresh unless we added localStorage persistence (not implemented yet).\n\nTry creating folders and notes!', folder_id: null, updated_at: new Date().toISOString(), created_at: new Date().toISOString() }
+			],
+			folders: []
+		}
+
 		// Font Size State
 		const fontSize = ref(localStorage.getItem('shynote_font_size') || '14')
 		const setFontSize = (size) => {
@@ -115,14 +124,28 @@ createApp({
 		let debounceTimer = null
 
 		const checkAuth = () => {
-			const token = localStorage.getItem('access_token')
-			if (token) {
-				isAuthenticated.value = true
-				fetchFolders()
-				fetchNotes()
-				fetchUserProfile()
+			const urlParams = new URLSearchParams(window.location.search);
+			const isGuestMode = urlParams.get('mode') === 'guest';
+			const storedToken = localStorage.getItem('access_token');
+
+			if (isGuestMode) {
+				// Enter Guest Mode
+				localStorage.setItem('access_token', 'guest');
+				isAuthenticated.value = true;
+				// Force load from guest store initially if we want specific state before fetch
+				// But fetchNotes/fetchFolders will be called immediately after and will hit our mock handler.
+			} else if (storedToken === 'guest') {
+				// We were in guest mode, but now accessed root without ?mode=guest
+				// Switch back to Auth Mode (Logout)
+				logout();
+			} else if (storedToken) {
+				// Normal Auth
+				isAuthenticated.value = true;
+				fetchFolders();
+				fetchNotes();
+				fetchUserProfile();
 			} else {
-				isAuthenticated.value = false
+				isAuthenticated.value = false;
 			}
 		}
 
@@ -192,6 +215,83 @@ createApp({
 
 		const authenticatedFetch = async (url, options = {}) => {
 			const token = localStorage.getItem('access_token')
+
+			// Guest Mode Bypass & Mock
+			if (token === 'guest') {
+				await new Promise(r => setTimeout(r, 50)); // Tiny network delay simulation
+
+				// Mock Response Helper
+				const ok = (data) => Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(data) })
+				const bad = () => Promise.resolve({ ok: false, status: 400, json: () => Promise.resolve({ error: 'Bad Request' }) })
+
+				const method = options.method || 'GET'
+				const body = options.body ? JSON.parse(options.body) : {}
+
+				// 1. Auth / Profile
+				if (url.includes('/auth/me')) {
+					if (method === 'GET') return ok(guestStore.user)
+					if (method === 'PATCH') {
+						Object.assign(guestStore.user, body)
+						return ok(guestStore.user)
+					}
+				}
+
+				// 2. Folders
+				if (url.includes('/api/folders')) {
+					if (method === 'GET') return ok([...guestStore.folders])
+					if (method === 'POST') {
+						const newFolder = { id: Date.now(), name: body.name, user_id: 'guest', created_at: new Date().toISOString() }
+						guestStore.folders.push(newFolder)
+						return ok(newFolder)
+					}
+					const idMatch = url.match(/\/api\/folders\/(\d+)/)
+					if (idMatch) {
+						const id = parseInt(idMatch[1])
+						if (method === 'PUT') {
+							const f = guestStore.folders.find(x => x.id === id)
+							if (f) f.name = body.name
+							return ok(f)
+						}
+						if (method === 'DELETE') {
+							guestStore.folders = guestStore.folders.filter(x => x.id !== id)
+							guestStore.notes = guestStore.notes.filter(x => x.folder_id !== id)
+							return ok({ success: true })
+						}
+					}
+				}
+
+				// 3. Notes
+				if (url.includes('/api/notes')) {
+					if (method === 'GET') return ok([...guestStore.notes].sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)))
+					if (method === 'POST') {
+						const newNote = { id: Date.now(), title: body.title || 'Untitled', content: body.content || '', folder_id: body.folder_id, updated_at: new Date().toISOString(), created_at: new Date().toISOString() }
+						guestStore.notes.unshift(newNote)
+						return ok(newNote)
+					}
+					const idMatch = url.match(/\/api\/notes\/(\d+)/)
+					if (idMatch) {
+						const id = parseInt(idMatch[1])
+						if (method === 'PUT') {
+							const n = guestStore.notes.find(x => x.id === id)
+							if (n) {
+								if (body.title !== undefined) n.title = body.title
+								if (body.content !== undefined) n.content = body.content
+								if (body.folder_id !== undefined) n.folder_id = body.folder_id
+								n.updated_at = new Date().toISOString()
+								return ok(n)
+							}
+							return bad()
+						}
+						if (method === 'DELETE') {
+							guestStore.notes = guestStore.notes.filter(x => x.id !== id)
+							return ok({ success: true })
+						}
+					}
+				}
+
+				return ok({})
+			}
+
 			const headers = {
 				...options.headers,
 				'Authorization': `Bearer ${token}`
