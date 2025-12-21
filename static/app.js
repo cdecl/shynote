@@ -882,7 +882,16 @@ createApp({
 
 			// 3. Smart Enter (Smart Lists, Indent, Comments)
 			if (e.key === 'Enter') {
+				// Helper: Get line info for single line operations
+				const getLineInfo = () => {
+					const startPos = value.lastIndexOf('\n', selectionStart - 1) + 1
+					let endPos = value.indexOf('\n', selectionStart)
+					if (endPos === -1) endPos = value.length
+					return { startPos, endPos, line: value.substring(startPos, endPos) }
+				}
+
 				const { startPos, line } = getLineInfo()
+
 
 				// Bullets: -, *, +
 				const bulletMatch = line.match(/^(\s*)([-*+])\s+/)
