@@ -14,6 +14,38 @@ createApp({
 		const isDarkMode = ref(true)
 		const isAuthenticated = ref(false)
 
+		// Font Size State
+		const fontSize = ref(localStorage.getItem('shynote_font_size') || '14')
+		const setFontSize = (size) => {
+			fontSize.value = size
+			localStorage.setItem('shynote_font_size', size)
+		}
+
+		// Sort State
+		const sortOption = ref({
+			field: localStorage.getItem('shynote_sort_field') || 'title', // 'title', 'updated_at', 'created_at'
+			direction: localStorage.getItem('shynote_sort_direction') || 'asc' // 'asc', 'desc'
+		})
+
+		const sortLabel = computed(() => {
+			const f = sortOption.value.field
+			const d = sortOption.value.direction
+			let field = 'Title'
+			if (f === 'updated_at') field = 'Modified'
+			else if (f === 'created_at') field = 'Created'
+
+			const dir = d === 'asc' ? 'Asc' : 'Desc'
+			return `${field} | ${dir}`
+		})
+
+		const showSortMenu = ref(false)
+		const toggleSortMenu = () => {
+			showSortMenu.value = !showSortMenu.value
+		}
+		const closeSortMenu = () => {
+			showSortMenu.value = false
+		}
+
 		const renameState = ref({
 			id: null,
 			type: null, // 'folder' | 'note'
@@ -224,6 +256,36 @@ createApp({
 		const setViewMode = (mode) => {
 			viewMode.value = mode
 			updateUserProfile({ view_mode: mode })
+		}
+
+		// Sort Functions
+		const setSortOption = (type, value) => {
+			if (type === 'field') {
+				sortOption.value.field = value
+				localStorage.setItem('shynote_sort_field', value)
+			} else if (type === 'direction') {
+				sortOption.value.direction = value
+				localStorage.setItem('shynote_sort_direction', value)
+			}
+		}
+
+		const sortItems = (items) => {
+			return [...items].sort((a, b) => {
+				let fieldA, fieldB
+
+				if (sortOption.value.field === 'title' || sortOption.value.field === 'name') {
+					// Handle title/name difference
+					fieldA = (a.title || a.name || '').toLowerCase()
+					fieldB = (b.title || b.name || '').toLowerCase()
+				} else {
+					fieldA = a[sortOption.value.field]
+					fieldB = b[sortOption.value.field]
+				}
+
+				if (fieldA < fieldB) return sortOption.value.direction === 'asc' ? -1 : 1
+				if (fieldA > fieldB) return sortOption.value.direction === 'asc' ? 1 : -1
+				return 0
+			})
 		}
 
 		const handleScroll = (e) => {
@@ -778,12 +840,24 @@ createApp({
 			})
 		})
 
-		const rootNotes = computed(() => {
-			return notes.value.filter(n => !n.folder_id)
+		const sortedRootNotes = computed(() => {
+			const root = notes.value.filter(n => !n.folder_id)
+			return sortItems(root)
+		})
+
+		const sortedFolders = computed(() => {
+			// Folders always use 'name' instead of 'title', handled in sortItems
+			// Use same sort criteria as notes for consistency
+			return sortItems(folders.value)
 		})
 
 		const getFolderNotes = (folderId) => {
 			return notes.value.filter(n => n.folder_id === folderId)
+		}
+
+		const getSortedFolderNotes = (folderId) => {
+			const folderNotes = getFolderNotes(folderId)
+			return sortItems(folderNotes)
 		}
 
 		onMounted(async () => {
@@ -953,8 +1027,6 @@ createApp({
 			deleteFolder,
 			debouncedUpdate,
 			previewContent,
-			rootNotes,
-			getFolderNotes,
 			isSidebarOpen,
 			toggleSidebar,
 			editorRef,
@@ -963,7 +1035,6 @@ createApp({
 			viewMode,
 			cycleViewMode,
 			setViewMode,
-			isDarkMode,
 			isDarkMode,
 			toggleDarkMode,
 
@@ -998,7 +1069,19 @@ createApp({
 			},
 			modalState,
 			closeModal,
-			confirmAction
+			confirmAction,
+			// Sort exports
+			sortOption,
+			setSortOption,
+			sortedRootNotes,
+			sortedFolders,
+			getSortedFolderNotes,
+			showSortMenu,
+			toggleSortMenu,
+			closeSortMenu,
+			sortLabel,
+			fontSize,
+			setFontSize
 		}
 	}
 }).mount('#app')

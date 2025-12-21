@@ -23,7 +23,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/wan2land/d2coding/d2coding.css">
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
-    <link rel="stylesheet" href="/static/style.css?v=2">
+    <link rel="stylesheet" href="/static/style.css?v=6">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 
@@ -80,19 +80,78 @@
 
         <!-- Sidebar -->
         <div :class="isSidebarOpen ? 'w-64' : 'w-0'"
-            class="bg-slate-50 border-r border-slate-200 flex flex-col flex-shrink-0 transition-all duration-300 overflow-hidden">
+            class="bg-slate-50 border-r border-slate-200 flex flex-col flex-shrink-0 transition-all duration-300">
             <!-- Header -->
-            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-                <div class="flex items-center gap-2">
-                    <h1 class="text-xl font-bold text-slate-700 tracking-wider">SHYNOTE</h1>
-                    <button @click="toggleDarkMode"
-                        class="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full transition-colors"
-                        :title="isDarkMode ? 'Light Mode' : 'Dark Mode'">
-                        <span class="material-symbols-rounded text-[18px] block">{{ isDarkMode ? 'light_mode' :
-                            'dark_mode' }}</span>
+            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 flex-shrink-0">
+                <h1 class="text-xl font-bold text-slate-700 tracking-wider">SHYNOTE</h1>
+                <button @click="toggleDarkMode"
+                    class="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full transition-colors"
+                    :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+                    <span class="material-symbols-rounded text-[20px] block transition-transform duration-300"
+                        :class="isDarkMode ? 'rotate-180' : 'rotate-0'">
+                        {{ isDarkMode ? 'light_mode' : 'dark_mode' }}
+                    </span>
+                </button>
+            </div>
+
+            <!-- Toolbar (Sort & New) -->
+            <div
+                class="px-3 py-2 border-b border-slate-200 flex justify-between items-center bg-slate-50 flex-shrink-0 gap-2">
+                <!-- Sort Dropdown Trigger -->
+                <div class="relative">
+                    <button @click="toggleSortMenu"
+                        class="p-1.5 hover:bg-slate-200 rounded text-slate-500 hover:text-slate-700 transition-colors flex items-center gap-1"
+                        title="Sort Options">
+                        <span class="material-symbols-rounded text-[18px] block">sort</span>
+                        <span class="text-xs font-medium"><span class="text-slate-400 dark:text-slate-500">Sort</span>
+                            ({{ sortLabel }})</span>
                     </button>
+
+                    <!-- Sort Menu Overlay (Close on click outside) -->
+                    <div v-if="showSortMenu" @click="closeSortMenu" class="fixed inset-0 z-40 cursor-default"></div>
+
+                    <!-- Sort Menu -->
+                    <div v-if="showSortMenu"
+                        class="absolute left-0 top-full mt-1 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-[100] p-1">
+                        <div class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 px-2 py-1">
+                            Sort By</div>
+                        <button @click="setSortOption('field', 'title'); closeSortMenu()"
+                            :class="sortOption.field === 'title' ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-slate-700' : 'text-slate-600 dark:text-slate-300'"
+                            class="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex justify-between items-center">
+                            Title <span v-if="sortOption.field === 'title'"
+                                class="material-symbols-rounded text-[16px]">check</span>
+                        </button>
+                        <button @click="setSortOption('field', 'updated_at'); closeSortMenu()"
+                            :class="sortOption.field === 'updated_at' ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-slate-700' : 'text-slate-600 dark:text-slate-300'"
+                            class="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex justify-between items-center">
+                            Date Modified <span v-if="sortOption.field === 'updated_at'"
+                                class="material-symbols-rounded text-[16px]">check</span>
+                        </button>
+                        <button @click="setSortOption('field', 'created_at'); closeSortMenu()"
+                            :class="sortOption.field === 'created_at' ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-slate-700' : 'text-slate-600 dark:text-slate-300'"
+                            class="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex justify-between items-center">
+                            Date Created <span v-if="sortOption.field === 'created_at'"
+                                class="material-symbols-rounded text-[16px]">check</span>
+                        </button>
+                        <div class="h-[1px] bg-slate-100 dark:bg-slate-700 my-1"></div>
+                        <div class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 px-2 py-1">
+                            Order</div>
+                        <button @click="setSortOption('direction', 'asc'); closeSortMenu()"
+                            :class="sortOption.direction === 'asc' ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-slate-700' : 'text-slate-600 dark:text-slate-300'"
+                            class="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex justify-between items-center">
+                            Ascending <span v-if="sortOption.direction === 'asc'"
+                                class="material-symbols-rounded text-[16px]">north</span>
+                        </button>
+                        <button @click="setSortOption('direction', 'desc'); closeSortMenu()"
+                            :class="sortOption.direction === 'desc' ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-slate-700' : 'text-slate-600 dark:text-slate-300'"
+                            class="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-slate-100 dark:hover:bg-slate-700 flex justify-between items-center">
+                            Descending <span v-if="sortOption.direction === 'desc'"
+                                class="material-symbols-rounded text-[16px]">south</span>
+                        </button>
+                    </div>
                 </div>
-                <div class="flex gap-2">
+
+                <div class="flex gap-1 h-full items-center">
                     <button @click="createFolder" class="p-1 hover:bg-slate-200 rounded relative group"
                         title="New Folder">
                         <img src="/static/icons/folder.svg" class="w-5 h-5" alt="New Folder">
@@ -121,7 +180,7 @@
                 <div v-else>
                     <!-- Uncategorized Notes (Root) -->
                     <!-- Uncategorized Notes (Root) -->
-                    <div v-for="note in rootNotes" :key="note.id" @click="selectNote(note)" :class="selectedNote && selectedNote.id === note.id 
+                    <div v-for="note in sortedRootNotes" :key="note.id" @click="selectNote(note)" :class="selectedNote && selectedNote.id === note.id 
                             ? 'bg-blue-200 border-blue-400 shadow-md' 
                             : 'bg-white shadow-md border-slate-200 hover:shadow-lg hover:bg-blue-50'"
                         class="text-sm h-10 p-2 mb-1 cursor-pointer border rounded-md flex items-center group justify-between transition-all">
@@ -155,10 +214,10 @@
                     </div>
 
                     <!-- Folders -->
-                    <div v-for="folder in folders" :key="folder.id" class="mb-2">
+                    <div v-for="folder in sortedFolders" :key="folder.id" class="mb-2">
                         <div
                             class="flex items-center text-sm font-semibold h-10 text-slate-600 p-2 mb-1 group bg-white shadow-md border border-slate-200 hover:shadow-lg hover:bg-blue-50 rounded transition-all cursor-pointer">
-                            <img :src="getFolderNotes(folder.id).length > 0 ? '/static/icons/folder-open.svg' : '/static/icons/folder.svg'"
+                            <img :src="getSortedFolderNotes(folder.id).length > 0 ? '/static/icons/folder-open.svg' : '/static/icons/folder.svg'"
                                 class="w-5 h-5 mr-2 opacity-90" alt="Folder">
                             <!-- Rename Input -->
                             <input v-if="renameState.id === folder.id && renameState.type === 'folder'"
@@ -185,8 +244,8 @@
                             </div>
                         </div>
                         <div class="pl-3 border-l-2 border-slate-200 ml-2">
-                            <div v-for="note in getFolderNotes(folder.id)" :key="note.id" @click="selectNote(note)"
-                                :class="selectedNote && selectedNote.id === note.id 
+                            <div v-for="note in getSortedFolderNotes(folder.id)" :key="note.id"
+                                @click="selectNote(note)" :class="selectedNote && selectedNote.id === note.id 
                                     ? 'bg-blue-200 border-blue-400 shadow-md' 
                                     : 'bg-white shadow-md border-slate-200 hover:shadow-lg hover:bg-blue-50'"
                                 class="text-sm h-10 p-2 mb-1 cursor-pointer border rounded-md flex items-center group justify-between transition-all relative">
@@ -222,8 +281,8 @@
                                     </button>
                                 </div>
                             </div>
-                            <div v-if="getFolderNotes(folder.id).length === 0"
-                                class="text-xs text-gray-300 italic px-2">Empty</div>
+                            <div v-if="getSortedFolderNotes(folder.id).length === 0"
+                                class="text-xs text-slate-400 p-2 pl-4 italic">Empty</div>
                         </div>
                     </div>
                 </div>
@@ -259,6 +318,21 @@
                         <div class="flex items-center gap-2">
                             <span
                                 class="text-[10px] font-bold text-slate-400 dark:text-[#D8DEE9] uppercase tracking-widest select-none">View</span>
+                            <!-- Font Size Selector -->
+                            <div class="relative group">
+                                <select :value="fontSize" @change="setFontSize($event.target.value)"
+                                    class="appearance-none bg-slate-100 dark:bg-[#434C5E] text-slate-600 dark:text-[#D8DEE9] text-xs font-bold py-1 pl-2 pr-6 rounded-lg cursor-pointer outline-none hover:bg-slate-200 dark:hover:bg-[#4C566A] transition-colors h-[26px]">
+                                    <option value="12">12</option>
+                                    <option value="14">14</option>
+                                    <option value="16">16</option>
+                                    <option value="18">18</option>
+                                    <option value="20">20</option>
+                                </select>
+                                <div
+                                    class="pointer-events-none absolute right-0 top-0 bottom-0 flex items-center px-1 text-slate-500 dark:text-[#D8DEE9]">
+                                    <span class="material-symbols-rounded text-[16px]">expand_more</span>
+                                </div>
+                            </div>
                             <div class="flex bg-slate-100 dark:bg-[#434C5E] rounded-lg p-1 gap-1">
                                 <button @click="setViewMode('edit')"
                                     :class="viewMode === 'edit' ? 'bg-white dark:bg-[#2E3440] text-blue-600 dark:text-[#88C0D0] shadow-sm' : 'text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600'"
@@ -295,7 +369,8 @@
                             class="absolute top-2 left-6 text-[10px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 select-none text-slate-300 dark:text-[#4C566A]">Editor</span>
                         <textarea ref="editorRef" @scroll="handleScroll" v-model="selectedNote.content"
                             @keydown="handleEditorKeyDown" @input="debouncedUpdate" @mouseup="handleMouseUp"
-                            class="flex-1 p-6 outline-none resize-none leading-relaxed font-sans text-sm bg-white dark:bg-[#2E3440] text-slate-700 dark:text-[#D8DEE9]"
+                            :style="'font-size: ' + fontSize + 'px !important'"
+                            class="flex-1 p-6 outline-none resize-none leading-relaxed font-sans bg-white dark:bg-[#2E3440] text-slate-700 dark:text-[#D8DEE9]"
                             placeholder="Type markdown here..."></textarea>
                     </div>
 
@@ -350,10 +425,9 @@
                     <div v-show="viewMode !== 'edit'" class="flex-1 flex flex-col relative group overflow-hidden">
                         <span
                             class="absolute top-2 left-6 text-[10px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 select-none text-slate-300 dark:text-[#4C566A]">Preview</span>
-                        <div ref="previewRef" @scroll="handleScroll"
-                            class="flex-1 flex flex-col overflow-y-auto bg-white dark:bg-[#2E3440]">
-                            <div class="p-0 markdown-body" :style="{ backgroundColor: 'transparent' }"
-                                v-html="previewContent"></div>
+                        <div ref="previewRef" @scroll="handleScroll" v-html="previewContent"
+                            :style="'font-size: ' + fontSize + 'px !important'"
+                            class="markdown-body p-6 overflow-y-auto h-full bg-white dark:bg-[#2E3440] transition-colors">
                         </div>
                     </div>
                 </div>
@@ -369,7 +443,8 @@
             </div>
         </main>
     </div>
-    <script src="/static/app.js?v=5"></script>
+    <script src="/static/app.js?v=6" type="module"></script>
 </body>
 
 </html>
+```
