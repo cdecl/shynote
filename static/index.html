@@ -231,7 +231,7 @@
                         <span
                             class="absolute top-2 left-6 text-[10px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 select-none text-gray-400">Editor</span>
                         <textarea ref="editorRef" @scroll="handleScroll" v-model="selectedNote.content"
-                            @input="debouncedUpdate"
+                            @keydown="handleEditorKeyDown" @input="debouncedUpdate"
                             :class="isDarkMode ? 'bg-[#2E3440] text-[#D8DEE9]' : 'bg-white text-gray-700'"
                             class="flex-1 p-6 outline-none resize-none leading-relaxed font-sans text-sm"
                             placeholder="Type markdown here..."></textarea>
@@ -260,7 +260,7 @@
             </div>
         </main>
     </div>
-    <script src="/static/app.js?v=3"></script>
+    <script src="/static/app.js?v=5"></script>
 </body>
 
 </html>

@@ -1,4 +1,4 @@
-const { createApp, ref, onMounted, computed } = Vue
+const { createApp, ref, onMounted, computed, nextTick } = Vue
 
 createApp({
 	setup() {
@@ -344,7 +344,242 @@ createApp({
 			}
 		}
 
+		const handleEditorKeyDown = (e) => {
+			if (e.isComposing || e.keyCode === 229) return
 
+			const el = e.target
+			const { selectionStart, selectionEnd, value } = el
+			const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
+			// const ctrlKey = isMac ? e.metaKey : e.ctrlKey 
+			const cmdKey = isMac ? e.metaKey : e.ctrlKey
+
+			// Helper: Insert text using execCommand to preserve Undo history
+			// Fallback to setRangeText if needed
+			const execReplace = (text, start, end) => {
+				el.focus()
+				el.setSelectionRange(start, end)
+				const success = document.execCommand('insertText', false, text)
+				if (!success) {
+					// Fallback
+					el.setRangeText(text, start, end, 'end')
+					el.dispatchEvent(new Event('input', { bubbles: true }))
+				}
+				// execCommand automatically fires input event
+			}
+
+			// Helper: Simple insert at current cursor
+			const insertText = (text) => {
+				const success = document.execCommand('insertText', false, text)
+				if (!success) {
+					el.setRangeText(text, el.selectionStart, el.selectionEnd, 'end')
+					el.dispatchEvent(new Event('input', { bubbles: true }))
+				}
+			}
+
+			// Helper: Get line info
+			const getLineInfo = () => {
+				const startPos = value.lastIndexOf('\n', selectionStart - 1) + 1
+				let endPos = value.indexOf('\n', selectionStart)
+				if (endPos === -1) endPos = value.length
+				return { startPos, endPos, line: value.substring(startPos, endPos) }
+			}
+
+			// 1. Move Line Up/Down (Alt + Up/Down)
+			if (e.altKey && !e.shiftKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+				e.preventDefault()
+				const { startPos, endPos, line } = getLineInfo()
+
+				if (e.key === 'ArrowUp') {
+					if (startPos > 0) {
+						const prevLineStart = value.lastIndexOf('\n', startPos - 2) + 1
+						const prevLineEnd = startPos - 1
+						const prevLine = value.substring(prevLineStart, prevLineEnd)
+						const newLineContent = line + '\n' + prevLine
+
+						// Perform replacement with Undo support
+						execReplace(newLineContent, prevLineStart, endPos)
+
+						// Restore selection
+						const newStart = prevLineStart
+						const newEnd = prevLineStart + line.length
+						nextTick(() => el.setSelectionRange(newStart, newEnd))
+					}
+				} else if (e.key === 'ArrowDown') {
+					if (endPos < value.length) {
+						const nextLineStart = endPos + 1
+						let nextLineEnd = value.indexOf('\n', nextLineStart)
+						if (nextLineEnd === -1) nextLineEnd = value.length
+						const nextLine = value.substring(nextLineStart, nextLineEnd)
+						const newLineContent = nextLine + '\n' + line
+
+						execReplace(newLineContent, startPos, nextLineEnd)
+
+						const newStart = startPos + nextLine.length + 1
+						const newEnd = newStart + line.length
+						nextTick(() => el.setSelectionRange(newStart, newEnd))
+					}
+				}
+				return
+			}
+
+			// 2. Copy Line Up/Down (Shift + Alt + Up/Down)
+			if (e.altKey && e.shiftKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+				e.preventDefault()
+				const { startPos, endPos, line } = getLineInfo()
+				const textToInsert = line + '\n'
+
+				if (e.key === 'ArrowUp') {
+					// Insert above
+					// We need to insert at startPos. 
+					// Ideally we want to KEEP selection on the line which moves down.
+					// execInsert puts cursor after inserted text.
+					// If we insert at startPos, cursor will be at end of inserted text.
+					// The inserted text is `line + \n`.
+					// So cursor will depend on `line` length.
+					// Original content starts at `startPos + line.length + 1`?
+					const originalSelectionStart = selectionStart
+					const originalSelectionEnd = selectionEnd
+
+					execReplace(textToInsert, startPos, startPos)
+
+					// Restoration: The original text shifted by textToInsert.length
+					const offset = textToInsert.length
+					nextTick(() => el.setSelectionRange(originalSelectionStart + offset, originalSelectionEnd + offset))
+				} else {
+					// Insert below
+					let insertPos = endPos + 1
+					let contentToInsert = textToInsert
+
+					if (endPos === value.length) {
+						insertPos = endPos
+						contentToInsert = '\n' + line
+					}
+
+					const originalSelectionStart = selectionStart
+					const originalSelectionEnd = selectionEnd
+
+					execReplace(contentToInsert, insertPos, insertPos)
+
+					// Restore selection to original line (which didn't move)
+					nextTick(() => el.setSelectionRange(originalSelectionStart, originalSelectionEnd))
+				}
+				return
+			}
+
+			// 3. Smart Enter (Smart Lists, Indent, Comments)
+			if (e.key === 'Enter') {
+				const { startPos, line } = getLineInfo()
+
+				// Bullets: -, *, +
+				const bulletMatch = line.match(/^(\s*)([-*+])\s+/)
+				if (bulletMatch) {
+					if (line.trim() === bulletMatch[2]) { // If only bullet, clear line
+						e.preventDefault()
+						execReplace('', startPos, selectionStart) // Clear up to cursor (or endPos if at end)
+					} else { // Continue bullet
+						e.preventDefault()
+						const prefix = '\n' + bulletMatch[1] + bulletMatch[2] + ' '
+						insertText(prefix)
+					}
+					return
+				}
+
+				// Numbered List: 1. 2.
+				const numMatch = line.match(/^(\s*)(\d+)\.\s+/)
+				if (numMatch) {
+					e.preventDefault()
+					const nextNum = parseInt(numMatch[2]) + 1
+					const prefix = '\n' + numMatch[1] + nextNum + '. '
+					insertText(prefix)
+					return
+				}
+
+				// Comments: // or * (JSDoc)
+				const commentMatch = line.match(/^(\s*)(\/\/|\*|\/\*\*?)\s*/)
+				if (commentMatch) {
+					e.preventDefault()
+					let char = commentMatch[2]
+					if (char.startsWith('/*')) char = ' *'
+					const prefix = '\n' + commentMatch[1] + char + ' '
+					insertText(prefix)
+					return
+				}
+
+				// Smart Indent: After { or :
+				if (line.trim().endsWith('{') || line.trim().endsWith(':')) {
+					e.preventDefault()
+					const indentMatch = line.match(/^(\s*)/)
+					const currentIndent = indentMatch ? indentMatch[1] : ''
+
+					// Use 2 spaces
+					// If e.shiftKey? Unindent? No, enter just indents.
+					const prefix = '\n' + currentIndent + '  '
+					insertText(prefix)
+					return
+				}
+			}
+
+			// 3.5. Tab Key
+			if (e.key === 'Tab') {
+				e.preventDefault()
+				if (e.shiftKey) {
+					const { startPos, line } = getLineInfo()
+					const originalSelectionStart = selectionStart
+					const originalSelectionEnd = selectionEnd
+					let deleteCount = 0
+					if (line.startsWith('  ')) deleteCount = 2
+					else if (line.startsWith('\t')) deleteCount = 1
+					else if (line.startsWith(' ')) deleteCount = 1
+
+					if (deleteCount > 0) {
+						execReplace('', startPos, startPos + deleteCount)
+						const newStart = Math.max(startPos, originalSelectionStart - deleteCount)
+						const newEnd = Math.max(startPos, originalSelectionEnd - deleteCount)
+						nextTick(() => el.setSelectionRange(newStart, newEnd))
+					}
+				} else {
+					insertText('  ')
+				}
+				return
+			}
+
+			// 4. Markdown Shortcuts
+			if (cmdKey) {
+				if (e.key === 'b') { // Bold
+					e.preventDefault()
+					const selectedText = value.substring(selectionStart, selectionEnd)
+					insertText(`**${selectedText}**`)
+					// Cursor placement logic
+					// insertText moves cursor to end.
+					// We need to calculate where to put it.
+					// If empty selection: `****`. Cursor should be in middle.
+					// current cursor is at `selectionStart` + 4.
+					// Move back 2.
+					if (selectedText.length === 0) {
+						// We can't rely on valid `el.selectionStart` immediately if async?
+						// execCommand is synchronous.
+						const newPos = el.selectionEnd - 2
+						el.setSelectionRange(newPos, newPos)
+					}
+					// If text selected: `**text**`. Cursor at end. Correct.
+				} else if (e.key === 'i') { // Italic
+					e.preventDefault()
+					const selectedText = value.substring(selectionStart, selectionEnd)
+					insertText(`*${selectedText}*`)
+					if (selectedText.length === 0) {
+						const newPos = el.selectionEnd - 1
+						el.setSelectionRange(newPos, newPos)
+					}
+				} else if (e.key === 's') { // Save
+					e.preventDefault()
+					updateNote()
+					statusMessage.value = 'Saved'
+					setTimeout(() => {
+						if (statusMessage.value === 'Saved') statusMessage.value = ''
+					}, 2000)
+				}
+			}
+		}
 
 		const debouncedUpdate = () => {
 			statusMessage.value = 'Typing...'
@@ -415,7 +650,8 @@ createApp({
 			isAuthenticated,
 			renameState,
 			startRename,
-			saveRename
+			saveRename,
+			handleEditorKeyDown
 		}
 	}
 }).mount('#app')

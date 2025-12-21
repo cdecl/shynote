@@ -26,6 +26,7 @@
 - **`src/`**: 백엔드 소스 코드 (`main.py`, `models.py`, `schemas.py`, `database.py`)
 - **`static/`**: 프론트엔드 리소스 (`index.html`, `app.js`)
 - **`docs/`**: 프로젝트 산출물 및 문서 (`walkthrough.md`, `implementation_plan.md`)
+  - `implementation_plan` 문서는 지속적으로 업데이트 진행  
 - **`tests/`**: 테스트 코드 디렉토리
 
 ## 4. 주요 기능 (Key Features)
@@ -46,13 +47,13 @@
 - **문서 관리**: `docs/` 폴더 내 지속적인 업데이트
 
 ## 6. 로드맵 (Roadmap)
-- [ ] **인증 (Authentication)**: JWT 기반 로그인 구현 (현재 인증 없음)
-- [ ] **데이터베이스 마이그레이션**: 배포 환경을 위한 PostgreSQL 전환
+- [x] **인증 (Authentication)**: JWT 기반 로그인 구현 (Google OAuth 2.0 완료)
+- [ ] **데이터베이스 마이그레이션**: 배포 환경을 위한 PostgreSQL 전환 (Vercel Postgres 연결 안정화)
 
 ## 7. TODO & 결정 필요 사항 (Open Issues)
 프로젝트 진행을 위해 검토 및 결정이 필요한 사항들입니다.
 
-- [ ] **배포 전략 수립**: Docker Container화 또는 PaaS(Heroku, Vercel 등) 배포 방식 결정
+- [x] **배포 전략 수립**: Vercel Serverless Function & PostgreSQL 사용 결정
 - [ ] **상태 관리 라이브러리 도입 여부**: 현재 Vanilla JS 객체(`ref`) 사용 중이나, 복잡도 증가 시 Pinia 등 도입 고려
-- [ ] **에디터 고도화**: 단순 Textarea에서 CodeMirror나 Monaco Editor 등으로 업그레이드 여부
+- [ ] **에디터 고도화**: 단순 Textarea에서 CodeMirror나 Monaco Editor 등으로 업그레이드 여부 (현재 Textarea 기반 기능 확장 사용 중)
 - [ ] **테스트 프레임워크 선정**: `pytest` 기반의 백엔드 테스트 및 프론트엔드 E2E 테스트 도구(Playwright 등) 구체화

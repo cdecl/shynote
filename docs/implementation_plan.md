@@ -1,85 +1,105 @@
-# implementation_plan.md
+# Implementation Plan & Status
 
-# Goal Description
-Implement an extensible JWT Authentication system (starting with Google, but designed for future providers) and enforce strict data isolation where Folders and Notes are stored and retrieved based on the authenticated User's ID.
+This document tracks the cumulative implementation details of the SHYNOTE project, from core foundation to latest advanced features.
 
-## User Review Required
-> [!IMPORTANT]
-> **Google Client ID**: You will need a Google Cloud Project with OAuth 2.0 credentials. You must replace `YOUR_GOOGLE_CLIENT_ID` in both the frontend code and backend configuration with your actual generic Client ID.
+## 1. Core Functionality & Architecture
+**Date**: Initial Implementation ~ 2025-12-21
+**Status**: Implemented
 
-> [!WARNING]
-> **Database Migration**: Adding `user_id` to existing `notes` and `folders` tables in SQLite requires a schema change. Existing data will need to be either assigned to a default user or the database will need to be reset. This plan assumes we will **attempt to preserve data** by adding the column as nullable initially, or the user can choose to delete `SHYNOTE.db` for valid clean slate.
+### Data Management Checklist
+- [x] **Database Schema**:
+    - [x] `Folders` table (id, name, user_id).
+    - [x] `Notes` table (id, title, content, folder_id, user_id, timestamps).
+    - [x] Relationships: Notes belong to Folders (optional) and Users.
+- [x] **API Endpoints (FastAPI)**:
+    - [x] `GET /api/folders`, `POST /api/folders`, `DELETE /api/folders/{id}`, `PUT /api/folders/{id}`.
+    - [x] `GET /api/notes`, `POST /api/notes`, `PUT /api/notes/{id}`, `DELETE /api/notes/{id}`.
 
-## Proposed Changes
+### Frontend Logic (Vue.js) Checklist
+- [x] **State Management**: Reactive `notes` and `folders` arrays using Vue `ref`.
+- [x] **Navigation**: Folder-based filtering of notes (`getFolderNotes`).
+- [x] **Editor Integation**: 
+    - [x] Split View (Editor + Live Preview).
+    - [x] Real-time Markdown rendering with `marked.js`.
+    - [x] Syntax Highlighting with `highlight.js`.
 
-### Configuration & Dependencies
-#### [MODIFY] pyproject.toml
-- Add dependencies:
-    - `google-auth` (to verify Google ID tokens)
-    - `python-jose[cryptography]` (to generate internal session JWTs)
-    - `python-multipart` (for form parsing if needed)
+---
 
-### Database & Models
-#### [MODIFY] src/models.py
-- **New `User` Model**:
-    - `id` (Integer, Primary Key)
-    - `email` (String, Unique, Index)
-    - `provider` (String, e.g., 'google') - *Supports multiple providers*
-    - `provider_id` (String, Index) - *The unique ID from the provider (e.g., Google 'sub')*
-    - `created_at` (DateTime)
-- **Update `Folder` and `Note` Models**:
-    - Add `user_id` (Integer, ForeignKey("users.id"), Index=True)
-    - Enforce relationship so notes/folders belong to a user.
+## 2. Advanced Editor Features
+**Date**: 2025-12-21
+**Status**: Implemented
 
-#### [MODIFY] src/schemas.py
-- Add `UserCreate`, `UserResponse` schemas.
-- Update `Note` and `Folder` schemas to include `user_id`.
-- Add `AuthRequest` (provider, token) and `Token` (access_token, token_type) schemas.
+### Features Checklist
+- [x] **Smart Content Control**:
+    - [x] **Smart Lists**: Auto-continuation for ` - `, ` * `, ` + `, ` 1. `.
+    - [x] **Smart Indent**: Auto-indent after `{`, `:`.
+    - [x] **Comment Continuation**: Auto-continuation for `//`, `/*`.
+- [x] **VS Code Line Actions**:
+    - [x] **Move Line**: `Alt + ArrowUp` / `Alt + ArrowDown`.
+    - [x] **Copy Line**: `Shift + Alt + ArrowUp` / `Shift + Alt + ArrowDown`.
+- [x] **Keyboard Shortcuts**:
+    - [x] `Ctrl/Cmd + B` (Bold), `Ctrl/Cmd + I` (Italic).
+    - [x] `Ctrl/Cmd + S` (Manual Save).
 
-#### [NEW] src/auth/
-- Refactor auth logic into a package or module to support multiple providers.
-- `src/auth/manager.py`: Handles generic login logic (get_user_by_provider -> create_if_missing -> mint_token).
-- `src/auth/providers/google.py`: Specific logic to verify Google ID tokens.
-- `src/auth/utils.py`: JWT utilities (create_access_token, decode_token).
+### Technical Implementation
+- **Logic**: Pure JavaScript in `static/app.js` (`handleEditorKeyDown` function).
+- **DOM Manipulation**: APIs like `selectionStart`, `selectionEnd`, and string manipulation for line operations.
+- **Undo Integration**: Uses `document.execCommand('insertText')` to preserve browser undo history.
 
-### API Implementation
-#### [MODIFY] src/main.py
-- **New Auth Endpoint**: `POST /auth/login`
-    - Accepts `{ "provider": "google", "token": "..." }`
-    - Verifies token via provider specific logic.
-    - Returns internal JWT access token.
-- **Dependency**: `get_current_user`
-    - Validates internal JWT from `Authorization` header.
-    - Returns `User` model instance.
-- **Protect Routes**:
-    - Apply `Depends(get_current_user)` to all Note/Folder CRUD endpoints.
-    - **Crucial**: All DB queries must filter by `user.id`.
-        - `db.query(Note).filter(Note.user_id == current_user.id, ...)`
+---
 
-### Frontend
-#### [MODIFY] static/index.html
-- Add Google Sign-In script (GIS).
-- Add a generic Login UI that can be expanded for other providers later.
+## 3. JWT Authentication & Data Isolation
+**Date**: 2025-12-20
+**Status**: Implemented
 
-#### [MODIFY] static/app.js
-- **Auth State Management**:
-    - Check for `access_token` in `localStorage`.
-    - If missing or invalid, show Login UI.
-- **Login Flow**:
-    - On Google Sign-In success, send ID token to `POST /auth/login`.
-    - Receive internal `access_token` and store it.
-    - Fetch initial data.
-- **API Requests**:
-    - Add `Authorization: Bearer <token>` header to all backend calls.
-    - Handle 401 response (auto-logout).
+### Architecture Checklist
+- [x] **Google OAuth 2.0 Integration**:
+    - [x] Frontend: Google Identity Services (GIS) button rendering and callback.
+    - [x] Backend: Token verification endpoint `/auth/login`.
+- [x] **Session Management**:
+    - [x] Internal JWT (HS256) issuance upon Google verification.
+    - [x] 7-day token expiration.
+    - [x] `localStorage` token storage.
+- [x] **Data Isolation**:
+    - [x] `get_current_user` dependency for protected routes.
+    - [x] Row Level Security (Application Level): All queries filtered by `current_user.id`.
 
-## Verification Plan
+---
 
-### Manual Verification
-1.  **Multi-Provider Design Check**: Verify code structure allows adding a 'github' provider easily in `src/auth/providers/`.
-2.  **Login Flow**: Test Google Sign-In. Verify backend returns internal JWT.
-3.  **Data Isolation**:
-    - Login as User A. Create "Secret Note A".
-    - Logout. Login as User B. Should NOT see "Secret Note A".
-    - Create "Secret Note B".
-    - Check DB: Ensure `user_id` columns match respective users.
+## 4. UI/UX & Styling
+**Date**: 2025-12-20 ~ 2025-12-21
+**Status**: Implemented
+
+### Styling Checklist
+- [x] **Theming**:
+    - [x] **Dark Mode**: Default Nord theme implementation.
+    - [x] **Markdown**: `github-markdown-css` (Dark) integration.
+    - [x] **Code**: `nord.css` for Highlight.js.
+- [x] **Typography**:
+    - [x] **Fonts**: D2Coding (Korean/Code) with JetBrains Mono/Inter fallback.
+- [x] **Layout Components**:
+    - [x] **Sidebar**: Collapsible/Resizable sidebar with specific width control.
+    - [x] **Toolbar**: "View" mode toggles (Split/Edit/Preview).
+    - [x] **Feedback**: Status messages ("Saved", "Typing...") and Loading states.
+
+---
+
+## 5. Infrastructure & Deployment
+**Date**: 2025-12-18 ~ 2025-12-21
+**Status**: Stabilized
+
+### Vercel / Serverless Optimization Checklist
+- [x] **ASGI Handler**: Correct entry point in `api/index.py` for Vercel Python runtime.
+- [x] **Static Files**: Absolute path resolution using `__file__` to avoid 404s in serverless environment.
+- [x] **Database Connectivity**:
+    - [x] **Sanitization**: `urllib.parse` to handle special characters in connection strings.
+    - [x] **Driver Fix**: Enforce `postgresql://` replacement for `psycopg2`.
+    - [x] **Fallback**: In-memory SQLite for environments without DB config.
+
+---
+
+## 6. Future Roadmap (To Be Implemented)
+- [ ] **Database Migration**: Fully transition to PostgreSQL for production (Vercel Postgres).
+- [ ] **State Management**: Refactor vanilla `ref` to Pinia if complexity grows.
+- [ ] **Editor Upgrade**: Evaluate CodeMirror/Monaco for richer editing experience.
+- [ ] **Testing**: Implement `pytest` suite and E2E tests.
