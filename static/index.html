@@ -84,9 +84,8 @@
             class="bg-slate-50 border-r border-slate-200 flex flex-col flex-shrink-0 transition-all duration-300">
             <!-- Header -->
             <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 flex-shrink-0">
-                <div class="flex items-center gap-3">
-                    <img src="/static/logo.png" class="w-12 h-12 rounded-full shadow-sm object-cover"
-                        alt="SHYNOTE Logo">
+                <div class="flex items-center gap-2">
+                    <img src="/static/logo.png" class="w-6 h-6 rounded-full shadow-sm object-cover" alt="SHYNOTE Logo">
                     <div class="relative">
                         <h1 class="text-xl font-bold text-slate-700 tracking-wider inline-block">
                             <a :href="homeUrl">SHYNOTE</a>
@@ -314,14 +313,15 @@
                 <!-- Toolbar -->
                 <div
                     class="h-14 border-b border-slate-100 dark:border-[#434C5E] bg-white/80 dark:bg-[#2E3440]/80 backdrop-blur-sm sticky top-0 z-30 flex justify-between items-center px-4 flex-shrink-0 transition-colors duration-300">
-                    <div class="flex items-center w-full mr-4 overflow-hidden">
+                    <div class="flex items-center flex-1 mr-4 overflow-hidden">
                         <button @click="toggleSidebar"
                             class="p-2 mr-2 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded-lg transition-colors flex-shrink-0"
                             title="Toggle Sidebar">
                             <span class="material-symbols-rounded">{{ isSidebarOpen ? 'keyboard_double_arrow_left' :
                                 'keyboard_double_arrow_right' }}</span>
                         </button>
-                        <div class="flex items-baseline gap-3 flex-1 min-w-0">
+                        <div class="items-baseline gap-3 flex-1 min-w-0"
+                            :class="isSidebarOpen ? 'hidden md:flex' : 'flex'">
                             <input v-model="selectedNote.title" @input="debouncedUpdate"
                                 class="text-lg font-bold text-slate-800 dark:text-[#ECEFF4] outline-none bg-transparent placeholder-slate-300 dark:placeholder-[#434C5E] min-w-0 flex-1"
                                 placeholder="Note Title">
@@ -333,7 +333,7 @@
                             </span>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2 flex-shrink-0">
+                    <div class="items-center gap-2 flex-shrink-0" :class="isSidebarOpen ? 'hidden md:flex' : 'flex'">
                         <div class="flex items-center gap-2">
                             <span
                                 class="text-[10px] font-bold text-slate-400 dark:text-[#D8DEE9] uppercase tracking-widest select-none">View</span>
