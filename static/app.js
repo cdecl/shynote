@@ -292,10 +292,15 @@ createApp({
 				})
 
 				if (response && response.ok) {
+					const updatedNote = await response.json()
 					// Update list item
 					const index = notes.value.findIndex(n => n.id === selectedNote.value.id)
 					if (index !== -1) {
-						notes.value[index] = { ...notes.value[index], ...selectedNote.value }
+						notes.value[index] = updatedNote
+					}
+					// Update selectedNote timestamps (keep reference if possible, or update properties)
+					if (selectedNote.value && selectedNote.value.id === updatedNote.id) {
+						selectedNote.value.updated_at = updatedNote.updated_at
 					}
 					statusMessage.value = 'Saved'
 				} else {
@@ -909,13 +914,22 @@ createApp({
 			formatText,
 			formatDate: (dateStr) => {
 				if (!dateStr) return ''
-				const date = new Date(dateStr)
+				// Assume server returns UTC. Append 'Z' if missing to force UTC parsing.
+				// Also handle "YYYY-MM-DD HH:MM:SS" from SQLite
+				let safeStr = dateStr
+				if (typeof dateStr === 'string' && !dateStr.endsWith('Z') && !dateStr.includes('+')) {
+					safeStr = dateStr.replace(' ', 'T') + 'Z'
+				}
+				const date = new Date(safeStr)
+				if (isNaN(date.getTime())) return dateStr
+
 				const yyyy = date.getFullYear()
 				const mm = String(date.getMonth() + 1).padStart(2, '0')
 				const dd = String(date.getDate()).padStart(2, '0')
 				const hh = String(date.getHours()).padStart(2, '0')
 				const min = String(date.getMinutes()).padStart(2, '0')
-				return `${yyyy}.${mm}.${dd} ${hh}:${min}`
+				const ss = String(date.getSeconds()).padStart(2, '0')
+				return `${yyyy}.${mm}.${dd} ${hh}:${min}:${ss}`
 			}
 		}
 	}

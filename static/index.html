@@ -220,13 +220,13 @@
                                 placeholder="Note Title">
                             <span class="text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap hidden sm:block">
                                 Last edited: {{ formatDate(selectedNote.updated_at) }}
+                                <span v-if="statusMessage" class="ml-2 text-blue-500 dark:text-blue-400 font-medium">
+                                    {{ statusMessage }}
+                                </span>
                             </span>
                         </div>
                     </div>
                     <div class="flex items-center gap-2 flex-shrink-0">
-
-                        <span class="text-xs text-slate-400 dark:text-[#D8DEE9] min-w-[60px] text-right">{{
-                            statusMessage }}</span>
                         <div class="flex items-center gap-2">
                             <span
                                 class="text-[10px] font-bold text-slate-400 dark:text-[#D8DEE9] uppercase tracking-widest select-none">View</span>
