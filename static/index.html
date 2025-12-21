@@ -6,6 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SHYNOTE</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -22,21 +27,23 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 
-<body class="bg-gray-100 h-screen overflow-hidden text-gray-800 font-sans">
+<body
+    class="bg-gray-100 dark:bg-[#2E3440] h-screen overflow-hidden text-gray-800 dark:text-[#D8DEE9] font-sans transition-colors duration-300">
     <div id="app" class="flex h-full">
         <!-- Login Modal -->
         <div v-if="!isAuthenticated"
             class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center backdrop-blur-sm">
-            <div class="bg-white p-8 rounded-2xl shadow-2xl w-96 text-center transform transition-all scale-100">
+            <div
+                class="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-2xl w-96 text-center transform transition-all scale-100 dark:text-white">
                 <div class="mb-6">
-                    <span class="material-symbols-rounded text-6xl text-blue-600 mb-2">lock</span>
-                    <h2 class="text-2xl font-bold text-gray-800">Welcome Back</h2>
-                    <p class="text-gray-500 text-sm mt-1">Sign in to access your notes</p>
+                    <span class="material-symbols-rounded text-6xl text-blue-600 dark:text-[#88C0D0] mb-2">lock</span>
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Welcome Back</h2>
+                    <p class="text-gray-500 dark:text-slate-400 text-sm mt-1">Sign in to access your notes</p>
                 </div>
 
                 <div id="google-btn" class="w-full"></div>
 
-                <p class="mt-6 text-xs text-gray-400">
+                <p class="mt-6 text-xs text-gray-400 dark:text-slate-500">
                     By continuing, you agree to our Terms of Service and Privacy Policy.
                 </p>
             </div>
@@ -44,22 +51,32 @@
 
         <!-- Sidebar -->
         <div :class="isSidebarOpen ? 'w-64' : 'w-0'"
-            class="bg-gray-50 border-r border-gray-200 flex flex-col flex-shrink-0 transition-all duration-300 overflow-hidden">
+            class="bg-slate-50 dark:bg-[#3B4252] border-r border-slate-200 dark:border-[#434C5E] flex flex-col flex-shrink-0 transition-all duration-300 overflow-hidden">
             <!-- Header -->
-            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
-                <h1 class="text-xl font-bold text-gray-700 tracking-wider">SHYNOTE</h1>
+            <div class="p-4 border-b border-slate-200 dark:border-[#434C5E] flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <h1 class="text-xl font-bold text-slate-700 dark:text-[#ECEFF4] tracking-wider">SHYNOTE</h1>
+                    <button @click="toggleDarkMode"
+                        class="p-1 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-200 dark:hover:bg-[#4C566A] rounded-full transition-colors"
+                        :title="isDarkMode ? 'Light Mode' : 'Dark Mode'">
+                        <span class="material-symbols-rounded text-[18px] block">{{ isDarkMode ? 'light_mode' :
+                            'dark_mode' }}</span>
+                    </button>
+                </div>
                 <div class="flex gap-2">
-                    <button @click="createFolder" class="p-1 hover:bg-gray-200 rounded relative group"
+                    <button @click="createFolder"
+                        class="p-1 hover:bg-slate-200 dark:hover:bg-[#4C566A] rounded relative group"
                         title="New Folder">
-                        <img src="/static/icons/folder.svg" class="w-6 h-6" alt="New Folder">
+                        <img src="/static/icons/folder.svg" class="w-6 h-6 dark:invert" alt="New Folder">
                         <div
                             class="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm border border-gray-100">
                             <span
                                 class="material-symbols-rounded text-[10px] text-gray-600 font-bold block leading-none">add</span>
                         </div>
                     </button>
-                    <button @click="createNote" class="p-1 hover:bg-gray-200 rounded relative group" title="New Note">
-                        <img src="/static/icons/markdown.svg" class="w-6 h-6" alt="New Note">
+                    <button @click="createNote"
+                        class="p-1 hover:bg-slate-200 dark:hover:bg-[#4C566A] rounded relative group" title="New Note">
+                        <img src="/static/icons/markdown.svg" class="w-6 h-6 dark:invert" alt="New Note">
                         <div
                             class="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm border border-gray-100">
                             <span
@@ -76,28 +93,32 @@
                 <!-- Folders & Notes -->
                 <div v-else>
                     <!-- Uncategorized Notes (Root) -->
-                    <div v-for="note in rootNotes" :key="note.id" @click="selectNote(note)"
-                        :class="{'bg-blue-50 border-blue-200': selectedNote && selectedNote.id === note.id, 'hover:bg-gray-100 border-transparent': !selectedNote || selectedNote.id !== note.id}"
-                        class="p-2 mb-1 cursor-pointer border rounded-md flex items-center group justify-between">
+                    <div v-for="note in rootNotes" :key="note.id" @click="selectNote(note)" :class="selectedNote && selectedNote.id === note.id 
+                            ? 'bg-blue-200 border-blue-400 dark:bg-[#5E81AC] dark:border-[#81A1C1]' 
+                            : 'hover:bg-blue-50 border-transparent dark:hover:bg-[#4C566A]'"
+                        class="p-2 mb-1 cursor-pointer border rounded-md flex items-center group justify-between transition-colors">
                         <div class="flex items-center truncate flex-1 min-w-0">
-                            <img src="/static/icons/markdown.svg" class="w-5 h-5 mr-2 flex-shrink-0" alt="Markdown">
+                            <img src="/static/icons/markdown.svg" class="w-5 h-5 mr-2 flex-shrink-0 dark:invert"
+                                alt="Markdown">
 
                             <!-- Rename Input -->
                             <input v-if="renameState.id === note.id && renameState.type === 'note'"
                                 :id="'rename-input-note-' + note.id" v-model="renameState.name" @click.stop
                                 @blur="saveRename" @keyup.enter="saveRename"
-                                class="flex-1 bg-white border border-blue-300 rounded px-1 text-sm outline-none w-full">
+                                class="flex-1 bg-white dark:bg-[#2E3440] border border-blue-300 dark:border-[#88C0D0] rounded px-1 text-sm outline-none w-full dark:text-[#D8DEE9]">
                             <!-- Normal Title -->
                             <div v-else @dblclick.stop="startRename(note, 'note')"
-                                class="font-medium text-sm text-gray-700 truncate select-none">{{ note.title ||
-                                'Untitled' }}</div>
+                                :class="selectedNote && selectedNote.id === note.id ? 'text-blue-900 dark:text-white font-bold' : 'text-slate-700 dark:text-[#ECEFF4]'"
+                                class="text-sm truncate select-none">{{ note.title || 'Untitled' }}</div>
                         </div>
                         <div class="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                             <button @click.stop="startRename(note, 'note')"
-                                class="text-gray-400 hover:text-blue-500 p-1" title="Rename Note">
+                                class="text-slate-500 hover:text-blue-700 dark:text-[#D8DEE9] dark:hover:text-white p-1"
+                                title="Rename Note">
                                 <span class="material-symbols-rounded text-[16px]">edit</span>
                             </button>
-                            <button @click.stop="deleteNote(note.id)" class="text-gray-400 hover:text-red-500 p-1"
+                            <button @click.stop="deleteNote(note.id)"
+                                class="text-slate-500 hover:text-red-600 dark:text-[#D8DEE9] dark:hover:text-[#BF616A] p-1"
                                 title="Delete Note">
                                 <span class="material-symbols-rounded text-[16px]">delete</span>
                             </button>
@@ -106,57 +127,66 @@
 
                     <!-- Folders -->
                     <div v-for="folder in folders" :key="folder.id" class="mb-2">
-                        <div class="flex items-center text-sm font-semibold text-gray-500 px-2 py-1 mb-1 group">
-                            <img src="/static/icons/folder.svg" class="w-5 h-5 mr-2" alt="Folder">
+                        <div
+                            class="flex items-center text-sm font-semibold text-slate-600 dark:text-[#ECEFF4] px-2 py-1 mb-1 group hover:bg-blue-50 dark:hover:bg-[#4C566A] rounded transition-colors cursor-pointer">
+                            <img src="/static/icons/folder.svg" class="w-5 h-5 mr-2 dark:invert opacity-90"
+                                alt="Folder">
                             <!-- Rename Input -->
                             <input v-if="renameState.id === folder.id && renameState.type === 'folder'"
                                 :id="'rename-input-folder-' + folder.id" v-model="renameState.name" @click.stop
                                 @blur="saveRename" @keyup.enter="saveRename"
-                                class="flex-1 bg-white border border-blue-300 rounded px-1 text-sm outline-none">
+                                class="flex-1 bg-white dark:bg-[#2E3440] border border-blue-300 dark:border-[#88C0D0] rounded px-1 text-sm outline-none dark:text-[#D8DEE9]">
                             <!-- Normal Name -->
                             <span v-else @dblclick.stop="startRename(folder, 'folder')"
                                 class="truncate flex-1 select-none">{{ folder.name }}</span>
 
                             <div class="ml-auto opacity-0 group-hover:opacity-100 flex items-center transition-opacity">
                                 <button @click.stop="startRename(folder, 'folder')"
-                                    class="text-gray-400 hover:text-blue-500 mr-1" title="Rename Folder">
+                                    class="text-slate-500 hover:text-blue-700 dark:text-[#D8DEE9] dark:hover:text-white mr-1"
+                                    title="Rename Folder">
                                     <span class="material-symbols-rounded text-[18px]">edit</span>
                                 </button>
-                                <button @click.stop="createNoteInFolder(folder.id)" class="hover:text-gray-700 mr-1"
+                                <button @click.stop="createNoteInFolder(folder.id)"
+                                    class="text-slate-500 hover:text-slate-800 dark:text-[#D8DEE9] dark:hover:text-white mr-1"
                                     title="Add Note to Folder">
                                     <span class="material-symbols-rounded text-[18px]">add</span>
                                 </button>
-                                <button @click.stop="deleteFolder(folder.id)" class="text-gray-400 hover:text-red-500"
+                                <button @click.stop="deleteFolder(folder.id)"
+                                    class="text-slate-500 hover:text-red-600 dark:text-[#D8DEE9] dark:hover:text-[#BF616A]"
                                     title="Delete Folder">
                                     <span class="material-symbols-rounded text-[16px]">delete</span>
                                 </button>
                             </div>
                         </div>
-                        <div class="pl-3 border-l-2 border-gray-100 ml-2">
+                        <div class="pl-3 border-l-2 border-slate-200 dark:border-[#434C5E] ml-2">
                             <div v-for="note in getFolderNotes(folder.id)" :key="note.id" @click="selectNote(note)"
-                                :class="{'bg-blue-50 border-blue-200': selectedNote && selectedNote.id === note.id, 'hover:bg-gray-100 border-transparent': !selectedNote || selectedNote.id !== note.id}"
-                                class="p-2 mb-1 cursor-pointer border rounded-md bg-white flex items-center group justify-between">
+                                :class="selectedNote && selectedNote.id === note.id 
+                                    ? 'bg-blue-200 border-blue-400 dark:bg-[#5E81AC] dark:border-[#81A1C1]' 
+                                    : 'bg-white dark:bg-[#2E3440] hover:bg-blue-50 border-transparent dark:hover:bg-[#4C566A]'"
+                                class="p-2 mb-1 cursor-pointer border rounded-md flex items-center group justify-between transition-colors">
                                 <div class="flex items-center truncate flex-1 min-w-0">
-                                    <img src="/static/icons/markdown.svg" class="w-4 h-4 mr-2 flex-shrink-0"
+                                    <img src="/static/icons/markdown.svg" class="w-4 h-4 mr-2 flex-shrink-0 dark:invert"
                                         alt="Markdown">
 
                                     <!-- Rename Input -->
                                     <input v-if="renameState.id === note.id && renameState.type === 'note'"
                                         :id="'rename-input-note-' + note.id" v-model="renameState.name" @click.stop
                                         @blur="saveRename" @keyup.enter="saveRename"
-                                        class="flex-1 bg-white border border-blue-300 rounded px-1 text-sm outline-none w-full">
+                                        class="flex-1 bg-white dark:bg-[#2E3440] border border-blue-300 dark:border-[#88C0D0] rounded px-1 text-sm outline-none w-full dark:text-[#D8DEE9]">
                                     <!-- Normal Title -->
                                     <div v-else @dblclick.stop="startRename(note, 'note')"
-                                        class="font-medium text-sm text-gray-700 truncate select-none">{{ note.title ||
-                                        'Untitled' }}</div>
+                                        :class="selectedNote && selectedNote.id === note.id ? 'text-blue-900 dark:text-white font-bold' : 'text-slate-700 dark:text-[#ECEFF4]'"
+                                        class="text-sm truncate select-none">{{ note.title || 'Untitled' }}</div>
                                 </div>
                                 <div class="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button @click.stop="startRename(note, 'note')"
-                                        class="text-gray-400 hover:text-blue-500 p-1" title="Rename Note">
+                                        class="text-slate-500 hover:text-blue-700 dark:text-[#D8DEE9] dark:hover:text-white p-1"
+                                        title="Rename Note">
                                         <span class="material-symbols-rounded text-[16px]">edit</span>
                                     </button>
                                     <button @click.stop="deleteNote(note.id)"
-                                        class="text-gray-400 hover:text-red-500 p-1" title="Delete Note">
+                                        class="text-slate-500 hover:text-red-600 dark:text-[#D8DEE9] dark:hover:text-[#BF616A] p-1"
+                                        title="Delete Note">
                                         <span class="material-symbols-rounded text-[16px]">delete</span>
                                     </button>
                                 </div>
@@ -170,52 +200,49 @@
         </div>
 
         <!-- Main Editor -->
-        <main class="flex-1 flex flex-col bg-white overflow-hidden">
+        <main class="flex-1 flex flex-col bg-white dark:bg-[#2E3440] overflow-hidden">
             <div v-if="selectedNote" class="flex flex-col h-full">
                 <!-- Toolbar -->
-                <div class="h-14 border-b border-gray-100 flex justify-between items-center px-4 flex-shrink-0">
+                <div
+                    class="h-14 border-b border-slate-100 dark:border-[#434C5E] bg-white/80 dark:bg-[#2E3440]/80 backdrop-blur-sm sticky top-0 z-30 flex justify-between items-center px-4 flex-shrink-0 transition-colors duration-300">
                     <div class="flex items-center w-full mr-4">
                         <button @click="toggleSidebar"
-                            class="p-2 mr-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+                            class="p-2 mr-2 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded-lg transition-colors flex-shrink-0"
                             title="Toggle Sidebar">
                             <span class="material-symbols-rounded">{{ isSidebarOpen ? 'keyboard_double_arrow_left' :
                                 'keyboard_double_arrow_right' }}</span>
                         </button>
                         <input v-model="selectedNote.title" @input="debouncedUpdate"
-                            class="text-lg font-bold text-gray-800 outline-none w-full bg-transparent placeholder-gray-300"
+                            class="text-lg font-bold text-slate-800 dark:text-[#ECEFF4] outline-none w-full bg-transparent placeholder-slate-300 dark:placeholder-[#434C5E]"
                             placeholder="Note Title">
                     </div>
                     <div class="flex items-center gap-2 flex-shrink-0">
 
-                        <span class="text-xs text-gray-400 min-w-[60px] text-right">{{ statusMessage }}</span>
+                        <span class="text-xs text-slate-400 dark:text-[#D8DEE9] min-w-[60px] text-right">{{
+                            statusMessage }}</span>
                         <div class="flex items-center gap-2">
                             <span
-                                class="text-[10px] font-bold text-gray-400 uppercase tracking-widest select-none">View</span>
-                            <div class="flex bg-gray-100 rounded-lg p-1 gap-1">
+                                class="text-[10px] font-bold text-slate-400 dark:text-[#D8DEE9] uppercase tracking-widest select-none">View</span>
+                            <div class="flex bg-slate-100 dark:bg-[#434C5E] rounded-lg p-1 gap-1">
                                 <button @click="viewMode = 'edit'"
-                                    :class="viewMode === 'edit' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'"
+                                    :class="viewMode === 'edit' ? 'bg-white dark:bg-[#2E3440] text-blue-600 dark:text-[#88C0D0] shadow-sm' : 'text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600'"
                                     class="p-1 rounded transition-all" title="Editor Only">
                                     <span class="material-symbols-rounded text-[18px] block">edit_note</span>
                                 </button>
                                 <button @click="viewMode = 'split'"
-                                    :class="viewMode === 'split' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'"
+                                    :class="viewMode === 'split' ? 'bg-white dark:bg-[#2E3440] text-blue-600 dark:text-[#88C0D0] shadow-sm' : 'text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600'"
                                     class="p-1 rounded transition-all" title="Split View">
                                     <span class="material-symbols-rounded text-[18px] block">vertical_split</span>
                                 </button>
                                 <button @click="viewMode = 'preview'"
-                                    :class="viewMode === 'preview' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'"
+                                    :class="viewMode === 'preview' ? 'bg-white dark:bg-[#2E3440] text-blue-600 dark:text-[#88C0D0] shadow-sm' : 'text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600'"
                                     class="p-1 rounded transition-all" title="Preview Only">
                                     <span class="material-symbols-rounded text-[18px] block">preview</span>
                                 </button>
                             </div>
-                            <button @click="toggleDarkMode"
-                                class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                                :title="isDarkMode ? 'Light Mode' : 'Dark Mode'">
-                                <span class="material-symbols-rounded text-[20px]">{{ isDarkMode ? 'light_mode' :
-                                    'dark_mode' }}</span>
-                            </button>
                             <button @click="deleteNote(selectedNote.id)"
-                                class="text-red-400 hover:text-red-500 p-2 rounded hover:bg-red-50" title="Delete Note">
+                                class="text-red-400 hover:text-red-500 p-2 rounded hover:bg-red-50 dark:hover:bg-red-900/30"
+                                title="Delete Note">
                                 <span class="material-symbols-rounded text-[20px]">delete</span>
                             </button>
                         </div>
@@ -226,24 +253,69 @@
                 <div class="flex-1 flex overflow-hidden">
                     <!-- Editor -->
                     <div v-show="viewMode !== 'preview'"
-                        class="flex-1 flex flex-col border-r border-gray-100 relative group"
-                        :class="isDarkMode ? 'border-[#434C5E]' : 'border-gray-100'">
+                        class="flex-1 flex flex-col border-r border-slate-100 dark:border-[#434C5E] relative group"
+                        :class="isDarkMode ? 'dark' : ''">
                         <span
-                            class="absolute top-2 left-6 text-[10px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 select-none text-gray-400">Editor</span>
+                            class="absolute top-2 left-6 text-[10px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 select-none text-slate-300 dark:text-[#4C566A]">Editor</span>
                         <textarea ref="editorRef" @scroll="handleScroll" v-model="selectedNote.content"
-                            @keydown="handleEditorKeyDown" @input="debouncedUpdate"
-                            :class="isDarkMode ? 'bg-[#2E3440] text-[#D8DEE9]' : 'bg-white text-gray-700'"
-                            class="flex-1 p-6 outline-none resize-none leading-relaxed font-sans text-sm"
+                            @keydown="handleEditorKeyDown" @input="debouncedUpdate" @mouseup="handleMouseUp"
+                            class="flex-1 p-6 outline-none resize-none leading-relaxed font-sans text-sm bg-white dark:bg-[#2E3440] text-slate-700 dark:text-[#D8DEE9]"
                             placeholder="Type markdown here..."></textarea>
+                    </div>
+
+                    <!-- Floating Formatting Toolbar -->
+                    <div v-if="toolbar.show" :style="{ top: toolbar.y + 'px', left: toolbar.x + 'px' }"
+                        class="fixed z-50 transform -translate-x-1/2 flex items-center bg-[#2E3440] text-white rounded-lg shadow-xl border border-gray-600 px-2 py-1 gap-1 animate-fade-in-up">
+                        <button @mousedown.prevent="formatText('bold')" class="p-1 hover:bg-[#3B4252] rounded"
+                            title="Bold">
+                            <span class="material-symbols-rounded text-[18px]">format_bold</span>
+                        </button>
+                        <button @mousedown.prevent="formatText('italic')" class="p-1 hover:bg-[#3B4252] rounded"
+                            title="Italic">
+                            <span class="material-symbols-rounded text-[18px]">format_italic</span>
+                        </button>
+                        <button @mousedown.prevent="formatText('strike')" class="p-1 hover:bg-[#3B4252] rounded"
+                            title="Strikethrough">
+                            <span class="material-symbols-rounded text-[18px]">strikethrough_s</span>
+                        </button>
+                        <button @mousedown.prevent="formatText('code')" class="p-1 hover:bg-[#3B4252] rounded"
+                            title="Code">
+                            <span class="material-symbols-rounded text-[18px]">code</span>
+                        </button>
+                        <div class="w-[1px] h-4 bg-gray-600 mx-1"></div>
+                        <button @mousedown.prevent="formatText('link')" class="p-1 hover:bg-[#3B4252] rounded"
+                            title="Link">
+                            <span class="material-symbols-rounded text-[18px]">link</span>
+                        </button>
+                        <div class="w-[1px] h-4 bg-gray-600 mx-1"></div>
+                        <button @mousedown.prevent="formatText('h1')" class="p-1 hover:bg-[#3B4252] rounded"
+                            title="Heading 1">
+                            <span class="material-symbols-rounded text-[18px]">format_h1</span>
+                        </button>
+                        <button @mousedown.prevent="formatText('h2')" class="p-1 hover:bg-[#3B4252] rounded"
+                            title="Heading 2">
+                            <span class="material-symbols-rounded text-[18px]">format_h2</span>
+                        </button>
+                        <button @mousedown.prevent="formatText('h3')" class="p-1 hover:bg-[#3B4252] rounded"
+                            title="Heading 3">
+                            <span class="material-symbols-rounded text-[18px]">format_h3</span>
+                        </button>
+                        <button @mousedown.prevent="formatText('h4')" class="p-1 hover:bg-[#3B4252] rounded"
+                            title="Heading 4">
+                            <span class="material-symbols-rounded text-[18px]">format_h4</span>
+                        </button>
+                        <button @mousedown.prevent="formatText('h5')" class="p-1 hover:bg-[#3B4252] rounded"
+                            title="Heading 5">
+                            <span class="material-symbols-rounded text-[18px]">format_h5</span>
+                        </button>
                     </div>
 
                     <!-- Preview -->
                     <div v-show="viewMode !== 'edit'" class="flex-1 flex flex-col relative group overflow-hidden">
                         <span
-                            class="absolute top-2 left-6 text-[10px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 select-none text-gray-400">Preview</span>
+                            class="absolute top-2 left-6 text-[10px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 select-none text-slate-300 dark:text-[#4C566A]">Preview</span>
                         <div ref="previewRef" @scroll="handleScroll"
-                            :class="isDarkMode ? 'bg-[#2E3440] nord-dark' : 'bg-white'"
-                            class="flex-1 flex flex-col overflow-y-auto">
+                            class="flex-1 flex flex-col overflow-y-auto bg-white dark:bg-[#2E3440]">
                             <div class="p-0 markdown-body" :style="{ backgroundColor: 'transparent' }"
                                 v-html="previewContent"></div>
                         </div>
@@ -251,10 +323,11 @@
                 </div>
             </div>
 
-            <div v-else class="flex-1 flex items-center justify-center text-gray-300 flex-col gap-4 bg-gray-50">
-                <span class="material-symbols-rounded text-gray-200 text-6xl mb-4">note_stack</span>
+            <div v-else
+                class="flex-1 flex items-center justify-center text-gray-300 dark:text-[#4C566A] flex-col gap-4 bg-gray-50 dark:bg-[#2E3440]">
+                <span class="material-symbols-rounded text-gray-200 dark:text-[#3B4252] text-6xl mb-4">note_stack</span>
                 <div class="text-center">
-                    <h3 class="text-lg font-medium text-gray-400">No Note Selected</h3>
+                    <h3 class="text-lg font-medium text-gray-400 dark:text-[#4C566A]">No Note Selected</h3>
                     <p class="text-sm">Select a note from the sidebar or create a new one.</p>
                 </div>
             </div>

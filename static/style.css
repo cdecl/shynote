@@ -10,11 +10,11 @@ textarea {
     tab-size: 2;
 }
 
-.nord-dark textarea {
+.dark textarea {
     caret-color: #88C0D0;
 }
 
-.nord-dark textarea::placeholder {
+.dark textarea::placeholder {
     color: #4C566A;
 }
 
@@ -46,8 +46,12 @@ textarea {
     vertical-align: middle;
 }
 
-/* Nord Theme Overrides */
-.nord-dark .markdown-body {
+/* Dark Mode Overrides (Global) */
+html.dark {
+    color-scheme: dark;
+}
+
+.dark .markdown-body {
     background-color: transparent !important;
     /* Let container bg show */
     color: #D8DEE9 !important;
@@ -63,34 +67,50 @@ textarea {
 }
 
 /* Force specific elements if variables miss some */
-.nord-dark .markdown-body h1,
-.nord-dark .markdown-body h2,
-.nord-dark .markdown-body h3,
-.nord-dark .markdown-body h4,
-.nord-dark .markdown-body h5,
-.nord-dark .markdown-body h6 {
+.dark .markdown-body h1,
+.dark .markdown-body h2,
+.dark .markdown-body h3,
+.dark .markdown-body h4,
+.dark .markdown-body h5,
+.dark .markdown-body h6 {
     color: #ECEFF4 !important;
     /* Nord6 */
     border-bottom-color: #434C5E !important;
 }
 
-.nord-dark .markdown-body a {
+.dark .markdown-body a {
     color: #88C0D0 !important;
 }
 
-.nord-dark .markdown-body blockquote {
+.dark .markdown-body blockquote {
     color: #D8DEE9 !important;
     border-left-color: #434C5E !important;
 }
 
-.nord-dark .markdown-body code,
-.nord-dark .markdown-body tt {
+.dark .markdown-body code,
+.dark .markdown-body tt {
     background-color: #3B4252 !important;
     /* Nord1 */
     color: #ECEFF4 !important;
 }
 
-.nord-dark .markdown-body pre {
+.dark .markdown-body pre {
     background-color: #2E3440 !important;
-    /* Let highlightjs handle bg or match main */
+}
+
+/* Fade In Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.2s ease-out forwards;
 }

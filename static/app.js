@@ -136,6 +136,13 @@ createApp({
 					? 'https://unpkg.com/nord-highlightjs@0.1/dist/nord.css'
 					: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css'
 			}
+
+			// Tailwind Dark Mode Support
+			if (isDarkMode.value) {
+				document.documentElement.classList.add('dark')
+			} else {
+				document.documentElement.classList.remove('dark')
+			}
 		}
 
 		const cycleViewMode = () => {
@@ -519,26 +526,82 @@ createApp({
 				}
 			}
 
-			// 3.5. Tab Key
+			// 3.5. Tab Key (Multi-line support)
 			if (e.key === 'Tab') {
 				e.preventDefault()
-				if (e.shiftKey) {
-					const { startPos, line } = getLineInfo()
-					const originalSelectionStart = selectionStart
-					const originalSelectionEnd = selectionEnd
-					let deleteCount = 0
-					if (line.startsWith('  ')) deleteCount = 2
-					else if (line.startsWith('\t')) deleteCount = 1
-					else if (line.startsWith(' ')) deleteCount = 1
 
-					if (deleteCount > 0) {
-						execReplace('', startPos, startPos + deleteCount)
-						const newStart = Math.max(startPos, originalSelectionStart - deleteCount)
-						const newEnd = Math.max(startPos, originalSelectionEnd - deleteCount)
-						nextTick(() => el.setSelectionRange(newStart, newEnd))
+				const startLineStart = value.lastIndexOf('\n', selectionStart - 1) + 1
+				let endLineEnd = value.indexOf('\n', selectionEnd)
+				if (endLineEnd === -1) endLineEnd = value.length
+				// If selection ends exactly at a newline, we might not want to indent the next empty line? 
+				// VS Code behavior: if cursor is at beginning of line `\n|`, it is Line N. 
+				// If selection is `Line 1\nLine 2`, endPos is after '2'.
+				// If selection includes the newline at end `Line 1\n`, it usually treats as Line 1 + Line 2 start?
+				// Let's stick to: if we have a range, extend to full lines.
+
+				// However, if selectionEnd is exactly at the start of a line (after \n), that line is typically NOT included in the indent action unless it's the only line.
+				// e.g. "A\n|B" -> Selection is "A\n". We indent A.
+				// "A\nB|" -> Selection is "A\nB". We indent A and B.
+
+				// Fix endLineEnd logic:
+				// If selectionEnd > startLineStart and value[selectionEnd-1] === '\n', current line is one less?
+				// To complicate things less, let's just grab the block spanning start to end.
+
+				// Re-calc boundaries to include full lines
+				// Start is simple:
+				const blockStart = value.lastIndexOf('\n', selectionStart - 1) + 1
+
+				// End:
+				let blockEnd = value.indexOf('\n', selectionEnd)
+				if (blockEnd === -1) blockEnd = value.length
+
+				// Special case: if selectionEnd is > selectionStart and is at the very beginning of a line (val[selectionEnd-1] == '\n'),
+				// we shouldn't really count that last newline's following line as "selected" for indentation purposes usually.
+				// But let's verify standard behavior.
+				// If I select "abc\n", I usually expect "  abc\n" if I indent. I don't expect the next empty line to be indented.
+
+				// However, standard `substring(start, end)` usage:
+				const originalText = value.substring(blockStart, blockEnd)
+				const lines = originalText.split('\n')
+
+				if (e.shiftKey) {
+					// Unindent
+					const newLines = lines.map(line => {
+						if (line.startsWith('  ')) return line.substring(2)
+						if (line.startsWith('\t')) return line.substring(1)
+						if (line.startsWith(' ')) return line.substring(1)
+						return line
+					})
+					const newText = newLines.join('\n')
+
+					if (newText !== originalText) {
+						execReplace(newText, blockStart, blockEnd)
+						// Restore selection roughly
+						// It's hard to exactly map selection anchors after mutation, 
+						// but standard behavior is selecting the whole block.
+						nextTick(() => {
+							el.setSelectionRange(blockStart, blockStart + newText.length)
+						})
 					}
 				} else {
-					insertText('  ')
+					// Indent
+					// Only if we have a selection OR it's a multi-line block.
+					// If it is a caret (selectionStart === selectionEnd), simple insert.
+					// UNLESS user wants "indent line" behavior even when just caret?
+					// Usually Tab at caret = insert spaces. Tab with selection = indent block.
+
+					if (selectionStart === selectionEnd) {
+						insertText('  ')
+						return
+					}
+
+					const newLines = lines.map(line => '  ' + line)
+					const newText = newLines.join('\n')
+
+					execReplace(newText, blockStart, blockEnd)
+					nextTick(() => {
+						el.setSelectionRange(blockStart, blockStart + newText.length)
+					})
 				}
 				return
 			}
@@ -609,6 +672,9 @@ createApp({
 
 		onMounted(async () => {
 			checkAuth()
+			// Init Dark Mode class
+			if (isDarkMode.value) document.documentElement.classList.add('dark')
+
 			// Wait a bit for Google Script to load if async
 			setTimeout(initGoogleAuth, 500)
 		})
@@ -619,6 +685,143 @@ createApp({
 				setTimeout(renderGoogleButton, 100)
 			}
 		})
+
+		// Floating Toolbar State
+		const toolbar = ref({
+			show: false,
+			x: 0,
+			y: 0
+		})
+
+		const hideToolbar = () => {
+			toolbar.value.show = false
+		}
+
+		const checkSelection = (e) => {
+			// Small delay to ensure selection is updated
+			setTimeout(() => {
+				const el = editorRef.value
+				if (!el) return
+
+				if (el.selectionStart !== el.selectionEnd) {
+					// We have a selection
+					// Calculate simple position based on mouse or last interaction
+					// Since textarea doesn't give BBox for text, we use mouse position if available
+					// or fallback to a guess? 
+					// Actually, for a pure textarea, getting the caret coordinates is hard without a library.
+					// We will rely on the mouseup event's clientX/Y for positioning.
+					// If triggered by keyboard, we might not show it or show it in a fixed spot?
+					// Let's stick to mouse interactions for the "floating" feeling.
+				} else {
+					hideToolbar()
+				}
+			}, 10)
+		}
+
+		const handleMouseUp = (e) => {
+			const el = editorRef.value
+			if (!el) return
+
+			if (el.selectionStart !== el.selectionEnd) {
+				const rect = el.getBoundingClientRect()
+				// Basic positioning: Above the mouse cursor
+				// Limit x to within bounds
+				toolbar.value = {
+					show: true,
+					x: e.clientX,
+					y: e.clientY - 50 // 50px above cursor
+				}
+			} else {
+				hideToolbar()
+			}
+		}
+
+		const formatText = (type) => {
+			const el = editorRef.value
+			if (!el) return
+
+			const start = el.selectionStart
+			const end = el.selectionEnd
+			const text = el.value.substring(start, end)
+			if (!text) return
+
+			let newText = text
+			let offset = 0
+
+			switch (type) {
+				case 'bold':
+					newText = `**${text}**`
+					offset = 2
+					break
+				case 'italic':
+					newText = `*${text}*`
+					offset = 1
+					break
+				case 'strike':
+					newText = `~~${text}~~`
+					offset = 2
+					break
+				case 'code':
+					newText = `\`${text}\``
+					offset = 1
+					break
+				case 'link':
+					newText = `[${text}](url)`
+					offset = 1
+					break
+				case 'h1':
+				case 'h2':
+				case 'h3':
+				case 'h4':
+				case 'h5':
+					const level = parseInt(type.replace('h', ''))
+					// We apply heading to the entire line(s)
+					// Calculate full lines from range
+					const blockStart = el.value.lastIndexOf('\n', start - 1) + 1
+					let blockEnd = el.value.indexOf('\n', end)
+					if (blockEnd === -1) blockEnd = el.value.length
+
+					const rawBlock = el.value.substring(blockStart, blockEnd)
+					const lines = rawBlock.split('\n')
+					const prefix = '#'.repeat(level) + ' '
+
+					const newLines = lines.map(line => {
+						// Remove existing heading
+						const clean = line.replace(/^(#+\s*)/, '')
+						return prefix + clean
+					})
+
+					newText = newLines.join('\n')
+
+					// Update range to cover the whole block for replacement
+					el.focus()
+					el.setSelectionRange(blockStart, blockEnd)
+					document.execCommand('insertText', false, newText)
+					hideToolbar()
+					return // Return early as we handled the replacement manually
+			}
+
+
+			// Execute replacement
+			el.focus()
+			// Use execCommand for Undo history
+			// We need to re-select exact range because focus might strictly maintain selection, but good to be safe
+			el.setSelectionRange(start, end)
+			document.execCommand('insertText', false, newText)
+
+			// Restore selection to include the markers? Or just the text?
+			// Usually easier to select the inner text so user can chain styles?
+			// Actually standard behavior: select the whole new thing.
+
+			// If we select inner text:
+			// el.setSelectionRange(start + offset, start + offset + text.length)
+
+			// If we select whole thing (easiest):
+			// el.setSelectionRange(start, start + newText.length)
+
+			// Let's hide toolbar after action
+			hideToolbar()
+		}
 
 		return {
 			notes,
@@ -651,7 +854,11 @@ createApp({
 			renameState,
 			startRename,
 			saveRename,
-			handleEditorKeyDown
+			handleEditorKeyDown,
+
+			toolbar,
+			handleMouseUp,
+			formatText
 		}
 	}
 }).mount('#app')

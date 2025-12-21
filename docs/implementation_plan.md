@@ -46,6 +46,15 @@ This document tracks the cumulative implementation details of the SHYNOTE projec
 - **DOM Manipulation**: APIs like `selectionStart`, `selectionEnd`, and string manipulation for line operations.
 - **Undo Integration**: Uses `document.execCommand('insertText')` to preserve browser undo history.
 
+### Floating Toolbar & Tab Features Checklist
+- [x] **Floating Toolbar**:
+    - [x] Select text to show formatting actions.
+    - [x] **Actions**: Bold, Italic, Strikethrough, Code, Link.
+    - [x] **Headings**: H1, H2, H3, H4, H5 buttons (applies to whole line).
+- [x] **Multi-line Tab Control**:
+    - [x] **Indent (Tab)**: Indents all selected lines by 2 spaces.
+    - [x] **Outdent (Shift+Tab)**: Unindents all selected lines by 2 spaces.
+
 ---
 
 ## 3. JWT Authentication & Data Isolation
@@ -72,7 +81,9 @@ This document tracks the cumulative implementation details of the SHYNOTE projec
 
 ### Styling Checklist
 - [x] **Theming**:
-    - [x] **Dark Mode**: Default Nord theme implementation.
+    - [x] **Dark Mode**: Global implementation using Tailwind `dark:` and CSS variables.
+        - [x] **Scope**: Applied to Login Modal, Sidebar, Editor, Preview, and Empty States.
+        - [x] **Scrollbar**: `color-scheme: dark` for native dark scrollbars.
     - [x] **Markdown**: `github-markdown-css` (Dark) integration.
     - [x] **Code**: `nord.css` for Highlight.js.
 - [x] **Typography**:
