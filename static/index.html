@@ -395,7 +395,7 @@
                 </div>
 
                 <!-- Split View -->
-                <div class="flex-1 flex overflow-hidden">
+                <div class="flex-1 flex overflow-hidden" @click="isSidebarOpen && (isSidebarOpen = false)">
                     <!-- Editor -->
                     <div v-show="viewMode !== 'preview'"
                         class="flex-1 flex flex-col border-r border-slate-100 dark:border-[#434C5E] relative group"
