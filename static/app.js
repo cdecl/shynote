@@ -678,12 +678,25 @@ createApp({
 			draggedNoteId.value = note.id
 		}
 
-		const handleDrop = async (targetFolderId) => {
+
+		const handleDrop = async (targetFolderId, event) => {
+			// Prevent default just to be safe if event is passed (though Vue handles modifiers)
+			// But here we might receive event as second arg if we update template
+
 			const noteId = draggedNoteId.value
 			if (!noteId) return
 
 			const note = notes.value.find(n => n.id === noteId)
-			if (note && note.folder_id !== targetFolderId) {
+			// Check if we are really moving it
+			// If targetFolderId is null, and note.folder_id is string 'null' or null, we might have issues?
+			// Typically note.folder_id comes from DB as null or int.
+			// Let's coerce for safety: (note.folder_id || null) !== (targetFolderId || null) ?
+			// But note.folder_id could be 0? 0 is falsy. ID should be > 0.
+
+			const currentIds = note.folder_id
+			const targetIds = targetFolderId
+
+			if (note && currentIds !== targetIds) {
 				// Optimistic Update
 				const originalFolderId = note.folder_id
 				note.folder_id = targetFolderId
@@ -694,7 +707,7 @@ createApp({
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({
 							title: note.title,
-							content: note.content, // We need to send content too usually
+							content: note.content,
 							folder_id: targetFolderId
 						})
 					})

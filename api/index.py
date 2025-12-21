@@ -194,19 +194,27 @@ def update_note(
     if db_note is None:
         raise HTTPException(status_code=404, detail="Note not found")
     
-    # Check folder ownership if changing folder
-    if note.folder_id is not None and note.folder_id != db_note.folder_id:
-         folder = db.query(models.Folder).filter(
-            models.Folder.id == note.folder_id,
-            models.Folder.user_id == current_user.id
-        ).first()
-         if not folder:
-             raise HTTPException(status_code=400, detail="Invalid folder")
+    # Logic to handle updates using exclude_unset to distinguish between "not sent" and "sent as null"
+    update_data = note.dict(exclude_unset=True)
 
-    db_note.title = note.title
-    db_note.content = note.content
-    if note.folder_id is not None:
-        db_note.folder_id = note.folder_id
+    if "title" in update_data:
+        db_note.title = update_data["title"]
+    
+    if "content" in update_data:
+        db_note.content = update_data["content"]
+
+    if "folder_id" in update_data:
+        new_folder_id = update_data["folder_id"]
+        # Check folder ownership if setting to a folder
+        if new_folder_id is not None:
+             folder = db.query(models.Folder).filter(
+                models.Folder.id == new_folder_id,
+                models.Folder.user_id == current_user.id
+            ).first()
+             if not folder:
+                 raise HTTPException(status_code=400, detail="Invalid folder")
+        
+        db_note.folder_id = new_folder_id
         
     db.commit()
     db.refresh(db_note)
