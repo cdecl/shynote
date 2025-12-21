@@ -757,47 +757,70 @@ createApp({
 				}
 			}
 
-			// Helper: Get line info
-			const getLineInfo = () => {
-				const startPos = value.lastIndexOf('\n', selectionStart - 1) + 1
-				let endPos = value.indexOf('\n', selectionStart)
-				if (endPos === -1) endPos = value.length
-				return { startPos, endPos, line: value.substring(startPos, endPos) }
+			// Helper: Get info about FULL lines covered by the selection
+			const getSelectedLinesInfo = () => {
+				const startLineStart = value.lastIndexOf('\n', selectionStart - 1) + 1
+
+				// Calculate end of the effective selection
+				// If cursor is at start of next line and there is a selection, we consider previous line as end
+				// e.g. "Line1\n|" (selection includes \n) -> We treat it as Line1 selected.
+				let effectiveEnd = selectionEnd
+				if (selectionEnd > selectionStart && (selectionEnd === value.length || value[selectionEnd - 1] === '\n')) {
+					// Check if we are actually at start of a line? 
+					// Actually, simpler check: if we are strictly after start, and prev char is newline
+					// we back off search to prevent grabbing next line
+					effectiveEnd--
+				}
+
+				let endLineEnd = value.indexOf('\n', effectiveEnd)
+				if (endLineEnd === -1) endLineEnd = value.length
+
+				const text = value.substring(startLineStart, endLineEnd)
+				return { start: startLineStart, end: endLineEnd, text }
 			}
 
 			// 1. Move Line Up/Down (Alt + Up/Down)
 			if (e.altKey && !e.shiftKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
 				e.preventDefault()
-				const { startPos, endPos, line } = getLineInfo()
+				const { start, end, text } = getSelectedLinesInfo()
 
 				if (e.key === 'ArrowUp') {
-					if (startPos > 0) {
-						const prevLineStart = value.lastIndexOf('\n', startPos - 2) + 1
-						const prevLineEnd = startPos - 1
+					if (start > 0) {
+						// Find previous line
+						const prevLineStart = value.lastIndexOf('\n', start - 2) + 1
+						const prevLineEnd = start - 1
 						const prevLine = value.substring(prevLineStart, prevLineEnd)
-						const newLineContent = line + '\n' + prevLine
 
-						// Perform replacement with Undo support
-						execReplace(newLineContent, prevLineStart, endPos)
+						// New content: Selected Block + \n + Previous Line
+						// We replace [prevLineStart, end] with [text + \n + prevLine]
+						const newContent = text + '\n' + prevLine
 
-						// Restore selection
-						const newStart = prevLineStart
-						const newEnd = prevLineStart + line.length
-						nextTick(() => el.setSelectionRange(newStart, newEnd))
+						execReplace(newContent, prevLineStart, end)
+
+						// Maintain selection on the moved block (now shifts up)
+						// Start is prevLineStart. End is prevLineStart + text.length
+						// But we also need to respect internal selection offsets if we want to be fancy?
+						// VSCode selects the whole block after move usually.
+						// Let's select the whole moved block.
+						nextTick(() => el.setSelectionRange(prevLineStart, prevLineStart + text.length))
 					}
 				} else if (e.key === 'ArrowDown') {
-					if (endPos < value.length) {
-						const nextLineStart = endPos + 1
+					if (end < value.length) {
+						// Find next line
+						const nextLineStart = end + 1
 						let nextLineEnd = value.indexOf('\n', nextLineStart)
 						if (nextLineEnd === -1) nextLineEnd = value.length
 						const nextLine = value.substring(nextLineStart, nextLineEnd)
-						const newLineContent = nextLine + '\n' + line
 
-						execReplace(newLineContent, startPos, nextLineEnd)
+						// New content: Next Line + \n + Selected Block
+						// Replace [start, nextLineEnd]
+						const newContent = nextLine + '\n' + text
 
-						const newStart = startPos + nextLine.length + 1
-						const newEnd = newStart + line.length
-						nextTick(() => el.setSelectionRange(newStart, newEnd))
+						execReplace(newContent, start, nextLineEnd)
+
+						// Maintain selection (shifts down by nextLine length + 1)
+						const offset = nextLine.length + 1
+						nextTick(() => el.setSelectionRange(start + offset, start + offset + text.length))
 					}
 				}
 				return
@@ -806,43 +829,53 @@ createApp({
 			// 2. Copy Line Up/Down (Shift + Alt + Up/Down)
 			if (e.altKey && e.shiftKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
 				e.preventDefault()
-				const { startPos, endPos, line } = getLineInfo()
-				const textToInsert = line + '\n'
+				const { start, end, text } = getSelectedLinesInfo()
+
+				// Standard behavior: 
+				// Down: Copy block and insert it BELOW. Selection stays on Original (or New? VSCode allows toggle. Usually Original stays selected or moves to new.)
+				// VSCode "Copy Line Down": Duplicates line, cursor moves to the NEW line (the bottom one).
+				// We will duplicate and move selection to the new block to facilitate chaining.
+
+				// Text to insert is `text + '\n'` (for Up) or `'\n' + text` (for Down)
 
 				if (e.key === 'ArrowUp') {
-					// Insert above
-					// We need to insert at startPos. 
-					// Ideally we want to KEEP selection on the line which moves down.
-					// execInsert puts cursor after inserted text.
-					// If we insert at startPos, cursor will be at end of inserted text.
-					// The inserted text is `line + \n`.
-					// So cursor will depend on `line` length.
-					// Original content starts at `startPos + line.length + 1`?
-					const originalSelectionStart = selectionStart
-					const originalSelectionEnd = selectionEnd
+					// Copy Up: Insert Duplicate ABOVE current block.
+					// Selection should move to the NEW (top) block? 
+					// Actually VSCode "Copy Line Up": Duplicates line up. Selection stays on the bottom instance (original).
+					// Let's stick to "Selection stays on the instance that was highlighted"? 
+					// If I copy UP, the new stuff is above. My cursor stays visually where it was (relative to viewport),
+					// effectively meaning it stays on the 'bottom' copy (which is the original content shifted down).
+					// So we insert text at `start`.
+					const textToInsert = text + '\n'
+					execReplace(textToInsert, start, start)
 
-					execReplace(textToInsert, startPos, startPos)
-
-					// Restoration: The original text shifted by textToInsert.length
-					const offset = textToInsert.length
-					nextTick(() => el.setSelectionRange(originalSelectionStart + offset, originalSelectionEnd + offset))
+					// Selection: Stays on original? 
+					// Original was at [start, end].
+					// Now it is at [start + len, end + len].
+					// So to keep selection on "Original" (now bottom), we shift selection.
+					const len = textToInsert.length
+					// We need to know exact selection offsets relative to block start if we want to preserve partial selection
+					// But `execReplace` messes with selection.
+					// Let's just select the whole original block again? Or keep exact internal?
+					// Simplicity: Select whole block.
+					// Update: Keep selection on the *Original* (bottom) block.
+					nextTick(() => el.setSelectionRange(start + len, end + len))
 				} else {
-					// Insert below
-					let insertPos = endPos + 1
-					let contentToInsert = textToInsert
-
-					if (endPos === value.length) {
-						insertPos = endPos
-						contentToInsert = '\n' + line
+					// Copy Down: Insert Duplicate BELOW current block.
+					// Selection stays on the TOP instance (original).
+					// We insert `\n + text` at `end`.
+					let insertPos = end
+					let textToInsert = '\n' + text
+					if (end === value.length) { // No newline at end of file case
+						textToInsert = '\n' + text
 					}
 
-					const originalSelectionStart = selectionStart
-					const originalSelectionEnd = selectionEnd
+					// If we insert at end, original block [start, end] is untouched.
+					// Except if we append, we typically use execReplace (insertText) at `end`.
+					execReplace(textToInsert, end, end)
 
-					execReplace(contentToInsert, insertPos, insertPos)
-
-					// Restore selection to original line (which didn't move)
-					nextTick(() => el.setSelectionRange(originalSelectionStart, originalSelectionEnd))
+					// Keep selection on original (top)
+					nextTick(() => el.setSelectionRange(start, end))
 				}
 				return
 			}
