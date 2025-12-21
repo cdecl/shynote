@@ -23,6 +23,26 @@ textarea {
     font-family: 'JetBrains Mono', 'D2Coding', monospace !important;
 }
 
+/* Code Block Styling (GFM-like) */
+.markdown-body pre {
+    padding: 16px !important;
+    border-radius: 6px !important;
+    background-color: #f6f8fa !important;
+    /* GitHub Light bg */
+    line-height: 1.45 !important;
+    overflow: auto !important;
+}
+
+/* Inline code styling */
+.markdown-body :not(pre)>code {
+    padding: 0.2em 0.4em !important;
+    margin: 0 !important;
+    font-size: 85% !important;
+    white-space: break-spaces !important;
+    background-color: #eff1f3 !important;
+    border-radius: 6px !important;
+}
+
 /* Adjustments for GitHub Markdown CSS */
 .markdown-body {
     font-family: 'JetBrains Mono', 'D2Coding', sans-serif !important;
@@ -129,23 +149,47 @@ html.dark {
     border-left-color: #434C5E !important;
 }
 
-.dark .markdown-body code,
-.dark .markdown-body tt {
-    background-color: #3B4252 !important;
-    /* Nord1 */
-    color: #ECEFF4 !important;
+/* Remove background from code inside pre to avoid font-bg effect */
+.dark .markdown-body pre code {
+    background-color: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }
 
 .dark .markdown-body pre {
     background-color: #2E3440 !important;
+    /* Nord Dark bg */
+    border: 1px solid #3B4252 !important;
+    /* Slight border distinction */
+}
+
+/* Dark Mode Inline Code */
+.dark .markdown-body :not(pre)>code {
+    background-color: #3B4252 !important;
+    color: #D8DEE9 !important;
 }
 
 /* List Item Highlighting */
 /* Light Mode */
-.markdown-body ul,
-.markdown-body ol {
+/* List Item Highlighting */
+/* Light Mode */
+.markdown-body ul {
+    list-style-type: disc !important;
+    padding-left: 1rem !important;
+    margin-left: 1rem !important;
     color: #334155 !important;
     /* Slate 700 */
+}
+
+.markdown-body ol {
+    list-style-type: decimal !important;
+    padding-left: 1rem !important;
+    /* Slate 700 */
+    margin-left: 1rem !important;
+    color: #334155 !important;
+    /* Slate 700 */
+
 }
 
 .markdown-body li::marker {
@@ -154,6 +198,7 @@ html.dark {
     font-weight: bold;
 }
 
+/* Dark Mode */
 /* Dark Mode */
 .dark .markdown-body ul,
 .dark .markdown-body ol {

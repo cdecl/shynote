@@ -66,8 +66,8 @@ createApp({
 			if (f === 'updated_at') field = 'Modified'
 			else if (f === 'created_at') field = 'Created'
 
-			const dir = d === 'asc' ? 'Asc' : 'Desc'
-			return `${field} | ${dir}`
+			const dir = d === 'asc' ? '↑' : '↓'
+			return `${field} ${dir}`
 		})
 
 		const showSortMenu = ref(false)
@@ -1128,8 +1128,8 @@ createApp({
 					offset = 2
 					break
 				case 'code':
-					newText = `\`${text}\``
-					offset = 1
+					newText = `\`\`\`\n${text}\n\`\`\``
+					offset = 4
 					break
 				case 'link':
 					newText = `[${text}](url)`
