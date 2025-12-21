@@ -83,13 +83,15 @@
         </div>
 
         <!-- Sidebar -->
-        <div :class="isSidebarOpen ? 'w-64' : 'w-0'"
-            class="bg-slate-50 border-r border-slate-200 flex flex-col flex-shrink-0 transition-all duration-300">
+        <!-- Sidebar -->
+        <div :class="[isSidebarOpen ? 'w-64' : 'w-14 cursor-pointer']" @click="!isSidebarOpen && toggleSidebar()"
+            class="bg-slate-50 border-r border-slate-200 flex flex-col flex-shrink-0 transition-all duration-300 overflow-hidden">
             <!-- Header -->
-            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 flex-shrink-0">
+            <div class="p-4 border-b border-slate-200 flex items-center bg-slate-50 flex-shrink-0 transition-all"
+                :class="isSidebarOpen ? 'justify-between' : 'justify-center'">
                 <div class="flex items-center gap-2">
                     <img src="/static/logo.png" class="w-6 h-6 rounded-full shadow-sm object-cover" alt="SHYNOTE Logo">
-                    <div class="relative">
+                    <div class="relative" v-show="isSidebarOpen">
                         <h1 class="text-xl font-bold text-slate-700 tracking-wider inline-block">
                             <a :href="homeUrl">SHYNOTE</a>
                         </h1>
@@ -98,7 +100,7 @@
                             appVersion }}</span>
                     </div>
                 </div>
-                <button @click="toggleDarkMode"
+                <button @click="toggleDarkMode" v-show="isSidebarOpen"
                     class="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full transition-colors"
                     :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
                     <span class="material-symbols-rounded text-[20px] block transition-transform duration-300"
@@ -109,10 +111,10 @@
             </div>
 
             <!-- Toolbar (Sort & New) -->
-            <div
-                class="px-3 py-2 border-b border-slate-200 flex justify-between items-center bg-slate-50 flex-shrink-0 gap-2">
+            <div class="px-3 py-2 border-b border-slate-200 flex items-center bg-slate-50 flex-shrink-0 gap-2 transition-all"
+                :class="isSidebarOpen ? 'justify-between flex-row' : 'flex-col justify-center py-4 gap-4'">
                 <!-- Sort Dropdown Trigger -->
-                <div class="relative">
+                <div class="relative" v-show="isSidebarOpen">
                     <button @click="toggleSortMenu"
                         class="p-1.5 hover:bg-slate-200 rounded text-slate-500 hover:text-slate-700 transition-colors flex items-center gap-1"
                         title="Sort Options">
@@ -165,9 +167,20 @@
                     </div>
                 </div>
 
-                <div class="flex gap-1 h-full items-center">
-                    <button @click="createFolder" class="p-1 hover:bg-slate-200 rounded relative group"
-                        title="New Folder">
+                <div class="flex items-center transition-all"
+                    :class="isSidebarOpen ? 'flex-row gap-1 h-full' : 'flex-col gap-3 w-full'">
+                    <!-- Dark Mode (Visible only when closed) -->
+                    <button @click="toggleDarkMode" v-show="!isSidebarOpen"
+                        class="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full transition-colors"
+                        :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+                        <span class="material-symbols-rounded text-[20px] block transition-transform duration-300"
+                            :class="isDarkMode ? 'rotate-180' : 'rotate-0'">
+                            {{ isDarkMode ? 'light_mode' : 'dark_mode' }}
+                        </span>
+                    </button>
+
+                    <button @click="createFolder" v-show="isSidebarOpen"
+                        class="p-1 hover:bg-slate-200 rounded relative group" title="New Folder">
                         <img src="/static/icons/folder.svg" class="w-5 h-5" alt="New Folder">
                         <div
                             class="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm border border-gray-100">
@@ -187,7 +200,7 @@
             </div>
 
             <!-- List -->
-            <div class="flex-1 overflow-y-auto p-2">
+            <div class="flex-1 overflow-y-auto p-2" v-show="isSidebarOpen">
                 <div v-if="loading" class="text-center text-gray-400 p-4">Loading...</div>
 
                 <!-- Folders & Notes -->

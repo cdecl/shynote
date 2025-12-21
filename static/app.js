@@ -534,6 +534,13 @@ createApp({
 			selectedNote.value = note
 			// Ensure content is string for marked
 			if (selectedNote.value.content === null) selectedNote.value.content = ""
+
+			// Auto collapse sidebar on selection (User Request)
+			if (isSidebarOpen.value) {
+				setTimeout(() => {
+					isSidebarOpen.value = false
+				}, 50)
+			}
 		}
 
 		const updateNote = async () => {
