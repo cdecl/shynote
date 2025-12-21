@@ -60,10 +60,6 @@ class FolderCreate(FolderBase):
 class FolderUpdate(FolderBase):
     pass
 
-class SmartEditRequest(BaseModel):
-    action: str
-    text: str
-    context: Optional[dict] = {}
 
 class Folder(FolderBase):
     id: int
