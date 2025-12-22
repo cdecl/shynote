@@ -44,3 +44,4 @@ class Note(Base):
     # Sharing
     share_id = Column(String, unique=True, index=True, nullable=True)
     is_shared = Column(Boolean, default=False)
+    is_pinned = Column(Boolean, default=False)

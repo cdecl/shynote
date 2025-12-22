@@ -45,8 +45,11 @@ class NoteBase(BaseModel):
 class NoteCreate(NoteBase):
     pass
 
-class NoteUpdate(NoteBase):
-    pass
+class NoteUpdate(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+    folder_id: Optional[int] = None
+    is_pinned: Optional[bool] = None
 
 class Note(NoteBase):
     id: int
@@ -55,6 +58,7 @@ class Note(NoteBase):
     updated_at: datetime
     share_id: Optional[str] = None
     is_shared: bool = False
+    is_pinned: bool = False
 
     class Config:
         from_attributes = True

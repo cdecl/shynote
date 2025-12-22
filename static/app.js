@@ -408,6 +408,11 @@ createApp({
 
 		const sortItems = (items) => {
 			return [...items].sort((a, b) => {
+				// 1. Pinning Priority
+				if (a.is_pinned && !b.is_pinned) return -1
+				if (!a.is_pinned && b.is_pinned) return 1
+
+				// 2. Normal Sort
 				let fieldA, fieldB
 
 				if (sortOption.value.field === 'title' || sortOption.value.field === 'name') {
@@ -751,6 +756,35 @@ createApp({
 			} catch (e) {
 				console.error("Stop sharing failed", e)
 				alert("Failed to stop sharing")
+			}
+		}
+
+		const togglePin = async (note) => {
+			if (!note) return
+
+			// Optimistic UI update
+			const originalState = note.is_pinned
+			note.is_pinned = !originalState
+
+			// If selected note is the one being toggled, ensure reactivity if needed (though object mutates)
+
+			try {
+				const response = await authenticatedFetch(`/api/notes/${note.id}`, {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						is_pinned: note.is_pinned
+					})
+				})
+
+				if (!response || !response.ok) {
+					// Revert on failure
+					note.is_pinned = originalState
+					alert("Failed to update pin status")
+				}
+			} catch (e) {
+				note.is_pinned = originalState
+				console.error("Pin toggle failed", e)
 			}
 		}
 
@@ -1433,7 +1467,9 @@ createApp({
 			focusEditor,
 			toggleShare,
 			copyShareLink,
-			stopSharing
+			copyShareLink,
+			stopSharing,
+			togglePin
 		}
 	}
 }).mount('#app')

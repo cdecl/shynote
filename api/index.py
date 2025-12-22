@@ -217,6 +217,9 @@ def update_note(
                  raise HTTPException(status_code=400, detail="Invalid folder")
         
         db_note.folder_id = new_folder_id
+
+    if "is_pinned" in update_data:
+        db_note.is_pinned = update_data["is_pinned"]
         
     db.commit()
     db.refresh(db_note)
