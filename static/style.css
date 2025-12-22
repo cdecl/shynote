@@ -4,7 +4,7 @@ body {
 
 /* Editor Font Settings */
 textarea {
-    font-family: 'JetBrains Mono', 'Spoqa Han Sans Neo', monospace !important;
+    font-family: 'Spoqa Han Sans Neo', monospace !important;
     line-height: 1.6;
     tab-size: 2;
 }
