@@ -47,6 +47,19 @@ createApp({
 			return '/'
 		})
 
+		const changelogContent = ref('')
+		const fetchChangelog = async () => {
+			try {
+				const res = await fetch('/static/changelog.md?v=' + Date.now())
+				if (res.ok) {
+					const text = await res.text()
+					changelogContent.value = marked.parse(text)
+				}
+			} catch (e) {
+				console.error("Failed to load changelog", e)
+			}
+		}
+
 		const fontSize = ref(localStorage.getItem('shynote_font_size') || '14')
 		const setFontSize = (size) => {
 			fontSize.value = size
@@ -175,6 +188,7 @@ createApp({
 		onMounted(() => {
 			checkAuth()
 			fetchAppConfig()
+			fetchChangelog()
 			initGoogleAuth()
 
 			// Detect system theme preference initially if not set
@@ -1467,9 +1481,9 @@ createApp({
 			focusEditor,
 			toggleShare,
 			copyShareLink,
-			copyShareLink,
 			stopSharing,
-			togglePin
+			togglePin,
+			changelogContent
 		}
 	}
 }).mount('#app')
