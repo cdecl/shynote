@@ -106,8 +106,14 @@
 
         <!-- Sidebar -->
         <!-- Sidebar -->
-        <div :class="[isSidebarOpen ? 'w-64' : 'w-14 cursor-pointer']" @click="!isSidebarOpen && toggleSidebar()"
-            class="bg-[#F2F0EA] dark:bg-[#242933] border-r border-[#E6E4DD] dark:border-[#3B4252] flex flex-col flex-shrink-0 transition-all duration-300 overflow-hidden">
+        <div :class="[isSidebarOpen ? 'w-80' : 'w-14 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#2E3440]']"
+            @click="!isSidebarOpen && toggleSidebar()"
+            class="relative bg-[#F2F0EA] dark:bg-[#242933] border-r border-[#E6E4DD] dark:border-[#3B4252] flex flex-col flex-shrink-0 transition-all duration-300 group/sidebar z-20">
+            <!-- Removed overflow-hidden -->
+
+            <!-- Bookmark/Handle Indicator -->
+            <div class="absolute -right-1.5 top-1/2 -translate-y-1/2 w-1.5 h-10 bg-slate-300 dark:bg-slate-600 rounded-r-md transition-all duration-300 shadow-md transform opacity-60 group-hover/sidebar:opacity-100 group-hover/sidebar:translate-x-0.5 group-hover/sidebar:bg-blue-400 group-hover/sidebar:w-2 cursor-pointer"
+                @click.stop="toggleSidebar" :class="!isSidebarOpen ? 'translate-x-0' : 'hidden'"></div>
             <!-- Header -->
             <div class="p-4 border-b border-[#E6E4DD] dark:border-[#3B4252] flex items-center bg-[#F2F0EA] dark:bg-[#242933] flex-shrink-0 transition-all"
                 :class="isSidebarOpen ? 'justify-between' : 'justify-center'">
@@ -192,7 +198,7 @@
                 <div class="flex items-center transition-all"
                     :class="isSidebarOpen ? 'flex-row gap-1 h-full' : 'flex-col gap-3 w-full'">
                     <!-- Dark Mode (Visible only when closed) -->
-                    <button @click="toggleDarkMode" v-show="!isSidebarOpen"
+                    <button @click.stop="toggleDarkMode" v-show="!isSidebarOpen"
                         class="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full transition-colors"
                         :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
                         <span class="material-symbols-rounded text-[20px] block transition-transform duration-300"
@@ -210,7 +216,8 @@
                                 class="material-symbols-rounded text-[10px] text-gray-600 font-bold block leading-none">add</span>
                         </div>
                     </button>
-                    <button @click="createNote" class="p-1 hover:bg-slate-200 rounded relative group" title="New Note">
+                    <button @click.stop="createNote" class="p-1 hover:bg-slate-200 rounded relative group"
+                        title="New Note">
                         <img src="/static/icons/markdown.svg" class="w-5 h-5" alt="New Note">
                         <div
                             class="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm border border-gray-100">
@@ -394,8 +401,7 @@
                     </div>
                     <div class="items-center gap-2 flex-shrink-0" :class="isSidebarOpen ? 'hidden md:flex' : 'flex'">
                         <div class="flex items-center gap-2">
-                            <span
-                                class="text-[10px] font-bold text-slate-400 dark:text-[#D8DEE9] uppercase tracking-widest select-none">View</span>
+                            <div class="w-[1px] h-4 bg-slate-200 dark:bg-[#434C5E] mx-0 hidden sm:block"></div>
                             <!-- Font Size Selector -->
                             <div class="relative group">
                                 <select :value="fontSize" @change="setFontSize($event.target.value)"
