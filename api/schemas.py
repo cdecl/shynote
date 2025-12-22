@@ -53,6 +53,8 @@ class Note(NoteBase):
     user_id: int
     created_at: datetime
     updated_at: datetime
+    share_id: Optional[str] = None
+    is_shared: bool = False
 
     class Config:
         from_attributes = True

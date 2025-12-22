@@ -1,10 +1,10 @@
 body {
-    font-family: 'D2Coding', 'Inter', -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+    font-family: 'Spoqa Han Sans Neo', 'Inter', -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
 }
 
 /* Editor Font Settings */
 textarea {
-    font-family: 'JetBrains Mono', 'D2Coding', monospace !important;
+    font-family: 'JetBrains Mono', 'Spoqa Han Sans Neo', monospace !important;
     line-height: 1.6;
     tab-size: 2;
 }
@@ -20,7 +20,7 @@ textarea {
 /* Preview Code Block Font */
 .markdown-body pre,
 .markdown-body code {
-    font-family: 'JetBrains Mono', 'D2Coding', monospace !important;
+    font-family: 'JetBrains Mono', 'Spoqa Han Sans Neo', monospace !important;
 }
 
 /* Code Block Styling (GFM-like) */
@@ -45,7 +45,7 @@ textarea {
 
 /* Adjustments for GitHub Markdown CSS */
 .markdown-body {
-    font-family: 'JetBrains Mono', 'D2Coding', sans-serif !important;
+    font-family: 'Inter', sans-serif !important;
     box-sizing: border-box;
     min-width: 200px;
     max-width: none !important;

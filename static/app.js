@@ -671,6 +671,89 @@ createApp({
 			}
 		}
 
+		// Sharing Logic
+		const toggleShare = async () => {
+			if (!selectedNote.value) return
+			const note = selectedNote.value
+
+			// If already shared, open the management modal
+			if (note.is_shared) {
+				openShareModal(note)
+			} else {
+				// Enable sharing first
+				try {
+					const response = await authenticatedFetch(`/api/notes/${note.id}/share`, {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' }
+					})
+					if (response && response.ok) {
+						const data = await response.json()
+						note.is_shared = data.is_shared
+						note.share_id = data.share_id
+						openShareModal(note)
+					}
+				} catch (e) {
+					console.error("Share enable failed", e)
+					alert("Failed to enable sharing")
+				}
+			}
+		}
+
+		const openShareModal = (note) => {
+			const shareUrl = `${window.location.origin}/share/${note.share_id}`
+
+			modalState.value.type = 'share-note'
+			modalState.value.title = 'Share Note'
+			modalState.value.message = 'Anyone with this link can view this note.'
+			modalState.value.inputValue = shareUrl // Using inputValue to store the link
+			modalState.value.cancelText = 'Close'
+			modalState.value.isOpen = true
+
+			// Auto-select text
+			nextTick(() => {
+				const input = document.getElementById('share-link-input')
+				if (input) input.select()
+			})
+		}
+
+		const copyShareLink = () => {
+			const input = document.getElementById('share-link-input')
+			if (input) {
+				input.select()
+				navigator.clipboard.writeText(input.value).then(() => {
+					closeModal()
+				})
+			}
+		}
+
+		const stopSharing = async () => {
+			if (!selectedNote.value) return
+			const note = selectedNote.value
+
+			// Direct action, no confirmation
+			// if (!confirm('Are you sure you want to stop sharing? The link will become invalid.')) return
+
+			try {
+				// Re-toggle to disable
+				const response = await authenticatedFetch(`/api/notes/${note.id}/share`, {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' }
+				})
+
+				if (response && response.ok) {
+					const data = await response.json()
+					if (!data.is_shared) {
+						note.is_shared = false
+						note.share_id = null
+						closeModal()
+					}
+				}
+			} catch (e) {
+				console.error("Stop sharing failed", e)
+				alert("Failed to stop sharing")
+			}
+		}
+
 		// Drag and Drop Logic
 		const draggedNoteId = ref(null)
 
@@ -1347,7 +1430,10 @@ createApp({
 			draggedNoteId,
 			handleDragStart,
 			handleDrop,
-			focusEditor
+			focusEditor,
+			toggleShare,
+			copyShareLink,
+			stopSharing
 		}
 	}
 }).mount('#app')

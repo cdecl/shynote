@@ -40,3 +40,7 @@ class Note(Base):
     
     user = relationship("User", back_populates="notes")
     folder = relationship("Folder", back_populates="notes")
+
+    # Sharing
+    share_id = Column(String, unique=True, index=True, nullable=True)
+    is_shared = Column(Boolean, default=False)
