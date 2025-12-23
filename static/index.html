@@ -18,6 +18,7 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="/static/style.css?v=6">
     <link id="github-theme" rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-light.min.css">
     <link id="highlight-theme" rel="stylesheet" href="https://unpkg.com/nord-highlightjs@0.1/dist/nord.css">
@@ -27,7 +28,9 @@
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
     <link href='//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSansNeo.css' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" href="/static/style.css?v=6">
+
+
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/default.css">
     <script src="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/index.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/scroll-behaviour.min.js"></script>
@@ -108,7 +111,7 @@
 
                 <!-- Input for Create Folder -->
                 <input v-if="modalState.type === 'create-folder'" id="modal-input" v-model="modalState.inputValue"
-                    @keyup.enter="confirmAction"
+                    @keyup.enter="confirmAction" @keydown.esc="closeModal"
                     class="w-full bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded px-3 py-2 text-sm outline-none focus:ring-2 ring-blue-500 mb-4 dark:text-white"
                     placeholder="Folder Name">
 
@@ -153,13 +156,15 @@
                 <!-- Header -->
                 <div class="p-4 border-b border-[#E6E4DD] dark:border-[#3B4252] flex items-center bg-[#F2F0EA] dark:bg-[#242933] flex-shrink-0 transition-all"
                     :class="isSidebarOpen ? 'justify-between' : 'justify-center'">
-                    <div class="flex items-center gap-2">
-                        <img src="/static/logo.png" class="w-6 h-6 rounded-full shadow-sm object-cover"
+                    <div class="flex items-center gap-2 cursor-pointer group/logo" @click="deselectNote"
+                        title="About Shynote">
+                        <img src="/static/logo.png"
+                            class="w-6 h-6 rounded-full shadow-sm object-cover group-hover/logo:scale-110 transition-transform"
                             alt="SHYNOTE Logo">
                         <div class="relative" v-show="isSidebarOpen">
                             <h1
                                 class="text-xl font-bold text-[#44403C] dark:text-[#ECEFF4] tracking-wider inline-block">
-                                <a :href="homeUrl">SHYNOTE</a>
+                                SHYNOTE
                             </h1>
                             <span v-if="appVersion"
                                 class="absolute -top-1 -right-8 text-[9px] font-normal text-slate-400 dark:text-slate-500 select-none">v{{
@@ -182,7 +187,7 @@
                     <!-- Sort Dropdown Trigger -->
                     <div class="relative" v-show="isSidebarOpen">
                         <button @click="toggleSortMenu"
-                            class="p-1.5 hover:bg-slate-200 rounded text-slate-500 hover:text-slate-700 transition-colors flex items-center gap-1"
+                            class="p-1.5 hover:bg-slate-200 dark:hover:bg-[#3B4252] rounded text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors flex items-center gap-1"
                             title="Sort Options">
                             <span class="material-symbols-rounded text-[18px] block">sort</span>
                             <span class="text-xs font-medium"><span
@@ -245,28 +250,32 @@
                                 {{ isDarkMode ? 'light_mode' : 'dark_mode' }}
                             </span>
                         </button>
-
                         <button @click="createFolder" v-show="isSidebarOpen"
-                            class="p-1 hover:bg-slate-200 rounded relative group" title="New Folder">
+                            class="p-1 hover:bg-slate-200 dark:hover:bg-[#3B4252] rounded relative group"
+                            title="New Folder">
                             <img src="/static/icons/folder.svg" class="w-5 h-5" alt="New Folder">
                             <div
-                                class="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm border border-gray-100">
+                                class="absolute -bottom-1 -right-1 bg-white dark:bg-[#4C566A] rounded-full p-0.5 shadow-sm border border-gray-100 dark:border-[#434C5E]">
                                 <span
-                                    class="material-symbols-rounded text-[10px] text-gray-600 font-bold block leading-none">add</span>
+                                    class="material-symbols-rounded text-[10px] text-gray-600 dark:text-[#ECEFF4] font-bold block leading-none">add</span>
                             </div>
                         </button>
-                        <button @click.stop="createNote" class="p-1 hover:bg-slate-200 rounded relative group"
+                        <button @click.stop="createNote"
+                            class="p-1 hover:bg-slate-200 dark:hover:bg-[#3B4252] rounded relative group"
                             title="New Note">
                             <img src="https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/document.svg"
                                 class="w-5 h-5" alt="New Note">
                             <div
-                                class="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm border border-gray-100">
+                                class="absolute -bottom-1 -right-1 bg-white dark:bg-[#4C566A] rounded-full p-0.5 shadow-sm border border-gray-100 dark:border-[#434C5E]">
                                 <span
-                                    class="material-symbols-rounded text-[10px] text-gray-600 font-bold block leading-none">add</span>
+                                    class="material-symbols-rounded text-[10px] text-gray-600 dark:text-[#ECEFF4] font-bold block leading-none">add</span>
                             </div>
                         </button>
                     </div>
                 </div>
+
+                <!-- Spacer for collapsed state to push footer to bottom -->
+                <div class="flex-1" v-if="!isSidebarOpen"></div>
 
                 <!-- List -->
                 <div class="flex-1 overflow-y-auto p-2" v-show="isSidebarOpen">
@@ -436,17 +445,31 @@
                         </div>
                     </div>
                 </div>
-                <!-- Sidebar Footer (Pin) -->
-                <div class="p-2 border-t border-[#E6E4DD] dark:border-[#3B4252] bg-[#F2F0EA] dark:bg-[#242933] flex-shrink-0 flex justify-end"
-                    v-show="isSidebarOpen">
-                    <button @click.stop="toggleSidebarPin"
-                        class="p-1.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                        :title="isSidebarPinned ? 'Unpin Sidebar (Auto-collapse on select)' : 'Pin Sidebar (Keep open)'">
-                        <span class="material-symbols-rounded text-[20px] transition-colors"
-                            :class="isSidebarPinned ? 'text-orange-500' : 'text-slate-400 dark:text-slate-500'">
-                            {{ isSidebarPinned ? 'push_pin' : 'keep_public' }}
-                        </span>
-                    </button>
+                <!-- Sidebar Footer -->
+                <div
+                    class="border-t border-[#E6E4DD] dark:border-[#3B4252] bg-[#F2F0EA] dark:bg-[#242933] flex-shrink-0">
+                    <!-- About Shynote & Pin Button (Combined) -->
+                    <div class="p-2 flex items-center transition-all w-full"
+                        :class="isSidebarOpen ? 'px-3 justify-between' : 'justify-center px-0'">
+                        <button @click.stop="deselectNote"
+                            class="group/about flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700/50 transition-all"
+                            title="About Shynote">
+                            <span
+                                class="material-symbols-rounded text-[18px] text-blue-500 dark:text-blue-400 group-hover/about:scale-110 transition-transform">info</span>
+                            <span v-show="isSidebarOpen"
+                                class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest group-hover/about:text-blue-600 dark:group-hover/about:text-blue-400">About
+                                Shynote</span>
+                        </button>
+
+                        <button v-show="isSidebarOpen" @click.stop="toggleSidebarPin"
+                            class="p-1.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                            :title="isSidebarPinned ? 'Unpin Sidebar (Auto-collapse on select)' : 'Pin Sidebar (Keep open)'">
+                            <span class="material-symbols-rounded text-[18px] transition-colors"
+                                :class="isSidebarPinned ? 'text-orange-500' : 'text-slate-400 dark:text-slate-500'">
+                                {{ isSidebarPinned ? 'push_pin' : 'keep_public' }}
+                            </span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -454,7 +477,7 @@
         <!-- Main Editor -->
         <main class="flex-1 flex flex-col bg-white dark:bg-[#2E3440] overflow-hidden"
             @click="isSidebarOpen && !isSidebarPinned && (isSidebarOpen = false)">
-            <div v-if="selectedNote" class="flex flex-col h-full">
+            <div v-if="selectedNote && selectedNote.id" class="flex flex-col h-full">
                 <!-- Toolbar -->
                 <div
                     class="h-14 border-b border-slate-100 dark:border-[#434C5E] bg-white/80 dark:bg-[#2E3440]/80 backdrop-blur-sm sticky top-0 z-30 flex justify-between items-center px-4 flex-shrink-0 transition-colors duration-300">
@@ -470,22 +493,7 @@
                                 @keydown.tab.prevent="focusEditor"
                                 class="text-lg font-bold text-[#1e3a8a] dark:text-[#8FBCBB] outline-none bg-transparent placeholder-slate-300 dark:placeholder-[#434C5E] min-w-0 flex-1"
                                 placeholder="Note Title">
-                            <div class="hidden sm:flex flex-col items-end justify-center select-none text-right">
-                                <span
-                                    class="text-[10px] font-extrabold text-[#1e3a8a] dark:text-[#8FBCBB] uppercase tracking-widest leading-none mb-1">
-                                    {{ statusMessage === 'Ready' ? 'SAVED' : statusMessage }}
-                                </span>
-                                <div class="flex flex-col items-end leading-none">
-                                    <span
-                                        class="text-[9px] text-[#1e3a8a] dark:text-[#8FBCBB] font-medium mb-0.5 opacity-80">
-                                        {{ formatDateParts(selectedNote.updated_at).date }}
-                                    </span>
-                                    <span
-                                        class="text-[9px] text-[#1e3a8a] dark:text-[#8FBCBB] font-medium opacity-80 whitespace-nowrap">
-                                        {{ formatDateParts(selectedNote.updated_at).time }}
-                                    </span>
-                                </div>
-                            </div>
+
                         </div>
                     </div>
                     <div class="items-center gap-2 flex-shrink-0" :class="isSidebarOpen ? 'hidden md:flex' : 'flex'">
@@ -506,23 +514,7 @@
                                     <span class="material-symbols-rounded text-[16px]">expand_more</span>
                                 </div>
                             </div>
-                            <div class="flex bg-slate-100 dark:bg-[#434C5E] rounded-lg p-1 gap-1">
-                                <button @click="setViewMode('edit')"
-                                    :class="viewMode === 'edit' ? 'bg-white dark:bg-[#2E3440] text-blue-600 dark:text-[#88C0D0] shadow-sm' : 'text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600'"
-                                    class="p-1 rounded transition-all" title="Editor Only">
-                                    <span class="material-symbols-rounded text-[18px] block">edit_note</span>
-                                </button>
-                                <button @click="setViewMode('split')"
-                                    :class="viewMode === 'split' ? 'bg-white dark:bg-[#2E3440] text-blue-600 dark:text-[#88C0D0] shadow-sm' : 'text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600'"
-                                    class="p-1 rounded transition-all" title="Split View">
-                                    <span class="material-symbols-rounded text-[18px] block">vertical_split</span>
-                                </button>
-                                <button @click="setViewMode('preview')"
-                                    :class="viewMode === 'preview' ? 'bg-white dark:bg-[#2E3440] text-blue-600 dark:text-[#88C0D0] shadow-sm' : 'text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600'"
-                                    class="p-1 rounded transition-all" title="Preview Only">
-                                    <span class="material-symbols-rounded text-[18px] block">preview</span>
-                                </button>
-                            </div>
+
                             <button @click="toggleShare" :class="selectedNote.is_shared 
                                     ? 'text-blue-600 bg-blue-100 dark:bg-blue-500 dark:text-white ring-2 ring-blue-300 dark:ring-blue-700 shadow-md transform scale-105' 
                                     : 'text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600'"
@@ -531,100 +523,248 @@
                                 <span class="material-symbols-rounded text-[18px] block"
                                     :style="selectedNote.is_shared ? 'font-variation-settings: \'FILL\' 1' : ''">share</span>
                             </button>
+                            <div class="w-[1px] h-4 bg-slate-200 dark:bg-[#434C5E] mx-1 hidden sm:block"></div>
+                            <div class="hidden sm:flex flex-col items-end justify-center select-none text-right">
+                                <span
+                                    class="text-[10px] font-extrabold text-[#1e3a8a] dark:text-[#8FBCBB] uppercase tracking-widest leading-none mb-1">
+                                    {{ statusMessage === 'Ready' ? 'SAVED' : statusMessage }}
+                                </span>
+                                <span
+                                    class="text-[9px] text-[#1e3a8a] dark:text-[#8FBCBB] font-medium opacity-80 whitespace-nowrap leading-none">
+                                    {{ formatDateParts(selectedNote.updated_at).date }} {{
+                                    formatDateParts(selectedNote.updated_at).time }}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Split View -->
-                <div class="flex-1 flex overflow-hidden">
-                    <!-- Editor -->
-                    <div v-show="viewMode !== 'preview'"
-                        class="flex-1 flex flex-col border-r border-slate-100 dark:border-[#434C5E] relative group"
-                        :class="isDarkMode ? 'dark' : ''">
-                        <span
-                            class="absolute top-2 left-6 text-[10px] font-bold uppercase tracking-widest pointer-events-none z-10 select-none text-slate-400 dark:text-slate-500 bg-slate-100/50 dark:bg-[#3B4252]/50 px-2 py-1 rounded backdrop-blur-sm">Editor</span>
-                        <textarea ref="editorRef" @scroll="handleScroll" v-model="selectedNote.content"
-                            @keydown="handleEditorKeyDown" @input="debouncedUpdate" @mouseup="handleMouseUp"
-                            :style="'font-size: ' + fontSize + 'px !important'"
-                            class="flex-1 p-6 pt-10 outline-none resize-none leading-relaxed font-sans bg-white dark:bg-[#2E3440] text-slate-700 dark:text-[#D8DEE9]"
-                            placeholder="Type markdown here..."></textarea>
+                <!-- Main Layout -->
+                <div class="flex-1 flex flex-col overflow-hidden">
+                    <!-- Unified Tabs (Not Split) -->
+                    <div
+                        class="h-9 bg-slate-200 dark:bg-[#252a33] border-b border-slate-300 dark:border-[#434C5E] flex items-end px-2 shrink-0 gap-1">
+                        <div @click="setViewMode('edit')"
+                            class="px-4 py-1.5 rounded-t-md border-t border-l border-r -mb-[1px] text-xs font-medium select-none cursor-pointer transition-colors"
+                            :class="viewMode === 'edit' ? 'bg-white dark:bg-[#2E3440] border-slate-300 dark:border-[#434C5E] text-slate-900 dark:text-slate-100 font-bold z-10 shadow-sm' : 'bg-transparent border-transparent text-slate-600 dark:text-slate-500 hover:text-slate-800 dark:hover:text-slate-400'">
+                            Editor
+                        </div>
+                        <div @click="setViewMode('preview')"
+                            class="px-4 py-1.5 rounded-t-md border-t border-l border-r -mb-[1px] text-xs font-medium select-none cursor-pointer transition-colors"
+                            :class="viewMode === 'preview' ? 'bg-white dark:bg-[#2E3440] border-slate-300 dark:border-[#434C5E] text-slate-900 dark:text-slate-100 font-bold z-10 shadow-sm' : 'bg-transparent border-transparent text-slate-600 dark:text-slate-500 hover:text-slate-800 dark:hover:text-slate-400'">
+                            Preview
+                        </div>
+                        <div @click="setViewMode('split')"
+                            class="px-4 py-1.5 rounded-t-md border-t border-l border-r -mb-[1px] text-xs font-medium select-none cursor-pointer transition-colors flex items-center gap-1.5"
+                            :class="viewMode === 'split' ? 'bg-white dark:bg-[#2E3440] border-slate-300 dark:border-[#434C5E] text-slate-900 dark:text-slate-100 font-bold z-10 shadow-sm' : 'bg-transparent border-transparent text-slate-600 dark:text-slate-500 hover:text-slate-800 dark:hover:text-slate-400'">
+                            <span v-if="viewMode === 'split'"
+                                class="material-symbols-rounded text-[16px] -ml-0.5">view_column</span>
+                            <span>Split View</span>
+                            <template v-if="viewMode === 'split'">
+                                <span class="w-[1px] h-3 bg-slate-300 dark:bg-slate-600 mx-0.5"></span>
+                                <span class="text-[10px] opacity-60 font-medium tracking-tight">Editor & Preview</span>
+                            </template>
+                        </div>
                     </div>
 
-                    <!-- Floating Formatting Toolbar -->
-                    <div v-if="toolbar.show" :style="{ top: toolbar.y + 'px', left: toolbar.x + 'px' }"
-                        class="fixed z-50 transform -translate-x-1/2 flex items-center bg-[#2E3440] text-white rounded-lg shadow-xl border border-gray-600 px-2 py-1 gap-1 animate-fade-in-up">
-                        <button @mousedown.prevent="formatText('bold')" class="p-1 hover:bg-[#3B4252] rounded"
-                            title="Bold">
-                            <span class="material-symbols-rounded text-[18px]">format_bold</span>
-                        </button>
-                        <button @mousedown.prevent="formatText('italic')" class="p-1 hover:bg-[#3B4252] rounded"
-                            title="Italic">
-                            <span class="material-symbols-rounded text-[18px]">format_italic</span>
-                        </button>
-                        <button @mousedown.prevent="formatText('strike')" class="p-1 hover:bg-[#3B4252] rounded"
-                            title="Strikethrough">
-                            <span class="material-symbols-rounded text-[18px]">strikethrough_s</span>
-                        </button>
-                        <button @mousedown.prevent="formatText('code')" class="p-1 hover:bg-[#3B4252] rounded"
-                            title="Code">
-                            <span class="material-symbols-rounded text-[18px]">code</span>
-                        </button>
-                        <div class="w-[1px] h-4 bg-gray-600 mx-1"></div>
-                        <button @mousedown.prevent="formatText('link')" class="p-1 hover:bg-[#3B4252] rounded"
-                            title="Link">
-                            <span class="material-symbols-rounded text-[18px]">link</span>
-                        </button>
-                        <div class="w-[1px] h-4 bg-gray-600 mx-1"></div>
-                        <button @mousedown.prevent="formatText('h1')" class="p-1 hover:bg-[#3B4252] rounded"
-                            title="Heading 1">
-                            <span class="material-symbols-rounded text-[18px]">format_h1</span>
-                        </button>
-                        <button @mousedown.prevent="formatText('h2')" class="p-1 hover:bg-[#3B4252] rounded"
-                            title="Heading 2">
-                            <span class="material-symbols-rounded text-[18px]">format_h2</span>
-                        </button>
-                        <button @mousedown.prevent="formatText('h3')" class="p-1 hover:bg-[#3B4252] rounded"
-                            title="Heading 3">
-                            <span class="material-symbols-rounded text-[18px]">format_h3</span>
-                        </button>
-                        <button @mousedown.prevent="formatText('h4')" class="p-1 hover:bg-[#3B4252] rounded"
-                            title="Heading 4">
-                            <span class="material-symbols-rounded text-[18px]">format_h4</span>
-                        </button>
-                        <button @mousedown.prevent="formatText('h5')" class="p-1 hover:bg-[#3B4252] rounded"
-                            title="Heading 5">
-                            <span class="material-symbols-rounded text-[18px]">format_h5</span>
-                        </button>
-                    </div>
+                    <!-- Split Columns -->
+                    <div class="flex-1 flex overflow-hidden">
+                        <!-- Editor -->
+                        <div v-show="viewMode !== 'preview'"
+                            class="flex-1 flex flex-col border-r border-slate-100 dark:border-[#434C5E] relative group"
+                            :class="isDarkMode ? 'dark' : ''">
 
-                    <!-- Preview -->
-                    <div v-show="viewMode !== 'edit'" class="flex-1 flex flex-col relative group overflow-hidden">
-                        <span
-                            class="absolute top-2 left-6 text-[10px] font-bold uppercase tracking-widest pointer-events-none z-20 select-none text-slate-400 dark:text-slate-500 bg-slate-100/50 dark:bg-[#3B4252]/50 px-2 py-1 rounded backdrop-blur-sm">Preview</span>
-                        <div ref="previewRef" @scroll="handleScroll" v-html="previewContent"
-                            :style="'font-size: ' + fontSize + 'px !important'"
-                            class="markdown-body p-6 !pt-14 overflow-y-auto h-full bg-white dark:bg-[#2E3440] transition-colors">
+                            <!-- Search Widget -->
+                            <div v-if="searchState.show"
+                                class="bg-gray-50 dark:bg-[#2E3440] border-b border-gray-200 dark:border-[#434C5E] p-2 flex flex-col gap-2 shadow-sm z-20 relative pr-10">
+
+                                <!-- Close Button (Absolute) -->
+                                <button @click="closeSearch"
+                                    class="absolute top-2 right-2 p-1 text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-[#3B4252] rounded"
+                                    title="Close">
+                                    <span class="material-symbols-rounded text-[18px]">close</span>
+                                </button>
+
+                                <div class="grid grid-cols-[1fr_auto] gap-2">
+                                    <!-- Find Input -->
+                                    <div class="relative">
+                                        <input ref="searchInputRef" v-model="searchState.query"
+                                            @keyup.enter="executeFind(false)" @keydown.enter.shift="executeFind(true)"
+                                            @keydown.esc="closeSearch" placeholder="Find"
+                                            class="w-full text-sm rounded border border-gray-300 dark:border-[#4C566A] bg-white dark:bg-[#3B4252] dark:text-[#D8DEE9] px-2 py-1 outline-none focus:border-blue-500 pr-8">
+                                        <div class="absolute right-1 top-0 bottom-0 flex items-center gap-1">
+                                            <button @click="searchState.caseSensitive = !searchState.caseSensitive"
+                                                :class="searchState.caseSensitive ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300' : 'text-gray-400 hover:text-gray-600 dark:text-gray-500'"
+                                                class="p-0.5 rounded text-[10px] font-bold w-5 text-center"
+                                                title="Match Case">Aa</button>
+                                            <button @click="searchState.useRegex = !searchState.useRegex"
+                                                :class="searchState.useRegex ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300' : 'text-gray-400 hover:text-gray-600 dark:text-gray-500'"
+                                                class="p-0.5 rounded text-[10px] font-bold w-5 text-center"
+                                                title="Regular Expression">.*</button>
+                                        </div>
+                                    </div>
+                                    <!-- Find Actions -->
+                                    <div class="flex items-center gap-1">
+                                        <button @click="executeFind(true)"
+                                            class="p-1 text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-[#3B4252] rounded"
+                                            title="Previous (Shift+Enter)">
+                                            <span class="material-symbols-rounded text-[18px]">arrow_upward</span>
+                                        </button>
+                                        <button @click="executeFind(false)"
+                                            class="p-1 text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-[#3B4252] rounded"
+                                            title="Next (Enter)">
+                                            <span class="material-symbols-rounded text-[18px]">arrow_downward</span>
+                                        </button>
+                                    </div>
+
+                                    <!-- Replace Input -->
+                                    <template v-if="searchState.showReplace">
+                                        <div class="relative">
+                                            <input v-model="searchState.replaceText"
+                                                @keyup.enter="executeReplace(false)" @keydown.esc="closeSearch"
+                                                placeholder="Replace"
+                                                class="w-full text-sm rounded border border-gray-300 dark:border-[#4C566A] bg-white dark:bg-[#3B4252] dark:text-[#D8DEE9] px-2 py-1 outline-none focus:border-blue-500">
+                                        </div>
+                                        <!-- Replace Actions -->
+                                        <div class="flex items-center gap-1">
+                                            <button @click="executeReplace(false)"
+                                                class="p-1 text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-[#3B4252] rounded"
+                                                title="Replace">
+                                                <span class="material-symbols-rounded text-[18px]">find_replace</span>
+                                            </button>
+                                            <button @click="executeReplace(true)"
+                                                class="p-1 text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-[#3B4252] rounded"
+                                                title="Replace All">
+                                                <span
+                                                    class="material-symbols-rounded text-[18px]">playlist_add_check</span>
+                                            </button>
+                                        </div>
+                                    </template>
+                                </div>
+                                <div v-if="!searchState.showReplace" class="flex justify-start">
+                                    <button @click="searchState.showReplace = true"
+                                        class="text-[10px] text-gray-400 hover:text-blue-500 flex items-center gap-1">
+                                        <span class="material-symbols-rounded text-[12px]">expand_more</span> Replace
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex-1 relative overflow-hidden">
+                                <textarea ref="editorRef"
+                                    class="w-full h-full resize-none outline-none bg-transparent p-4 font-mono text-sm leading-relaxed"
+                                    :style="{ fontSize: fontSize + 'px' }" :value="selectedNote.content || ''"
+                                    @input="handleInput" @scroll="handleScroll" @click="updateToolbarPos"
+                                    @keyup="updateToolbarPos" @keydown="handleKeydown" spellcheck="false"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Floating Formatting Toolbar -->
+                        <div v-if="toolbar.show" :style="{ top: toolbar.y + 'px', left: toolbar.x + 'px' }"
+                            class="fixed z-50 transform -translate-x-1/2 flex items-center bg-[#2E3440] text-white rounded-lg shadow-xl border border-gray-600 px-2 py-1 gap-1 animate-fade-in-up">
+                            <button @mousedown.prevent="formatText('bold')" class="p-1 hover:bg-[#3B4252] rounded"
+                                title="Bold">
+                                <span class="material-symbols-rounded text-[18px]">format_bold</span>
+                            </button>
+                            <button @mousedown.prevent="formatText('italic')" class="p-1 hover:bg-[#3B4252] rounded"
+                                title="Italic">
+                                <span class="material-symbols-rounded text-[18px]">format_italic</span>
+                            </button>
+                            <button @mousedown.prevent="formatText('strike')" class="p-1 hover:bg-[#3B4252] rounded"
+                                title="Strikethrough">
+                                <span class="material-symbols-rounded text-[18px]">strikethrough_s</span>
+                            </button>
+                            <button @mousedown.prevent="formatText('code')" class="p-1 hover:bg-[#3B4252] rounded"
+                                title="Code">
+                                <span class="material-symbols-rounded text-[18px]">code</span>
+                            </button>
+                            <div class="w-[1px] h-4 bg-gray-600 mx-1"></div>
+                            <button @mousedown.prevent="formatText('link')" class="p-1 hover:bg-[#3B4252] rounded"
+                                title="Link">
+                                <span class="material-symbols-rounded text-[18px]">link</span>
+                            </button>
+                            <div class="w-[1px] h-4 bg-gray-600 mx-1"></div>
+                            <button @mousedown.prevent="formatText('h1')" class="p-1 hover:bg-[#3B4252] rounded"
+                                title="Heading 1">
+                                <span class="material-symbols-rounded text-[18px]">format_h1</span>
+                            </button>
+                            <button @mousedown.prevent="formatText('h2')" class="p-1 hover:bg-[#3B4252] rounded"
+                                title="Heading 2">
+                                <span class="material-symbols-rounded text-[18px]">format_h2</span>
+                            </button>
+                            <button @mousedown.prevent="formatText('h3')" class="p-1 hover:bg-[#3B4252] rounded"
+                                title="Heading 3">
+                                <span class="material-symbols-rounded text-[18px]">format_h3</span>
+                            </button>
+                            <button @mousedown.prevent="formatText('h4')" class="p-1 hover:bg-[#3B4252] rounded"
+                                title="Heading 4">
+                                <span class="material-symbols-rounded text-[18px]">format_h4</span>
+                            </button>
+                            <button @mousedown.prevent="formatText('h5')" class="p-1 hover:bg-[#3B4252] rounded"
+                                title="Heading 5">
+                                <span class="material-symbols-rounded text-[18px]">format_h5</span>
+                            </button>
+                        </div>
+
+                        <!-- Preview -->
+                        <div v-show="viewMode !== 'edit'" class="flex-1 flex flex-col relative group overflow-hidden">
+                            <!-- Header -->
+
+                            <div class="flex-1 overflow-hidden relative">
+                                <div ref="previewRef" @scroll="handleScroll" v-html="previewContent"
+                                    :style="'font-size: ' + fontSize + 'px !important'"
+                                    class="markdown-body p-6 overflow-y-auto h-full bg-white dark:bg-[#2E3440] transition-colors">
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div v-else class="flex-1 flex flex-col gap-4 bg-gray-50 dark:bg-[#2E3440] overflow-y-auto">
-                <div v-if="changelogContent" class="max-w-3xl w-full mx-auto p-8">
-                    <div class="mb-4 flex items-center gap-2 text-slate-400">
-                        <span class="material-symbols-rounded">info</span>
-                        <span class="text-sm font-bold uppercase tracking-widest">Latest Updates</span>
+            <div v-else class="flex-1 flex flex-col gap-4 bg-gray-50 dark:bg-[#2E3440] overflow-y-auto animate-fade-in">
+                <div class="max-w-3xl w-full mx-auto p-8">
+                    <!-- About Header -->
+                    <div
+                        class="flex flex-col items-center gap-4 text-center pb-8 mb-8 border-b border-slate-200 dark:border-[#3B4252]">
+                        <img src="/static/logo.png" class="w-20 h-20 rounded-full shadow-xl" alt="SHYNOTE Logo">
+                        <div>
+                            <h2 class="text-3xl font-black text-slate-800 dark:text-white tracking-tight">SHYNOTE
+                            </h2>
+                            <div class="flex items-center justify-center gap-3 mt-2">
+                                <span
+                                    class="px-2.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 text-[10px] font-bold rounded-full border border-blue-200 dark:border-blue-800">VERSION
+                                    {{ appVersion }}</span>
+                                <span
+                                    class="px-2.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-bold rounded-full border border-slate-200 dark:border-slate-700">MIT
+                                    LICENSE</span>
+                            </div>
+                            <div class="mt-4">
+                                <a href="https://github.com/cdecl/shynote" target="_blank"
+                                    class="text-xs text-slate-400 hover:text-blue-500 transition-colors flex items-center justify-center gap-1">
+                                    <span class="material-symbols-rounded text-[14px]">link</span>
+                                    github.com/cdecl/shynote
+                                </a>
+                            </div>
+                        </div>
                     </div>
-                    <div class="markdown-body bg-transparent" style="font-size: 12px !important"
-                        v-html="changelogContent"></div>
-                </div>
-                <div v-else
-                    class="flex-1 flex items-center justify-center flex-col gap-4 text-gray-300 dark:text-[#4C566A]">
-                    <span
-                        class="material-symbols-rounded text-gray-200 dark:text-[#3B4252] text-6xl mb-4">note_stack</span>
-                    <div class="text-center">
-                        <h3 class="text-lg font-medium text-gray-400 dark:text-[#4C566A]">No Note Selected</h3>
-                        <p class="text-sm">Select a note from the sidebar or create a new one.</p>
+
+                    <div v-if="changelogContent">
+                        <div
+                            class="mb-4 flex items-center justify-between text-slate-400 border-b border-slate-200 dark:border-[#3B4252] pb-4">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-rounded text-[18px]">history</span>
+                                <span class="text-xs font-bold uppercase tracking-widest">Release Notes</span>
+                            </div>
+                        </div>
+                        <div class="markdown-body bg-transparent" style="font-size: 13px !important"
+                            v-html="changelogContent"></div>
+                    </div>
+                    <div v-else
+                        class="flex-1 flex items-center justify-center flex-col gap-4 text-gray-300 dark:text-[#4C566A] py-12">
+                        <span
+                            class="material-symbols-rounded text-gray-200 dark:text-[#3B4252] text-6xl mb-4">note_stack</span>
+                        <div class="text-center">
+                            <h3 class="text-lg font-medium text-gray-400 dark:text-[#4C566A]">No Note Selected</h3>
+                            <p class="text-sm">Select a note from the sidebar or create a new one.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -643,7 +783,7 @@
             });
         }
     </script>
-    <script src="/static/app.js?v=6" type="module"></script>
+    <script src="/static/app.js?v=7" type="module"></script>
 </body>
 
 </html>

@@ -1,22 +1,53 @@
-const { createApp, ref, onMounted, computed, nextTick } = Vue
+const { createApp, ref, onMounted, computed, nextTick, watch } = Vue
 
 createApp({
 	setup() {
+		const STORAGE_KEYS = {
+			TOKEN: 'access_token',
+			DARK_MODE: 'shynote_dark_mode',
+			SIDEBAR_PINNED: 'shynote_sidebar_pinned',
+			FONT_SIZE: 'shynote_font_size',
+			COLLAPSED_FOLDERS: 'shynote_collapsed_folders',
+			SORT_FIELD: 'shynote_sort_field',
+			SORT_DIRECTION: 'shynote_sort_direction',
+			LAST_NOTE_ID: 'shynote_last_note_id'
+		}
+
+		// Private Helpers
+		const parseSafeDate = (dateStr) => {
+			if (!dateStr) return null
+			let safeStr = dateStr
+			if (typeof dateStr === 'string' && !dateStr.endsWith('Z') && !dateStr.includes('+')) {
+				safeStr = dateStr.replace(' ', 'T') + 'Z'
+			}
+			const date = new Date(safeStr)
+			return isNaN(date.getTime()) ? null : date
+		}
+
 		const notes = ref([])
 		const folders = ref([])
 		const selectedNote = ref(null)
 		const loading = ref(false)
 		const statusMessage = ref('Ready')
 		const isSidebarOpen = ref(true)
+		const isSidebarPinned = ref(localStorage.getItem(STORAGE_KEYS.SIDEBAR_PINNED) === 'true')
 		const editorRef = ref(null)
 		const previewRef = ref(null)
-		const viewMode = ref('split') // 'split', 'edit', 'preview'
-		const isDarkMode = ref(true)
-		const collapsedFolders = ref(JSON.parse(localStorage.getItem('shynote_collapsed_folders') || '{}')) // Dictionary to track collapsed state by folder ID
-		const isSidebarPinned = ref(localStorage.getItem('shynote_sidebar_pinned') === 'true')
-		const isAuthenticated = ref(false)
+		const viewMode = ref('split')
+		const isDarkMode = ref(localStorage.getItem(STORAGE_KEYS.DARK_MODE) === null ? true : localStorage.getItem(STORAGE_KEYS.DARK_MODE) === 'true')
+		const isAuthenticated = ref(false) // Was missing!
+		const fontSize = ref(localStorage.getItem(STORAGE_KEYS.FONT_SIZE) || '14')
+		const setFontSize = (size) => {
+			fontSize.value = size
+			localStorage.setItem(STORAGE_KEYS.FONT_SIZE, size)
+		}
+		const collapsedFolders = ref(JSON.parse(localStorage.getItem(STORAGE_KEYS.COLLAPSED_FOLDERS) || '{}'))
+		const cmEditor = ref(null) // Removed but keeping ref cleanup if needed, actually removal is better.
+		// Let's just remove it effectively by ignoring it.
+		// But for cleaner code, I will replace the logic.
 
-		// Guest Store (InMemory DB)
+
+		// Guest Store (InMemory DB) - Defined Early for authenticatedFetch
 		const guestStore = {
 			user: { id: 'guest', email: 'guest@shynote.app', is_dark_mode: true, view_mode: 'split' },
 			notes: [
@@ -24,6 +55,458 @@ createApp({
 			],
 			folders: []
 		}
+
+		// Dependencies needed early
+		const logout = () => {
+			localStorage.removeItem(STORAGE_KEYS.TOKEN)
+			isAuthenticated.value = false
+			notes.value = []
+			folders.value = []
+			selectedNote.value = null
+		}
+
+		const authenticatedFetch = async (url, options = {}) => {
+			const token = localStorage.getItem('access_token')
+
+			// Guest Mode Bypass & Mock
+			if (token === 'guest') {
+				await new Promise(r => setTimeout(r, 50)); // Tiny network delay simulation
+
+				// Mock Response Helper
+				const ok = (data) => Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(data) })
+				const bad = () => Promise.resolve({ ok: false, status: 400, json: () => Promise.resolve({ error: 'Bad Request' }) })
+
+				const method = options.method || 'GET'
+				const body = options.body ? JSON.parse(options.body) : {}
+
+				// 1. Auth / Profile
+				if (url.includes('/auth/me')) {
+					if (method === 'GET') return ok(guestStore.user)
+					if (method === 'PATCH') {
+						Object.assign(guestStore.user, body)
+						return ok(guestStore.user)
+					}
+				}
+
+				// 2. Folders
+				if (url.includes('/api/folders')) {
+					if (method === 'GET') return ok([...guestStore.folders])
+					if (method === 'POST') {
+						const newFolder = { id: Date.now(), name: body.name, user_id: 'guest', created_at: new Date().toISOString() }
+						guestStore.folders.push(newFolder)
+						return ok(newFolder)
+					}
+					const idMatch = url.match(/\/api\/folders\/(\d+)/)
+					if (idMatch) {
+						const id = parseInt(idMatch[1])
+						if (method === 'PUT') {
+							const f = guestStore.folders.find(x => x.id === id)
+							if (f) f.name = body.name
+							return ok(f)
+						}
+						if (method === 'DELETE') {
+							guestStore.folders = guestStore.folders.filter(x => x.id !== id)
+							guestStore.notes = guestStore.notes.filter(x => x.folder_id !== id)
+							return ok({ success: true })
+						}
+					}
+				}
+
+				// 3. Notes
+				if (url.includes('/api/notes')) {
+					if (method === 'GET') return ok([...guestStore.notes].sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)))
+					if (method === 'POST') {
+						const newNote = { id: Date.now(), title: body.title || 'Untitled', content: body.content || '', folder_id: body.folder_id, updated_at: new Date().toISOString(), created_at: new Date().toISOString() }
+						guestStore.notes.unshift(newNote)
+						return ok(newNote)
+					}
+					const idMatch = url.match(/\/api\/notes\/(\d+)/)
+					if (idMatch) {
+						const id = parseInt(idMatch[1])
+						if (method === 'PUT') {
+							const n = guestStore.notes.find(x => x.id === id)
+							if (n) {
+								if (body.title !== undefined) n.title = body.title
+								if (body.content !== undefined) n.content = body.content
+								if (body.folder_id !== undefined) n.folder_id = body.folder_id
+								n.updated_at = new Date().toISOString()
+								return ok(n)
+							}
+							return bad()
+						}
+						if (method === 'DELETE') {
+							guestStore.notes = guestStore.notes.filter(x => x.id !== id)
+							return ok({ success: true })
+						}
+					}
+				}
+
+				return ok({})
+			}
+
+			if (!token) return null // Return null or throw error if no token for non-guest mode
+
+			const headers = {
+				...options.headers,
+				'Authorization': `Bearer ${token}`
+			}
+
+			const response = await fetch(url, { ...options, headers })
+			if (response.status === 401) {
+				logout()
+				return null
+			}
+			return response
+		}
+		// Floating Toolbar State (Defined Early)
+		const toolbar = ref({
+			show: false,
+			x: 0,
+			y: 0
+		})
+
+		const hideToolbar = () => {
+			toolbar.value.show = false
+		}
+
+
+		// Forward declaration not possible with const, so we change logic order.
+		// We will define debouncedUpdate and updateNote BEFORE handleInput.
+
+
+		let debounceTimer = null
+
+		const updateNote = async () => {
+			if (!selectedNote.value || !selectedNote.value.id) return
+
+			selectedNote.value.updated_at = new Date().toISOString()
+			statusMessage.value = 'Saving...'
+
+			try {
+				const response = await authenticatedFetch(`/api/notes/${selectedNote.value.id}`, {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						title: selectedNote.value.title,
+						content: selectedNote.value.content,
+						folder_id: selectedNote.value.folder_id
+					})
+				})
+
+				if (response && response.ok) {
+					statusMessage.value = 'Saved'
+					// Update local list
+					const idx = notes.value.findIndex(n => n.id === selectedNote.value.id)
+					if (idx !== -1) {
+						notes.value[idx] = { ...selectedNote.value }
+					}
+				} else {
+					statusMessage.value = 'Error saving'
+				}
+			} catch (e) {
+				console.error("Save failed", e)
+				statusMessage.value = 'Error saving'
+			}
+		}
+
+		const debouncedUpdate = () => {
+			statusMessage.value = 'Typing...'
+			if (debounceTimer) clearTimeout(debounceTimer)
+			debounceTimer = setTimeout(updateNote, 1000)
+		}
+
+
+
+
+
+		// New Handlers
+		const handleInput = (e) => {
+			if (selectedNote.value) {
+				selectedNote.value.content = e.target.value
+				debouncedUpdate()
+			}
+		}
+
+		const handleKeydown = (e) => {
+			// Tab Handling
+			if (e.key === 'Tab') {
+				e.preventDefault()
+				const el = e.target
+				const start = el.selectionStart
+				const end = el.selectionEnd
+
+				// Simple inset 4 spaces
+				// If shift, we could try to unindent, but textarea manipulation is raw.
+				// Sticking to basic insert for now.
+				if (!e.shiftKey) {
+					el.setRangeText('    ', start, end, 'end')
+					handleInput(e) // Update state
+				}
+			}
+
+			// Shortcuts
+			if ((e.metaKey || e.ctrlKey)) {
+				switch (e.key.toLowerCase()) {
+					case 'b': e.preventDefault(); formatText('bold'); break;
+					case 'i': e.preventDefault(); formatText('italic'); break;
+					case 'k': e.preventDefault(); formatText('link'); break;
+					case 's': e.preventDefault(); updateNote(); break; // Save
+					case 'f': e.preventDefault(); openSearch(); break;
+				}
+			}
+		}
+
+		const handleScroll = (e) => {
+			if (!previewRef.value || !editorRef.value) return
+
+			const source = e.target
+			const editor = editorRef.value
+			let target = null
+
+			if (source === previewRef.value) {
+				target = editor
+			} else if (source === editor) {
+				target = previewRef.value
+			}
+
+			if (target && source.scrollHeight > source.clientHeight) {
+				const percentage = source.scrollTop / (source.scrollHeight - source.clientHeight)
+				target.scrollTop = percentage * (target.scrollHeight - target.clientHeight)
+			}
+		}
+
+		// Toolbar Logic
+
+
+
+
+		// Track mouse for toolbar
+		const mousePos = ref({ x: 0, y: 0 })
+		window.addEventListener('mousemove', (e) => {
+			mousePos.value = { x: e.clientX, y: e.clientY }
+		})
+
+		const updateToolbarPos = () => {
+			const el = editorRef.value
+			if (!el || el.selectionStart === el.selectionEnd) {
+				hideToolbar()
+				return
+			}
+			// Show at mouse pos
+			toolbar.value.x = mousePos.value.x
+			toolbar.value.y = mousePos.value.y - 40 // Above cursor
+			toolbar.value.show = true
+		}
+
+		const formatText = (type) => {
+			const el = editorRef.value
+			if (!el) return
+			const start = el.selectionStart
+			const end = el.selectionEnd
+			const selection = el.value.substring(start, end)
+
+			let newText = selection
+			let wrap = ''
+
+			switch (type) {
+				case 'bold': wrap = '**'; break;
+				case 'italic': wrap = '*'; break;
+				case 'strike': wrap = '~~'; break;
+				case 'code': wrap = '`'; break; // Simple inline code
+				case 'link':
+					newText = `[${selection}](url)`
+					wrap = ''
+					break;
+				// Headings
+				case 'h1': case 'h2': case 'h3': case 'h4': case 'h5':
+					// Handle line logic... complex for simple textarea replace.
+					// Just prepend to selection for now or handle simple case.
+					const level = parseInt(type.replace('h', ''))
+					const prefix = '#'.repeat(level) + ' '
+					// We should find the start of the line.
+					// Scan back from start to find \n
+					let lineStart = el.value.lastIndexOf('\n', start - 1) + 1
+					// Insert at lineStart
+					el.setRangeText(prefix, lineStart, lineStart, 'end')
+					handleInput({ target: el })
+					el.focus()
+					return
+			}
+
+			if (wrap) {
+				newText = `${wrap}${selection}${wrap}`
+			}
+
+			el.setRangeText(newText, start, end, 'select')
+			handleInput({ target: el })
+			hideToolbar()
+			el.focus()
+		}
+
+		const focusEditor = () => {
+			if (editorRef.value) {
+				editorRef.value.focus()
+			}
+		}
+
+		// --- Search Widget Logic (Simplified) ---
+		// Search highlighting is removed as textarea doesn't support it easily.
+		// We implement Find/Next/Replace.
+		const searchState = ref({
+			show: false,
+			showReplace: false,
+			query: '',
+			replaceText: '',
+			caseSensitive: false,
+			useRegex: false
+		})
+		const searchInputRef = ref(null)
+
+		const updateHighlights = () => {
+			// Not supported in Textarea
+		}
+
+		const openSearch = (replace = false) => {
+			searchState.value.show = true
+			if (replace) searchState.value.showReplace = true
+			nextTick(() => {
+				if (searchInputRef.value) searchInputRef.value.focus()
+				const el = editorRef.value
+				if (el && el.selectionStart !== el.selectionEnd) {
+					searchState.value.query = el.value.substring(el.selectionStart, el.selectionEnd)
+				}
+			})
+		}
+
+		const closeSearch = () => {
+			searchState.value.show = false
+			searchState.value.showReplace = false
+			if (editorRef.value) editorRef.value.focus()
+		}
+
+		watch(() => [searchState.value.query, searchState.value.caseSensitive, searchState.value.useRegex], () => {
+			// No live highlights
+		})
+
+		const executeFind = (reverse = false) => {
+			// Basic find in string
+			const el = editorRef.value
+			if (!el) return
+			const content = el.value
+			let query = searchState.value.query
+			if (!query) return
+
+			let searchIndex = -1
+			const currentPos = el.selectionEnd // Start searching after current selection
+
+			// Flags
+			const flags = searchState.value.caseSensitive ? 'g' : 'gi'
+
+			if (searchState.value.useRegex) {
+				// Regex find... complex to implement "Next" without global loop.
+				// Simplified: Find all matches, find next one after currentPos.
+				try {
+					const regex = new RegExp(query, flags)
+					let match
+					const matches = []
+					while ((match = regex.exec(content)) !== null) {
+						matches.push({ start: match.index, end: match.index + match[0].length })
+					}
+
+					if (matches.length === 0) return
+
+					// Find next
+					let nextMatch = matches.find(m => m.start >= currentPos)
+					if (!nextMatch) nextMatch = matches[0] // Loop around
+
+					if (nextMatch) {
+						el.setSelectionRange(nextMatch.start, nextMatch.end)
+						el.scrollIntoView({ block: 'center' }) // Crude scroll
+						// Better scroll:
+						const lines = content.substring(0, nextMatch.start).split('\n').length
+						const lineHeight = 24 // approximate
+						el.scrollTop = (lines * lineHeight) - (el.clientHeight / 2)
+					}
+				} catch (e) { }
+			} else {
+				// String find
+				const lowerContent = searchState.value.caseSensitive ? content : content.toLowerCase()
+				const lowerQuery = searchState.value.caseSensitive ? query : query.toLowerCase()
+
+				let nextIndex = lowerContent.indexOf(lowerQuery, currentPos)
+				if (nextIndex === -1) nextIndex = lowerContent.indexOf(lowerQuery, 0) // Loop
+
+				if (nextIndex !== -1) {
+					el.setSelectionRange(nextIndex, nextIndex + query.length)
+					el.blur(); el.focus() // Ensure visibility?
+
+					// Scroll
+					const lines = content.substring(0, nextIndex).split('\n').length
+					// approximate scroll...
+				}
+			}
+		}
+
+		const executeReplace = (all = false) => {
+			const el = editorRef.value
+			if (!el) return
+			const query = searchState.value.query
+			const replacement = searchState.value.replaceText
+			if (!query) return
+
+			if (all) {
+				const flags = (searchState.value.caseSensitive ? 'g' : 'gi')
+				const regex = new RegExp(searchState.value.useRegex ? query : query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags)
+				const newContent = el.value.replace(regex, replacement)
+				selectedNote.value.content = newContent
+				el.value = newContent
+				handleInput({ target: el })
+			} else {
+				// Replace current selection if matches, or find next
+				if (el.selectionStart !== el.selectionEnd) {
+					const sel = el.value.substring(el.selectionStart, el.selectionEnd)
+					// Check match
+					// ... simplified: just replace
+					el.setRangeText(replacement, el.selectionStart, el.selectionEnd, 'select')
+					handleInput({ target: el })
+					executeFind()
+				} else {
+					executeFind()
+				}
+			}
+		}
+
+		// Watchers
+		watch(() => selectedNote.value?.id, (newId) => {
+			if (newId) {
+				nextTick(() => {
+					const el = editorRef.value
+					if (el && selectedNote.value) {
+						el.value = selectedNote.value.content || ''
+						el.scrollTop = 0
+					}
+				})
+			}
+		}, { flush: 'post', immediate: true })
+
+		watch(isDarkMode, (val) => {
+			// CSS handles colors
+		})
+
+		watch(fontSize, (val) => {
+			// CSS bound style handles this
+		})
+
+		watch(isSidebarOpen, () => {
+			// responsive
+		})
+
+		watch(viewMode, () => {
+			// responsive
+		})
+
+
+
 
 
 		// App Version & Config
@@ -62,16 +545,12 @@ createApp({
 			}
 		}
 
-		const fontSize = ref(localStorage.getItem('shynote_font_size') || '14')
-		const setFontSize = (size) => {
-			fontSize.value = size
-			localStorage.setItem('shynote_font_size', size)
-		}
+
 
 		// Sort State
 		const sortOption = ref({
-			field: localStorage.getItem('shynote_sort_field') || 'title', // 'title', 'updated_at', 'created_at'
-			direction: localStorage.getItem('shynote_sort_direction') || 'asc' // 'asc', 'desc'
+			field: localStorage.getItem(STORAGE_KEYS.SORT_FIELD) || 'title', // 'title', 'updated_at', 'created_at'
+			direction: localStorage.getItem(STORAGE_KEYS.SORT_DIRECTION) || 'asc' // 'asc', 'desc'
 		})
 
 		const sortLabel = computed(() => {
@@ -159,44 +638,46 @@ createApp({
 			closeModal()
 		}
 
-		let debounceTimer = null
 
-		const checkAuth = () => {
+
+		const checkAuth = async () => {
 			const urlParams = new URLSearchParams(window.location.search);
 			const isGuestMode = urlParams.get('mode') === 'guest';
-			const storedToken = localStorage.getItem('access_token');
+			const storedToken = localStorage.getItem(STORAGE_KEYS.TOKEN);
 
 			if (isGuestMode) {
-				// Enter Guest Mode
-				localStorage.setItem('access_token', 'guest');
+				localStorage.setItem(STORAGE_KEYS.TOKEN, 'guest');
 				isAuthenticated.value = true;
-				// Force load from guest store initially if we want specific state before fetch
-				// But fetchNotes/fetchFolders will be called immediately after and will hit our mock handler.
-			} else if (storedToken === 'guest') {
-				// We were in guest mode, but now accessed root without ?mode=guest
-				// Switch back to Auth Mode (Logout)
+				await Promise.all([fetchFolders(), fetchNotes(), fetchUserProfile()]);
+				autoSelectNote();
+			} else if (storedToken === 'guest' && !isGuestMode) {
 				logout();
 			} else if (storedToken) {
-				// Normal Auth
 				isAuthenticated.value = true;
-				fetchFolders();
-				fetchNotes();
-				fetchUserProfile();
+				await Promise.all([fetchFolders(), fetchNotes(), fetchUserProfile()]);
+				autoSelectNote();
 			} else {
 				isAuthenticated.value = false;
 			}
 		}
 
-		onMounted(() => {
-			checkAuth()
+		onMounted(async () => {
+			await checkAuth()
 			fetchAppConfig()
 			fetchChangelog()
 			initGoogleAuth()
 
-			// Detect system theme preference initially if not set
-			if (!localStorage.getItem('shynote_dark_mode')) {
+			// Global Esc Key Listener for Modals
+			window.addEventListener('keydown', (e) => {
+				if (e.key === 'Escape' && modalState.value.isOpen) {
+					closeModal()
+				}
+			})
+
+			if (localStorage.getItem(STORAGE_KEYS.DARK_MODE) === null) {
 				if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
 					isDarkMode.value = true
+					localStorage.setItem(STORAGE_KEYS.DARK_MODE, 'true')
 				}
 			}
 			if (isDarkMode.value) document.documentElement.classList.add('dark')
@@ -217,12 +698,10 @@ createApp({
 
 				if (res.ok) {
 					const data = await res.json()
-					localStorage.setItem('access_token', data.access_token)
+					localStorage.setItem(STORAGE_KEYS.TOKEN, data.access_token)
 					isAuthenticated.value = true
-					isAuthenticated.value = true
-					fetchUserProfile()
-					fetchFolders()
-					fetchNotes()
+					await Promise.all([fetchUserProfile(), fetchFolders(), fetchNotes()])
+					autoSelectNote()
 				} else {
 					console.error("Login failed")
 					alert("Login failed!")
@@ -266,105 +745,7 @@ createApp({
 			}
 		}
 
-		const authenticatedFetch = async (url, options = {}) => {
-			const token = localStorage.getItem('access_token')
 
-			// Guest Mode Bypass & Mock
-			if (token === 'guest') {
-				await new Promise(r => setTimeout(r, 50)); // Tiny network delay simulation
-
-				// Mock Response Helper
-				const ok = (data) => Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(data) })
-				const bad = () => Promise.resolve({ ok: false, status: 400, json: () => Promise.resolve({ error: 'Bad Request' }) })
-
-				const method = options.method || 'GET'
-				const body = options.body ? JSON.parse(options.body) : {}
-
-				// 1. Auth / Profile
-				if (url.includes('/auth/me')) {
-					if (method === 'GET') return ok(guestStore.user)
-					if (method === 'PATCH') {
-						Object.assign(guestStore.user, body)
-						return ok(guestStore.user)
-					}
-				}
-
-				// 2. Folders
-				if (url.includes('/api/folders')) {
-					if (method === 'GET') return ok([...guestStore.folders])
-					if (method === 'POST') {
-						const newFolder = { id: Date.now(), name: body.name, user_id: 'guest', created_at: new Date().toISOString() }
-						guestStore.folders.push(newFolder)
-						return ok(newFolder)
-					}
-					const idMatch = url.match(/\/api\/folders\/(\d+)/)
-					if (idMatch) {
-						const id = parseInt(idMatch[1])
-						if (method === 'PUT') {
-							const f = guestStore.folders.find(x => x.id === id)
-							if (f) f.name = body.name
-							return ok(f)
-						}
-						if (method === 'DELETE') {
-							guestStore.folders = guestStore.folders.filter(x => x.id !== id)
-							guestStore.notes = guestStore.notes.filter(x => x.folder_id !== id)
-							return ok({ success: true })
-						}
-					}
-				}
-
-				// 3. Notes
-				if (url.includes('/api/notes')) {
-					if (method === 'GET') return ok([...guestStore.notes].sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)))
-					if (method === 'POST') {
-						const newNote = { id: Date.now(), title: body.title || 'Untitled', content: body.content || '', folder_id: body.folder_id, updated_at: new Date().toISOString(), created_at: new Date().toISOString() }
-						guestStore.notes.unshift(newNote)
-						return ok(newNote)
-					}
-					const idMatch = url.match(/\/api\/notes\/(\d+)/)
-					if (idMatch) {
-						const id = parseInt(idMatch[1])
-						if (method === 'PUT') {
-							const n = guestStore.notes.find(x => x.id === id)
-							if (n) {
-								if (body.title !== undefined) n.title = body.title
-								if (body.content !== undefined) n.content = body.content
-								if (body.folder_id !== undefined) n.folder_id = body.folder_id
-								n.updated_at = new Date().toISOString()
-								return ok(n)
-							}
-							return bad()
-						}
-						if (method === 'DELETE') {
-							guestStore.notes = guestStore.notes.filter(x => x.id !== id)
-							return ok({ success: true })
-						}
-					}
-				}
-
-				return ok({})
-			}
-
-			const headers = {
-				...options.headers,
-				'Authorization': `Bearer ${token}`
-			}
-
-			const response = await fetch(url, { ...options, headers })
-			if (response.status === 401) {
-				logout()
-				return null
-			}
-			return response
-		}
-
-		const logout = () => {
-			localStorage.removeItem('access_token')
-			isAuthenticated.value = false
-			notes.value = []
-			folders.value = []
-			selectedNote.value = null
-		}
 
 		const toggleSidebar = () => {
 			isSidebarOpen.value = !isSidebarOpen.value
@@ -372,7 +753,7 @@ createApp({
 
 		const toggleFolder = (folderId) => {
 			collapsedFolders.value[folderId] = !collapsedFolders.value[folderId]
-			localStorage.setItem('shynote_collapsed_folders', JSON.stringify(collapsedFolders.value))
+			localStorage.setItem(STORAGE_KEYS.COLLAPSED_FOLDERS, JSON.stringify(collapsedFolders.value))
 		}
 
 		const applyTheme = () => {
@@ -400,6 +781,7 @@ createApp({
 		const toggleDarkMode = () => {
 			isDarkMode.value = !isDarkMode.value
 			applyTheme()
+			localStorage.setItem(STORAGE_KEYS.DARK_MODE, isDarkMode.value)
 			updateUserProfile({ is_dark_mode: isDarkMode.value })
 		}
 
@@ -420,10 +802,10 @@ createApp({
 		const setSortOption = (type, value) => {
 			if (type === 'field') {
 				sortOption.value.field = value
-				localStorage.setItem('shynote_sort_field', value)
+				localStorage.setItem(STORAGE_KEYS.SORT_FIELD, value)
 			} else if (type === 'direction') {
 				sortOption.value.direction = value
-				localStorage.setItem('shynote_sort_direction', value)
+				localStorage.setItem(STORAGE_KEYS.SORT_DIRECTION, value)
 			}
 		}
 
@@ -451,14 +833,7 @@ createApp({
 			})
 		}
 
-		const handleScroll = (e) => {
-			if (!editorRef.value || !previewRef.value) return
-			const source = e.target
-			const target = source === editorRef.value ? previewRef.value : editorRef.value
 
-			const percentage = source.scrollTop / (source.scrollHeight - source.clientHeight)
-			target.scrollTop = percentage * (target.scrollHeight - target.clientHeight)
-		}
 
 		const fetchFolders = async () => {
 			try {
@@ -556,13 +931,54 @@ createApp({
 			}
 		}
 
+		const autoSelectNote = () => {
+			if (notes.value.length === 0) return
+
+			const lastNoteId = localStorage.getItem(STORAGE_KEYS.LAST_NOTE_ID)
+			if (lastNoteId) {
+				const lastNote = notes.value.find(n => String(n.id) === String(lastNoteId))
+				if (lastNote) {
+					selectNote(lastNote)
+					return
+				}
+			}
+
+			// Fallback: first note at the top
+			// First check folders in sorted order
+			const allSortedFolders = sortItems(folders.value)
+			for (const folder of allSortedFolders) {
+				const folderNotes = getSortedFolderNotes(folder.id)
+				if (folderNotes.length > 0) {
+					selectNote(folderNotes[0])
+					return
+				}
+			}
+			// Then check root notes in sorted order
+			const rootNotes = sortItems(notes.value.filter(n => !n.folder_id))
+			if (rootNotes.length > 0) {
+				selectNote(rootNotes[0])
+			}
+		}
+
 		const toggleSidebarPin = () => {
 			isSidebarPinned.value = !isSidebarPinned.value
-			localStorage.setItem('shynote_sidebar_pinned', isSidebarPinned.value)
+			localStorage.setItem(STORAGE_KEYS.SIDEBAR_PINNED, isSidebarPinned.value)
+		}
+
+		const deselectNote = () => {
+			console.log("Navigating to About Shynote page...");
+			selectedNote.value = null
+			// cmEditor.value = null // Clear editor reference to force re-init on fresh DOM
+			if (isSidebarOpen.value && !isSidebarPinned.value) {
+				isSidebarOpen.value = false
+			}
 		}
 
 		const selectNote = (note) => {
 			selectedNote.value = note
+			if (note && note.id) {
+				localStorage.setItem(STORAGE_KEYS.LAST_NOTE_ID, note.id)
+			}
 			// Ensure content is string for marked
 			if (selectedNote.value.content === null) selectedNote.value.content = ""
 
@@ -574,41 +990,7 @@ createApp({
 			}
 		}
 
-		const updateNote = async () => {
-			if (!selectedNote.value) return
 
-			statusMessage.value = 'Saving...'
-			try {
-				const response = await authenticatedFetch(`/api/notes/${selectedNote.value.id}`, {
-					method: 'PUT',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						title: selectedNote.value.title,
-						content: selectedNote.value.content,
-						folder_id: selectedNote.value.folder_id
-					})
-				})
-
-				if (response && response.ok) {
-					const updatedNote = await response.json()
-					// Update list item
-					const index = notes.value.findIndex(n => n.id === selectedNote.value.id)
-					if (index !== -1) {
-						notes.value[index] = updatedNote
-					}
-					// Update selectedNote timestamps (keep reference if possible, or update properties)
-					if (selectedNote.value && selectedNote.value.id === updatedNote.id) {
-						selectedNote.value.updated_at = updatedNote.updated_at
-					}
-					statusMessage.value = 'Saved'
-				} else {
-					statusMessage.value = 'Error'
-				}
-			} catch (e) {
-				statusMessage.value = 'Error'
-				console.error(e)
-			}
-		}
 
 		const deleteNote = (id) => {
 			openModal('delete-note', id)
@@ -887,346 +1269,13 @@ createApp({
 			}
 		}
 
-		const handleEditorKeyDown = (e) => {
-			if (e.isComposing || e.keyCode === 229) return
-
-			const el = e.target
-			const { selectionStart, selectionEnd, value } = el
-			const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
-			// const ctrlKey = isMac ? e.metaKey : e.ctrlKey 
-			const cmdKey = isMac ? e.metaKey : e.ctrlKey
-
-			// Helper: Insert text using execCommand to preserve Undo history
-			// Fallback to setRangeText if needed
-			const execReplace = (text, start, end) => {
-				el.focus()
-				el.setSelectionRange(start, end)
-				const success = document.execCommand('insertText', false, text)
-				if (!success) {
-					// Fallback
-					el.setRangeText(text, start, end, 'end')
-					el.dispatchEvent(new Event('input', { bubbles: true }))
-				}
-				// execCommand automatically fires input event
-			}
-
-			// Helper: Simple insert at current cursor
-			const insertText = (text) => {
-				const success = document.execCommand('insertText', false, text)
-				if (!success) {
-					el.setRangeText(text, el.selectionStart, el.selectionEnd, 'end')
-					el.dispatchEvent(new Event('input', { bubbles: true }))
-				}
-			}
-
-			// Helper: Get info about FULL lines covered by the selection
-			const getSelectedLinesInfo = () => {
-				const startLineStart = value.lastIndexOf('\n', selectionStart - 1) + 1
-
-				// Calculate end of the effective selection
-				// If cursor is at start of next line and there is a selection, we consider previous line as end
-				// e.g. "Line1\n|" (selection includes \n) -> We treat it as Line1 selected.
-				let effectiveEnd = selectionEnd
-				if (selectionEnd > selectionStart && (selectionEnd === value.length || value[selectionEnd - 1] === '\n')) {
-					// Check if we are actually at start of a line? 
-					// Actually, simpler check: if we are strictly after start, and prev char is newline
-					// we back off search to prevent grabbing next line
-					effectiveEnd--
-				}
-
-				let endLineEnd = value.indexOf('\n', effectiveEnd)
-				if (endLineEnd === -1) endLineEnd = value.length
-
-				const text = value.substring(startLineStart, endLineEnd)
-				return { start: startLineStart, end: endLineEnd, text }
-			}
-
-			// 1. Move Line Up/Down (Alt + Up/Down)
-			if (e.altKey && !e.shiftKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
-				e.preventDefault()
-				const { start, end, text } = getSelectedLinesInfo()
-
-				if (e.key === 'ArrowUp') {
-					if (start > 0) {
-						// Find previous line
-						const prevLineStart = value.lastIndexOf('\n', start - 2) + 1
-						const prevLineEnd = start - 1
-						const prevLine = value.substring(prevLineStart, prevLineEnd)
-
-						// New content: Selected Block + \n + Previous Line
-						// We replace [prevLineStart, end] with [text + \n + prevLine]
-						const newContent = text + '\n' + prevLine
-
-						execReplace(newContent, prevLineStart, end)
-
-						// Maintain selection on the moved block (now shifts up)
-						// Start is prevLineStart. End is prevLineStart + text.length
-						// But we also need to respect internal selection offsets if we want to be fancy?
-						// VSCode selects the whole block after move usually.
-						// Let's select the whole moved block.
-						nextTick(() => el.setSelectionRange(prevLineStart, prevLineStart + text.length))
-					}
-				} else if (e.key === 'ArrowDown') {
-					if (end < value.length) {
-						// Find next line
-						const nextLineStart = end + 1
-						let nextLineEnd = value.indexOf('\n', nextLineStart)
-						if (nextLineEnd === -1) nextLineEnd = value.length
-						const nextLine = value.substring(nextLineStart, nextLineEnd)
-
-						// New content: Next Line + \n + Selected Block
-						// Replace [start, nextLineEnd]
-						const newContent = nextLine + '\n' + text
-
-						execReplace(newContent, start, nextLineEnd)
-
-						// Maintain selection (shifts down by nextLine length + 1)
-						const offset = nextLine.length + 1
-						nextTick(() => el.setSelectionRange(start + offset, start + offset + text.length))
-					}
-				}
-				return
-			}
-
-			// 2. Copy Line Up/Down (Shift + Alt + Up/Down)
-			if (e.altKey && e.shiftKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
-				e.preventDefault()
-				const { start, end, text } = getSelectedLinesInfo()
-
-				// Standard behavior: 
-				// Down: Copy block and insert it BELOW. Selection stays on Original (or New? VSCode allows toggle. Usually Original stays selected or moves to new.)
-				// VSCode "Copy Line Down": Duplicates line, cursor moves to the NEW line (the bottom one).
-				// We will duplicate and move selection to the new block to facilitate chaining.
-
-				// Text to insert is `text + '\n'` (for Up) or `'\n' + text` (for Down)
-
-				if (e.key === 'ArrowUp') {
-					// Copy Up: Insert Duplicate ABOVE current block.
-					// Selection should move to the NEW (top) block? 
-					// Actually VSCode "Copy Line Up": Duplicates line up. Selection stays on the bottom instance (original).
-					// Let's stick to "Selection stays on the instance that was highlighted"? 
-					// If I copy UP, the new stuff is above. My cursor stays visually where it was (relative to viewport),
-					// effectively meaning it stays on the 'bottom' copy (which is the original content shifted down).
-					// So we insert text at `start`.
-					const textToInsert = text + '\n'
-					execReplace(textToInsert, start, start)
-
-					// Selection: Stays on original? 
-					// Original was at [start, end].
-					// Now it is at [start + len, end + len].
-					// So to keep selection on "Original" (now bottom), we shift selection.
-					const len = textToInsert.length
-					// We need to know exact selection offsets relative to block start if we want to preserve partial selection
-					// But `execReplace` messes with selection.
-					// Let's just select the whole original block again? Or keep exact internal?
-					// Simplicity: Select whole block.
-					// Update: Keep selection on the *Original* (bottom) block.
-					nextTick(() => el.setSelectionRange(start + len, end + len))
-				} else {
-					// Copy Down: Insert Duplicate BELOW current block.
-					// Selection stays on the TOP instance (original).
-					// We insert `\n + text` at `end`.
-					let insertPos = end
-					let textToInsert = '\n' + text
-					if (end === value.length) { // No newline at end of file case
-						textToInsert = '\n' + text
-					}
-
-					// If we insert at end, original block [start, end] is untouched.
-					// Except if we append, we typically use execReplace (insertText) at `end`.
-					execReplace(textToInsert, end, end)
-
-					// Keep selection on original (top)
-					nextTick(() => el.setSelectionRange(start, end))
-				}
-				return
-			}
-
-			// 3. Smart Enter (Smart Lists, Indent, Comments)
-			if (e.key === 'Enter') {
-				// Helper: Get line info for single line operations
-				const getLineInfo = () => {
-					const startPos = value.lastIndexOf('\n', selectionStart - 1) + 1
-					let endPos = value.indexOf('\n', selectionStart)
-					if (endPos === -1) endPos = value.length
-					return { startPos, endPos, line: value.substring(startPos, endPos) }
-				}
-
-				const { startPos, line } = getLineInfo()
 
 
-				// Bullets: -, *, +
-				const bulletMatch = line.match(/^(\s*)([-*+])\s+/)
-				if (bulletMatch) {
-					if (line.trim() === bulletMatch[2]) { // If only bullet, clear line
-						e.preventDefault()
-						execReplace('', startPos, selectionStart) // Clear up to cursor (or endPos if at end)
-					} else { // Continue bullet
-						e.preventDefault()
-						const prefix = '\n' + bulletMatch[1] + bulletMatch[2] + ' '
-						insertText(prefix)
-					}
-					return
-				}
 
-				// Numbered List: 1. 2.
-				const numMatch = line.match(/^(\s*)(\d+)\.\s+/)
-				if (numMatch) {
-					e.preventDefault()
-					const nextNum = parseInt(numMatch[2]) + 1
-					const prefix = '\n' + numMatch[1] + nextNum + '. '
-					insertText(prefix)
-					return
-				}
 
-				// Comments: // or * (JSDoc)
-				const commentMatch = line.match(/^(\s*)(\/\/|\*|\/\*\*?)\s*/)
-				if (commentMatch) {
-					e.preventDefault()
-					let char = commentMatch[2]
-					if (char.startsWith('/*')) char = ' *'
-					const prefix = '\n' + commentMatch[1] + char + ' '
-					insertText(prefix)
-					return
-				}
 
-				// Smart Indent: After { or :
-				if (line.trim().endsWith('{') || line.trim().endsWith(':')) {
-					e.preventDefault()
-					const indentMatch = line.match(/^(\s*)/)
-					const currentIndent = indentMatch ? indentMatch[1] : ''
 
-					// Use 2 spaces
-					// If e.shiftKey? Unindent? No, enter just indents.
-					const prefix = '\n' + currentIndent + '  '
-					insertText(prefix)
-					return
-				}
-			}
 
-			// 3.5. Tab Key (Multi-line support)
-			if (e.key === 'Tab') {
-				e.preventDefault()
-
-				const startLineStart = value.lastIndexOf('\n', selectionStart - 1) + 1
-				let endLineEnd = value.indexOf('\n', selectionEnd)
-				if (endLineEnd === -1) endLineEnd = value.length
-				// If selection ends exactly at a newline, we might not want to indent the next empty line? 
-				// VS Code behavior: if cursor is at beginning of line `\n|`, it is Line N. 
-				// If selection is `Line 1\nLine 2`, endPos is after '2'.
-				// If selection includes the newline at end `Line 1\n`, it usually treats as Line 1 + Line 2 start?
-				// Let's stick to: if we have a range, extend to full lines.
-
-				// However, if selectionEnd is exactly at the start of a line (after \n), that line is typically NOT included in the indent action unless it's the only line.
-				// e.g. "A\n|B" -> Selection is "A\n". We indent A.
-				// "A\nB|" -> Selection is "A\nB". We indent A and B.
-
-				// Fix endLineEnd logic:
-				// If selectionEnd > startLineStart and value[selectionEnd-1] === '\n', current line is one less?
-				// To complicate things less, let's just grab the block spanning start to end.
-
-				// Re-calc boundaries to include full lines
-				// Start is simple:
-				const blockStart = value.lastIndexOf('\n', selectionStart - 1) + 1
-
-				// End:
-				let blockEnd = value.indexOf('\n', selectionEnd)
-				if (blockEnd === -1) blockEnd = value.length
-
-				// Special case: if selectionEnd is > selectionStart and is at the very beginning of a line (val[selectionEnd-1] == '\n'),
-				// we shouldn't really count that last newline's following line as "selected" for indentation purposes usually.
-				// But let's verify standard behavior.
-				// If I select "abc\n", I usually expect "  abc\n" if I indent. I don't expect the next empty line to be indented.
-
-				// However, standard `substring(start, end)` usage:
-				const originalText = value.substring(blockStart, blockEnd)
-				const lines = originalText.split('\n')
-
-				if (e.shiftKey) {
-					// Unindent
-					const newLines = lines.map(line => {
-						if (line.startsWith('  ')) return line.substring(2)
-						if (line.startsWith('\t')) return line.substring(1)
-						if (line.startsWith(' ')) return line.substring(1)
-						return line
-					})
-					const newText = newLines.join('\n')
-
-					if (newText !== originalText) {
-						execReplace(newText, blockStart, blockEnd)
-						// Restore selection roughly
-						// It's hard to exactly map selection anchors after mutation, 
-						// but standard behavior is selecting the whole block.
-						nextTick(() => {
-							el.setSelectionRange(blockStart, blockStart + newText.length)
-						})
-					}
-				} else {
-					// Indent
-					// Only if we have a selection OR it's a multi-line block.
-					// If it is a caret (selectionStart === selectionEnd), simple insert.
-					// UNLESS user wants "indent line" behavior even when just caret?
-					// Usually Tab at caret = insert spaces. Tab with selection = indent block.
-
-					if (selectionStart === selectionEnd) {
-						insertText('  ')
-						return
-					}
-
-					const newLines = lines.map(line => '  ' + line)
-					const newText = newLines.join('\n')
-
-					execReplace(newText, blockStart, blockEnd)
-					nextTick(() => {
-						el.setSelectionRange(blockStart, blockStart + newText.length)
-					})
-				}
-				return
-			}
-
-			// 4. Markdown Shortcuts
-			if (cmdKey) {
-				if (e.key === 'b') { // Bold
-					e.preventDefault()
-					const selectedText = value.substring(selectionStart, selectionEnd)
-					insertText(`**${selectedText}**`)
-					// Cursor placement logic
-					// insertText moves cursor to end.
-					// We need to calculate where to put it.
-					// If empty selection: `****`. Cursor should be in middle.
-					// current cursor is at `selectionStart` + 4.
-					// Move back 2.
-					if (selectedText.length === 0) {
-						// We can't rely on valid `el.selectionStart` immediately if async?
-						// execCommand is synchronous.
-						const newPos = el.selectionEnd - 2
-						el.setSelectionRange(newPos, newPos)
-					}
-					// If text selected: `**text**`. Cursor at end. Correct.
-				} else if (e.key === 'i') { // Italic
-					e.preventDefault()
-					const selectedText = value.substring(selectionStart, selectionEnd)
-					insertText(`*${selectedText}*`)
-					if (selectedText.length === 0) {
-						const newPos = el.selectionEnd - 1
-						el.setSelectionRange(newPos, newPos)
-					}
-				} else if (e.key === 's') { // Save
-					e.preventDefault()
-					updateNote()
-					statusMessage.value = 'Saved'
-					setTimeout(() => {
-						if (statusMessage.value === 'Saved') statusMessage.value = ''
-					}, 2000)
-				}
-			}
-		}
-
-		const debouncedUpdate = () => {
-			statusMessage.value = 'Typing...'
-			if (debounceTimer) clearTimeout(debounceTimer)
-			debounceTimer = setTimeout(updateNote, 1000)
-		}
 
 		const previewContent = computed(() => {
 			if (!selectedNote.value || !selectedNote.value.content) return ''
@@ -1276,163 +1325,42 @@ createApp({
 			}
 		})
 
-		// Floating Toolbar State
-		const toolbar = ref({
-			show: false,
-			x: 0,
-			y: 0
+
+
+
+
+
+
+		// Watchers
+		watch(() => selectedNote.value?.id, (newId) => {
+			if (newId) {
+				nextTick(() => {
+					// Standard Textarea Reset
+					if (editorRef.value) {
+						editorRef.value.scrollTop = 0
+						// value is bound by v-model or :value, but simple textarea needs update? 
+						// No, :value handles it if we use v-model, but we used :value="selectedNote.content" in index.html?
+						// Let's check index.html. I didn't verify if I added v-model or :value.
+						// I added `ref="editorRef" @input="handleInput"`. I missed `:value` or `v-model`. 
+						// I need to set the value manually here or via prop. 
+						// Textarea usage: <textarea .value="..."></textarea>
+						// I'll update it here:
+						if (selectedNote.value) {
+							editorRef.value.value = selectedNote.value.content || ''
+						}
+					}
+					if (previewRef.value) {
+						previewRef.value.scrollTop = 0
+					}
+				})
+			}
+		}, { flush: 'post', immediate: true })
+
+		// Other watchers (fontSize, darkMode, viewMode) handled via CSS binding in template
+
+		watch(fontSize, (val) => {
+			// Optional: could manually resize if needed, but style binding handles it.
 		})
-
-		const hideToolbar = () => {
-			toolbar.value.show = false
-		}
-
-		const checkSelection = (e) => {
-			// Small delay to ensure selection is updated
-			setTimeout(() => {
-				const el = editorRef.value
-				if (!el) return
-
-				if (el.selectionStart !== el.selectionEnd) {
-					// We have a selection
-					// Calculate simple position based on mouse or last interaction
-					// Since textarea doesn't give BBox for text, we use mouse position if available
-					// or fallback to a guess? 
-					// Actually, for a pure textarea, getting the caret coordinates is hard without a library.
-					// We will rely on the mouseup event's clientX/Y for positioning.
-					// If triggered by keyboard, we might not show it or show it in a fixed spot?
-					// Let's stick to mouse interactions for the "floating" feeling.
-				} else {
-					hideToolbar()
-				}
-			}, 10)
-		}
-
-		const handleMouseUp = (e) => {
-			const el = editorRef.value
-			if (!el) return
-
-			if (el.selectionStart !== el.selectionEnd) {
-				const rect = el.getBoundingClientRect()
-				// Basic positioning: Above the mouse cursor
-				// Clamp values to keep it on screen
-				// Assuming toolbar width ~280px, so half is 140px. Margin 10px.
-				const halfWidth = 140
-				const screenW = window.innerWidth
-
-				// Shift right by 40px as requested
-				let x = e.clientX + 40
-				// Prevent left overflow
-				if (x < halfWidth + 10) x = halfWidth + 10
-				// Prevent right overflow
-				if (x > screenW - halfWidth - 10) x = screenW - halfWidth - 10
-
-				let y = e.clientY - 50
-				// Prevent top overflow
-				if (y < 60) y = e.clientY + 30 // Show below if too close to top
-
-				toolbar.value = {
-					show: true,
-					x: x,
-					y: y
-				}
-			} else {
-				hideToolbar()
-			}
-		}
-
-		const formatText = (type) => {
-			const el = editorRef.value
-			if (!el) return
-
-			const start = el.selectionStart
-			const end = el.selectionEnd
-			const text = el.value.substring(start, end)
-			if (!text) return
-
-			let newText = text
-			let offset = 0
-
-			switch (type) {
-				case 'bold':
-					newText = `**${text}**`
-					offset = 2
-					break
-				case 'italic':
-					newText = `*${text}*`
-					offset = 1
-					break
-				case 'strike':
-					newText = `~~${text}~~`
-					offset = 2
-					break
-				case 'code':
-					newText = `\`\`\`\n${text}\n\`\`\``
-					offset = 4
-					break
-				case 'link':
-					newText = `[${text}](url)`
-					offset = 1
-					break
-				case 'h1':
-				case 'h2':
-				case 'h3':
-				case 'h4':
-				case 'h5':
-					const level = parseInt(type.replace('h', ''))
-					// We apply heading to the entire line(s)
-					// Calculate full lines from range
-					const blockStart = el.value.lastIndexOf('\n', start - 1) + 1
-					let blockEnd = el.value.indexOf('\n', end)
-					if (blockEnd === -1) blockEnd = el.value.length
-
-					const rawBlock = el.value.substring(blockStart, blockEnd)
-					const lines = rawBlock.split('\n')
-					const prefix = '#'.repeat(level) + ' '
-
-					const newLines = lines.map(line => {
-						// Remove existing heading
-						const clean = line.replace(/^(#+\s*)/, '')
-						return prefix + clean
-					})
-
-					newText = newLines.join('\n')
-
-					// Update range to cover the whole block for replacement
-					el.focus()
-					el.setSelectionRange(blockStart, blockEnd)
-					document.execCommand('insertText', false, newText)
-					hideToolbar()
-					return // Return early as we handled the replacement manually
-			}
-
-
-			// Execute replacement
-			el.focus()
-			// Use execCommand for Undo history
-			// We need to re-select exact range because focus might strictly maintain selection, but good to be safe
-			el.setSelectionRange(start, end)
-			document.execCommand('insertText', false, newText)
-
-			// Restore selection to include the markers? Or just the text?
-			// Usually easier to select the inner text so user can chain styles?
-			// Actually standard behavior: select the whole new thing.
-
-			// If we select inner text:
-			// el.setSelectionRange(start + offset, start + offset + text.length)
-
-			// If we select whole thing (easiest):
-			// el.setSelectionRange(start, start + newText.length)
-
-			// Let's hide toolbar after action
-			hideToolbar()
-		}
-
-		const focusEditor = () => {
-			if (editorRef.value) {
-				editorRef.value.focus()
-			}
-		}
 
 		return {
 			notes,
@@ -1444,6 +1372,7 @@ createApp({
 			createNote,
 			createNoteInFolder,
 			selectNote,
+			deselectNote,
 			deleteNote,
 			deleteFolder,
 			debouncedUpdate,
@@ -1468,21 +1397,12 @@ createApp({
 			renameState,
 			startRename,
 			saveRename,
-			handleEditorKeyDown,
 
 			toolbar,
-			handleMouseUp,
 			formatText,
 			formatDate: (dateStr) => {
-				if (!dateStr) return ''
-				// Assume server returns UTC. Append 'Z' if missing to force UTC parsing.
-				// Also handle "YYYY-MM-DD HH:MM:SS" from SQLite
-				let safeStr = dateStr
-				if (typeof dateStr === 'string' && !dateStr.endsWith('Z') && !dateStr.includes('+')) {
-					safeStr = dateStr.replace(' ', 'T') + 'Z'
-				}
-				const date = new Date(safeStr)
-				if (isNaN(date.getTime())) return dateStr
+				const date = parseSafeDate(dateStr)
+				if (!date) return dateStr || ''
 
 				const yyyy = date.getFullYear()
 				const mm = String(date.getMonth() + 1).padStart(2, '0')
@@ -1493,13 +1413,8 @@ createApp({
 				return `${yyyy}.${mm}.${dd} ${hh}:${min}:${ss}`
 			},
 			formatDateParts: (dateStr) => {
-				if (!dateStr) return { date: '', time: '' }
-				let safeStr = dateStr
-				if (typeof dateStr === 'string' && !dateStr.endsWith('Z') && !dateStr.includes('+')) {
-					safeStr = dateStr.replace(' ', 'T') + 'Z'
-				}
-				const date = new Date(safeStr)
-				if (isNaN(date.getTime())) return { date: dateStr, time: '' }
+				const date = parseSafeDate(dateStr)
+				if (!date) return { date: dateStr || '', time: '' }
 
 				const yyyy = date.getFullYear()
 				const mm = String(date.getMonth() + 1).padStart(2, '0')
@@ -1541,7 +1456,18 @@ createApp({
 			copyShareLink,
 			stopSharing,
 			togglePin,
-			changelogContent
+			changelogContent,
+			toolbar,
+			formatText,
+			searchState,
+			openSearch,
+			closeSearch,
+			executeFind,
+			executeReplace,
+			searchInputRef,
+			handleInput,
+			handleKeydown,
+			updateToolbarPos
 		}
 	}
 }).mount('#app')

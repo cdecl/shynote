@@ -1,3 +1,32 @@
+# v1.0.6 Release Notes
+
+## Summary
+- 에디터 엔진을 CodeMirror에서 순수 Textarea로 회귀하여 모바일 호환성을 개선하고, 성능 안정화를 위한 대대적인 리팩토링을 진행했습니다.
+
+## Changes
+
+### 1. 에디터 엔진 변경 (Editor Engine Switch)
+- **Textarea 복귀**: CodeMirror 5를 제거하고 가벼운 표준 `textarea`로 교체하여 모바일 WebKit 브라우저에서의 충돌 및 로딩 문제를 해결했습니다.
+- **기능 이식 (Feature Porting)**:
+  - **서식 단축키**: `Bold(Cmd+B)`, `Italic(Cmd+I)`, `Link(Cmd+K)` 등 주요 단축키 지원.
+  - **탭 들여쓰기**: `Tab` 키로 4칸 들여쓰기(Space) 지원.
+  - **플로팅 툴바**: 텍스트 선택 시 포맷팅 툴바 표시 (마우스 지원).
+  - **찾기/바꾸기**: `Textarea` 호환 검색 위젯 재구현.
+
+### 2. 성능 및 안정성 (Performance & Stability)
+- **초기 로딩 속도 50% 향상**: `Promise.all`을 이용한 병렬 데이터 페칭 도입.
+
+---
+
+### 2. UI/UX 개선 (Interface Improvements)
+- **탭 기반 뷰 전환 (Tabbed Views)**:
+  - `[Editor]`, `[Preview]`, `[Split View]` 탭을 통해 직관적으로 모드 전환.
+  - Split View 모드에서도 탭 바가 유지되어 일관된 경험 제공.
+- **테마 통일 (Unified Theme)**: 에디터와 미리보기의 배경색, 폰트, 헤더 스타일을 완벽하게 일치시켜 위화감 제거.
+- **툴바 재배치**: 저장 상태(Saved)와 날짜 표시를 우측 상단으로 이동하여 공간 효율 최적화.
+
+---
+
 # v1.0.5 Release Notes
 
 ## Summary

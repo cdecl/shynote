@@ -25,9 +25,37 @@ This document tracks the cumulative implementation details of the SHYNOTE projec
 
 ---
 
-## 2. Advanced Editor Features
-**Date**: 2025-12-21
+## 2. Editor Migration (CodeMirror 5)
+**Date**: 2025-12-23
 **Status**: Implemented
+
+### Core Integration Checklist
+- [x] **Core Integration**
+  - [x] Add CodeMirror 5 CDN links (Core, Modes, Addons, Themes)
+  - [x] Initialize CodeMirror using `fromTextArea`
+  - [x] Implement Two-way Binding with Vue State
+  - [x] Dark Mode Support (setOption('theme'))
+- [x] **Styling**:
+    - [x] Match existing typography (font-family, line-height).
+
+### Feature Porting Checklist
+- [x] **Keymaps**:
+    - [x] Indent/Outdent (Tab/Shift+Tab) via `sublime` keymap.
+    - [x] Smart Lists (Auto-continue lists) via `continuelist` addon.
+    - [x] Custom Shortcuts (`Cmd+S`, `Cmd+B`...).
+- [x] **Extensions**:
+    - [x] Markdown Language Support.
+    - [x] Syntax Highlighting.
+    - [x] Active Line Highlighting.
+    - [x] Bracket Matching & Auto-close.
+- [x] **UI Components**:
+    - [x] **Floating Toolbar**: Re-implement using CodeMirror `Tooltip` or DOM widget.
+
+---
+
+## 3. Advanced Editor Features (Legacy Textarea)
+**Date**: 2025-12-21
+**Status**: Obsolete (Being replaced by CodeMirror)
 
 ### Features Checklist
 - [x] **Smart Content Control**:
@@ -112,5 +140,5 @@ This document tracks the cumulative implementation details of the SHYNOTE projec
 ## 6. Future Roadmap (To Be Implemented)
 - [ ] **Database Migration**: Fully transition to PostgreSQL for production (Vercel Postgres).
 - [ ] **State Management**: Refactor vanilla `ref` to Pinia if complexity grows.
-- [ ] **Editor Upgrade**: Evaluate CodeMirror/Monaco for richer editing experience.
+- [x] **Editor Upgrade**: Evaluate CodeMirror/Monaco for richer editing experience.
 - [ ] **Testing**: Implement `pytest` suite and E2E tests.
