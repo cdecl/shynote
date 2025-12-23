@@ -12,6 +12,8 @@ createApp({
 		const previewRef = ref(null)
 		const viewMode = ref('split') // 'split', 'edit', 'preview'
 		const isDarkMode = ref(true)
+		const collapsedFolders = ref(JSON.parse(localStorage.getItem('shynote_collapsed_folders') || '{}')) // Dictionary to track collapsed state by folder ID
+		const isSidebarPinned = ref(localStorage.getItem('shynote_sidebar_pinned') === 'true')
 		const isAuthenticated = ref(false)
 
 		// Guest Store (InMemory DB)
@@ -368,6 +370,11 @@ createApp({
 			isSidebarOpen.value = !isSidebarOpen.value
 		}
 
+		const toggleFolder = (folderId) => {
+			collapsedFolders.value[folderId] = !collapsedFolders.value[folderId]
+			localStorage.setItem('shynote_collapsed_folders', JSON.stringify(collapsedFolders.value))
+		}
+
 		const applyTheme = () => {
 			const themeLink = document.getElementById('github-theme')
 			const highlightLink = document.getElementById('highlight-theme')
@@ -549,13 +556,18 @@ createApp({
 			}
 		}
 
+		const toggleSidebarPin = () => {
+			isSidebarPinned.value = !isSidebarPinned.value
+			localStorage.setItem('shynote_sidebar_pinned', isSidebarPinned.value)
+		}
+
 		const selectNote = (note) => {
 			selectedNote.value = note
 			// Ensure content is string for marked
 			if (selectedNote.value.content === null) selectedNote.value.content = ""
 
-			// Auto collapse sidebar on selection (User Request)
-			if (isSidebarOpen.value) {
+			// Auto collapse sidebar on selection (User Request) - Only if NOT pinned
+			if (isSidebarOpen.value && !isSidebarPinned.value) {
 				setTimeout(() => {
 					isSidebarOpen.value = false
 				}, 50)
@@ -1438,6 +1450,10 @@ createApp({
 			previewContent,
 			isSidebarOpen,
 			toggleSidebar,
+			isSidebarPinned,
+			toggleSidebarPin,
+			collapsedFolders,
+			toggleFolder,
 			editorRef,
 			previewRef,
 			handleScroll,
@@ -1475,6 +1491,26 @@ createApp({
 				const min = String(date.getMinutes()).padStart(2, '0')
 				const ss = String(date.getSeconds()).padStart(2, '0')
 				return `${yyyy}.${mm}.${dd} ${hh}:${min}:${ss}`
+			},
+			formatDateParts: (dateStr) => {
+				if (!dateStr) return { date: '', time: '' }
+				let safeStr = dateStr
+				if (typeof dateStr === 'string' && !dateStr.endsWith('Z') && !dateStr.includes('+')) {
+					safeStr = dateStr.replace(' ', 'T') + 'Z'
+				}
+				const date = new Date(safeStr)
+				if (isNaN(date.getTime())) return { date: dateStr, time: '' }
+
+				const yyyy = date.getFullYear()
+				const mm = String(date.getMonth() + 1).padStart(2, '0')
+				const dd = String(date.getDate()).padStart(2, '0')
+				const hh = String(date.getHours()).padStart(2, '0')
+				const min = String(date.getMinutes()).padStart(2, '0')
+				const ss = String(date.getSeconds()).padStart(2, '0')
+				return {
+					date: `${yyyy}.${mm}.${dd}`,
+					time: `${hh}:${min}:${ss}`
+				}
 			},
 			modalState,
 			closeModal,
