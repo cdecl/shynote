@@ -556,8 +556,16 @@ createApp({
 			}
 		}
 
+		const hasSelection = ref(false)
+		const checkSelection = () => {
+			const el = editorRef.value
+			if (!el) return
+			hasSelection.value = el.selectionStart !== el.selectionEnd
+		}
+
 		// Scroll Sync
 		const handleScroll = (e) => {
+			// ... existing scroll logic
 			if (!editorRef.value) return
 			const source = e.target
 
@@ -1591,7 +1599,10 @@ createApp({
 			searchInputRef,
 			handleInput,
 			handleKeydown,
-			formatText
+			formatText,
+			hasSelection,
+			checkSelection
+
 		}
 	}
 }).mount('#app')
