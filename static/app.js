@@ -805,8 +805,12 @@ createApp({
 		// Drag and Drop Logic
 		const draggedNoteId = ref(null)
 
-		const handleDragStart = (note) => {
+		const handleDragStart = (note, event) => {
 			draggedNoteId.value = note.id
+			if (event && event.dataTransfer) {
+				event.dataTransfer.effectAllowed = 'move'
+				event.dataTransfer.setData('text/plain', String(note.id))
+			}
 		}
 
 
@@ -854,6 +858,21 @@ createApp({
 				}
 			}
 			draggedNoteId.value = null
+			dropTargetId.value = null
+		}
+
+		const dropTargetId = ref(null) // 'root' or folderId (int)
+
+		const handleDragEnter = (targetId) => {
+			if (draggedNoteId.value) {
+				dropTargetId.value = targetId
+			}
+		}
+
+		const handleDragLeave = (targetId) => {
+			if (dropTargetId.value === targetId) {
+				dropTargetId.value = null
+			}
 		}
 
 		const handleEditorKeyDown = (e) => {
@@ -1478,6 +1497,9 @@ createApp({
 			draggedNoteId,
 			handleDragStart,
 			handleDrop,
+			dropTargetId,
+			handleDragEnter,
+			handleDragLeave,
 			focusEditor,
 			toggleShare,
 			copyShareLink,

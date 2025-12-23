@@ -35,17 +35,32 @@
         // options are optional ;)
         var mobileDragDropOptions = {
             // enable these if you want to prevent scrolling while dragging
-            // dragImageTranslateOverride: MobileDragDrop.scrollBehaviourDragImageTranslateOverride
+            dragImageTranslateOverride: MobileDragDrop.scrollBehaviourDragImageTranslateOverride,
+            // holdToDrag: delay in ms to start the drag (prevents conflict with click/scroll)
+            holdToDrag: 300
         };
         // wait for the resources to be loaded
         document.addEventListener('DOMContentLoaded', function () {
             MobileDragDrop.polyfill(mobileDragDropOptions);
         });
 
-        // Fix for iOS Safari to prevent scrolling when starting drag
-        window.addEventListener('touchmove', function () { }, { passive: false });
-    </script>
+        // Removed global touchmove listener as it interferes with normal scrolling/interaction
 
+    </script>
+    <style>
+        .draggable-touch {
+            /* Critical for iOS Drag & Drop Polyfill */
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            touch-action: manipulation;
+        }
+
+        /* Ensure drag image background is visible if polyfill uses clone */
+        .dnd-poly-drag-image {
+            opacity: 1 !important;
+        }
+    </style>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 
@@ -76,7 +91,7 @@
             class="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center backdrop-blur-sm"
             @click.self="closeModal">
             <div
-                class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-2xl w-96 transform transition-all scale-100 border border-slate-200 dark:border-slate-700">
+                class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-2xl w-72 transform transition-all scale-100 border border-slate-200 dark:border-slate-700">
                 <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-2">{{ modalState.title }}</h3>
                 <p class="text-slate-600 dark:text-slate-300 text-sm mb-4">{{ modalState.message }}</p>
 
@@ -253,16 +268,18 @@
                 <!-- Folders & Notes -->
                 <div v-else>
                     <!-- Root Drop Zone (Move to Root) -->
-                    <div @dragover.prevent @drop="handleDrop(null)" class="min-h-[2rem] pb-2 transition-colors rounded"
-                        :class="draggedNoteId ? 'bg-slate-50/50 border-2 border-dashed border-transparent hover:border-slate-300' : ''">
+                    <div @dragover.prevent @dragenter.prevent="handleDragEnter('root')"
+                        @dragleave.prevent="handleDragLeave('root')" @drop="handleDrop(null, $event)"
+                        class="min-h-[2rem] pb-2 transition-colors rounded"
+                        :class="[draggedNoteId ? 'transition-all duration-200' : '', (draggedNoteId && dropTargetId === 'root') ? 'bg-blue-100 dark:bg-blue-900/30 border-2 border-dashed border-blue-400' : (draggedNoteId ? 'bg-slate-50/50 border-2 border-dashed border-transparent hover:border-slate-300' : '')]">
                         <!-- Uncategorized Notes (Root) -->
                         <!-- Uncategorized Notes (Root) -->
                         <div v-for="note in sortedRootNotes" :key="note.id" @click="selectNote(note)"
                             :class="selectedNote && selectedNote.id === note.id 
                             ? 'bg-[#E0F2FE] dark:bg-[#3B4252] border-blue-400 dark:border-[#88C0D0] shadow-md ring-1 ring-blue-300 dark:ring-[#88C0D0]/50' 
                             : 'bg-[#FFFEF8] dark:bg-[#2E3440] shadow-[0_2px_8px_rgba(0,0,0,0.08)] border-[#E6E4DD] dark:border-[#3B4252] md:hover:shadow-xl md:hover:bg-white dark:hover:bg-[#3B4252] active:bg-[#F2F0EA] dark:active:bg-[#242933]'"
-                            draggable="true" @dragstart="handleDragStart(note)"
-                            class="text-sm h-10 p-2 mb-2 cursor-pointer border rounded-md flex items-center group justify-between transition-all">
+                            draggable="true" @dragstart="handleDragStart(note, $event)"
+                            class="draggable-touch text-sm h-10 p-2 mb-2 cursor-pointer border rounded-md flex items-center group justify-between transition-all">
                             <div class="flex items-center min-w-0 flex-1">
                                 <!-- Pin Icon (Replaces Markdown Icon) -->
                                 <button @click.stop="togglePin(note)" class="mr-2 flex-shrink-0 focus:outline-none"
@@ -306,9 +323,10 @@
 
                     <!-- Folders -->
                     <div v-for="folder in sortedFolders" :key="folder.id" class="mb-3" @dragover.prevent
-                        @drop="handleDrop(folder.id)">
-                        <div
-                            class="flex items-center text-sm font-semibold h-10 text-[#57534E] dark:text-[#D8DEE9] p-2 mb-1 group bg-[#FFFEF8] dark:bg-[#2E3440] shadow-[0_2px_8px_rgba(0,0,0,0.08)] border-[#E6E4DD] dark:border-[#3B4252] md:hover:shadow-xl md:hover:bg-white dark:hover:bg-[#3B4252] active:bg-[#F2F0EA] dark:active:bg-[#242933] rounded transition-all cursor-pointer">
+                        @dragenter.prevent="handleDragEnter(folder.id)" @dragleave.prevent="handleDragLeave(folder.id)"
+                        @drop="handleDrop(folder.id, $event)">
+                        <div class="flex items-center text-sm font-semibold h-10 text-[#57534E] dark:text-[#D8DEE9] p-2 mb-1 group shadow-[0_2px_8px_rgba(0,0,0,0.08)] border-[#E6E4DD] dark:border-[#3B4252] rounded transition-all cursor-pointer"
+                            :class="dropTargetId === folder.id ? 'bg-blue-100 dark:bg-blue-900/40 ring-2 ring-blue-400' : 'bg-[#FFFEF8] dark:bg-[#2E3440] md:hover:shadow-xl md:hover:bg-white dark:hover:bg-[#3B4252] active:bg-[#F2F0EA] dark:active:bg-[#242933]'">
                             <img :src="getSortedFolderNotes(folder.id).length > 0 ? '/static/icons/folder-open.svg' : '/static/icons/folder.svg'"
                                 class="w-5 h-5 mr-2 opacity-90" alt="Folder">
                             <!-- Rename Input -->
@@ -342,8 +360,8 @@
                                 :class="selectedNote && selectedNote.id === note.id 
                                     ? 'bg-[#E0F2FE] dark:bg-[#3B4252] border-blue-400 dark:border-[#88C0D0] shadow-md ring-1 ring-blue-300 dark:ring-[#88C0D0]/50' 
                                     : 'bg-[#FFFEF8] dark:bg-[#2E3440] shadow-[0_2px_8px_rgba(0,0,0,0.08)] border-[#E6E4DD] dark:border-[#3B4252] md:hover:shadow-xl md:hover:bg-white dark:hover:bg-[#3B4252] active:bg-[#F2F0EA] dark:active:bg-[#242933]'"
-                                draggable="true" @dragstart="handleDragStart(note)"
-                                class="text-sm h-10 p-2 mb-2 cursor-pointer border rounded-md flex items-center group justify-between transition-all relative">
+                                draggable="true" @dragstart="handleDragStart(note, $event)"
+                                class="draggable-touch text-sm h-10 p-2 mb-2 cursor-pointer border rounded-md flex items-center group justify-between transition-all relative">
                                 <!-- Tree Connector -->
                                 <div class="absolute -left-3 top-1/2 w-3 h-0.5 bg-slate-200 -translate-y-1/2"></div>
 
