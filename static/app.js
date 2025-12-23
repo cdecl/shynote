@@ -221,10 +221,23 @@ createApp({
 			const end = el.selectionEnd
 			const value = el.value
 
+
+
 			// 1. Tab / Shift+Tab (Indentation)
 			if (e.key === 'Tab' || (e.metaKey && (e.key === ']' || e.key === '[')) || (e.ctrlKey && (e.key === ']' || e.key === '['))) {
 				e.preventDefault()
-				const isIndent = e.key === 'Tab' ? !e.shiftKey : (e.key === ']' || e.key === 'Tab')
+				const isTab = e.key === 'Tab'
+				const isShift = e.shiftKey
+				// Check for simple Tab insert (No selection, No Shift)
+				if (isTab && !isShift && start === end) {
+					// Insert 4 spaces at cursor
+					el.setRangeText('    ', start, end, 'end')
+					handleInput({ target: el })
+					return
+				}
+
+				// Otherwise (Shift+Tab OR Selection active), perform Line Indentation
+				const isIndent = isTab ? !isShift : (e.key === ']' || e.key === 'Tab')
 
 				// Find start and end lines
 				const startLineStart = value.lastIndexOf('\n', start - 1) + 1
@@ -236,7 +249,7 @@ createApp({
 
 				const newLines = lines.map(line => {
 					if (isIndent) {
-						return '    ' + line
+						return '    ' + line // 4 spaces
 					} else {
 						// Outdent: remove up to 4 spaces
 						return line.replace(/^ {1,4}/, '')
@@ -247,6 +260,60 @@ createApp({
 				el.setRangeText(newText, startLineStart, endLineEnd, 'select')
 				handleInput({ target: el })
 				return
+			}
+
+			// 1.5 Auto-List Continuation (Enter)
+			if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+				// Find current line
+				const lineStart = value.lastIndexOf('\n', start - 1) + 1
+				let lineEnd = value.indexOf('\n', start)
+				if (lineEnd === -1) lineEnd = value.length
+				const line = value.substring(lineStart, lineEnd)
+
+				// Match list pattern: whitespace + marker (- or * or digits.) + space
+				const match = line.match(/^(\s*)([-*]|\d+\.)\s/)
+				if (match) {
+					e.preventDefault()
+					const fullMarker = match[0]
+					const indent = match[1]
+					const marker = match[2]
+
+					// Check if line is EMPTY (just marker)
+					if (line.trim() === marker || line.trim() === marker + '.') {
+						// Empty list item -> Remove marker (Pressing enter twice ends list)
+						// Or if content length is equal to fullMarker length
+						if (line.length === fullMarker.length || line.trim().length === marker.length) {
+							el.setRangeText('', lineStart, lineEnd, 'select')
+							// effectively deletes the line content. 
+							// We might want to keep the newline? 
+							// Actually user pressed enter. If we delete line, we should probably output TWO newlines?
+							// Standard behavior: 
+							// - Items: [ "- Item 1" ]
+							// - Press Enter after "Item 1" -> [ "- Item 1", "- " ]
+							// - Press Enter again -> [ "- Item 1", "" ] (exit list)
+
+							// So if currently empty "- ", we replace it with empty string (remove indent)
+							el.setRangeText('', lineStart, lineEnd, 'select')
+							return
+						}
+					}
+
+					// Create new line with marker
+					let nextMarker = marker
+					// If numbered, increment
+					if (/^\d+\.$/.test(marker)) {
+						const num = parseInt(marker)
+						nextMarker = (num + 1) + '.'
+					}
+
+					const insertion = '\n' + indent + nextMarker + ' '
+					el.setRangeText(insertion, start, start, 'end')
+					handleInput({ target: el })
+					// Scroll to cursor if needed (browser usually handles input scroll but setRangeText might not)
+					el.blur(); el.focus() // hack to scroll? 
+					// Actually handleScroll handles highlight sync. 
+					return
+				}
 			}
 
 			// 2. Line Manipulation
