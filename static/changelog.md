@@ -1,3 +1,19 @@
+# v1.0.3 Release Notes
+
+## Summary
+- 모바일 환경에서의 UI 사용성 개선 및 사이드바 상호작용 수정이 진행되었습니다.
+
+## Bug Fixes
+
+### 1. 모바일 UI 상호작용 수정 (Mobile UI Interaction Fixes)
+- **드래그 앤 드롭 개선**:
+  - 모바일 드래그 앤 드롭 폴리필(polyfill) 적용으로 터치 동작 최적화
+  - 사이드바 접힘 상태에서의 상호작용 로직 개선
+
+### 2. UI 개선 (UI Improvements)
+- **입력 박스 높이 축소**:
+  - 사용자 입력 박스의 크기를 줄여 UI 최적화
+
 # v1.0.2 Release Notes
 
 ## Summary
