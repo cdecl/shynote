@@ -13,11 +13,13 @@ SHYNOTE는 사용자가 온전히 글쓰기에 집중할 수 있도록 설계된
 - **글자 크기 조절**: 에디터와 미리보기의 글자 크기를 툴바에서 즉시 조절하여 가독성을 높일 수 있습니다.
 
 ### 2. 스마트한 마크다운 에디터 (Advanced Editor)
-- **CodeMirror 5 탑재**: 안정적이고 강력한 기능의 전문 에디터 엔진을 적용했습니다.
+- **Native Smart Editor**: 웹 표준 Textarea를 기반으로 자체 확장된 가볍고 호환성 높은 에디터를 제공합니다.
 - **강력한 편집 기능**:
-  - **VS Code 호환 단축키**: 줄 이동/복제/삭제, 다중 선택(`Cmd+D`), 주석 토글 등 개발자에게 익숙한 단축키를 그대로 지원합니다.
-  - **스마트 검색/바꾸기**: 실시간 하이라이팅, 정규식(Regex) 검색, 대소문자 구분을 지원하는 고급 검색 위젯을 제공합니다.
-- **플로팅 툴바**: 텍스트 선택 시 서식 도구가 자동으로 나타나 마우스만으로도 빠른 편집이 가능합니다.
+  - **고급 단축키**: 줄 이동(`Alt+↑/↓`), 줄 복제(`Shift+Alt+↑/↓`), 멀티라인 들여쓰기(`Tab`/`Shift+Tab`) 등을 지원합니다.
+  - **스마트 검색/바꾸기**: 정규식(Regex) 지원, 대소문자 구분 기능을 갖춘 통합 검색 위젯을 제공합니다.
+- **스마트 툴바**: 
+  - 선택한 텍스트 위에 자동으로 나타나는 **플로팅 툴바**로 서식을 빠르게 적용할 수 있습니다.
+  - **Sticky Toolbar** 모드를 통해 모바일 환경에서도 편하게 접근할 수 있습니다.
 - **[👉 에디터 기능 및 단축키 가이드 보기](docs/editor_guide.md)**
 
 ### 3. 직관적인 파일 관리 (File Management)
@@ -44,7 +46,7 @@ SHYNOTE는 사용자가 온전히 글쓰기에 집중할 수 있도록 설계된
 ## 🛠 기술 스택 (Tech Stack)
 - **Frontend**: Vue.js 3 (ES Modules), TailwindCSS
 - **Backend**: FastAPI, SQLite (Dev) / PostgreSQL (Prod), SQLAlchemy
-- **Etc**: Google OAuth 2.0 Auth, Marked.js, CodeMirror 5
+- **Etc**: Google OAuth 2.0 Auth, Marked.js
 
 
 
