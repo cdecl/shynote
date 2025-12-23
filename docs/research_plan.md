@@ -1,18 +1,35 @@
 # SHYNOTE 기술 연구 및 로드맵 제안 (Technical Research & Roadmap)
 
-## 1. 편집기 고도화 (Editor Enhancement)
-현재 `textarea` 기반의 에디터는 가볍지만, 찾기/바꾸기, 정규식 지원, 미니맵 등 고급 기능을 구현하기에는 한계가 있습니다. 이를 위해 기존 오픈소스 에디터 도입을 검토합니다.
+## 1. 편집기 고도화 (Editor Enhancement) - [결정 완료]
 
-### 비교 분석
-| 후보 (Option) | 장점 (Pros) | 단점 (Cons) | 추천 여부 |
-|:---:|:---|:---|:---:|
-| **CodeMirror 6** | - 모듈 방식으로 가벼움<br>- 모바일 친화적<br>- Obsidian(모바일), Replit 등에서 사용<br>- 확장성 우수 | - 설정 난이도 있음<br>- UI 커스터마이징 필요 | **강력 추천** |
-| **Monaco Editor** | - VS Code와 동일한 사용자 경험<br>- 강력한 기능 기본 내장 (Find, Replace, Minimap)<br>- Intellisense 지원 | - 매우 무거운 번들 사이즈 (>2MB)<br>- 모바일 지원 약함 | 보류 (IDE급 기능 필요 시 고려) |
-| **자체 구현** | - 완벽한 제어 가능<br>- 필요한 기능만 구현하여 경량화 | - 유지보수 비용 매우 높음<br>- 텍스트 버퍼, Undo/Redo 등 기본기 재구현 필요 | 비추천 |
+초기에는 기능 확장을 위해 `CodeMirror 6` 등의 외부 라이브러리 도입을 검토하였으나, 모바일 호환성 및 유지보수 효율성을 위해 **Web Standard `textarea`를 유지하고 기능을 직접 확장**하는 방향으로 선회하였습니다.
 
-### 제안 (Recommendation)
-**CodeMirror 6** 도입을 권장합니다.
-- **이유**: `textarea`의 한계를 넘어서면서도 Monaco보다 가볍고 모바일에 대응하기 좋습니다. Markdown 파싱 및 Syntax Highlighting 생태계가 풍부합니다.
+### 결정 사항: Native Textarea 기반 자체 확장
+- **결정 배경**:
+  - `CodeMirror`, `Monaco` 등은 데스크탑 환경에서는 강력하나, 모바일 브라우저(iOS Safari 등)에서 가상 키보드 동작, 커서 제어, 스크롤 등 네이티브 동작과의 이질감이 발생함.
+  - 외부 의존성을 제거하여 앱의 경량화 유지.
+
+### 구현된 기능 (Implemented Features):
+`textarea`의 한계를 극복하기 위해 바닐라 JS로 다음 기능들을 직접 구현하였습니다.
+
+1.  **고급 텍스트 조작 (Keyboard Shortcuts)**:
+    - **Indentation**: `Tab` (들여쓰기), `Shift+Tab` (내어쓰기) - 멀티라인 지원.
+    - **Line Actions**: `Alt+↑/↓` (줄 이동), `Shift+Alt+↑/↓` (줄 복제), `Shift+Cmd+K` (줄 삭제).
+    - **Editor Navigation**: 스마트한 커서 위치 조정 및 스크롤 동기화.
+
+2.  **검색 및 바꾸기 (Search & Replace)**:
+    - **자체 위젯**: 에디터 상단에 Native UI로 통합된 검색바 구현.
+    - **기능**: 정규식(`Regex`), 대소문자 구분(`Case Sensitive`), 모두 바꾸기 지원.
+    - **UX 최적화**: 
+      - `Enter` 키 입력 시 포커스를 유지하며 다음 찾기 수행 (빠른 탐색).
+      - 모바일 환경에서도 화면 가림 없이 동작하도록 레이아웃 최적화.
+
+3.  **포맷팅 툴바 (Formatting Toolbar)**:
+    - **Sticky Toolbar**: 스크롤 시에도 상단에 고정되어 접근성 확보.
+    - **기능 확장**: 기존 Bold/Italic 외 `H4`, `H5`, `Code Block` 등 추가.
+
+### 향후 계획 (Future Plan)
+- **Overlay Highlight (보류)**: 검색어 하이라이팅을 위한 `Backdrop` 기법은 스크롤 동기화 및 폰트 렌더링 미세 오차 문제로 인해 현재는 제외되었습니다. 추후 필요 시 `Canvas` 기반 렌더링이나 단순 `mark` 태그 오버레이를 재검토할 수 있습니다.
 
 ---
 

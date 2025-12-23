@@ -249,6 +249,57 @@ html.dark {
     }
 }
 
+
 .animate-fade-in-up {
     animation: fadeInUp 0.2s ease-out forwards;
+}
+
+/* Table Styling Override (GitHub Markdown CSS might be minimal) */
+.markdown-body table {
+    display: block;
+    width: max-content;
+    max-width: 100%;
+    overflow: auto;
+    border-spacing: 0;
+    border-collapse: collapse;
+}
+
+.markdown-body table tr {
+    background-color: #fff;
+    border-top: 1px solid #c8d1d9;
+}
+
+.markdown-body table tr:nth-child(2n) {
+    background-color: #f6f8fa;
+}
+
+.markdown-body table th,
+.markdown-body table td {
+    padding: 6px 13px;
+    border: 1px solid #d0d7de;
+}
+
+.markdown-body table th {
+    font-weight: 600;
+}
+
+/* Dark Mode Table overrides */
+.dark .markdown-body table tr {
+    background-color: #2E3440 !important;
+    /* Nord0 */
+    border-top: 1px solid #434C5E !important;
+    /* Nord2 */
+}
+
+.dark .markdown-body table tr:nth-child(2n) {
+    background-color: #3B4252 !important;
+    /* Nord1 */
+}
+
+.dark .markdown-body table th,
+.dark .markdown-body table td {
+    border: 1px solid #434C5E !important;
+    /* Nord2 */
+    color: #D8DEE9 !important;
+    /* Nord4 */
 }

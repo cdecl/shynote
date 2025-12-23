@@ -589,31 +589,38 @@
                                     <!-- Find Input -->
                                     <div class="relative">
                                         <input ref="searchInputRef" v-model="searchState.query"
-                                            @keyup.enter="executeFind(false)" @keydown.enter.shift="executeFind(true)"
+                                            @keydown.enter.prevent="executeFind(false, false)"
+                                            @keydown.enter.shift.prevent="executeFind(true, false)"
                                             @keydown.esc="closeSearch" placeholder="Find"
                                             class="w-full text-sm rounded border border-gray-300 dark:border-[#4C566A] bg-white dark:bg-[#3B4252] dark:text-[#D8DEE9] px-2 py-1 outline-none focus:border-blue-500 pr-8">
                                         <div class="absolute right-1 top-0 bottom-0 flex items-center gap-1">
                                             <button @click="searchState.caseSensitive = !searchState.caseSensitive"
                                                 :class="searchState.caseSensitive ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300' : 'text-gray-400 hover:text-gray-600 dark:text-gray-500'"
-                                                class="p-0.5 rounded text-[10px] font-bold w-5 text-center"
+                                                class="p-0.5 rounded text-[10px] font-bold w-5 h-5 flex items-center justify-center"
                                                 title="Match Case">Aa</button>
                                             <button @click="searchState.useRegex = !searchState.useRegex"
                                                 :class="searchState.useRegex ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300' : 'text-gray-400 hover:text-gray-600 dark:text-gray-500'"
-                                                class="p-0.5 rounded text-[10px] font-bold w-5 text-center"
-                                                title="Regular Expression">.*</button>
+                                                class="p-0.5 rounded text-[10px] font-bold w-5 h-5 flex items-center justify-center"
+                                                title="Use Regex">.*</button>
                                         </div>
                                     </div>
                                     <!-- Find Actions -->
-                                    <div class="flex items-center gap-1">
+                                    <div class="flex items-center">
                                         <button @click="executeFind(true)"
-                                            class="p-1 text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-[#3B4252] rounded"
-                                            title="Previous (Shift+Enter)">
-                                            <span class="material-symbols-rounded text-[18px]">arrow_upward</span>
+                                            class="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                            title="Previous">
+                                            <span class="material-symbols-rounded text-[20px]">keyboard_arrow_up</span>
                                         </button>
                                         <button @click="executeFind(false)"
-                                            class="p-1 text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-[#3B4252] rounded"
-                                            title="Next (Enter)">
-                                            <span class="material-symbols-rounded text-[18px]">arrow_downward</span>
+                                            class="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                            title="Next">
+                                            <span
+                                                class="material-symbols-rounded text-[20px]">keyboard_arrow_down</span>
+                                        </button>
+                                        <button @click="closeSearch"
+                                            class="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 ml-1"
+                                            title="Close (Esc)">
+                                            <span class="material-symbols-rounded text-[18px]">close</span>
                                         </button>
                                     </div>
 
@@ -647,62 +654,82 @@
                                         <span class="material-symbols-rounded text-[12px]">expand_more</span> Replace
                                     </button>
                                 </div>
+
                             </div>
+
+                            <!-- Fixed Formatting Toolbar (Visible on Selection) -->
+                            <!-- Fixed Formatting Toolbar -->
+                            <div
+                                class="flex-none border-b border-slate-100 dark:border-[#434C5E] bg-white dark:bg-[#2E3440] p-1 flex items-center gap-1 z-20">
+                                <button @mousedown.prevent="formatText('bold')"
+                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                    title="Bold (Cmd+B)">
+                                    <span class="material-symbols-rounded text-[18px]">format_bold</span>
+                                </button>
+                                <button @mousedown.prevent="formatText('italic')"
+                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                    title="Italic (Cmd+I)">
+                                    <span class="material-symbols-rounded text-[18px]">format_italic</span>
+                                </button>
+                                <button @mousedown.prevent="formatText('strike')"
+                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                    title="Strikethrough">
+                                    <span class="material-symbols-rounded text-[18px]">strikethrough_s</span>
+                                </button>
+                                <button @mousedown.prevent="formatText('code')"
+                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                    title="Inline Code">
+                                    <span class="material-symbols-rounded text-[18px]">code</span>
+                                </button>
+                                <button @mousedown.prevent="formatText('codeblock')"
+                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                    title="Code Block">
+                                    <span class="material-symbols-rounded text-[18px]">terminal</span>
+                                </button>
+                                <div class="w-[1px] h-4 bg-slate-200 dark:bg-[#4C566A] mx-1"></div>
+                                <button @mousedown.prevent="formatText('link')"
+                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                    title="Link (Cmd+K)">
+                                    <span class="material-symbols-rounded text-[18px]">link</span>
+                                </button>
+                                <div class="w-[1px] h-4 bg-slate-200 dark:bg-[#4C566A] mx-1"></div>
+                                <button @mousedown.prevent="formatText('h1')"
+                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                    title="Heading 1">
+                                    <span class="material-symbols-rounded text-[18px]">format_h1</span>
+                                </button>
+                                <button @mousedown.prevent="formatText('h2')"
+                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                    title="Heading 2">
+                                    <span class="material-symbols-rounded text-[18px]">format_h2</span>
+                                </button>
+                                <button @mousedown.prevent="formatText('h3')"
+                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                    title="Heading 3">
+                                    <span class="material-symbols-rounded text-[18px]">format_h3</span>
+                                </button>
+                                <button @mousedown.prevent="formatText('h4')"
+                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                    title="Heading 4">
+                                    <span class="material-symbols-rounded text-[18px]">format_h4</span>
+                                </button>
+                                <button @mousedown.prevent="formatText('h5')"
+                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                    title="Heading 5">
+                                    <span class="material-symbols-rounded text-[18px]">format_h5</span>
+                                </button>
+                            </div>
+
                             <div class="flex-1 relative overflow-hidden">
                                 <textarea ref="editorRef"
-                                    class="w-full h-full resize-none outline-none bg-transparent p-4 font-mono text-sm leading-relaxed"
+                                    class="w-full h-full resize-none outline-none bg-transparent p-4 font-mono text-sm leading-relaxed text-slate-800 dark:text-gray-200 overflow-y-scroll"
                                     :style="{ fontSize: fontSize + 'px' }" :value="selectedNote.content || ''"
-                                    @input="handleInput" @scroll="handleScroll" @click="updateToolbarPos"
-                                    @keyup="updateToolbarPos" @keydown="handleKeydown" spellcheck="false"></textarea>
+                                    @input="handleInput" @scroll="handleScroll" @keydown="handleKeydown"
+                                    spellcheck="false"></textarea>
                             </div>
                         </div>
 
-                        <!-- Floating Formatting Toolbar -->
-                        <div v-if="toolbar.show" :style="{ top: toolbar.y + 'px', left: toolbar.x + 'px' }"
-                            class="fixed z-50 transform -translate-x-1/2 flex items-center bg-[#2E3440] text-white rounded-lg shadow-xl border border-gray-600 px-2 py-1 gap-1 animate-fade-in-up">
-                            <button @mousedown.prevent="formatText('bold')" class="p-1 hover:bg-[#3B4252] rounded"
-                                title="Bold">
-                                <span class="material-symbols-rounded text-[18px]">format_bold</span>
-                            </button>
-                            <button @mousedown.prevent="formatText('italic')" class="p-1 hover:bg-[#3B4252] rounded"
-                                title="Italic">
-                                <span class="material-symbols-rounded text-[18px]">format_italic</span>
-                            </button>
-                            <button @mousedown.prevent="formatText('strike')" class="p-1 hover:bg-[#3B4252] rounded"
-                                title="Strikethrough">
-                                <span class="material-symbols-rounded text-[18px]">strikethrough_s</span>
-                            </button>
-                            <button @mousedown.prevent="formatText('code')" class="p-1 hover:bg-[#3B4252] rounded"
-                                title="Code">
-                                <span class="material-symbols-rounded text-[18px]">code</span>
-                            </button>
-                            <div class="w-[1px] h-4 bg-gray-600 mx-1"></div>
-                            <button @mousedown.prevent="formatText('link')" class="p-1 hover:bg-[#3B4252] rounded"
-                                title="Link">
-                                <span class="material-symbols-rounded text-[18px]">link</span>
-                            </button>
-                            <div class="w-[1px] h-4 bg-gray-600 mx-1"></div>
-                            <button @mousedown.prevent="formatText('h1')" class="p-1 hover:bg-[#3B4252] rounded"
-                                title="Heading 1">
-                                <span class="material-symbols-rounded text-[18px]">format_h1</span>
-                            </button>
-                            <button @mousedown.prevent="formatText('h2')" class="p-1 hover:bg-[#3B4252] rounded"
-                                title="Heading 2">
-                                <span class="material-symbols-rounded text-[18px]">format_h2</span>
-                            </button>
-                            <button @mousedown.prevent="formatText('h3')" class="p-1 hover:bg-[#3B4252] rounded"
-                                title="Heading 3">
-                                <span class="material-symbols-rounded text-[18px]">format_h3</span>
-                            </button>
-                            <button @mousedown.prevent="formatText('h4')" class="p-1 hover:bg-[#3B4252] rounded"
-                                title="Heading 4">
-                                <span class="material-symbols-rounded text-[18px]">format_h4</span>
-                            </button>
-                            <button @mousedown.prevent="formatText('h5')" class="p-1 hover:bg-[#3B4252] rounded"
-                                title="Heading 5">
-                                <span class="material-symbols-rounded text-[18px]">format_h5</span>
-                            </button>
-                        </div>
+
 
                         <!-- Preview -->
                         <div v-show="viewMode !== 'edit'" class="flex-1 flex flex-col relative group overflow-hidden">
