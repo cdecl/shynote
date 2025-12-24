@@ -52,6 +52,7 @@ This document tracks the cumulative implementation details of the SHYNOTE projec
 - [x] **UI Components**:
     - [x] **Floating Toolbar**: Updated to work with CodeMirror text selection.
     - [x] **Search/Replace**: Ported to use CodeMirror State and Transactions.
+    - [x] **Word Wrap**: Toggleable via Toolbar, defaults to ON.
 
 
 ---

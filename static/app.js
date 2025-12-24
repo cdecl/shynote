@@ -60,7 +60,7 @@ createApp({
 
 
 		// New UI States
-		const isWordWrap = ref(localStorage.getItem(STORAGE_KEYS.WORD_WRAP) === 'true')
+		const isWordWrap = ref(localStorage.getItem(STORAGE_KEYS.WORD_WRAP) !== 'false')
 		const splitRatio = ref(Number(localStorage.getItem(STORAGE_KEYS.SPLIT_RATIO)) || 50)
 
 		const toggleWordWrap = () => {

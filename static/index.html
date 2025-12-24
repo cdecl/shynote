@@ -523,6 +523,16 @@
                     <div class="items-center gap-2 flex-shrink-0" :class="isSidebarOpen ? 'hidden md:flex' : 'flex'">
                         <div class="flex items-center gap-2">
                             <div class="w-[1px] h-4 bg-slate-200 dark:bg-[#434C5E] mx-0 hidden sm:block"></div>
+                            <!-- Word Wrap Toggle -->
+                            <button @click="toggleWordWrap" :class="isWordWrap 
+                                    ? 'text-blue-600 bg-blue-100 dark:bg-blue-500 dark:text-white ring-2 ring-blue-300 dark:ring-blue-700 shadow-md transform scale-105' 
+                                    : 'text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600'"
+                                class="p-1 rounded transition-all duration-200" title="Toggle Word Wrap">
+                                <span class="material-symbols-rounded text-[18px] block">wrap_text</span>
+                            </button>
+
+                            <div class="w-[1px] h-4 bg-slate-200 dark:bg-[#434C5E] mx-1 hidden sm:block"></div>
+
                             <!-- Font Size Selector -->
                             <div class="relative group">
                                 <select :value="fontSize" @change="setFontSize($event.target.value)"
