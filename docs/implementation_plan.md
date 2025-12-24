@@ -154,7 +154,7 @@ This document tracks the cumulative implementation details of the SHYNOTE projec
 **Status**: In Progress
 
 ### Storage Strategy
-- [ ] **IndexedDB (Local)**:
+- [x] **IndexedDB (Local)**:
     - [x] Schema Design (`Current_State`, `Pending_Logs`).
     - [x] `idb` wrapper for async operations.
 - [ ] **PostgreSQL (Remote)**:
@@ -168,3 +168,7 @@ This document tracks the cumulative implementation details of the SHYNOTE projec
 - [ ] **Conflict Resolution**:
     - [ ] Hash-based comparison logic.
     - [ ] Conflict UI (Server vs Local choice).
+
+### Data Isolation
+- [x] **IndexedDB**: Scope queries by `user_id`.
+- [x] **LocalStorage**: Prefix keys with `user_id` for multi-user support.

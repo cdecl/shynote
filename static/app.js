@@ -37,35 +37,73 @@ createApp({
 			return isNaN(date.getTime()) ? null : date
 		}
 
+		// User Settings Helper
+		const getUserStorageKey = (key) => {
+			const prefix = currentUserId.value ? `${currentUserId.value}_` : 'guest_';
+			return `${prefix}${key}`;
+		}
+
+		const saveUserSetting = (key, value) => {
+			localStorage.setItem(getUserStorageKey(key), String(value))
+		}
+
+		const loadUserSettings = () => {
+			// Settings that depend on user
+			isSidebarPinned.value = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.SIDEBAR_PINNED)) === 'true'
+			fontSize.value = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.FONT_SIZE)) || '14'
+			collapsedFolders.value = JSON.parse(localStorage.getItem(getUserStorageKey(STORAGE_KEYS.COLLAPSED_FOLDERS)) || '{}')
+
+			const field = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.SORT_FIELD)) || 'title'
+			const dir = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.SORT_DIRECTION)) || 'asc'
+			sortOption.value = { field, direction: dir }
+
+			// Word Wrap
+			const wrapVal = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.WORD_WRAP))
+			isWordWrap.value = wrapVal !== 'false' // Default true if null
+
+			const ratio = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.SPLIT_RATIO))
+			splitRatio.value = Number(ratio) || 50
+
+			// Apply Word Wrap
+			if (editorView.value) {
+				editorView.value.dispatch({
+					effects: wordWrapCompartment.reconfigure(isWordWrap.value ? EditorView.lineWrapping : [])
+				})
+			}
+		}
+
 		const notes = ref([])
 		const folders = ref([])
 		const selectedNote = ref(null)
 		const loading = ref(false)
 		const statusMessage = ref('Ready')
 		const isSidebarOpen = ref(true)
-		const isSidebarPinned = ref(localStorage.getItem(STORAGE_KEYS.SIDEBAR_PINNED) === 'true')
+		const isSidebarPinned = ref(false) // Init defaults
 		const editorRef = ref(null)
 		const previewRef = ref(null)
 		const viewMode = ref('split')
+
+		// Dark mode is global/device specific usually, but code requested "User Info". 
+		// Let's keep dark mode global for now as per industry standard? 
+		// Or user profile has 'is_dark_mode' so it syncs from DB actually!
+		// But local fallback:
 		const isDarkMode = ref(localStorage.getItem(STORAGE_KEYS.DARK_MODE) === null ? true : localStorage.getItem(STORAGE_KEYS.DARK_MODE) === 'true')
-		const isAuthenticated = ref(false) // Was missing!
-		const fontSize = ref(localStorage.getItem(STORAGE_KEYS.FONT_SIZE) || '14')
+
+		const isAuthenticated = ref(false)
+		const fontSize = ref('14')
 		const setFontSize = (size) => {
 			fontSize.value = size
-			localStorage.setItem(STORAGE_KEYS.FONT_SIZE, size)
+			saveUserSetting(STORAGE_KEYS.FONT_SIZE, size)
 		}
-		const collapsedFolders = ref(JSON.parse(localStorage.getItem(STORAGE_KEYS.COLLAPSED_FOLDERS) || '{}'))
-		// Let's just remove it effectively by ignoring it.
-		// But for cleaner code, I will replace the logic.
-
+		const collapsedFolders = ref({})
 
 		// New UI States
-		const isWordWrap = ref(localStorage.getItem(STORAGE_KEYS.WORD_WRAP) !== 'false')
-		const splitRatio = ref(Number(localStorage.getItem(STORAGE_KEYS.SPLIT_RATIO)) || 50)
+		const isWordWrap = ref(true)
+		const splitRatio = ref(50)
 
 		const toggleWordWrap = () => {
 			isWordWrap.value = !isWordWrap.value
-			localStorage.setItem(STORAGE_KEYS.WORD_WRAP, isWordWrap.value)
+			saveUserSetting(STORAGE_KEYS.WORD_WRAP, isWordWrap.value)
 			const view = editorView.value
 			if (view) {
 				view.dispatch({
@@ -80,15 +118,15 @@ createApp({
 			isResizing.value = true
 			document.addEventListener('mousemove', handleResize)
 			document.addEventListener('mouseup', stopResize)
-			document.body.style.userSelect = 'none' // Prevent selection while dragging
+			document.body.style.userSelect = 'none'
 		}
 		const handleResize = (e) => {
 			if (!isResizing.value) return
-			const container = document.querySelector('.split-container') // Need to add this class to HTML
+			const container = document.querySelector('.split-container')
 			if (!container) return
 			const containerRect = container.getBoundingClientRect()
 			const newRatio = ((e.clientX - containerRect.left) / containerRect.width) * 100
-			if (newRatio > 20 && newRatio < 80) { // Limits
+			if (newRatio > 20 && newRatio < 80) {
 				splitRatio.value = newRatio
 			}
 		}
@@ -97,14 +135,16 @@ createApp({
 			document.removeEventListener('mousemove', handleResize)
 			document.removeEventListener('mouseup', stopResize)
 			document.body.style.userSelect = ''
-			localStorage.setItem(STORAGE_KEYS.SPLIT_RATIO, splitRatio.value)
+			saveUserSetting(STORAGE_KEYS.SPLIT_RATIO, splitRatio.value)
 		}
+
+		const currentUserId = ref(null)
 
 		// Guest Store (InMemory DB) - Defined Early for authenticatedFetch
 		const guestStore = {
 			user: { id: 'guest', email: 'guest@shynote.app', is_dark_mode: true, view_mode: 'split' },
 			notes: [
-				{ id: 999, title: 'Welcome to Guest Mode', content: '# Guest Mode\n\nChanges here are **temporary** (in-memory) and will be lost on refresh unless we added localStorage persistence (not implemented yet).\n\nTry creating folders and notes!', folder_id: null, updated_at: new Date().toISOString(), created_at: new Date().toISOString() }
+				{ id: 999, title: 'Welcome to Guest Mode', content: '# Guest Mode\n\nChanges here are **temporary** (in-memory) and will be lost on refresh unless we added localStorage persistence (not implemented yet).\n\nTry creating folders and notes!', folder_id: null, user_id: 'guest', updated_at: new Date().toISOString(), created_at: new Date().toISOString() }
 			],
 			folders: []
 		}
@@ -113,6 +153,7 @@ createApp({
 		const logout = () => {
 			localStorage.removeItem(STORAGE_KEYS.TOKEN)
 			isAuthenticated.value = false
+			currentUserId.value = null
 			notes.value = []
 			folders.value = []
 			selectedNote.value = null
@@ -263,6 +304,9 @@ createApp({
 				if (hasIDB) {
 					try {
 						const rawNote = JSON.parse(JSON.stringify(selectedNote.value))
+						if (!rawNote.user_id && currentUserId.value) {
+							rawNote.user_id = currentUserId.value
+						}
 						await LocalDB.saveNote(rawNote)
 						statusMessage.value = 'Saved locally'
 					} catch (e) {
@@ -791,13 +835,18 @@ createApp({
 			if (isGuestMode) {
 				localStorage.setItem(STORAGE_KEYS.TOKEN, 'guest');
 				isAuthenticated.value = true;
-				await Promise.all([fetchFolders(), fetchNotes(), fetchUserProfile()]);
+				currentUserId.value = 'guest';
+				await fetchUserProfile();
+				await fetchFolders();
+				await fetchNotes();
 				autoSelectNote();
 			} else if (storedToken === 'guest' && !isGuestMode) {
 				logout();
 			} else if (storedToken) {
 				isAuthenticated.value = true;
-				await Promise.all([fetchFolders(), fetchNotes(), fetchUserProfile()]);
+				await fetchUserProfile(); // Fetches and sets currentUserId
+				await fetchFolders();
+				await fetchNotes();
 				autoSelectNote();
 			} else {
 				isAuthenticated.value = false;
@@ -896,7 +945,7 @@ createApp({
 
 		const toggleFolder = (folderId) => {
 			collapsedFolders.value[folderId] = !collapsedFolders.value[folderId]
-			localStorage.setItem(STORAGE_KEYS.COLLAPSED_FOLDERS, JSON.stringify(collapsedFolders.value))
+			saveUserSetting(STORAGE_KEYS.COLLAPSED_FOLDERS, JSON.stringify(collapsedFolders.value))
 		}
 
 		const applyTheme = () => {
@@ -945,10 +994,10 @@ createApp({
 		const setSortOption = (type, value) => {
 			if (type === 'field') {
 				sortOption.value.field = value
-				localStorage.setItem(STORAGE_KEYS.SORT_FIELD, value)
+				saveUserSetting(STORAGE_KEYS.SORT_FIELD, value)
 			} else if (type === 'direction') {
 				sortOption.value.direction = value
-				localStorage.setItem(STORAGE_KEYS.SORT_DIRECTION, value)
+				saveUserSetting(STORAGE_KEYS.SORT_DIRECTION, value)
 			}
 		}
 
@@ -979,16 +1028,24 @@ createApp({
 
 
 		const fetchFolders = async () => {
-			if (hasIDB) {
-				const local = await LocalDB.getAllFolders()
-				if (local && local.length > 0) folders.value = local
+			const uid = currentUserId.value;
+			if (hasIDB && uid) {
+				try {
+					const local = await LocalDB.getAllFolders(uid)
+					if (local && local.length > 0) folders.value = local
+				} catch (e) { console.error("Local Folders Error", e) }
 			}
 			try {
 				const response = await authenticatedFetch('/api/folders')
 				if (response && response.ok) {
 					const data = await response.json()
 					folders.value = data
-					if (hasIDB) await LocalDB.saveFoldersBulk(data)
+
+					// Inject user_id if missing (e.g. from server)
+					if (hasIDB && uid) {
+						const foldersToSave = data.map(f => ({ ...f, user_id: f.user_id || uid }))
+						await LocalDB.saveFoldersBulk(foldersToSave)
+					}
 				}
 			} catch (e) {
 				console.error("Failed to fetch folders", e)
@@ -1000,6 +1057,7 @@ createApp({
 				const response = await authenticatedFetch('/auth/me')
 				if (response && response.ok) {
 					const user = await response.json()
+					if (user.id) currentUserId.value = user.id; // Set ID
 					if (user.is_dark_mode !== undefined) {
 						isDarkMode.value = user.is_dark_mode
 						applyTheme()
@@ -1028,11 +1086,12 @@ createApp({
 
 		const fetchNotes = async () => {
 			loading.value = true
+			const uid = currentUserId.value;
 
 			// 1. Instant Load from LocalDB
-			if (hasIDB) {
+			if (hasIDB && uid) {
 				try {
-					const localNotes = await LocalDB.getAllNotes()
+					const localNotes = await LocalDB.getAllNotes(uid)
 					if (localNotes && localNotes.length > 0) {
 						notes.value = localNotes
 					}
@@ -1044,10 +1103,13 @@ createApp({
 				if (response && response.ok) {
 					const serverNotes = await response.json()
 
-					if (hasIDB) {
-						await LocalDB.saveNotesBulk(serverNotes)
-						// Reload merged state
-						notes.value = await LocalDB.getAllNotes()
+					if (hasIDB && uid) {
+						// Inject user_id if missing
+						const notesToSave = serverNotes.map(n => ({ ...n, user_id: n.user_id || uid }))
+						await LocalDB.saveNotesBulk(notesToSave)
+
+						// Reload merged state strictly for this user
+						notes.value = await LocalDB.getAllNotes(uid)
 					} else {
 						notes.value = serverNotes
 					}
@@ -1091,8 +1153,16 @@ createApp({
 				})
 				if (response && response.ok) {
 					const newNote = await response.json()
+					// Ensure user_id is locally present if server didn't send it back (though it usually does)
+					if (!newNote.user_id && currentUserId.value) newNote.user_id = currentUserId.value;
+
 					notes.value.unshift(newNote)
 					selectedNote.value = newNote
+
+					// Persist new note locally
+					if (hasIDB) {
+						await LocalDB.saveNote(newNote)
+					}
 				}
 			} catch (e) {
 				console.error("Failed to create note", e)
@@ -1102,7 +1172,7 @@ createApp({
 		const autoSelectNote = () => {
 			if (notes.value.length === 0) return
 
-			const lastNoteId = localStorage.getItem(STORAGE_KEYS.LAST_NOTE_ID)
+			const lastNoteId = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.LAST_NOTE_ID))
 			if (lastNoteId) {
 				const lastNote = notes.value.find(n => String(n.id) === String(lastNoteId))
 				if (lastNote) {
@@ -1128,9 +1198,15 @@ createApp({
 			}
 		}
 
+
+		// Watch user change to reload settings
+		watch(currentUserId, (newId) => {
+			if (newId) loadUserSettings()
+		}, { immediate: true })
+
 		const toggleSidebarPin = () => {
 			isSidebarPinned.value = !isSidebarPinned.value
-			localStorage.setItem(STORAGE_KEYS.SIDEBAR_PINNED, isSidebarPinned.value)
+			saveUserSetting(STORAGE_KEYS.SIDEBAR_PINNED, isSidebarPinned.value)
 		}
 
 		const deselectNote = () => {
@@ -1145,7 +1221,7 @@ createApp({
 		const selectNote = (note) => {
 			selectedNote.value = note
 			if (note && note.id) {
-				localStorage.setItem(STORAGE_KEYS.LAST_NOTE_ID, note.id)
+				saveUserSetting(STORAGE_KEYS.LAST_NOTE_ID, note.id)
 			}
 			// Ensure content is string for marked
 			if (selectedNote.value.content === null) selectedNote.value.content = ""

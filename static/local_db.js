@@ -1,22 +1,36 @@
 import { openDB } from "https://esm.sh/idb@7.1.1";
 
 const DB_NAME = 'SHYNOTE_VAULT';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 export const initDB = async () => {
 	return openDB(DB_NAME, DB_VERSION, {
-		upgrade(db) {
+		upgrade(db, oldVersion, newVersion, transaction) {
 			// Notes Store: Mirror of Server Data + Local Edits
+			let notesStore;
 			if (!db.objectStoreNames.contains('notes')) {
-				const notesStore = db.createObjectStore('notes', { keyPath: 'id' });
+				notesStore = db.createObjectStore('notes', { keyPath: 'id' });
 				notesStore.createIndex('folder_id', 'folder_id', { unique: false });
 				notesStore.createIndex('updated_at', 'updated_at', { unique: false });
 				notesStore.createIndex('sync_status', 'sync_status', { unique: false }); // 'synced', 'dirty', 'conflict'
+				notesStore.createIndex('user_id', 'user_id', { unique: false });
+			} else {
+				notesStore = transaction.objectStore('notes');
+				if (!notesStore.indexNames.contains('user_id')) {
+					notesStore.createIndex('user_id', 'user_id', { unique: false });
+				}
 			}
 
 			// Folders Store
+			let foldersStore;
 			if (!db.objectStoreNames.contains('folders')) {
-				db.createObjectStore('folders', { keyPath: 'id' });
+				foldersStore = db.createObjectStore('folders', { keyPath: 'id' });
+				foldersStore.createIndex('user_id', 'user_id', { unique: false });
+			} else {
+				foldersStore = transaction.objectStore('folders');
+				if (!foldersStore.indexNames.contains('user_id')) {
+					foldersStore.createIndex('user_id', 'user_id', { unique: false });
+				}
 			}
 
 			// Pending Logs: Write-Ahead Log for mutations
@@ -34,8 +48,11 @@ export const LocalDB = {
 		return db.get('notes', id);
 	},
 
-	async getAllFolders() {
+	async getAllFolders(userId) {
 		const db = await initDB();
+		if (userId) {
+			return db.getAllFromIndex('folders', 'user_id', userId);
+		}
 		return db.getAll('folders');
 	},
 
@@ -49,8 +66,11 @@ export const LocalDB = {
 		await tx.done;
 	},
 
-	async getAllNotes() {
+	async getAllNotes(userId) {
 		const db = await initDB();
+		if (userId) {
+			return db.getAllFromIndex('notes', 'user_id', userId);
+		}
 		return db.getAll('notes');
 	},
 
