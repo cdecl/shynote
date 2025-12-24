@@ -1,3 +1,22 @@
+# v1.2.1 Release Notes
+
+## Summary
+- **동기화 충돌 해결(Conflict Resolution) UI**를 구현하여 데이터 정합성을 강화했습니다.
+- **Hash 기반 동기화 로직**을 도입하여 파일 비교 효율성과 정확도를 높였습니다.
+- 서버 삭제 내역을 로컬에 반영하는 삭제 동기화 로직을 추가했습니다.
+
+## New Features
+
+### 1. Conflict Resolution (충돌 해결)
+- **Conflict Banner**: 서로 다른 기기에서 수정하여 충돌 발생 시, 에디터 상단에 경고 배너를 표시합니다.
+- **Diff & Merge UI**: CodeMirror MergeView를 도입하여 **내 노트(Left)**와 **서버 노트(Right)**를 나란히 비교하고, 원하는 버전을 선택하여 병합할 수 있습니다.
+
+### 2. Sync Logic Enhancement (동기화 로직 개선)
+- **Hash Verification**: SHA-256 해시를 이용한 정밀한 변경 감지로 불필요한 덮어쓰기를 방지합니다.
+- **Deletion Sync**: 서버에서 삭제된 노트가 로컬에 남아있는 "좀비 데이터" 현상을 해결했습니다.
+
+---
+
 # v1.2.0 Release Notes
 
 ## Summary
