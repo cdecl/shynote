@@ -1,3 +1,17 @@
+# v1.1.0 Release Notes
+
+## Summary
+- **CodeMirror 6** 엔진 전면 도입을 통해 성능, 안정성, 확장성을 확보했습니다.
+- 다크 모드 UI/UX를 대폭 개선하고 가독성을 강화했습니다.
+
+## New Features & Improvements
+
+### 1. Editor Engine Upgrade (CodeMirror 6)
+- **CodeMirror 6 Migration**: 최신 에디터 엔진 도입으로 성능 향상 및 확장성 확보 (Textarea 한계 극복).
+- **Native Search**: CodeMirror 네이티브 검색 기능 도입으로 빠르고 정확한 검색/치환 지원.
+
+---
+
 # v1.0.6 Release Notes
 
 ## Summary
@@ -79,7 +93,7 @@
 
 ### 2. 노트 고정 기능 (Pinned Notes)
 - **기능**:
-  - 중요한 노트를 리스트 최상단에 고정하는 기능 추가
+  - 중요한 노트를 목록 최상단에 고정하는 기능 추가
   - 폴더 내부에서도 고정된 노트가 최상단에 배치됨
 - **UI/UX**:
   - 노트 리스트 좌측에 핀(Push Pin) 아이콘 버튼 추가

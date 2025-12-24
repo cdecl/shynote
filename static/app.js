@@ -1,4 +1,14 @@
-const { createApp, ref, onMounted, computed, nextTick, watch } = Vue
+import { EditorView, keymap, highlightSpecialChars, drawSelection, dropCursor, crosshairCursor, lineNumbers, highlightActiveLineGutter, placeholder } from "https://esm.sh/@codemirror/view@6.23.0?deps=@codemirror/state@6.4.0"
+import { EditorState, Compartment, EditorSelection } from "https://esm.sh/@codemirror/state@6.4.0"
+import { markdown, markdownLanguage } from "https://esm.sh/@codemirror/lang-markdown@6.2.3?deps=@codemirror/state@6.4.0"
+import { languages } from "https://esm.sh/@codemirror/language-data@6.4.0?deps=@codemirror/state@6.4.0"
+import { defaultKeymap, history, historyKeymap } from "https://esm.sh/@codemirror/commands@6.3.3?deps=@codemirror/state@6.4.0"
+import { search, searchKeymap, highlightSelectionMatches, setSearchQuery, SearchQuery, findNext, findPrevious } from "https://esm.sh/@codemirror/search@6.5.5?deps=@codemirror/state@6.4.0"
+import { oneDark } from "https://esm.sh/@codemirror/theme-one-dark@6.1.2?deps=@codemirror/state@6.4.0"
+import { syntaxHighlighting, defaultHighlightStyle, bracketMatching } from "https://esm.sh/@codemirror/language@6.10.0?deps=@codemirror/state@6.4.0"
+import { closeBrackets, closeBracketsKeymap } from "https://esm.sh/@codemirror/autocomplete@6.12.0?deps=@codemirror/state@6.4.0"
+
+const { createApp, ref, onMounted, computed, nextTick, watch, onBeforeUnmount } = Vue
 
 createApp({
 	setup() {
@@ -10,7 +20,9 @@ createApp({
 			COLLAPSED_FOLDERS: 'shynote_collapsed_folders',
 			SORT_FIELD: 'shynote_sort_field',
 			SORT_DIRECTION: 'shynote_sort_direction',
-			LAST_NOTE_ID: 'shynote_last_note_id'
+			LAST_NOTE_ID: 'shynote_last_note_id',
+			WORD_WRAP: 'shynote_word_wrap',
+			SPLIT_RATIO: 'shynote_split_ratio'
 		}
 
 		// Private Helpers
@@ -42,10 +54,50 @@ createApp({
 			localStorage.setItem(STORAGE_KEYS.FONT_SIZE, size)
 		}
 		const collapsedFolders = ref(JSON.parse(localStorage.getItem(STORAGE_KEYS.COLLAPSED_FOLDERS) || '{}'))
-		const cmEditor = ref(null) // Removed but keeping ref cleanup if needed, actually removal is better.
 		// Let's just remove it effectively by ignoring it.
 		// But for cleaner code, I will replace the logic.
 
+
+		// New UI States
+		const isWordWrap = ref(localStorage.getItem(STORAGE_KEYS.WORD_WRAP) === 'true')
+		const splitRatio = ref(Number(localStorage.getItem(STORAGE_KEYS.SPLIT_RATIO)) || 50)
+
+		const toggleWordWrap = () => {
+			isWordWrap.value = !isWordWrap.value
+			localStorage.setItem(STORAGE_KEYS.WORD_WRAP, isWordWrap.value)
+			const view = editorView.value
+			if (view) {
+				view.dispatch({
+					effects: wordWrapCompartment.reconfigure(isWordWrap.value ? EditorView.lineWrapping : [])
+				})
+			}
+		}
+
+		// Split Resize Logic
+		const isResizing = ref(false)
+		const startResize = () => {
+			isResizing.value = true
+			document.addEventListener('mousemove', handleResize)
+			document.addEventListener('mouseup', stopResize)
+			document.body.style.userSelect = 'none' // Prevent selection while dragging
+		}
+		const handleResize = (e) => {
+			if (!isResizing.value) return
+			const container = document.querySelector('.split-container') // Need to add this class to HTML
+			if (!container) return
+			const containerRect = container.getBoundingClientRect()
+			const newRatio = ((e.clientX - containerRect.left) / containerRect.width) * 100
+			if (newRatio > 20 && newRatio < 80) { // Limits
+				splitRatio.value = newRatio
+			}
+		}
+		const stopResize = () => {
+			isResizing.value = false
+			document.removeEventListener('mousemove', handleResize)
+			document.removeEventListener('mouseup', stopResize)
+			document.body.style.userSelect = ''
+			localStorage.setItem(STORAGE_KEYS.SPLIT_RATIO, splitRatio.value)
+		}
 
 		// Guest Store (InMemory DB) - Defined Early for authenticatedFetch
 		const guestStore = {
@@ -208,274 +260,196 @@ createApp({
 
 
 		// New Handlers
-		const handleInput = (e) => {
-			if (selectedNote.value) {
-				selectedNote.value.content = e.target.value
-				debouncedUpdate()
-			}
-		}
 
-		const handleKeydown = (e) => {
-			const el = e.target
-			const start = el.selectionStart
-			const end = el.selectionEnd
-			const value = el.value
+		// New Handlers
 
+		const editorView = ref(null)
+		const themeCompartment = new Compartment()
+		const wordWrapCompartment = new Compartment()
 
+		const initEditor = () => {
+			if (!editorRef.value) return
+			if (editorView.value) editorView.value.destroy()
 
-			// 1. Tab / Shift+Tab (Indentation)
-			if (e.key === 'Tab' || (e.metaKey && (e.key === ']' || e.key === '[')) || (e.ctrlKey && (e.key === ']' || e.key === '['))) {
-				e.preventDefault()
-				const isTab = e.key === 'Tab'
-				const isShift = e.shiftKey
-				// Check for simple Tab insert (No selection, No Shift)
-				if (isTab && !isShift && start === end) {
-					// Insert 4 spaces at cursor
-					el.setRangeText('    ', start, end, 'end')
-					handleInput({ target: el })
-					return
-				}
+			const startState = EditorState.create({
+				doc: selectedNote.value ? (selectedNote.value.content || '') : '',
+				extensions: [
+					keymap.of([...defaultKeymap, ...historyKeymap]), // Standard keys
+					history(),
+					drawSelection(),
+					search({ top: true }),
+					dropCursor(),
+					EditorState.allowMultipleSelections.of(true),
+					markdown({ base: markdownLanguage }), // Markdown logic
+					syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+					bracketMatching(),
+					closeBrackets(),
+					keymap.of(closeBracketsKeymap),
+					highlightActiveLineGutter(),
+					highlightSpecialChars(),
+					placeholder('Start typing...'),
+					// Theme Compartment
+					themeCompartment.of(isDarkMode.value ? oneDark : []),
+					// Word Wrap Compartment
+					wordWrapCompartment.of(isWordWrap.value ? EditorView.lineWrapping : []),
+					// Custom Theme for Caret & Font & Search
+					EditorView.theme({
+						"&": { fontSize: "inherit" },
+						".cm-scroller": { fontFamily: "'JetBrains Mono', monospace" },
+						".cm-content": {
+							fontFamily: "'JetBrains Mono', monospace",
+							padding: "5px !important"
+						},
+						".cm-cursor, .cm-dropCursor": { borderLeftColor: "#528bff" },
+						"&.cm-focused .cm-cursor": { borderLeftColor: "#528bff" },
+						"&.cm-focused .cm-selectionBackground, ::selection": { backgroundColor: isDarkMode.value ? "rgba(104, 151, 187, 0.4) !important" : "#D9D9D9 !important" },
 
-				// Otherwise (Shift+Tab OR Selection active), perform Line Indentation
-				const isIndent = isTab ? !isShift : (e.key === ']' || e.key === 'Tab')
-
-				// Find start and end lines
-				const startLineStart = value.lastIndexOf('\n', start - 1) + 1
-				let endLineEnd = value.indexOf('\n', end)
-				if (endLineEnd === -1) endLineEnd = value.length
-
-				// Expand selection to full lines
-				const lines = value.substring(startLineStart, endLineEnd).split('\n')
-
-				const newLines = lines.map(line => {
-					if (isIndent) {
-						return '    ' + line // 4 spaces
-					} else {
-						// Outdent: remove up to 4 spaces
-						return line.replace(/^ {1,4}/, '')
-					}
-				})
-
-				const newText = newLines.join('\n')
-				el.setRangeText(newText, startLineStart, endLineEnd, 'select')
-				handleInput({ target: el })
-				return
-			}
-
-			// 1.5 Auto-List Continuation (Enter)
-			if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
-				// Find current line
-				const lineStart = value.lastIndexOf('\n', start - 1) + 1
-				let lineEnd = value.indexOf('\n', start)
-				if (lineEnd === -1) lineEnd = value.length
-				const line = value.substring(lineStart, lineEnd)
-
-				// Match list pattern: whitespace + marker (- or * or digits.) + space
-				const match = line.match(/^(\s*)([-*]|\d+\.)\s/)
-				if (match) {
-					e.preventDefault()
-					const fullMarker = match[0]
-					const indent = match[1]
-					const marker = match[2]
-
-					// Check if line is EMPTY (just marker)
-					if (line.trim() === marker || line.trim() === marker + '.') {
-						// Empty list item -> Remove marker (Pressing enter twice ends list)
-						// Or if content length is equal to fullMarker length
-						if (line.length === fullMarker.length || line.trim().length === marker.length) {
-							el.setRangeText('', lineStart, lineEnd, 'select')
-							// effectively deletes the line content. 
-							// We might want to keep the newline? 
-							// Actually user pressed enter. If we delete line, we should probably output TWO newlines?
-							// Standard behavior: 
-							// - Items: [ "- Item 1" ]
-							// - Press Enter after "Item 1" -> [ "- Item 1", "- " ]
-							// - Press Enter again -> [ "- Item 1", "" ] (exit list)
-
-							// So if currently empty "- ", we replace it with empty string (remove indent)
-							el.setRangeText('', lineStart, lineEnd, 'select')
-							return
+						// Search Match Colors
+						".cm-searchMatch": {
+							backgroundColor: isDarkMode.value ? "#FDD835" : "#FFFF0055",
+							color: isDarkMode.value ? "#000000 !important" : "inherit"
+						},
+						".cm-searchMatch-selected": {
+							backgroundColor: isDarkMode.value ? "#FF9800" : "#FF9900",
+							color: isDarkMode.value ? "#000000 !important" : "inherit"
 						}
-					}
+					}),
+					// Update Listener (Sync)
+					EditorView.updateListener.of((update) => {
+						if (update.docChanged) {
+							if (selectedNote.value) {
+								selectedNote.value.content = update.state.doc.toString()
+								debouncedUpdate()
+							}
+						}
+						// Check selection for toolbar
+						if (update.selectionSet) {
+							checkSelection()
+						}
+					}),
+					// Check for Scroll Sync
+					EditorView.domEventHandlers({
+						scroll: handleScroll
+					}),
+					// Custom Keymap for Save/Find/Formatting
+					keymap.of([
+						{ key: "Mod-s", run: () => { updateNote(); return true } },
+						{ key: "Mod-f", run: () => { openSearch(); return true } },
+						{ key: "Mod-g", run: () => { executeFind(false); return true } },
+						{ key: "Shift-Mod-g", run: () => { executeFind(true); return true } },
+						{ key: "Escape", run: () => { closeSearch(); return false } }, // Fallback escape
+						{ key: "Mod-b", run: () => { formatText('bold'); return true } },
+						{ key: "Mod-i", run: () => { formatText('italic'); return true } },
+						{ key: "Mod-k", run: () => { formatText('link'); return true } }
+					])
+				]
+			})
 
-					// Create new line with marker
-					let nextMarker = marker
-					// If numbered, increment
-					if (/^\d+\.$/.test(marker)) {
-						const num = parseInt(marker)
-						nextMarker = (num + 1) + '.'
-					}
-
-					const insertion = '\n' + indent + nextMarker + ' '
-					el.setRangeText(insertion, start, start, 'end')
-					handleInput({ target: el })
-					// Scroll to cursor if needed (browser usually handles input scroll but setRangeText might not)
-					el.blur(); el.focus() // hack to scroll? 
-					// Actually handleScroll handles highlight sync. 
-					return
-				}
-			}
-
-			// 2. Line Manipulation
-
-			// Duplicate Line (Shift + Alt + Arrow) - Must be checked BEFORE Move Line
-			if (e.shiftKey && e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
-				e.preventDefault()
-				// Identify current line
-				const startLineStart = value.lastIndexOf('\n', start - 1) + 1
-				let startLineEnd = value.indexOf('\n', start)
-				if (startLineEnd === -1) startLineEnd = value.length
-				const currentLine = value.substring(startLineStart, startLineEnd)
-
-				// Insert duplicate
-				const insertText = '\n' + currentLine
-				el.setRangeText(insertText, startLineEnd, startLineEnd, 'end')
-				handleInput({ target: el })
-				return
-			}
-
-			// Move Line Up/Down (Alt + Arrow)
-			if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
-				e.preventDefault()
-				const direction = e.key === 'ArrowUp' ? -1 : 1
-
-				// Identify current line range
-				const startLineStart = value.lastIndexOf('\n', start - 1) + 1
-				let startLineEnd = value.indexOf('\n', start)
-				if (startLineEnd === -1) startLineEnd = value.length
-
-				const currentLine = value.substring(startLineStart, startLineEnd)
-
-				if (direction === -1) { // Up
-					// Find previous line
-					if (startLineStart === 0) return // Already at top
-					const prevLineStart = value.lastIndexOf('\n', startLineStart - 2) + 1
-					const prevLineEnd = startLineStart - 1
-					const prevLine = value.substring(prevLineStart, prevLineEnd)
-
-					// Swap
-					const newBlock = currentLine + '\n' + prevLine
-					el.setRangeText(newBlock, prevLineStart, startLineEnd, 'select')
-					// Adjust selection to follow moved line
-					el.setSelectionRange(prevLineStart, prevLineStart + currentLine.length)
-				} else { // Down
-					// Find next line
-					if (startLineEnd === value.length) return // Already at bottom
-					const nextLineStart = startLineEnd + 1
-					let nextLineEnd = value.indexOf('\n', nextLineStart)
-					if (nextLineEnd === -1) nextLineEnd = value.length
-					const nextLine = value.substring(nextLineStart, nextLineEnd)
-
-					// Swap
-					const newBlock = nextLine + '\n' + currentLine
-					el.setRangeText(newBlock, startLineStart, nextLineEnd, 'select')
-					// Adjust selection
-					const newStart = startLineStart + nextLine.length + 1
-					el.setSelectionRange(newStart, newStart + currentLine.length)
-				}
-				handleInput({ target: el })
-				return
-			}
-
-			// Delete Line (Cmd+Shift+K / Ctrl+Shift+K)
-			if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'k') {
-				e.preventDefault()
-				const startLineStart = value.lastIndexOf('\n', start - 1) + 1
-				let nextLineStart = value.indexOf('\n', start) + 1
-				if (nextLineStart === 0) nextLineStart = value.length // EOF case
-
-				// If it's the last line (no newline at end), we might need to delete newline before it
-				let deleteEnd = nextLineStart
-				let deleteStart = startLineStart
-
-				if (startLineStart > 0 && deleteEnd === value.length && value[startLineStart - 1] === '\n') {
-					// removing last line, consume preceding newline
-					deleteStart--
-				}
-
-				el.setRangeText('', deleteStart, deleteEnd, 'select')
-				handleInput({ target: el })
-				return
-			}
-
-			// 3. Search Navigation (Cmd+G)
-			if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'g') {
-				e.preventDefault()
-				if (!searchState.value.show) {
-					openSearch()
-				} else {
-					executeFind(e.shiftKey) // shift = prev, no-shift = next
-				}
-				return
-			}
-
-
-			// Shortcuts
-			if ((e.metaKey || e.ctrlKey)) {
-				switch (e.key.toLowerCase()) {
-					case 'b': e.preventDefault(); formatText('bold'); break;
-					case 'i': e.preventDefault(); formatText('italic'); break;
-					case 'k': e.preventDefault(); formatText('link'); break;
-					case 's': e.preventDefault(); updateNote(); break; // Save
-					case 'f': e.preventDefault(); openSearch(); break;
-				}
-			}
+			editorView.value = new EditorView({
+				state: startState,
+				parent: editorRef.value
+			})
 		}
+
+
+
+
+
 
 
 
 		const formatText = (type) => {
-			const el = editorRef.value
-			if (!el) return
-			const start = el.selectionStart
-			const end = el.selectionEnd
-			const selection = el.value.substring(start, end)
+			const view = editorView.value
+			if (!view) return
+			view.focus()
 
-			let newText = selection
 			let wrap = ''
-
 			switch (type) {
 				case 'bold': wrap = '**'; break;
 				case 'italic': wrap = '*'; break;
 				case 'strike': wrap = '~~'; break;
-				case 'code': wrap = '`'; break; // Simple inline code
-				case 'codeblock':
-					newText = `\`\`\`\n${selection}\n\`\`\``
+				case 'code': wrap = '`'; break;
+				default:
+					// Fallback to more complex logic below
 					break;
-				case 'link':
-					const url = prompt('Link URL:', 'https://')
-					if (url) newText = `[${selection}](url)`
-					else return
-					wrap = ''
-					break;
-				// Headings
-				case 'h1': case 'h2': case 'h3': case 'h4': case 'h5':
-					// Handle line logic... complex for simple textarea replace.
-					// Just prepend to selection for now or handle simple case.
-					const level = parseInt(type.replace('h', ''))
-					const prefix = '#'.repeat(level) + ' '
-					// We should find the start of the line.
-					// Scan back from start to find \n
-					let lineStart = el.value.lastIndexOf('\n', start - 1) + 1
-					// Insert at lineStart
-					el.setRangeText(prefix, lineStart, lineStart, 'end')
-					handleInput({ target: el })
-					el.focus()
-					return
 			}
 
 			if (wrap) {
-				newText = `${wrap}${selection}${wrap}`
+				const transaction = view.state.changeByRange(range => {
+					const slice = view.state.sliceDoc(range.from, range.to)
+					// Simple Toggle Logic (check outer)
+					const isWrapped = slice.startsWith(wrap) && slice.endsWith(wrap) && slice.length >= wrap.length * 2
+					if (isWrapped) {
+						return {
+							changes: { from: range.from, to: range.to, insert: slice.slice(wrap.length, -wrap.length) },
+							range: EditorSelection.range(range.from, range.to - (wrap.length * 2))
+						}
+					}
+					return {
+						changes: { from: range.from, to: range.to, insert: wrap + slice + wrap },
+						range: EditorSelection.range(range.from, range.to + (wrap.length * 2))
+					}
+				})
+				view.dispatch(transaction)
+				return
 			}
 
-			el.setRangeText(newText, start, end, 'select')
-			handleInput({ target: el })
-			el.focus()
+			// Headings
+			if (type.startsWith('h')) {
+				const level = parseInt(type.replace('h', ''))
+				const prefix = '#'.repeat(level) + ' '
+
+				const transaction = view.state.changeByRange(range => {
+					const line = view.state.doc.lineAt(range.from)
+					// Check if already has heading
+					const match = line.text.match(/^#+ /)
+					let newText = prefix + line.text.replace(/^#+ /, '')
+					if (match && match[0] === prefix) {
+						// Toggle off if same level? Or just keep? Let's just set it ensures it is that level.
+						// If same, maybe remove? 
+						if (line.text.startsWith(prefix)) newText = line.text.substring(prefix.length)
+					}
+
+					return {
+						changes: { from: line.from, to: line.to, insert: newText },
+						range: EditorSelection.range(range.from + (newText.length - line.text.length), range.to + (newText.length - line.text.length))
+					}
+				})
+				view.dispatch(transaction)
+				return
+			}
+
+			if (type === 'codeblock') {
+				const transaction = view.state.changeByRange(range => {
+					const slice = view.state.sliceDoc(range.from, range.to)
+					return {
+						changes: { from: range.from, to: range.to, insert: "```\n" + slice + "\n```" },
+						range: EditorSelection.range(range.from + 4, range.from + 4 + slice.length)
+					}
+				})
+				view.dispatch(transaction)
+			}
+
+			if (type === 'link') {
+				const url = prompt('Link URL:', 'https://')
+				if (!url) return
+				const transaction = view.state.changeByRange(range => {
+					const slice = view.state.sliceDoc(range.from, range.to)
+					const insert = `[${slice}](${url})`
+					return {
+						changes: { from: range.from, to: range.to, insert: insert },
+						range: EditorSelection.range(range.from + insert.length, range.from + insert.length)
+					}
+				})
+				view.dispatch(transaction)
+			}
 		}
 
+		console.log('Setup functions defined')
+
 		const focusEditor = () => {
-			if (editorRef.value) {
-				editorRef.value.focus()
+			if (editorView.value) {
+				editorView.value.focus()
 			}
 		}
 
@@ -501,9 +475,10 @@ createApp({
 			if (replace) searchState.value.showReplace = true
 			nextTick(() => {
 				if (searchInputRef.value) searchInputRef.value.focus()
-				const el = editorRef.value
-				if (el && el.selectionStart !== el.selectionEnd) {
-					searchState.value.query = el.value.substring(el.selectionStart, el.selectionEnd)
+				const view = editorView.value
+				if (view && !view.state.selection.main.empty) {
+					const range = view.state.selection.main
+					searchState.value.query = view.state.sliceDoc(range.from, range.to)
 				}
 			})
 		}
@@ -511,7 +486,7 @@ createApp({
 		const closeSearch = () => {
 			searchState.value.show = false
 			searchState.value.showReplace = false
-			if (editorRef.value) editorRef.value.focus()
+			if (editorView.value) editorView.value.focus()
 		}
 
 		watch(() => [searchState.value.query, searchState.value.caseSensitive, searchState.value.useRegex], () => {
@@ -519,139 +494,58 @@ createApp({
 		})
 
 		const executeFind = (reverse = false, focusEditor = true) => {
-			const el = editorRef.value
-			if (!el) return
-			const content = el.value
-			let query = searchState.value.query
+			const view = editorView.value
+			if (!view) return
+			const query = searchState.value.query
 			if (!query) return
 
-			let searchIndex = -1
-			const currentPos = el.selectionEnd
+			const searchQuery = new SearchQuery({
+				search: query,
+				caseSensitive: searchState.value.caseSensitive,
+				regexp: searchState.value.useRegex
+			})
 
-			const flags = searchState.value.caseSensitive ? 'g' : 'gi'
+			view.dispatch({ effects: setSearchQuery.of(searchQuery) })
 
-			if (searchState.value.useRegex) {
-				try {
-					const regex = new RegExp(query, flags)
-					let match
-					const matches = []
-					while ((match = regex.exec(content)) !== null) {
-						matches.push({ start: match.index, end: match.index + match[0].length })
-					}
-
-					if (matches.length === 0) return
-
-					let nextMatch = null
-					if (reverse) {
-						let prevMatch = null
-						for (const m of matches) {
-							if (m.start < el.selectionStart) {
-								prevMatch = m
-							} else {
-								break
-							}
-						}
-						nextMatch = prevMatch || matches[matches.length - 1]
-					} else {
-						let found = matches.find(m => m.start >= currentPos)
-						if (!found) found = matches[0] // Loop around
-						nextMatch = found
-					}
-
-					if (nextMatch) {
-						if (focusEditor) el.focus()
-						el.setSelectionRange(nextMatch.start, nextMatch.end)
-
-						// Manually scroll if not focusing (since blur might not scroll)
-						if (!focusEditor) {
-							const textBefore = content.substring(0, nextMatch.start)
-							const lines = textBefore.split('\n').length
-							const lineHeight = 21 // Approx for 14px font
-							const scrollPos = (lines * lineHeight) - (el.clientHeight / 2)
-							el.scrollTop = scrollPos > 0 ? scrollPos : 0
-						}
-					}
-				} catch (e) {
-					console.error("Regex error", e)
-				}
+			if (reverse) {
+				findPrevious(view)
 			} else {
-				// Normal string search
-				const lowerContent = searchState.value.caseSensitive ? content : content.toLowerCase()
-				const lowerQuery = searchState.value.caseSensitive ? query : query.toLowerCase()
-
-				// Find all occurrences
-				const matches = []
-				let pos = 0
-				while (true) {
-					const idx = lowerContent.indexOf(lowerQuery, pos)
-					if (idx === -1) break
-					matches.push({ start: idx, end: idx + query.length })
-					pos = idx + 1
-				}
-
-				if (matches.length === 0) return
-
-				let nextMatch
-				if (reverse) {
-					let prevMatch = null
-					for (const m of matches) {
-						if (m.start < el.selectionStart) {
-							prevMatch = m
-						} else {
-							break
-						}
-					}
-					nextMatch = prevMatch || matches[matches.length - 1]
-				} else {
-					let found = matches.find(m => m.start >= currentPos)
-					if (!found) found = matches[0]
-					nextMatch = found
-				}
-
-				if (nextMatch) {
-					if (focusEditor) el.focus()
-					el.setSelectionRange(nextMatch.start, nextMatch.end)
-
-					if (!focusEditor) {
-						const textBefore = content.substring(0, nextMatch.start)
-						const lines = textBefore.split('\n').length
-						const lineHeight = 21
-						const scrollPos = (lines * lineHeight) - (el.clientHeight / 2)
-						el.scrollTop = scrollPos > 0 ? scrollPos : 0
-					}
-				}
+				findNext(view)
 			}
+			if (focusEditor) view.focus()
 		}
 
 		const hasSelection = ref(false)
 		const checkSelection = () => {
-			const el = editorRef.value
-			if (!el) return
-			hasSelection.value = el.selectionStart !== el.selectionEnd
+			const view = editorView.value
+			if (!view) return
+			hasSelection.value = !view.state.selection.main.empty
 		}
 
 		// Scroll Sync
 		const handleScroll = (e) => {
-			// ... existing scroll logic
-			if (!editorRef.value) return
+			const view = editorView.value
+			const scrollDOM = view ? view.scrollDOM : null
+
 			const source = e.target
 
-			// Sync Preview
 			if (previewRef.value && viewMode.value !== 'edit') {
-				if (source === editorRef.value) {
+				if (source === scrollDOM || (source.classList && source.classList.contains('cm-scroller'))) {
+					// CM -> Preview
 					const percentage = source.scrollTop / (source.scrollHeight - source.clientHeight)
 					previewRef.value.scrollTop = percentage * (previewRef.value.scrollHeight - previewRef.value.clientHeight)
-				} else if (source === previewRef.value) {
+				} else if (source === previewRef.value && scrollDOM) {
+					// Preview -> CM
 					const percentage = source.scrollTop / (source.scrollHeight - source.clientHeight)
-					editorRef.value.scrollTop = percentage * (editorRef.value.scrollHeight - editorRef.value.clientHeight)
+					scrollDOM.scrollTop = percentage * (scrollDOM.scrollHeight - scrollDOM.clientHeight)
 				}
 			}
 		}
 
 		const executeReplace = (all = false) => {
-			const el = editorRef.value
-			if (!el) return
-			const content = el.value
+			const view = editorView.value
+			if (!view) return
+			const content = view.state.doc.toString()
 			let query = searchState.value.query
 			let replace = searchState.value.replaceText
 			if (!query) return
@@ -661,15 +555,16 @@ createApp({
 				const regex = new RegExp(searchState.value.useRegex ? query : query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags)
 				const newContent = content.replace(regex, replace)
 
+				view.dispatch({
+					changes: { from: 0, to: content.length, insert: newContent }
+				})
 				// Update everything
 				selectedNote.value.content = newContent
-				el.value = newContent
-				handleInput({ target: el })
 			} else {
 				// Replace Current Selection OR Next Match
-				const selStart = el.selectionStart
-				const selEnd = el.selectionEnd
-				const selText = content.substring(selStart, selEnd)
+				// Check if current selection matches query
+				const selection = view.state.selection.main
+				const selText = view.state.sliceDoc(selection.from, selection.to)
 
 				let isMatch = false
 				if (searchState.value.useRegex) {
@@ -682,9 +577,11 @@ createApp({
 					isMatch = searchState.value.caseSensitive ? selText === query : selText.toLowerCase() === query.toLowerCase()
 				}
 
-				if (isMatch && selStart !== selEnd) {
-					el.setRangeText(replace, selStart, selEnd, 'select')
-					handleInput({ target: el })
+				if (isMatch && !selection.empty) {
+					view.dispatch({
+						changes: { from: selection.from, to: selection.to, insert: replace },
+						scrollIntoView: true
+					})
 					executeFind(false, false) // keep focus behavior
 				} else {
 					executeFind(false, false)
@@ -1500,6 +1397,11 @@ createApp({
 
 			// Wait a bit for Google Script to load if async
 			setTimeout(initGoogleAuth, 500)
+
+			// Editor initialized via watcher generally, but we can ensure cleanup
+			onBeforeUnmount(() => {
+				if (editorView.value) editorView.value.destroy()
+			})
 		})
 
 		// Watch authentication state to re-render button if logout
@@ -1516,29 +1418,28 @@ createApp({
 
 
 		// Watchers
+		// Watchers
 		watch(() => selectedNote.value?.id, (newId) => {
 			if (newId) {
 				nextTick(() => {
-					// Standard Textarea Reset
-					if (editorRef.value) {
-						editorRef.value.scrollTop = 0
-						// value is bound by v-model or :value, but simple textarea needs update? 
-						// No, :value handles it if we use v-model, but we used :value="selectedNote.content" in index.html?
-						// Let's check index.html. I didn't verify if I added v-model or :value.
-						// I added `ref="editorRef" @input="handleInput"`. I missed `:value` or `v-model`. 
-						// I need to set the value manually here or via prop. 
-						// Textarea usage: <textarea .value="..."></textarea>
-						// I'll update it here:
-						if (selectedNote.value) {
-							editorRef.value.value = selectedNote.value.content || ''
-						}
-					}
-					if (previewRef.value) {
-						previewRef.value.scrollTop = 0
-					}
+					initEditor()
 				})
+			} else {
+				// Destroy if no note
+				if (editorView.value) {
+					editorView.value.destroy()
+					editorView.value = null
+				}
 			}
 		}, { flush: 'post', immediate: true })
+
+		watch(isDarkMode, (val) => {
+			if (editorView.value) {
+				editorView.value.dispatch({
+					effects: themeCompartment.reconfigure(val ? oneDark : [])
+				})
+			}
+		})
 
 		// Other watchers (fontSize, darkMode, viewMode) handled via CSS binding in template
 
@@ -1582,7 +1483,6 @@ createApp({
 			startRename,
 			saveRename,
 
-			toolbar,
 			formatText,
 			formatDate: (dateStr) => {
 				const date = parseSafeDate(dateStr)
@@ -1664,12 +1564,15 @@ createApp({
 			executeFind,
 			executeReplace,
 			searchInputRef,
-			handleInput,
-			handleKeydown,
 			formatText,
 			hasSelection,
-			checkSelection
-
+			checkSelection,
+			guestMode: computed(() => !isAuthenticated.value),
+			// Config
+			isWordWrap,
+			toggleWordWrap,
+			splitRatio,
+			startResize
 		}
 	}
 }).mount('#app')

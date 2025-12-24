@@ -25,31 +25,34 @@ This document tracks the cumulative implementation details of the SHYNOTE projec
 
 ---
 
-## 2. Editor Migration (CodeMirror 5)
+## 2. Editor Migration (CodeMirror 6)
 **Date**: 2025-12-23
 **Status**: Implemented
 
 ### Core Integration Checklist
 - [x] **Core Integration**
-  - [x] Add CodeMirror 5 CDN links (Core, Modes, Addons, Themes)
-  - [x] Initialize CodeMirror using `fromTextArea`
-  - [x] Implement Two-way Binding with Vue State
-  - [x] Dark Mode Support (setOption('theme'))
+  - [x] Add CodeMirror 6 CDN links (esm.sh: View, State, Lang-Markdown, Theme-OneDark)
+  - [x] Initialize CodeMirror `EditorView` and `EditorState`
+  - [x] Implement Two-way Binding with Vue State (UpdateListener + Watcher)
+  - [x] Dynamic Theme Support (`Compartment` for One Dark / Light)
 - [x] **Styling**:
-    - [x] Match existing typography (font-family, line-height).
+    - [x] Full height container allowing scroll.
+    - [x] Match application typography.
 
 ### Feature Porting Checklist
 - [x] **Keymaps**:
-    - [x] Indent/Outdent (Tab/Shift+Tab) via `sublime` keymap.
-    - [x] Smart Lists (Auto-continue lists) via `continuelist` addon.
-    - [x] Custom Shortcuts (`Cmd+S`, `Cmd+B`...).
+    - [x] Default CodeMirror Keymaps (Standard, History).
+    - [x] Custom Shortcuts (`Mod-S` Save, `Mod-F` Find, `Mod-B/I/K` Formatting).
 - [x] **Extensions**:
-    - [x] Markdown Language Support.
-    - [x] Syntax Highlighting.
-    - [x] Active Line Highlighting.
+    - [x] Markdown Language Support (GFM).
+    - [x] Syntax Highlighting (`defaultHighlightStyle`).
+    - [x] Active Line Gutter.
     - [x] Bracket Matching & Auto-close.
+    - [x] Multiple Selections.
 - [x] **UI Components**:
-    - [x] **Floating Toolbar**: Re-implement using CodeMirror `Tooltip` or DOM widget.
+    - [x] **Floating Toolbar**: Updated to work with CodeMirror text selection.
+    - [x] **Search/Replace**: Ported to use CodeMirror State and Transactions.
+
 
 ---
 
