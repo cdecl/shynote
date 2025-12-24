@@ -51,10 +51,9 @@
 
 ---
 
-## 3. 로딩 및 데이터 동기화 전략 (Last Write Wins)
+## 3. 로딩 및 데이터 동기화 전략 (Pull Sync & Hash Verification)
 
-현재 구현은 빠른 반응성을 위해 **Dirty Flag** 기반의 "최종 수정 우선(Last Write Wins)" 전략을 사용합니다.
-(Hash 기반 검증은 추후 고도화 예정)
+현재 시스템은 빠른 반응성을 위해 **Dirty Flag** 기반의 "최종 수정 우선(Last Write Wins)" 전략을 채택하고 있으며, 데이터 정합성을 위해 **Hash 기반 검증** 및 **삭제 동기화(Full Sync Logics)**를 포함합니다.
 
 ### ⚡ 로딩 및 병합 프로세스 (Loading & Merging)
 
@@ -62,16 +61,20 @@
    - 앱 실행 시 `LocalDB.getAllNotes()`를 호출하여 IndexedDB의 데이터를 즉시 메모리(`notes.value`)로 로드.
    - 사용자는 네트워크 대기 없이 즉시 문서를 확인 가능.
 
-2. **Server Fetch & Merge (서버 데이터 수신 및 병합)**
+2. **Server Fetch & Full Sync (서버 데이터 수신 및 완전 동기화)**
    - 백그라운드에서 `/api/notes`를 호출하여 서버의 최신 데이터를 가져옴.
    - **병합 로직 (`LocalDB.saveNotesBulk`)**:
-     - 서버에서 받은 각 노트에 대해 로컬 DB의 상태를 확인.
-     - **Case A: 로컬 노트가 `Dirty` 상태인 경우** (전송 대기 중인 수정사항 존재)
-       - 서버 데이터를 **무시(Skip)**합니다. 로컬의 수정 내역이 우선시됩니다.
-       - 이후 `SyncWorker`가 로컬 내용을 서버로 강제 Push합니다.
-     - **Case B: 로컬 노트가 `Synced` 상태인 경우**
-       - 서버 데이터로 로컬 IndexedDB를 **덮어쓰기(Overwrite)**합니다.
-       - 동기화 완료 상태(`sync_status: 'synced'`)를 유지합니다.
+     - 서버에서 받은 노트(`serverNotes`)와 로컬 DB(`localNotes`)를 비교.
+
+     - **Step A: 생성 및 수정 반영 (Upsert via Hash)**
+       - 각 서버 노트에 대해 해시(Content Hash)를 비교하거나 최신성 검증.
+       - **로컬이 `Dirty` 상태인 경우**: 서버 데이터를 **무시(Skip)**하고 추후 로컬 내용을 Push.
+       - **로컬이 `Synced` 상태인 경우**: 서버의 `updated_at`이 더 최신인 경우 로컬 DB 업데이트.
+
+     - **Step B: 삭제 동기화 (Server Deletion Check)**
+       - **원리**: 서버 목록에 없는 데이터가 로컬에 존재한다면, 타 기기에서 삭제된 것으로 간주.
+       - **예외(Exception)**: 단, 로컬에서 새로 생성되어 아직 서버로 전송되지 않은(`Synced`가 아닌 `Dirty` 상태) 노트는 **삭제 대상에서 제외**.
+       - **Action**: 서버 목록에 없고 && 로컬 상태가 `Synced`인 노트는 로컬 DB에서 영구 삭제.
 
 3. **UI Refresh (화면 갱신)**
    - 병합이 완료되면 `LocalDB`에서 다시 데이터를 조회하여 UI(`notes.value`)를 최신 상태로 갱신.
@@ -80,8 +83,11 @@
 - **전략**: **Client-side Priority for Dirty Notes** (수정 중인 로컬 데이터 절대 우선)
 - **이유**: 사용자가 방금 작성한 내용이 서버의 내용보다 최신일 확률이 높으며, 작성 중인 내용이 덮어씌워지는 경험("Ghost Typing")을 방지하기 위함.
 
-
-> **Note:** 이 설계는 네트워크 연결이 불안정한 환경에서도 사용자의 편집 흐름을 끊지 않으며, 서버 리소스를 최소한으로 사용하여 동기화 정합성을 유지합니다.
+### 🧟 좀비 데이터 및 삭제 정책 (Deletion Policy)
+로컬-우선 동기화 특성상, 드문 확률로 삭제된 데이터가 재동기화 시 부활하는 **"좀비 데이터(Zombie Data)"** 현상이 발생할 수 있습니다.
+- **현상**: A기기 삭제 -> B기기 오프라인 수정 -> B기기 온라인 동기화 시 서버로 재전송.
+- **정책**: 복잡한 Tombstone(삭제 마커) 시스템 대신 **"사용자의 명시적 재삭제"**를 유도하는 단순한 정책을 유지합니다. 
+- **근거**: 개인 노트 앱 특성상 동시 편집 빈도가 낮으며, 데이터 유실보다는 데이터 보존이 더 안전한 방향이기 때문입니다.
 
 ---
 
@@ -100,6 +106,7 @@
   - `folder_id`: 소속 폴더 ID (Relation)
   - `sync_status`: 동기화 상태 (`dirty` | `synced`)
   - `local_updated_at`: 로컬 수정 시각
+  - `content_hash`: (Optional) 변경 감지용 해시
 
 ### 📂 Folders Store (`folders`)
 폴더 계층 구조를 캐싱하여 오프라인상에서도 트리 구조를 유지합니다.
@@ -109,4 +116,3 @@
   - `name`: 폴더명
   - `user_id`: 소유자 ID
 
-> **Note**: 초기 설계와 달리, 오프라인 환경에서의 완벽한 UX를 위해 **문서 내용뿐만 아니라 폴더 구조 정보까지 로컬에 모두 저장**합니다.

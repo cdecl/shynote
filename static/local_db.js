@@ -1,7 +1,7 @@
 import { openDB } from "https://esm.sh/idb@7.1.1";
 
 const DB_NAME = 'SHYNOTE_VAULT';
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 export const initDB = async () => {
 	return openDB(DB_NAME, DB_VERSION, {
@@ -103,9 +103,19 @@ export const LocalDB = {
 		const store = tx.objectStore('notes');
 		for (const note of notes) {
 			const existing = await store.get(note.id);
+
+			// 1. Conflict Protection: If Local is Dirty, NEVER overwrite.
 			if (existing && existing.sync_status === 'dirty') {
 				continue;
 			}
+
+			// 2. Optimization: If Hash matches, SKIP overwrite (No change).
+			// Note: We need to store content_hash in DB for this to work.
+			// If existing has no hash (migration), we update.
+			if (existing && existing.content_hash && existing.content_hash === note.content_hash) {
+				continue;
+			}
+
 			await store.put({
 				...note,
 				sync_status: 'synced',

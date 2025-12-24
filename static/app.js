@@ -37,6 +37,15 @@ createApp({
 			return isNaN(date.getTime()) ? null : date
 		}
 
+		// Hash Helper for Sync
+		const shynote_hash = async (text) => {
+			const encoder = new TextEncoder();
+			const data = encoder.encode(text);
+			const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+			const hashArray = Array.from(new Uint8Array(hashBuffer));
+			return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+		}
+
 		// User Settings Helper
 		const getUserStorageKey = (key) => {
 			const prefix = currentUserId.value ? `${currentUserId.value}_` : 'guest_';
@@ -1088,9 +1097,33 @@ createApp({
 				if (response && response.ok) {
 					const serverNotes = await response.json()
 
+
 					if (hasIDB && uid) {
-						// Inject user_id if missing
-						const notesToSave = serverNotes.map(n => ({ ...n, user_id: n.user_id || uid }))
+						// 1. Identify Deletions (Server Side Deletion)
+						// Get all local synced notes
+						const localNotesAll = await LocalDB.getAllNotes(uid)
+						const serverIds = new Set(serverNotes.map(n => n.id))
+
+						for (const ln of localNotesAll) {
+							// If local note is NOT in server list AND it is NOT dirty (waiting to be pushed)
+							// Then it means it was deleted on another device.
+							if (!serverIds.has(ln.id) && ln.sync_status !== 'dirty') {
+								await LocalDB.deleteNote(ln.id)
+							}
+						}
+
+						// 2. Compute Hashes & Filter Updates
+						const notesToSave = []
+						for (const n of serverNotes) {
+							// Generate hash for content comparison
+							// Hash basis: id + title + content + folder_id
+							// Ensuring nulls consistencies 
+							const base = `${n.id}:${n.title}:${n.content || ''}:${n.folder_id || 'null'}`
+							n.content_hash = await shynote_hash(base)
+							n.user_id = n.user_id || uid
+							notesToSave.push(n)
+						}
+
 						await LocalDB.saveNotesBulk(notesToSave)
 
 						// Reload merged state strictly for this user
