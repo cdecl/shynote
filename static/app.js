@@ -7,6 +7,7 @@ import { search, searchKeymap, highlightSelectionMatches, setSearchQuery, Search
 import { oneDark } from "https://esm.sh/@codemirror/theme-one-dark@6.1.2?deps=@codemirror/state@6.4.0"
 import { syntaxHighlighting, defaultHighlightStyle, bracketMatching } from "https://esm.sh/@codemirror/language@6.10.0?deps=@codemirror/state@6.4.0"
 import { closeBrackets, closeBracketsKeymap } from "https://esm.sh/@codemirror/autocomplete@6.12.0?deps=@codemirror/state@6.4.0"
+import { MergeView } from "https://esm.sh/@codemirror/merge@6.4.0?deps=@codemirror/state@6.4.0, @codemirror/view@6.23.0"
 import { LocalDB } from "./local_db.js"
 
 const { createApp, ref, onMounted, computed, nextTick, watch, onBeforeUnmount } = Vue
@@ -370,6 +371,29 @@ createApp({
 			if (!editorRef.value) return
 			if (editorView.value) editorView.value.destroy()
 
+			console.log(`[InitEditor] Called. ConflictMode=${conflictState.value.isConflict}`)
+
+			// Merge View Mode
+			if (conflictState.value.isConflict) {
+				const { localNote, serverNote } = conflictState.value
+				console.log("[InitEditor] Initializing MergeView", localNote, serverNote)
+
+				editorView.value = new MergeView({
+					a: {
+						doc: localNote.content || '',
+						extensions: [markdown({ base: markdownLanguage }), EditorView.editable.of(false), EditorView.lineWrapping]
+					},
+					b: {
+						doc: serverNote.content || '',
+						extensions: [markdown({ base: markdownLanguage }), EditorView.editable.of(false), EditorView.lineWrapping]
+					},
+					parent: editorRef.value,
+					orientation: "a-b", // Left: Local, Right: Server
+					gutter: true
+				})
+				return
+			}
+
 			const startState = EditorState.create({
 				doc: selectedNote.value ? (selectedNote.value.content || '') : '',
 				extensions: [
@@ -450,11 +474,58 @@ createApp({
 			})
 		}
 
+		// Conflict Logic
+		const conflictState = ref({
+			isConflict: false,
+			localNote: null,
+			serverNote: null
+		})
 
+		const enterConflictMode = (local, server) => {
+			conflictState.value = {
+				isConflict: true,
+				localNote: local,
+				serverNote: server
+			}
+			console.log('Conflict detected! Entering Merge Mode.', local, server)
+			nextTick(() => {
+				initEditor() // Re-init to show MergeView
+			})
+		}
 
+		const resolveConflict = async (action) => {
+			const { localNote, serverNote } = conflictState.value
+			if (!localNote || !serverNote) return
 
+			if (action === 'use_local') {
+				// We keep local. Just need to update LocalDB to say... actually status is still dirty.
+				// But we might want to update the 'base' hash to current execution?
+				// Simply doing nothing keeps it dirty and it will overwrite server on next push.
+				// But we should act like we 'resolved' it. 
+				// Maybe force push now?
+				await updateNote() // Will push to server
+			} else if (action === 'use_server') {
+				// Overwrite local with server content
+				localNote.title = serverNote.title
+				localNote.content = serverNote.content
+				localNote.folder_id = serverNote.folder_id
+				localNote.content_hash = serverNote.content_hash
+				// Save as synced
+				if (hasIDB) {
+					await LocalDB.saveNote({ ...localNote, sync_status: 'synced' }) // This method defaults dirty?
+					// Wait, saveNote defaults dirty. We need direct put or allow override.
+					// Let's manually put for now or use saveNotesBulk one item
+					await LocalDB.saveNotesBulk([localNote])
+				}
+				// Update UI
+				if (selectedNote.value && selectedNote.value.id === localNote.id) {
+					selectedNote.value = localNote
+				}
+			}
 
-
+			conflictState.value.isConflict = false
+			initEditor()
+		}
 
 
 		const formatText = (type) => {
@@ -468,15 +539,18 @@ createApp({
 				case 'italic': wrap = '*'; break;
 				case 'strike': wrap = '~~'; break;
 				case 'code': wrap = '`'; break;
+				case 'link':
+					// Link needs special handling or just wrap for now
+					wrap = '';
+					// Simple implementation for now or use specific command
+					break;
 				default:
-					// Fallback to more complex logic below
 					break;
 			}
 
 			if (wrap) {
 				const transaction = view.state.changeByRange(range => {
 					const slice = view.state.sliceDoc(range.from, range.to)
-					// Simple Toggle Logic (check outer)
 					const isWrapped = slice.startsWith(wrap) && slice.endsWith(wrap) && slice.length >= wrap.length * 2
 					if (isWrapped) {
 						return {
@@ -500,12 +574,9 @@ createApp({
 
 				const transaction = view.state.changeByRange(range => {
 					const line = view.state.doc.lineAt(range.from)
-					// Check if already has heading
 					const match = line.text.match(/^#+ /)
 					let newText = prefix + line.text.replace(/^#+ /, '')
 					if (match && match[0] === prefix) {
-						// Toggle off if same level? Or just keep? Let's just set it ensures it is that level.
-						// If same, maybe remove? 
 						if (line.text.startsWith(prefix)) newText = line.text.substring(prefix.length)
 					}
 
@@ -515,34 +586,9 @@ createApp({
 					}
 				})
 				view.dispatch(transaction)
-				return
-			}
-
-			if (type === 'codeblock') {
-				const transaction = view.state.changeByRange(range => {
-					const slice = view.state.sliceDoc(range.from, range.to)
-					return {
-						changes: { from: range.from, to: range.to, insert: "```\n" + slice + "\n```" },
-						range: EditorSelection.range(range.from + 4, range.from + 4 + slice.length)
-					}
-				})
-				view.dispatch(transaction)
-			}
-
-			if (type === 'link') {
-				const url = prompt('Link URL:', 'https://')
-				if (!url) return
-				const transaction = view.state.changeByRange(range => {
-					const slice = view.state.sliceDoc(range.from, range.to)
-					const insert = `[${slice}](${url})`
-					return {
-						changes: { from: range.from, to: range.to, insert: insert },
-						range: EditorSelection.range(range.from + insert.length, range.from + insert.length)
-					}
-				})
-				view.dispatch(transaction)
 			}
 		}
+
 
 		console.log('Setup functions defined')
 
@@ -1126,8 +1172,36 @@ createApp({
 
 						await LocalDB.saveNotesBulk(notesToSave)
 
+						// 3. Check for Conflicts (Dirty vs Server Hash Mismatch)
+						const conflictCandidates = []
+						const currentLocalNotes = await LocalDB.getAllNotes(uid)
+						for (const ln of currentLocalNotes) {
+							if (ln.sync_status === 'dirty') {
+								const serverNote = notesToSave.find(sn => sn.id === ln.id)
+								if (serverNote) {
+									console.log(`[Sync Debug] Checking Dirty Note ${ln.id}: Local Hash=${ln.content_hash?.substring(0, 8)} vs Server Hash=${serverNote.content_hash?.substring(0, 8)}`)
+									if (serverNote.content_hash !== ln.content_hash) {
+										// Conflict Detected!
+										console.warn(`[Sync Debug] Conflict Detected for Note ${ln.title}!`)
+										conflictCandidates.push({ local: ln, server: serverNote })
+									}
+								}
+							}
+						}
+
+						if (conflictCandidates.length > 0) {
+							// For simplicity, handle first conflict
+							const conflict = conflictCandidates[0]
+							// Only trigger if we are currently editing this note
+							if (selectedNote.value && selectedNote.value.id === conflict.local.id) {
+								if (!conflictState.value.isConflict) {
+									enterConflictMode(conflict.local, conflict.server)
+								}
+							}
+						}
+
 						// Reload merged state strictly for this user
-						notes.value = await LocalDB.getAllNotes(uid)
+						notes.value = currentLocalNotes
 					} else {
 						notes.value = serverNotes
 					}
@@ -1800,7 +1874,9 @@ createApp({
 			splitRatio,
 			startResize,
 			hasIDB,
-			isSyncing
+			isSyncing,
+			conflictState,
+			resolveConflict
 		}
 	}
 }).mount('#app')

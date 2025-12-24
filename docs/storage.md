@@ -79,6 +79,42 @@
 3. **UI Refresh (화면 갱신)**
    - 병합이 완료되면 `LocalDB`에서 다시 데이터를 조회하여 UI(`notes.value`)를 최신 상태로 갱신.
 
+### 📊 데이터 동기화 흐름도 (Sequence Flow)
+
+```mermaid
+sequenceDiagram
+    participant User as 사용자 (UI)
+    participant App as App (Memory)
+    participant IDB as LocalDB (IndexedDB)
+    participant Server as Server (API)
+
+    Note over User, IDB: 1. 초기 로딩 (Instant Load)
+    App->>IDB: getAllNotes()
+    IDB-->>App: Return Cached Notes
+    App->>User: Render UI (즉시 표시)
+
+    Note over App, Server: 2. 백그라운드 동기화 (Background Sync)
+    App->>Server: GET /api/notes (전체 데이터)
+    Server-->>App: Return Server Notes
+    
+    loop Merge Logic (Hash & Delete)
+        App->>App: Hash 비교 (Local vs Server)
+        opt Hash Mismatch & Dirty
+            App->>App: Conflict 감지 및 배너 표시
+        end
+        opt Hash Mismatch & Synced
+            App->>IDB: Update Note (Server Win)
+        end
+        opt Not via Server & Synced
+            App->>IDB: Delete Note (Server Deletion)
+        end
+    end
+
+    App->>IDB: reload Data
+    IDB-->>App: Return Updated Notes
+    App->>User: Update UI (화면 갱신)
+```
+
 ### 🔄 충돌 해결 정책 (Conflict Resolution)
 - **전략**: **Client-side Priority for Dirty Notes** (수정 중인 로컬 데이터 절대 우선)
 - **이유**: 사용자가 방금 작성한 내용이 서버의 내용보다 최신일 확률이 높으며, 작성 중인 내용이 덮어씌워지는 경험("Ghost Typing")을 방지하기 위함.

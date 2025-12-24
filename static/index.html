@@ -616,6 +616,24 @@
                             :class="isDarkMode ? 'dark' : ''"
                             :style="viewMode === 'split' ? { flex: `0 0 ${splitRatio}%` } : {}">
 
+                            <!-- Conflict Banner -->
+                            <div v-if="conflictState.isConflict"
+                                class="bg-red-50 text-red-700 px-4 py-3 flex items-center justify-between border-b border-red-200">
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-rounded">warning</span>
+                                    <span class="font-bold">Sync Conflict Detected!</span>
+                                    <span class="text-sm">Left: Your Changes | Right: Server Changes</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button @click="resolveConflict('use_local')"
+                                        class="px-3 py-1 bg-white border border-red-300 rounded text-sm hover:bg-red-50 font-medium">Keep
+                                        My Version (Left)</button>
+                                    <button @click="resolveConflict('use_server')"
+                                        class="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700 font-medium">Use
+                                        Server Version (Right)</button>
+                                </div>
+                            </div>
+
                             <!-- Search Widget -->
                             <div v-if="searchState.show"
                                 class="bg-gray-50 dark:bg-[#2E3440] border-b border-gray-200 dark:border-[#434C5E] p-2 flex flex-col gap-2 shadow-sm z-20 relative pr-10">
