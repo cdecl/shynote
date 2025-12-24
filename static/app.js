@@ -70,6 +70,13 @@ createApp({
 					effects: wordWrapCompartment.reconfigure(isWordWrap.value ? EditorView.lineWrapping : [])
 				})
 			}
+
+			// Dark Mode (Local Preference override before DB)
+			const localDark = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.DARK_MODE))
+			if (localDark !== null) {
+				isDarkMode.value = localDark === 'true'
+				applyTheme()
+			}
 		}
 
 		const notes = ref([])
@@ -973,7 +980,8 @@ createApp({
 		const toggleDarkMode = () => {
 			isDarkMode.value = !isDarkMode.value
 			applyTheme()
-			localStorage.setItem(STORAGE_KEYS.DARK_MODE, isDarkMode.value)
+			saveUserSetting(STORAGE_KEYS.DARK_MODE, isDarkMode.value) // User Scoped
+			localStorage.setItem(STORAGE_KEYS.DARK_MODE, isDarkMode.value) // Global Fallback (for generic boot)
 			updateUserProfile({ is_dark_mode: isDarkMode.value })
 		}
 
