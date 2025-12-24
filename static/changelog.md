@@ -1,3 +1,26 @@
+# v1.2.0 Release Notes
+
+## Summary
+- **Local-first Architecture**를 도입하여 오프라인 환경에서도 끊김 없는 작업 경험을 제공합니다.
+- 초기 로딩 속도(0ms)와 데이터 안정성을 대폭 강화했습니다.
+
+## New Features
+
+### 1. Local-first & Offline Support (로컬 우선 아키텍처)
+- **IndexedDB 기반 저장소**: 작성 중인 문서와 폴더 구조가 브라우저 내장 DB에 자동 저장됩니다.
+- **즉시 로딩 (Instant Load)**: 서버 연결 없이도 앱 실행 즉시 이전에 작업하던 내용을 볼 수 있습니다.
+- **오프라인 작업 지원**: 인터넷 연결이 끊겨도 문서 작성 및 수정이 가능하며, 데이터 유실이 없습니다.
+
+### 2. Smart Sync & UI (동기화 및 UI)
+- **Background Sync**: 네트워크 연결 시 백그라운드에서 자동으로 서버와 동기화됩니다.
+- **상태 인디케이터**: 툴바 우측 상단에 로컬 저장소 활성화 여부와 동기화 상태(Spinning Icon)가 표시됩니다.
+- **충돌 방지 (Last Write Wins)**: 사용자가 작성 중인 최신 내용(Dirty State)을 우선적으로 보호합니다.
+
+### 3. UX Improvements
+- **Splash Screen**: 다크 모드 초기 구동 시 발생하던 화이트 플래시(White Flash) 현상을 제거했습니다.
+
+---
+
 # v1.1.0 Release Notes
 
 ## Summary

@@ -44,6 +44,14 @@ SHYNOTE는 사용자가 온전히 글쓰기에 집중할 수 있도록 설계된
 
 
 
+### 6. 로컬 우선 및 오프라인 지원 (Local-first & Offline)
+- **IndexedDB 기반 저장소 (Local-first)**: 
+  - 작성 중인 모든 내용은 **1초마다 로컬 DB(IndexedDB)에 자동 저장**됩니다.
+  - 네트워크가 끊겨도 **데이터 유실 없이 작업**할 수 있으며, 앱 재실행 시 **즉시 로딩(Instant Load)**되어 쾌적함을 유지합니다.
+- **백그라운드 동기화 (Sync)**:
+  - 네트워크 연결이 복구되면 백그라운드 워커가 자동으로 변경 사항을 서버와 동기화합니다.
+  - "Last Write Wins" 전략을 통해 사용자의 최신 수정 내역을 안전하게 보호합니다.
+
 ## 🛠 기술 스택 (Tech Stack)
 - **Frontend**: Vue.js 3 (ES Modules), TailwindCSS
 - **Backend**: FastAPI, SQLite (Dev) / PostgreSQL (Prod), SQLAlchemy

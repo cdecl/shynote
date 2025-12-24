@@ -145,3 +145,25 @@ This document tracks the cumulative implementation details of the SHYNOTE projec
 - [ ] **State Management**: Refactor vanilla `ref` to Pinia if complexity grows.
 - [x] **Editor Upgrade**: Evaluate CodeMirror/Monaco for richer editing experience.
 - [ ] **Testing**: Implement `pytest` suite and E2E tests.
+
+---
+
+## 7. Local-first Sync Architecture (Planned)
+**Date**: 2025-12-24
+**Status**: In Progress
+
+### Storage Strategy
+- [ ] **IndexedDB (Local)**:
+    - [x] Schema Design (`Current_State`, `Pending_Logs`).
+    - [x] `idb` wrapper for async operations.
+- [ ] **PostgreSQL (Remote)**:
+    - [ ] Migration from SQLite.
+    - [ ] Schema update for versioning/hashing (`content_hash`, `version_id`).
+
+### Synchronization Logic
+- [x] **Write-Ahead Logging (WAL)**:
+    - [x] Implement local write (Snapshot + Log).
+    - [x] Implement Background Sync Worker.
+- [ ] **Conflict Resolution**:
+    - [ ] Hash-based comparison logic.
+    - [ ] Conflict UI (Server vs Local choice).

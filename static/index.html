@@ -550,7 +550,10 @@
                             <div class="w-[1px] h-4 bg-slate-200 dark:bg-[#434C5E] mx-1 hidden sm:block"></div>
                             <div class="hidden sm:flex flex-col items-end justify-center select-none text-right">
                                 <span
-                                    class="text-[10px] font-extrabold text-[#1e3a8a] dark:text-[#8FBCBB] uppercase tracking-widest leading-none mb-1">
+                                    class="text-[10px] font-extrabold text-[#1e3a8a] dark:text-[#8FBCBB] uppercase tracking-widest leading-none mb-1 flex items-center justify-end">
+                                    <span v-if="hasIDB" class="material-symbols-rounded text-[10px] mr-1"
+                                        :class="isSyncing ? 'animate-spin text-green-500' : ''"
+                                        title="Local-First Storage Active">database</span>
                                     {{ statusMessage === 'Ready' ? 'SAVED' : statusMessage }}
                                 </span>
                                 <span

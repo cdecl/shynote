@@ -7,6 +7,7 @@ import { search, searchKeymap, highlightSelectionMatches, setSearchQuery, Search
 import { oneDark } from "https://esm.sh/@codemirror/theme-one-dark@6.1.2?deps=@codemirror/state@6.4.0"
 import { syntaxHighlighting, defaultHighlightStyle, bracketMatching } from "https://esm.sh/@codemirror/language@6.10.0?deps=@codemirror/state@6.4.0"
 import { closeBrackets, closeBracketsKeymap } from "https://esm.sh/@codemirror/autocomplete@6.12.0?deps=@codemirror/state@6.4.0"
+import { LocalDB } from "./local_db.js"
 
 const { createApp, ref, onMounted, computed, nextTick, watch, onBeforeUnmount } = Vue
 
@@ -249,10 +250,71 @@ createApp({
 			}
 		}
 
+		const hasIDB = typeof window !== 'undefined' && 'indexedDB' in window
+		const isSyncing = ref(false)
+
 		const debouncedUpdate = () => {
 			statusMessage.value = 'Typing...'
 			if (debounceTimer) clearTimeout(debounceTimer)
-			debounceTimer = setTimeout(updateNote, 1000)
+			debounceTimer = setTimeout(async () => {
+				if (!selectedNote.value) return
+				selectedNote.value.updated_at = new Date().toISOString()
+
+				if (hasIDB) {
+					try {
+						const rawNote = JSON.parse(JSON.stringify(selectedNote.value))
+						await LocalDB.saveNote(rawNote)
+						statusMessage.value = 'Saved locally'
+					} catch (e) {
+						console.error("Local save failed", e)
+						statusMessage.value = 'Error saving'
+					}
+				} else {
+					await updateNote()
+				}
+			}, 1000)
+		}
+
+		const syncWorker = async () => {
+			if (!hasIDB || isSyncing.value || !isAuthenticated.value) return
+			isSyncing.value = true
+			try {
+				const logs = await LocalDB.getPendingLogs()
+				if (logs && logs.length > 0) {
+					const latestUpdates = {}
+					for (const log of logs) {
+						if (log.entity === 'note') latestUpdates[log.entity_id] = log
+					}
+
+					for (const log of Object.values(latestUpdates)) {
+						const { title, content, folder_id } = log.payload
+						const response = await authenticatedFetch(`/api/notes/${log.entity_id}`, {
+							method: 'PUT',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ title, content, folder_id })
+						})
+
+						if (response && response.ok) {
+							const processedLogs = logs.filter(l => l.entity_id === log.entity_id && l.id <= log.id)
+							for (const pl of processedLogs) {
+								await LocalDB.removeLog(pl.id)
+							}
+							await LocalDB.markNoteSynced(log.entity_id)
+							if (statusMessage.value === 'Saved locally') {
+								statusMessage.value = 'Synced'
+							}
+						}
+					}
+				}
+			} catch (e) {
+				console.error("Sync Error", e)
+			} finally {
+				isSyncing.value = false
+			}
+		}
+
+		if (hasIDB) {
+			setInterval(syncWorker, 5000)
 		}
 
 
@@ -917,10 +979,16 @@ createApp({
 
 
 		const fetchFolders = async () => {
+			if (hasIDB) {
+				const local = await LocalDB.getAllFolders()
+				if (local && local.length > 0) folders.value = local
+			}
 			try {
 				const response = await authenticatedFetch('/api/folders')
 				if (response && response.ok) {
-					folders.value = await response.json()
+					const data = await response.json()
+					folders.value = data
+					if (hasIDB) await LocalDB.saveFoldersBulk(data)
 				}
 			} catch (e) {
 				console.error("Failed to fetch folders", e)
@@ -960,10 +1028,29 @@ createApp({
 
 		const fetchNotes = async () => {
 			loading.value = true
+
+			// 1. Instant Load from LocalDB
+			if (hasIDB) {
+				try {
+					const localNotes = await LocalDB.getAllNotes()
+					if (localNotes && localNotes.length > 0) {
+						notes.value = localNotes
+					}
+				} catch (e) { console.error("Local Load Error", e) }
+			}
+
 			try {
 				const response = await authenticatedFetch('/api/notes')
 				if (response && response.ok) {
-					notes.value = await response.json()
+					const serverNotes = await response.json()
+
+					if (hasIDB) {
+						await LocalDB.saveNotesBulk(serverNotes)
+						// Reload merged state
+						notes.value = await LocalDB.getAllNotes()
+					} else {
+						notes.value = serverNotes
+					}
 				}
 			} catch (e) {
 				console.error("Failed to fetch notes", e)
@@ -1572,7 +1659,9 @@ createApp({
 			isWordWrap,
 			toggleWordWrap,
 			splitRatio,
-			startResize
+			startResize,
+			hasIDB,
+			isSyncing
 		}
 	}
 }).mount('#app')
