@@ -135,5 +135,17 @@ export const LocalDB = {
 			await store.put(note);
 		}
 		await tx.done;
+	},
+
+	async deleteNote(id) {
+		const db = await initDB();
+		const tx = db.transaction(['notes'], 'readwrite');
+		await tx.objectStore('notes').delete(id);
+		await tx.done;
+	},
+
+	async deleteFolder(id) {
+		const db = await initDB();
+		await db.delete('folders', id);
 	}
 };

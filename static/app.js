@@ -1231,6 +1231,9 @@ createApp({
 				if (response && response.ok) {
 					notes.value = notes.value.filter(n => n.id !== id)
 					selectedNote.value = null
+					if (hasIDB) {
+						await LocalDB.deleteNote(id)
+					}
 				}
 			} catch (e) {
 				console.error("Failed to delete note", e)
@@ -1303,6 +1306,15 @@ createApp({
 			try {
 				const response = await authenticatedFetch(`/api/folders/${id}`, { method: 'DELETE' })
 				if (response && response.ok) {
+					if (hasIDB) {
+						// Delete local notes in this folder first to prevent resurrection
+						const folderNotes = notes.value.filter(n => n.folder_id === id)
+						for (const n of folderNotes) {
+							await LocalDB.deleteNote(n.id)
+						}
+						await LocalDB.deleteFolder(id)
+					}
+
 					folders.value = folders.value.filter(f => f.id !== id)
 					// Also remove notes or move them? Currently notes cascade delete or stay orphan?
 					// Backend usually handles cascade. But frontend should refresh notes.
@@ -1473,10 +1485,18 @@ createApp({
 					if (!response || !response.ok) {
 						throw new Error("Failed to move note")
 					}
+
+					if (hasIDB) {
+						await LocalDB.saveNote(note)
+					}
+
 				} catch (e) {
 					console.error("Move failed", e)
 					// Revert
 					note.folder_id = originalFolderId
+					if (hasIDB) {
+						await LocalDB.saveNote(note)
+					}
 					alert("Failed to move note")
 				}
 			}
