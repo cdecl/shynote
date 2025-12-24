@@ -124,6 +124,10 @@ This document tracks the cumulative implementation details of the SHYNOTE projec
     - [x] **Sidebar**: Collapsible/Resizable sidebar with specific width control.
     - [x] **Toolbar**: "View" mode toggles (Split/Edit/Preview).
     - [x] **Feedback**: Status messages ("Saved", "Typing...") and Loading states.
+    - [x] **Code Blocks**:
+        - [x] **Copy Button**: Hover to copy code with visual feedback.
+        - [x] **Scroll**: Horizontal scrolling for overflow content.
+    - [x] **Toolbar**: Labels for icons ("WRAP", "SIZE", "SHARE").
 
 ---
 

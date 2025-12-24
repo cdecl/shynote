@@ -523,39 +523,39 @@
                     <div class="items-center gap-2 flex-shrink-0" :class="isSidebarOpen ? 'hidden md:flex' : 'flex'">
                         <div class="flex items-center gap-2">
                             <div class="w-[1px] h-4 bg-slate-200 dark:bg-[#434C5E] mx-0 hidden sm:block"></div>
-                            <!-- Word Wrap Toggle -->
-                            <button @click="toggleWordWrap" :class="isWordWrap 
-                                    ? 'text-blue-600 bg-blue-100 dark:bg-blue-500 dark:text-white ring-2 ring-blue-300 dark:ring-blue-700 shadow-md transform scale-105' 
-                                    : 'text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600'"
-                                class="p-1 rounded transition-all duration-200" title="Toggle Word Wrap">
-                                <span class="material-symbols-rounded text-[18px] block">wrap_text</span>
-                            </button>
 
-                            <div class="w-[1px] h-4 bg-slate-200 dark:bg-[#434C5E] mx-1 hidden sm:block"></div>
 
                             <!-- Font Size Selector -->
-                            <div class="relative group">
-                                <select :value="fontSize" @change="setFontSize($event.target.value)"
-                                    class="appearance-none bg-slate-100 dark:bg-[#434C5E] text-slate-600 dark:text-[#D8DEE9] text-xs font-bold py-1 pl-2 pr-6 rounded-lg cursor-pointer outline-none hover:bg-slate-200 dark:hover:bg-[#4C566A] transition-colors h-[26px]">
-                                    <option value="12">12</option>
-                                    <option value="14">14</option>
-                                    <option value="16">16</option>
-                                    <option value="18">18</option>
-                                    <option value="20">20</option>
-                                </select>
-                                <div
-                                    class="pointer-events-none absolute right-0 top-0 bottom-0 flex items-center px-1 text-slate-500 dark:text-[#D8DEE9]">
-                                    <span class="material-symbols-rounded text-[16px]">expand_more</span>
+                            <div class="relative group flex items-center gap-1.5 p-1 rounded bg-transparent">
+                                <span
+                                    class="text-slate-400 dark:text-[#D8DEE9] text-[10px] font-bold uppercase tracking-wider hidden sm:inline-block">Size</span>
+                                <div class="relative">
+                                    <select :value="fontSize" @change="setFontSize($event.target.value)"
+                                        class="appearance-none bg-slate-100 dark:bg-[#434C5E] text-slate-600 dark:text-[#D8DEE9] text-xs font-bold py-1 pl-2 pr-6 rounded-lg cursor-pointer outline-none hover:bg-slate-200 dark:hover:bg-[#4C566A] transition-colors h-[26px]">
+                                        <option value="12">12 px</option>
+                                        <option value="14">14 px</option>
+                                        <option value="16">16 px</option>
+                                        <option value="18">18 px</option>
+                                        <option value="20">20 px</option>
+                                    </select>
+                                    <div
+                                        class="pointer-events-none absolute right-0 top-0 bottom-0 flex items-center px-1 text-slate-500 dark:text-[#D8DEE9]">
+                                        <span class="material-symbols-rounded text-[16px]">expand_more</span>
+                                    </div>
                                 </div>
                             </div>
+
+                            <div class="w-[1px] h-4 bg-slate-200 dark:bg-[#434C5E] mx-1 hidden sm:block"></div>
 
                             <button @click="toggleShare" :class="selectedNote.is_shared 
                                     ? 'text-blue-600 bg-blue-100 dark:bg-blue-500 dark:text-white ring-2 ring-blue-300 dark:ring-blue-700 shadow-md transform scale-105' 
                                     : 'text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600'"
-                                class="p-1 rounded transition-all duration-200"
+                                class="p-1 px-2 rounded transition-all duration-200 flex items-center gap-1.5"
                                 :title="selectedNote.is_shared ? 'Manage Sharing' : 'Share Note'">
                                 <span class="material-symbols-rounded text-[18px] block"
                                     :style="selectedNote.is_shared ? 'font-variation-settings: \'FILL\' 1' : ''">share</span>
+                                <span
+                                    class="text-[10px] font-bold uppercase tracking-wider hidden sm:inline-block">Share</span>
                             </button>
                             <div class="w-[1px] h-4 bg-slate-200 dark:bg-[#434C5E] mx-1 hidden sm:block"></div>
                             <div class="hidden sm:flex flex-col items-end justify-center select-none text-right">

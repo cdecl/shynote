@@ -22,7 +22,7 @@ createApp({
 			SORT_FIELD: 'shynote_sort_field',
 			SORT_DIRECTION: 'shynote_sort_direction',
 			LAST_NOTE_ID: 'shynote_last_note_id',
-			WORD_WRAP: 'shynote_word_wrap',
+
 			SPLIT_RATIO: 'shynote_split_ratio'
 		}
 
@@ -57,19 +57,8 @@ createApp({
 			const dir = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.SORT_DIRECTION)) || 'asc'
 			sortOption.value = { field, direction: dir }
 
-			// Word Wrap
-			const wrapVal = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.WORD_WRAP))
-			isWordWrap.value = wrapVal !== 'false' // Default true if null
-
 			const ratio = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.SPLIT_RATIO))
 			splitRatio.value = Number(ratio) || 50
-
-			// Apply Word Wrap
-			if (editorView.value) {
-				editorView.value.dispatch({
-					effects: wordWrapCompartment.reconfigure(isWordWrap.value ? EditorView.lineWrapping : [])
-				})
-			}
 
 			// Dark Mode (Local Preference override before DB)
 			const localDark = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.DARK_MODE))
@@ -105,19 +94,7 @@ createApp({
 		const collapsedFolders = ref({})
 
 		// New UI States
-		const isWordWrap = ref(true)
 		const splitRatio = ref(50)
-
-		const toggleWordWrap = () => {
-			isWordWrap.value = !isWordWrap.value
-			saveUserSetting(STORAGE_KEYS.WORD_WRAP, isWordWrap.value)
-			const view = editorView.value
-			if (view) {
-				view.dispatch({
-					effects: wordWrapCompartment.reconfigure(isWordWrap.value ? EditorView.lineWrapping : [])
-				})
-			}
-		}
 
 		// Split Resize Logic
 		const isResizing = ref(false)
@@ -404,7 +381,7 @@ createApp({
 					// Theme Compartment
 					themeCompartment.of(isDarkMode.value ? oneDark : []),
 					// Word Wrap Compartment
-					wordWrapCompartment.of(isWordWrap.value ? EditorView.lineWrapping : []),
+					wordWrapCompartment.of(EditorView.lineWrapping),
 					// Custom Theme for Caret & Font & Search
 					EditorView.theme({
 						"&": { fontSize: "inherit" },
@@ -1529,15 +1506,41 @@ createApp({
 
 
 
+		// Copy Code Logic
+		window.copyCode = (btn) => {
+			const pre = btn.nextElementSibling
+			const code = pre.querySelector('code').innerText
+			navigator.clipboard.writeText(code).then(() => {
+				const originalText = btn.innerHTML
+				btn.innerHTML = '<span class="material-symbols-rounded text-[14px]">check</span>'
+				btn.classList.add('text-green-400')
+				setTimeout(() => {
+					btn.innerHTML = originalText
+					btn.classList.remove('text-green-400')
+				}, 2000)
+			}).catch(err => {
+				console.error('Failed to copy class', err)
+			})
+		}
+
+		const renderer = new marked.Renderer()
+		renderer.code = function (code, language) {
+			const validLang = hljs.getLanguage(language) ? language : 'plaintext'
+			const highlighted = hljs.highlight(code, { language: validLang }).value
+			return `<div class="relative group my-4">
+				<button onclick="copyCode(this)" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 p-1.5 rounded-md shadow-sm border border-gray-300 dark:border-gray-600 flex items-center justify-center z-10" title="Copy code">
+					<span class="material-symbols-rounded text-[16px]">content_copy</span>
+				</button>
+				<pre class="!my-0"><code class="hljs language-${validLang}">${highlighted}</code></pre>
+			</div>`
+		}
+
 		const previewContent = computed(() => {
 			if (!selectedNote.value || !selectedNote.value.content) return ''
 			return marked.parse(selectedNote.value.content, {
+				renderer: renderer,
 				gfm: true,
-				breaks: true,
-				highlight: function (code, lang) {
-					const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-					return hljs.highlight(code, { language }).value;
-				}
+				breaks: true
 			})
 		})
 
@@ -1740,8 +1743,7 @@ createApp({
 			checkSelection,
 			guestMode: computed(() => !isAuthenticated.value),
 			// Config
-			isWordWrap,
-			toggleWordWrap,
+
 			splitRatio,
 			startResize,
 			hasIDB,
