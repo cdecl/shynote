@@ -1237,8 +1237,12 @@ createApp({
 			}
 		}
 
-		const createFolder = () => {
-			openModal('create-folder')
+		const deleteConfirmation = ref({ id: null, type: null })
+		const titleInputRef = ref(null)
+
+		const createFolder = async () => {
+			// creating untitled folder immediately
+			await createFolderImpl('Untitled Folder')
 		}
 
 		const createFolderImpl = async (name) => {
@@ -1249,7 +1253,14 @@ createApp({
 					body: JSON.stringify({ name })
 				})
 				if (response && response.ok) {
-					fetchFolders()
+					const newFolder = await response.json()
+					if (hasIDB && currentUserId.value) {
+						newFolder.user_id = currentUserId.value
+					}
+					folders.value.push(newFolder)
+
+					// Auto start rename
+					startRename(newFolder, 'folder')
 				}
 			} catch (e) {
 				console.error("Failed to create folder", e)
@@ -1265,7 +1276,7 @@ createApp({
 				const response = await authenticatedFetch('/api/notes', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ title: '', content: '', folder_id: folderId })
+					body: JSON.stringify({ title: 'Untitled', content: '', folder_id: folderId })
 				})
 				if (response && response.ok) {
 					const newNote = await response.json()
@@ -1274,6 +1285,16 @@ createApp({
 
 					notes.value.unshift(newNote)
 					selectedNote.value = newNote
+
+					// Open sidebar if collapsed
+					if (!isSidebarOpen.value) {
+						isSidebarOpen.value = true
+					}
+
+					// Enter rename mode for the new note (like folder creation)
+					nextTick(() => {
+						startRename(newNote, 'note')
+					})
 
 					// Persist new note locally
 					if (hasIDB) {
@@ -1344,16 +1365,44 @@ createApp({
 
 			// Auto collapse sidebar on selection (User Request) - Only if NOT pinned
 			if (isSidebarOpen.value && !isSidebarPinned.value) {
+				// Delay closing to allow for potential double-click (rename)
+				// If user double-clicks, startRename will set renameState
+				// We check renameState before closing
 				setTimeout(() => {
+					// Check if we are currently renaming the SELECTED note
+					// If so, do NOT close the sidebar
+					if (renameState.value.id === note.id && renameState.value.type === 'note') {
+						return
+					}
 					isSidebarOpen.value = false
-				}, 50)
+				}, 300)
 			}
 		}
 
 
 
+		const requestDelete = (id, type) => {
+			deleteConfirmation.value = { id, type }
+		}
+
+		const confirmDelete = async () => {
+			const { id, type } = deleteConfirmation.value
+			if (!id || !type) return
+
+			if (type === 'note') {
+				await deleteNoteImpl(id)
+			} else if (type === 'folder') {
+				await deleteFolderImpl(id)
+			}
+			deleteConfirmation.value = { id: null, type: null }
+		}
+
+		const cancelDelete = () => {
+			deleteConfirmation.value = { id: null, type: null }
+		}
+
 		const deleteNote = (id) => {
-			openModal('delete-note', id)
+			requestDelete(id, 'note')
 		}
 
 		const deleteNoteImpl = async (id) => {
@@ -1430,7 +1479,7 @@ createApp({
 		}
 
 		const deleteFolder = (id) => {
-			openModal('delete-folder', id)
+			requestDelete(id, 'folder')
 		}
 
 		const deleteFolderImpl = async (id) => {
@@ -1807,6 +1856,11 @@ createApp({
 			renameState,
 			startRename,
 			saveRename,
+			deleteConfirmation,
+			requestDelete,
+			confirmDelete,
+			cancelDelete,
+			titleInputRef,
 
 			formatText,
 			formatDate: (dateStr) => {
