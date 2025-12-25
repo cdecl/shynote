@@ -1,43 +1,33 @@
 import { openDB } from "https://esm.sh/idb@7.1.1";
 
 const DB_NAME = 'SHYNOTE_VAULT';
-const DB_VERSION = 4;
+const DB_VERSION = 7;
 
 export const initDB = async () => {
 	return openDB(DB_NAME, DB_VERSION, {
 		upgrade(db, oldVersion, newVersion, transaction) {
-			// Notes Store: Mirror of Server Data + Local Edits
-			let notesStore;
-			if (!db.objectStoreNames.contains('notes')) {
-				notesStore = db.createObjectStore('notes', { keyPath: 'id' });
-				notesStore.createIndex('folder_id', 'folder_id', { unique: false });
-				notesStore.createIndex('updated_at', 'updated_at', { unique: false });
-				notesStore.createIndex('sync_status', 'sync_status', { unique: false }); // 'synced', 'dirty', 'conflict'
-				notesStore.createIndex('user_id', 'user_id', { unique: false });
-			} else {
-				notesStore = transaction.objectStore('notes');
-				if (!notesStore.indexNames.contains('user_id')) {
-					notesStore.createIndex('user_id', 'user_id', { unique: false });
-				}
-			}
+			console.log(`Upgrading DB from v${oldVersion} to v${newVersion}. Clearing data for schema update.`);
+
+			// 1. Force Truncate: Delete all existing stores
+			if (db.objectStoreNames.contains('notes')) db.deleteObjectStore('notes');
+			if (db.objectStoreNames.contains('folders')) db.deleteObjectStore('folders');
+			if (db.objectStoreNames.contains('pending_logs')) db.deleteObjectStore('pending_logs');
+
+			// 2. Re-create Stores
+			// Notes Store
+			const notesStore = db.createObjectStore('notes', { keyPath: 'id' });
+			notesStore.createIndex('folder_id', 'folder_id', { unique: false });
+			notesStore.createIndex('updated_at', 'updated_at', { unique: false });
+			notesStore.createIndex('sync_status', 'sync_status', { unique: false });
+			notesStore.createIndex('user_id', 'user_id', { unique: false });
 
 			// Folders Store
-			let foldersStore;
-			if (!db.objectStoreNames.contains('folders')) {
-				foldersStore = db.createObjectStore('folders', { keyPath: 'id' });
-				foldersStore.createIndex('user_id', 'user_id', { unique: false });
-			} else {
-				foldersStore = transaction.objectStore('folders');
-				if (!foldersStore.indexNames.contains('user_id')) {
-					foldersStore.createIndex('user_id', 'user_id', { unique: false });
-				}
-			}
+			const foldersStore = db.createObjectStore('folders', { keyPath: 'id' });
+			foldersStore.createIndex('user_id', 'user_id', { unique: false });
 
-			// Pending Logs: Write-Ahead Log for mutations
-			if (!db.objectStoreNames.contains('pending_logs')) {
-				const logStore = db.createObjectStore('pending_logs', { keyPath: 'id', autoIncrement: true });
-				logStore.createIndex('created_at', 'created_at');
-			}
+			// Pending Logs
+			const logStore = db.createObjectStore('pending_logs', { keyPath: 'id', autoIncrement: true });
+			logStore.createIndex('created_at', 'created_at');
 		},
 	});
 };
@@ -61,6 +51,49 @@ export const LocalDB = {
 		const tx = db.transaction('folders', 'readwrite');
 		const store = tx.objectStore('folders');
 		for (const folder of folders) {
+			// Only overwrite if not dirty
+			const existing = await store.get(folder.id);
+			if (existing && existing.sync_status === 'dirty') continue;
+
+			await store.put({
+				...folder,
+				sync_status: 'synced',
+				local_updated_at: new Date().toISOString()
+			});
+		}
+		await tx.done;
+	},
+
+	async saveFolder(folder, action = 'UPDATE') {
+		const db = await initDB();
+		const tx = db.transaction(['folders', 'pending_logs'], 'readwrite');
+
+		// 1. Update State
+		await tx.objectStore('folders').put({
+			...folder,
+			sync_status: 'dirty',
+			local_updated_at: new Date().toISOString()
+		});
+
+		// 2. Add Log
+		await tx.objectStore('pending_logs').add({
+			action: action,
+			entity: 'folder',
+			entity_id: folder.id,
+			payload: { name: folder.name },
+			created_at: new Date().toISOString()
+		});
+
+		await tx.done;
+	},
+
+	async markFolderSynced(id) {
+		const db = await initDB();
+		const tx = db.transaction('folders', 'readwrite');
+		const store = tx.objectStore('folders');
+		const folder = await store.get(id);
+		if (folder) {
+			folder.sync_status = 'synced';
 			await store.put(folder);
 		}
 		await tx.done;
@@ -74,7 +107,7 @@ export const LocalDB = {
 		return db.getAll('notes');
 	},
 
-	async saveNote(note) {
+	async saveNote(note, action = 'UPDATE') {
 		const db = await initDB();
 		const tx = db.transaction(['notes', 'pending_logs'], 'readwrite');
 
@@ -87,7 +120,7 @@ export const LocalDB = {
 
 		// 2. Add Log
 		await tx.objectStore('pending_logs').add({
-			action: 'UPDATE',
+			action: action, // 'CREATE' or 'UPDATE'
 			entity: 'note',
 			entity_id: note.id,
 			payload: { title: note.title, content: note.content, folder_id: note.folder_id },

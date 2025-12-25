@@ -74,7 +74,8 @@ def create_folder(
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(utils.get_current_user)
 ):
-    db_folder = models.Folder(name=folder.name, user_id=current_user.id)
+    # Check if folder exists (Upsert-like behavior or just fail if collision - UUID collision unlikely)
+    db_folder = models.Folder(id=folder.id, name=folder.name, user_id=current_user.id)
     db.add(db_folder)
     db.commit()
     db.refresh(db_folder)
@@ -92,7 +93,7 @@ def read_folders(
 
 @app.delete("/api/folders/{folder_id}")
 def delete_folder(
-    folder_id: int, 
+    folder_id: str, 
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(utils.get_current_user)
 ):
@@ -109,7 +110,7 @@ def delete_folder(
 
 @app.put("/api/folders/{folder_id}", response_model=schemas.Folder)
 def update_folder(
-    folder_id: int,
+    folder_id: str,
     folder: schemas.FolderUpdate,
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(utils.get_current_user)
@@ -143,6 +144,7 @@ def create_note(
              raise HTTPException(status_code=404, detail="Folder not found")
 
     db_note = models.Note(
+        id=note.id, # Use Client ID
         title=note.title, 
         content=note.content, 
         folder_id=note.folder_id,
@@ -157,7 +159,7 @@ def create_note(
 def read_notes(
     skip: int = 0, 
     limit: int = 100, 
-    folder_id: int = None, 
+    folder_id: str = None, 
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(utils.get_current_user)
 ):
@@ -170,7 +172,7 @@ def read_notes(
 
 @app.get("/api/notes/{note_id}", response_model=schemas.Note)
 def read_note(
-    note_id: int, 
+    note_id: str, 
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(utils.get_current_user)
 ):
@@ -184,42 +186,62 @@ def read_note(
 
 @app.put("/api/notes/{note_id}", response_model=schemas.Note)
 def update_note(
-    note_id: int, 
+    note_id: str, 
     note: schemas.NoteUpdate, 
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(utils.get_current_user)
 ):
+    # Check if note exists
     db_note = db.query(models.Note).filter(
         models.Note.id == note_id,
         models.Note.user_id == current_user.id
     ).first()
-    if db_note is None:
-        raise HTTPException(status_code=404, detail="Note not found")
     
-    # Logic to handle updates using exclude_unset to distinguish between "not sent" and "sent as null"
     update_data = note.dict(exclude_unset=True)
 
-    if "title" in update_data:
-        db_note.title = update_data["title"]
-    
-    if "content" in update_data:
-        db_note.content = update_data["content"]
+    # Validate folder_id if present
+    if "folder_id" in update_data and update_data["folder_id"] is not None:
+        folder = db.query(models.Folder).filter(
+            models.Folder.id == update_data["folder_id"],
+            models.Folder.user_id == current_user.id
+        ).first()
+        if not folder:
+             raise HTTPException(status_code=400, detail="Invalid folder")
 
-    if "folder_id" in update_data:
-        new_folder_id = update_data["folder_id"]
-        # Check folder ownership if setting to a folder
-        if new_folder_id is not None:
-             folder = db.query(models.Folder).filter(
-                models.Folder.id == new_folder_id,
-                models.Folder.user_id == current_user.id
-            ).first()
-             if not folder:
-                 raise HTTPException(status_code=400, detail="Invalid folder")
+    if db_note is None:
+        # Not found? Create it! (Upsert for Sync)
+        # We must allow creating with a specific ID to keep sync consistent
+        # Only create if we have enough info (title, content generally optional but good to have)
         
-        db_note.folder_id = new_folder_id
+        # Ensure we have a valid title if it's missing (fallback)
+        title = update_data.get("title", "Untitled Note")
+        content = update_data.get("content", "")
+        folder_id = update_data.get("folder_id", None)
+        
+        db_note = models.Note(
+            id=note_id,
+            title=title,
+            content=content,
+            folder_id=folder_id,
+            user_id=current_user.id,
+            is_pinned=update_data.get("is_pinned", False)
+        )
+        db.add(db_note)
+        # Note: In postgres, we might need to reset sequence after manual insert, 
+        # but for simple sync recovery this should work. Validating ID collision handled by transaction.
+    else:
+        # Update existing
+        if "title" in update_data:
+            db_note.title = update_data["title"]
+        
+        if "content" in update_data:
+            db_note.content = update_data["content"]
+            
+        if "folder_id" in update_data:
+            db_note.folder_id = update_data["folder_id"]
 
-    if "is_pinned" in update_data:
-        db_note.is_pinned = update_data["is_pinned"]
+        if "is_pinned" in update_data:
+            db_note.is_pinned = update_data["is_pinned"]
         
     db.commit()
     db.refresh(db_note)
@@ -227,7 +249,7 @@ def update_note(
 
 @app.delete("/api/notes/{note_id}")
 def delete_note(
-    note_id: int, 
+    note_id: str, 
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(utils.get_current_user)
 ):
@@ -246,7 +268,7 @@ def delete_note(
 
 @app.put("/api/notes/{note_id}/share")
 def share_note_toggle(
-    note_id: int, 
+    note_id: str, 
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(utils.get_current_user)
 ):

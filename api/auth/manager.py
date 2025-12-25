@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from .. import models, schemas
-from .utils import create_access_token
+from .utils import create_access_token, uuid7
 from .providers.google import verify_google_token
 
 def authenticate(db: Session, auth_request: schemas.AuthRequest):
@@ -19,6 +19,7 @@ def authenticate(db: Session, auth_request: schemas.AuthRequest):
     # 3. Create if not exists
     if not user:
         user = models.User(
+            id=uuid7(), # Explicitly assign UUID v7
             email=user_info["email"],
             provider=auth_request.provider,
             provider_id=user_info["provider_id"]

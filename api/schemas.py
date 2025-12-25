@@ -12,7 +12,7 @@ class UserCreate(UserBase):
     provider_id: str
 
 class User(UserBase):
-    id: int
+    id: str
     created_at: datetime
     is_dark_mode: bool = False
     view_mode: str = "edit"
@@ -29,7 +29,7 @@ class Token(BaseModel):
     token_type: str
 
 class TokenData(BaseModel):
-    user_id: Optional[int] = None
+    user_id: Optional[str] = None
 
 class AuthRequest(BaseModel):
     provider: str
@@ -40,20 +40,20 @@ class AuthRequest(BaseModel):
 class NoteBase(BaseModel):
     title: str
     content: Optional[str] = None
-    folder_id: Optional[int] = None
+    folder_id: Optional[str] = None
 
 class NoteCreate(NoteBase):
-    pass
+    id: str  # Client generated UUID
 
 class NoteUpdate(BaseModel):
     title: Optional[str] = None
     content: Optional[str] = None
-    folder_id: Optional[int] = None
+    folder_id: Optional[str] = None
     is_pinned: Optional[bool] = None
 
 class Note(NoteBase):
-    id: int
-    user_id: int
+    id: str
+    user_id: str
     created_at: datetime
     updated_at: datetime
     share_id: Optional[str] = None
@@ -67,15 +67,15 @@ class FolderBase(BaseModel):
     name: str
 
 class FolderCreate(FolderBase):
-    pass
+    id: str  # Client generated UUID
 
 class FolderUpdate(FolderBase):
     pass
 
 
 class Folder(FolderBase):
-    id: int
-    user_id: int
+    id: str
+    user_id: str
     notes: List[Note] = []
 
     class Config:
