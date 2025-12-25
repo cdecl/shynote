@@ -1355,13 +1355,70 @@ createApp({
 			}
 		}
 
-		const selectNote = (note) => {
+		const selectNote = async (note) => {
+			// 1. Immediate selection for instant UI
 			selectedNote.value = note
 			if (note && note.id) {
 				saveUserSetting(STORAGE_KEYS.LAST_NOTE_ID, note.id)
 			}
 			// Ensure content is string for marked
 			if (selectedNote.value.content === null) selectedNote.value.content = ""
+
+			// 2. Load from IndexedDB if available (instant)
+			if (hasIDB && note && note.id) {
+				try {
+					const localNote = await LocalDB.getNote(note.id)
+					if (localNote) {
+						// Update with local data (may be more recent if edited offline)
+						selectedNote.value = localNote
+					}
+				} catch (e) {
+					console.error("Failed to load from IndexedDB", e)
+				}
+			}
+
+			// 3. Fetch from server in background (for sync)
+			if (note && note.id && isAuthenticated.value) {
+				try {
+					const response = await authenticatedFetch(`/api/notes/${note.id}`)
+					if (response && response.ok) {
+						const serverNote = await response.json()
+
+						// Check if server version is different
+						if (hasIDB) {
+							const localNote = await LocalDB.getNote(note.id)
+							if (localNote && localNote.content_hash !== serverNote.content_hash) {
+								// Conflict detection - server has newer version
+								console.log("Server has different version")
+								// Update local cache with server version
+								await LocalDB.saveNotesBulk([serverNote])
+							}
+						}
+
+						// Update UI with server version (if still selected)
+						if (selectedNote.value && selectedNote.value.id === note.id) {
+							selectedNote.value = serverNote
+							// Update editor content directly
+							nextTick(() => {
+								if (editorView.value && !conflictState.value.isConflict) {
+									const currentContent = editorView.value.state.doc.toString()
+									if (currentContent !== serverNote.content) {
+										editorView.value.dispatch({
+											changes: {
+												from: 0,
+												to: editorView.value.state.doc.length,
+												insert: serverNote.content || ''
+											}
+										})
+									}
+								}
+							})
+						}
+					}
+				} catch (e) {
+					console.error("Failed to fetch note from server", e)
+				}
+			}
 
 			// Auto collapse sidebar on selection (User Request) - Only if NOT pinned
 			if (isSidebarOpen.value && !isSidebarPinned.value) {
