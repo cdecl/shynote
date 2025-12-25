@@ -23,6 +23,7 @@ createApp({
 			SORT_FIELD: 'shynote_sort_field',
 			SORT_DIRECTION: 'shynote_sort_direction',
 			LAST_NOTE_ID: 'shynote_last_note_id',
+			USER_ID: 'shynote_user_id',
 
 			SPLIT_RATIO: 'shynote_split_ratio'
 		}
@@ -146,6 +147,7 @@ createApp({
 		// Dependencies needed early
 		const logout = () => {
 			localStorage.removeItem(STORAGE_KEYS.TOKEN)
+			localStorage.removeItem(STORAGE_KEYS.USER_ID)
 			isAuthenticated.value = false
 			currentUserId.value = null
 			notes.value = []
@@ -883,9 +885,25 @@ createApp({
 				logout();
 			} else if (storedToken) {
 				isAuthenticated.value = true;
-				await fetchUserProfile(); // Fetches and sets currentUserId
-				await fetchFolders();
-				await fetchNotes();
+
+				// Optimistic Load (Instant UI)
+				const cachedId = localStorage.getItem(STORAGE_KEYS.USER_ID)
+				if (cachedId) {
+					currentUserId.value = parseInt(cachedId, 10)
+					// Fire fetches immediately without waiting
+					fetchFolders()
+					fetchNotes()
+				}
+
+				const oldId = currentUserId.value
+				await fetchUserProfile(); // Fetches and sets currentUserId from server (Source of Truth)
+
+				// If user ID changed (or was null), refetch correct data
+				if (currentUserId.value !== oldId) {
+					fetchFolders()
+					fetchNotes()
+				}
+
 				autoSelectNote();
 			} else {
 				isAuthenticated.value = false;
@@ -1097,7 +1115,10 @@ createApp({
 				const response = await authenticatedFetch('/auth/me')
 				if (response && response.ok) {
 					const user = await response.json()
-					if (user.id) currentUserId.value = user.id; // Set ID
+					if (user.id) {
+						currentUserId.value = user.id; // Set ID
+						localStorage.setItem(STORAGE_KEYS.USER_ID, user.id); // Cache ID
+					}
 					if (user.is_dark_mode !== undefined) {
 						isDarkMode.value = user.is_dark_mode
 						applyTheme()
@@ -1144,10 +1165,12 @@ createApp({
 					const serverNotes = await response.json()
 
 
-					if (hasIDB && uid) {
+					if (hasIDB) {
+						const currentUid = currentUserId.value || uid; // Use latest UID
+
 						// 1. Identify Deletions (Server Side Deletion)
 						// Get all local synced notes
-						const localNotesAll = await LocalDB.getAllNotes(uid)
+						const localNotesAll = await LocalDB.getAllNotes(currentUid)
 						const serverIds = new Set(serverNotes.map(n => n.id))
 
 						for (const ln of localNotesAll) {
@@ -1166,7 +1189,8 @@ createApp({
 							// Ensuring nulls consistencies 
 							const base = `${n.id}:${n.title}:${n.content || ''}:${n.folder_id || 'null'}`
 							n.content_hash = await shynote_hash(base)
-							n.user_id = n.user_id || uid
+							// Use server provided user_id, or fallback to currentUid
+							n.user_id = n.user_id || currentUid
 							notesToSave.push(n)
 						}
 
@@ -1174,7 +1198,7 @@ createApp({
 
 						// 3. Check for Conflicts (Dirty vs Server Hash Mismatch)
 						const conflictCandidates = []
-						const currentLocalNotes = await LocalDB.getAllNotes(uid)
+						const currentLocalNotes = await LocalDB.getAllNotes(currentUid)
 						for (const ln of currentLocalNotes) {
 							if (ln.sync_status === 'dirty') {
 								const serverNote = notesToSave.find(sn => sn.id === ln.id)
