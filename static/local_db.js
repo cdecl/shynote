@@ -1,7 +1,7 @@
 import { openDB } from "https://esm.sh/idb@7.1.1";
 
 const DB_NAME = 'SHYNOTE_VAULT';
-const DB_VERSION = 7;
+const DB_VERSION = 8;
 
 export const initDB = async () => {
 	return openDB(DB_NAME, DB_VERSION, {
@@ -123,7 +123,7 @@ export const LocalDB = {
 			action: action, // 'CREATE' or 'UPDATE'
 			entity: 'note',
 			entity_id: note.id,
-			payload: { title: note.title, content: note.content, folder_id: note.folder_id },
+			payload: { title: note.title, content: note.content, folder_id: note.folder_id, is_pinned: note.is_pinned },
 			created_at: new Date().toISOString()
 		});
 
@@ -182,13 +182,33 @@ export const LocalDB = {
 
 	async deleteNote(id) {
 		const db = await initDB();
-		const tx = db.transaction(['notes'], 'readwrite');
+		const tx = db.transaction(['notes', 'pending_logs'], 'readwrite');
 		await tx.objectStore('notes').delete(id);
+
+		// Add Log
+		await tx.objectStore('pending_logs').add({
+			action: 'DELETE',
+			entity: 'note',
+			entity_id: id,
+			created_at: new Date().toISOString()
+		});
+
 		await tx.done;
 	},
 
 	async deleteFolder(id) {
 		const db = await initDB();
-		await db.delete('folders', id);
+		const tx = db.transaction(['folders', 'pending_logs'], 'readwrite');
+		await tx.objectStore('folders').delete(id);
+
+		// Add Log
+		await tx.objectStore('pending_logs').add({
+			action: 'DELETE',
+			entity: 'folder',
+			entity_id: id,
+			created_at: new Date().toISOString()
+		});
+
+		await tx.done;
 	}
 };

@@ -1,3 +1,23 @@
+# v1.2.3 Release Notes
+
+## Summary
+- **Local-First Sync Architecture** 도입으로 오프라인 작업과 데이터 동기화 안정성을 대폭 강화했습니다. (v1.2.0의 고도화 작업 완료)
+- **Auto Recovery** 및 **Dependency Ordering** 로직을 통해 동기화 오류를 스스로 복구하는 "자가 치유" 시스템을 구축했습니다.
+
+## New Features & Fixes
+
+### 1. Robust Sync System (동기화 안정성)
+- **Auto Recovery (자가 치유)**: 서버 동기화 실패(404) 시 자동으로 데이터를 재생성(Upsert)하여 유실된 데이터를 복구합니다.
+- **Folder Priority Ordering**: 동기화 시 폴더를 노트보다 먼저 처리하여 "Invalid Folder ID" 오류를 원천 차단했습니다.
+- **Dirty State Protection**: 로컬에서 수정 중인 내용이 서버 데이터에 의해 덮어씌워지지 않도록 강력하게 보호합니다.
+
+### 2. Core Improvements
+- **UUID v7 Migration**: 모든 데이터(노트, 폴더)의 ID 체계를 시간 순 정렬이 가능한 UUID v7으로 전환했습니다.
+- **List Sync Fix**: 노트를 클릭하여 서버에서 데이터를 갱신할 때, 사이드바 목록 정보(제목 등)가 즉시 반영되지 않던 문제를 해결했습니다.
+- **Bug Fixes**: `pinnedNotes` 변수 누락으로 인한 오류 및 각종 Syntax Error 수정.
+
+---
+
 # v1.2.2 Release Notes
 
 ## Summary

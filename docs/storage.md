@@ -37,17 +37,32 @@
 
 ---
 
-## 2. 저장 프로세스: Bin-log & 체크포인트
+## 2. 저장 프로세스: Bin-log & 체크포인트 (Local-First Sync)
 
-사용자의 입력 지연을 0으로 만들기 위해 **Write-Ahead Logging(WAL)** 방식을 채용합니다.
+사용자의 모든 변경사항은 즉시 로컬에 반영되고, 비동기로 서버에 동기화되는 **WAL (Write-Ahead Logging)** 방식을 따릅니다.
 
-### 🔄 상세 단계
-1. **Local Write (즉시):** 사용자가 편집 시 IndexedDB의 두 테이블에 동시 기록
-   - `Current_State`: 현재 문서 스냅샷 (UI 렌더링용)
-   - `Pending_Logs`: 서버로 전송할 변경 이력 (Bin-log)
-2. **Checkpoint (트리거):** 백그라운드 워커가 `Pending_Logs`에 쌓인 항목을 감시.
-3. **Background Sync (비동기):** `await`을 사용하여 로그를 서버(PostgreSQL)에 전송.
-4. **Commit (확정):** 서버 응답 성공 시 로컬 로그 삭제 또는 `synced` 상태로 변경.
+### 🔄 상세 단계 (Detailed Workflow)
+
+1.  **Local Mutation (즉시)**: 사용자가 편집, 생성, 삭제, 이동 시 `LocalDB`에 즉시 반영.
+    -   `Current_State`: 현재 문서 스냅샷 (UI 렌더링용)
+    -   `Pending_Logs`: 서버로 전송할 변경 작업 목록 (Queue)
+        -   Schema: `{ id, entity, entity_id, action, payload, timestamp }`
+        -   Action: `CREATE`, `UPDATE`, `DELETE`
+
+2.  **Background Sync Worker (5초 주기)**:
+    -   `setInterval`로 `pending_logs`를 주기적으로 확인.
+    -   **Log Deduplication & Optimization**:
+        -   동일 Entity에 대한 여러 변경사항 압축 (Latest Write Wins).
+        -   **Merge Logic**: `CREATE` 후 `UPDATE` 발생 시 -> 단일 `CREATE` (Merged Payload)로 변환.
+    -   **Dependency Ordering (중요)**:
+        -   **Folders First**: 폴더 생성/수정을 노트 작업보다 먼저 실행하여 `Invalid Folder ID` (400) 오류 방지.
+        -   Order: `Folder (Create/Update)` → `Note (All Actions)` → `Folder (Delete)`
+
+3.  **Server Execution & Auto Recovery (자가 치유)**:
+    -   서버 API 호출 (`PUT`, `POST`, `DELETE`).
+    -   **Self-Healing Logic**:
+        -   `PUT` (Update) 요청이 `404 Not Found` 실패 시 -> 자동으로 `POST` (Create/Upsert)로 전환하여 유실된 데이터 복구.
+    -   성공 시 로컬 `pending_logs` 삭제.
 
 ---
 
@@ -368,4 +383,15 @@
   - `id`: 폴더 고유 ID
   - `name`: 폴더명
   - `user_id`: 소유자 ID
+
+### 📋 Pending Logs Store (`pending_logs`)
+오프라인 상태나 네트워크 지연 시 변경사항을 임시 저장하는 큐(Queue)입니다.
+- **Key**: `id` (Auto-Increment Integer)
+- **Fields**:
+  - `id`: 로그 ID
+  - `entity`: 대상 엔티티 타입 (`note` | `folder`)
+  - `entity_id`: 대상 엔티티 UUID
+  - `action`: 수행할 작업 (`CREATE` | `UPDATE` | `DELETE`)
+  - `payload`: 변경 데이터 (JSON Object)
+  - `timestamp`: 생성 시각
 

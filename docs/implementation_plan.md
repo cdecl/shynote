@@ -162,26 +162,40 @@ This document tracks the cumulative implementation details of the SHYNOTE projec
 
 ---
 
-## 7. Local-first Sync Architecture (Planned)
-**Date**: 2025-12-24
-**Status**: In Progress
+## 7. Local-first Sync Architecture
+**Date**: 2025-12-24 ~ 2025-12-26
+**Status**: Completed
 
 ### Storage Strategy
 - [x] **IndexedDB (Local)**:
-    - [x] Schema Design (`Current_State`, `Pending_Logs`).
+    - [x] Schema Design (`Current_State` stores for Notes/Folders, `Pending_Logs` for sync queue).
     - [x] `idb` wrapper for async operations.
-- [ ] **PostgreSQL (Remote)**:
-    - [ ] Migration from SQLite.
-    - [ ] Schema update for versioning/hashing (`content_hash`, `version_id`).
+    - [x] **UUID v7**: Migration to time-ordered UUIDs for all entities (Users, Folders, Notes).
+- [x] **Database (Remote)**:
+    - [x] Schema update: All IDs converted to String(UUID).
+    - [x] Hashing: Implemented `content_hash` for efficient change detection.
 
 ### Synchronization Logic
 - [x] **Write-Ahead Logging (WAL)**:
-    - [x] Implement local write (Snapshot + Log).
-    - [x] Implement Background Sync Worker.
-- [ ] **Conflict Resolution**:
-    - [ ] Hash-based comparison logic.
-    - [ ] Conflict UI (Server vs Local choice).
+    - [x] Local First: All mutations (Create, Update, Delete) save to IndexedDB immediately.
+    - [x] Background Sync Worker: Processes `pending_logs` every 5 seconds.
+    - [x] **Auto Recovery**: Worker automatically retries failed `PUT` (404) requests as `POST` (Upsert).
+    - [x] **Dependency Ordering**: Prioritizes Folder operations over Notes to prevent reference errors.
+- [x] **Conflict Resolution**:
+    - [x] Hash-based comparison (`content_hash`).
+    - [x] Dirty Check: Prevents overwriting local unsynced changes (Dirty) with server data.
+    - [x] Conflict UI: Notifies user of hash mismatches for manual resolution.
 
 ### Data Isolation
-- [x] **IndexedDB**: Scope queries by `user_id`.
+- [x] **IndexedDB**: Scope queries by `user_id` (via creating separate stores or filtering, currently filtering by UID logic in app).
 - [x] **LocalStorage**: Prefix keys with `user_id` for multi-user support.
+
+---
+
+## 8. Future Roadmap (To Be Implemented)
+- [ ] **Database Migration**: Fully transition to PostgreSQL for production (Vercel Postgres).
+- [ ] **State Management**: Refactor vanilla `ref` to Pinia if complexity grows.
+- [ ] **Testing**: Implement `pytest` suite and E2E tests.
+- [ ] **Folder Structure Sync**:
+    - [ ] Implement smart refresh of folder structure (e.g., on folder toggle or visibility change) to keep the tree view consistent across devices.
+    - [ ] List UI "Dirty Check" refining.
