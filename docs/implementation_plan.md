@@ -53,6 +53,15 @@ This document tracks the cumulative implementation details of the SHYNOTE projec
     - [x] **Floating Toolbar**: Updated to work with CodeMirror text selection.
     - [x] **Search/Replace**: Ported to use CodeMirror State and Transactions.
     - [x] **Word Wrap**: Toggleable via Toolbar, defaults to ON.
+- [x] **Inline Delete Confirmation**: Replaced modal with "Ask Box" (Y/N) inline for notes and folders.
+- [x] **New Note/Folder UX**: 
+  - Auto-focus title on new note.
+  - Direct creation + rename for new folders.
+- [x] **Sidebar Refinement**: Compact list style for better density.
+- [x] **Editor Improvements**: 
+  - [x] Floating Toolbar for text selection. work with CodeMirror text selection.
+    - [x] **Search/Replace**: Ported to use CodeMirror State and Transactions.
+    - [x] **Word Wrap**: Toggleable via Toolbar, defaults to ON.
 
 
 ---
