@@ -405,7 +405,7 @@ createApp({
 					search({ top: true }),
 					dropCursor(),
 					EditorState.allowMultipleSelections.of(true),
-					markdown({ base: markdownLanguage }), // Markdown logic
+					markdown({ base: markdownLanguage, codeLanguages: languages }), // Markdown logic
 					syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
 					bracketMatching(),
 					closeBrackets(),
@@ -1015,7 +1015,7 @@ createApp({
 			}
 			if (highlightLink) {
 				highlightLink.href = isDarkMode.value
-					? 'https://unpkg.com/nord-highlightjs@0.1/dist/nord.css'
+					? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css'
 					: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css'
 			}
 

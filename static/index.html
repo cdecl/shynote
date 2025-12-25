@@ -8,7 +8,7 @@
     <link rel="icon" href="/static/favicon.ico">
     <link rel="manifest" href="/static/manifest.json">
     <link rel="apple-touch-icon" href="/static/icon-192.png">
-    <meta name="theme-color" content="#2E3440">
+    <meta name="theme-color" content="#24292F">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -87,10 +87,10 @@
 </head>
 
 <body
-    class="bg-gray-100 dark:bg-[#2E3440] h-screen overflow-hidden text-gray-800 dark:text-[#D8DEE9] font-sans transition-colors duration-300">
+    class="bg-gray-100 dark:bg-[#24292F] h-screen overflow-hidden text-gray-800 dark:text-[#D8DEE9] font-sans transition-colors duration-300">
     <div id="app" class="flex h-full">
         <!-- Splash Screen (Auto-removed when Vue mounts) -->
-        <div class="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gray-100 dark:bg-[#2E3440]"
+        <div class="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gray-100 dark:bg-[#24292F]"
             v-if="false">
             <img src="/static/logo.png" class="w-24 h-24 rounded-full shadow-2xl animate-pulse" alt="SHYNOTE">
         </div>
@@ -499,12 +499,12 @@
         </div>
 
         <!-- Main Editor -->
-        <main class="flex-1 flex flex-col bg-white dark:bg-[#2E3440] overflow-hidden"
+        <main class="flex-1 flex flex-col bg-white dark:bg-[#24292F] overflow-hidden"
             @click="isSidebarOpen && !isSidebarPinned && (isSidebarOpen = false)">
             <div v-if="selectedNote && selectedNote.id" class="flex flex-col h-full">
                 <!-- Toolbar -->
                 <div
-                    class="h-14 border-b border-slate-100 dark:border-[#434C5E] bg-white/80 dark:bg-[#2E3440]/80 backdrop-blur-sm sticky top-0 z-30 flex justify-between items-center px-4 flex-shrink-0 transition-colors duration-300">
+                    class="h-14 border-b border-slate-100 dark:border-[#434C5E] bg-white/80 dark:bg-[#24292F]/80 backdrop-blur-sm sticky top-0 z-30 flex justify-between items-center px-4 flex-shrink-0 transition-colors duration-300">
                     <div class="flex items-center flex-1 mr-4 overflow-hidden">
                         <button @click.stop="toggleSidebar"
                             class="p-2 mr-2 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded-lg transition-colors flex-shrink-0"
@@ -722,7 +722,7 @@
                             <div class="flex-1 relative overflow-hidden flex flex-col">
                                 <!-- Static Formatting Toolbar -->
                                 <div
-                                    class="w-full border-b border-slate-100 dark:border-[#434C5E] bg-white dark:bg-[#2E3440] p-1 flex items-center gap-1 flex-none z-10">
+                                    class="w-full border-b border-slate-100 dark:border-[#434C5E] bg-white dark:bg-[#24292F] p-1 flex items-center gap-1 flex-none z-10">
                                     <button @mousedown.prevent="formatText('bold')"
                                         class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
                                         title="Bold (Cmd+B)">
@@ -794,7 +794,7 @@
                             :class="{ 'opacity-100 bg-blue-500': false }" @mousedown="startResize"></div>
 
                         <!-- Preview Pane -->
-                        <div class="flex flex-col h-full bg-slate-50 dark:bg-[#2E3440] border-l border-slate-200 dark:border-[#3B4252] overflow-hidden transition-all duration-300 relative"
+                        <div class="flex flex-col h-full bg-slate-50 dark:bg-[#24292F] border-l border-slate-200 dark:border-[#3B4252] overflow-hidden transition-all duration-300 relative"
                             :class="{ 'hidden': viewMode === 'edit', 'flex-1': viewMode === 'preview' }"
                             :style="viewMode === 'split' ? { flex: `0 0 ${100 - splitRatio}%` } : {}">
 

@@ -94,7 +94,7 @@ html.dark {
     /* Let container bg show */
     color: #D8DEE9 !important;
     /* Nord4 */
-    --color-canvas-default: #2E3440;
+    --color-canvas-default: #24292F;
     --color-canvas-subtle: #3B4252;
     --color-border-default: #434C5E;
     --color-border-muted: #3B4252;
@@ -105,58 +105,51 @@ html.dark {
 }
 
 /* Light Mode Header Colors */
+/* Light Mode Header Colors */
 .markdown-body h1 {
-    color: #1e3a8a !important;
+    color: #1F2328 !important;
 }
 
-/* Blue 900 */
 .markdown-body h2 {
-    color: #1d4ed8 !important;
+    color: #1F2328 !important;
 }
 
-/* Blue 700 */
 .markdown-body h3 {
-    color: #2563eb !important;
+    color: #1F2328 !important;
 }
 
-/* Blue 600 */
 .markdown-body h4 {
-    color: #475569 !important;
+    color: #1F2328 !important;
 }
 
-/* Slate 600 */
 .markdown-body h5 {
-    color: #64748b !important;
+    color: #1F2328 !important;
 }
 
-/* Slate 500 */
+/* GitHub Light Text */
 
 /* Dark Mode Header Colors overrides generic settings */
 .dark .markdown-body h1 {
-    color: #8FBCBB !important;
+    color: #E6EDF3 !important;
 }
 
-/* Nord7 */
 .dark .markdown-body h2 {
-    color: #88C0D0 !important;
+    color: #E6EDF3 !important;
 }
 
-/* Nord8 */
 .dark .markdown-body h3 {
-    color: #81A1C1 !important;
+    color: #E6EDF3 !important;
 }
 
-/* Nord9 */
 .dark .markdown-body h4 {
-    color: #5E81AC !important;
+    color: #E6EDF3 !important;
 }
 
-/* Nord10 */
 .dark .markdown-body h5 {
-    color: #ECEFF4 !important;
+    color: #E6EDF3 !important;
 }
 
-/* Nord6 */
+/* GitHub Dark Text */
 
 
 .dark .markdown-body a {
@@ -177,7 +170,7 @@ html.dark {
 }
 
 .dark .markdown-body pre {
-    background-color: #2E3440 !important;
+    background-color: #24292F !important;
     /* Nord Dark bg */
     border: 1px solid #3B4252 !important;
     /* Slight border distinction */
@@ -302,7 +295,7 @@ html.dark {
 
 /* Dark Mode Table overrides */
 .dark .markdown-body table tr {
-    background-color: #2E3440 !important;
+    background-color: #24292F !important;
     /* Nord0 */
     border-top: 1px solid #434C5E !important;
     /* Nord2 */
@@ -319,4 +312,9 @@ html.dark {
     /* Nord2 */
     color: #D8DEE9 !important;
     /* Nord4 */
+}
+
+/* CodeMirror Background Override */
+.dark .cm-editor {
+    background-color: #24292F !important;
 }
