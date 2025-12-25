@@ -180,8 +180,8 @@
                 <!-- Header -->
                 <div class="p-4 border-b border-[#E6E4DD] dark:border-[#3B4252] flex items-center bg-[#F2F0EA] dark:bg-[#242933] flex-shrink-0 transition-all"
                     :class="isSidebarOpen ? 'justify-between' : 'justify-center'">
-                    <div class="flex items-center gap-2 cursor-pointer group/logo" @click="deselectNote"
-                        title="About Shynote">
+                    <a :href="homeUrl" class="flex items-center gap-2 cursor-pointer group/logo no-underline"
+                        title="Go to Home">
                         <img src="/static/logo.png"
                             class="w-6 h-6 rounded-full shadow-sm object-cover group-hover/logo:scale-110 transition-transform"
                             alt="SHYNOTE Logo">
@@ -194,7 +194,7 @@
                                 class="absolute -top-1 -right-8 text-[9px] font-normal text-slate-400 dark:text-slate-500 select-none">v{{
                                 appVersion }}</span>
                         </div>
-                    </div>
+                    </a>
                     <button @click="toggleDarkMode" v-show="isSidebarOpen"
                         class="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full transition-colors"
                         :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
