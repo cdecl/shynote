@@ -1,3 +1,16 @@
+# v0.2.5 Release Notes
+
+## Summary
+- **동기화 안정성 강화**: 서버 삭제 내역 동기화 시 발생하던 무한 재시도 문제를 해결하고, 에디터 저장/동기화 상태 로직을 문서화했습니다.
+- **설정 정보 제공**: 사용자가 현재 연결된 데이터베이스 유형(SQLite/PostgreSQL)을 확인할 수 있도록 개선했습니다.
+
+## Bug Fixes & Improvements
+- **Infinite Sync Loop Fix**: `DELETE` 요청 시 `404 Not Found`가 반환되면 실패로 간주하여 무한 재시도하던 문제를 수정했습니다. (멱등성 보장)
+- **DB Type Display**: 설정(Settings) > Backup & Restore 섹션에 현재 사용 중인 DB 타입(sqlite/postgresql) 배지를 추가했습니다.
+- **Documentation**: `docs/storage.md`에 에디터 입력 상태 전이(Typing -> Saved -> Synced) 로직을 상세히 기술했습니다.
+
+---
+
 # v0.2.4 Release Notes
 
 ## Summary
