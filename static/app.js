@@ -1773,7 +1773,7 @@ createApp({
 			if (type === 'note') {
 				await deleteNote(id)
 			} else if (type === 'folder') {
-				await deleteFolder(id)
+				await deleteFolderImpl(id)
 			}
 			deleteConfirmation.value = { id: null, type: null }
 		}
