@@ -66,6 +66,31 @@
 
 ---
 
+
+### 🚦 에디터 상태 전이 로직 (Editor State Transitions)
+
+**UI 상의 저장 상태 변화 흐름:** `Typing...` → `Saved locally` → `Synced`
+
+1.  **Typing (입력 중)**
+    *   **Trigger**: 사용자가 키보드로 입력하면 `debouncedUpdate()`가 즉시 호출됩니다.
+    *   **Action**: `statusMessage.value`를 `'Typing...'`으로 설정합니다.
+    *   **Debounce**: 1초(1000ms) 타이머를 시작/재설정합니다 (`setTimeout`).
+
+2.  **Saved locally (로컬 저장)**
+    *   **Trigger**: 사용자가 입력을 멈추고 1초가 지나면 타이머가 발동합니다.
+    *   **Action**: `LocalDB.saveNote(rawNote)`를 호출하여 **IndexedDB**에 저장합니다.
+    *   **Status Update**: 저장이 성공하면 `statusMessage.value`를 `'Saved locally'`로 변경합니다. (이때 서버로 즉시 보내지 않습니다.)
+
+3.  **Synced (서버 동기화)**
+    *   **Trigger**: 별도로 돌고 있는 `setInterval(syncWorker, 5000)` 루프가 5초마다 실행됩니다.
+    *   **Action**: `syncWorker`가 `pending_logs`(대기 중인 변경사항)를 발견하고 서버로 `PUT` 요청을 보냅니다.
+    *   **Status Update**: 서버 응답이 성공(200 OK)하면 `LocalDB.removeLog`를 실행하고, 만약 현재 상태 메시지가 `'Saved locally'`라면 `'Synced'`로 변경합니다.
+
+**요약 흐름도:**
+`User Input (Typing...)` --> **1초 대기** --> `IndexedDB Save (Saved locally)` --> **최대 5초 대기** --> `Network Sync (Synced)`
+
+---
+
 ## 3. 로딩 및 데이터 동기화 전략 (Pull Sync & Hash Verification)
 
 현재 시스템은 빠른 반응성을 위해 **Dirty Flag** 기반의 "최종 수정 우선(Last Write Wins)" 전략을 채택하고 있으며, 데이터 정합성을 위해 **Hash 기반 검증** 및 **삭제 동기화(Full Sync Logics)**를 포함합니다.
