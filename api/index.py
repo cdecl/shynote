@@ -41,7 +41,13 @@ def read_root():
 @app.get("/auth/config")
 def get_auth_config():
     from .config import GOOGLE_CLIENT_ID
-    return {"google_client_id": GOOGLE_CLIENT_ID}
+    from .database import SQLALCHEMY_DATABASE_URL
+    
+    db_type = "unknown"
+    if SQLALCHEMY_DATABASE_URL:
+        db_type = SQLALCHEMY_DATABASE_URL.split(":")[0]
+        
+    return {"google_client_id": GOOGLE_CLIENT_ID, "db_type": db_type}
 
 @app.post("/auth/login", response_model=schemas.Token)
 def login(auth_request: schemas.AuthRequest, db: Session = Depends(database.get_db)):

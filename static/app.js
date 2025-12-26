@@ -129,6 +129,8 @@ createApp({
 		}
 		const collapsedFolders = ref({})
 
+		const dbType = ref('...')
+
 		// New UI States
 		const splitRatio = ref(50)
 
@@ -471,7 +473,7 @@ createApp({
 								}
 							}
 
-							if (response && response.ok) {
+							if (response && (response.ok || (isDelete && response.status === 404))) {
 								const processedLogs = logs.filter(l => l.entity === log.entity && l.entity_id === log.entity_id)
 								for (const pl of processedLogs) {
 									await LocalDB.removeLog(pl.id)
@@ -1253,6 +1255,9 @@ createApp({
 				const res = await fetch('/auth/config')
 				if (!res.ok) return
 				const config = await res.json()
+				if (config.db_type) {
+					dbType.value = config.db_type
+				}
 
 				if (window.google) {
 					window.google.accounts.id.initialize({
@@ -2345,7 +2350,8 @@ createApp({
 			hasIDB,
 			isSyncing,
 			conflictState,
-			resolveConflict
+			resolveConflict,
+			dbType
 		}
 	}
 }).mount('#app')
