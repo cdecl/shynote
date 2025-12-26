@@ -264,6 +264,94 @@ def delete_note(
     db.commit()
     return {"message": "Note deleted successfully"}
 
+# --- Backup & Restore ---
+
+@app.get("/api/backup", response_model=schemas.BackupData)
+def backup_data(
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(utils.get_current_user)
+):
+    """
+    Exports all folders and notes for the current user.
+    """
+    folders = db.query(models.Folder).filter(models.Folder.user_id == current_user.id).all()
+    notes = db.query(models.Note).filter(models.Note.user_id == current_user.id).all()
+    
+    return {"folders": folders, "notes": notes}
+
+
+@app.post("/api/restore")
+def restore_data(
+    backup: schemas.BackupData,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(utils.get_current_user)
+):
+    """
+    Restores folders and notes from a backup file. Appends data, skipping duplicates.
+    """
+    existing_folder_ids = {f.id for f in db.query(models.Folder.id).filter(models.Folder.user_id == current_user.id).all()}
+    existing_note_ids = {n.id for n in db.query(models.Note.id).filter(models.Note.user_id == current_user.id).all()}
+    
+    new_folders = []
+    for folder_data in backup.folders:
+        if folder_data.id not in existing_folder_ids:
+            new_folder = models.Folder(
+                id=folder_data.id,
+                name=folder_data.name,
+                user_id=current_user.id
+            )
+            db.add(new_folder)
+            new_folders.append(new_folder)
+            existing_folder_ids.add(folder_data.id)
+
+    all_folder_ids = existing_folder_ids
+
+    new_notes = []
+    for note_data in backup.notes:
+        if note_data.id not in existing_note_ids:
+            folder_id = note_data.folder_id
+            if folder_id and folder_id not in all_folder_ids:
+                folder_id = None
+
+            new_note = models.Note(
+                id=note_data.id,
+                title=note_data.title,
+                content=note_data.content,
+                folder_id=folder_id,
+                user_id=current_user.id,
+                created_at=note_data.created_at,
+                updated_at=note_data.updated_at,
+                is_pinned=note_data.is_pinned
+            )
+            db.add(new_note)
+            new_notes.append(new_note)
+            
+    db.commit()
+    
+    return {
+        "message": "Restore successful",
+        "folders_added": len(new_folders),
+        "notes_added": len(new_notes)
+    }
+
+
+@app.delete("/api/reset")
+def reset_account(
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(utils.get_current_user)
+):
+    """
+    NUCLEAR OPTION: Deletes ALL folders and notes for the current user.
+    """
+    # Delete notes first (foreign key constraint might not exist but logical order)
+    db.query(models.Note).filter(models.Note.user_id == current_user.id).delete()
+    # Delete folders
+    db.query(models.Folder).filter(models.Folder.user_id == current_user.id).delete()
+    
+    db.commit()
+    return {"message": "Account data reset successfully"}
+
+
 # --- Sharing ---
 
 @app.put("/api/notes/{note_id}/share")

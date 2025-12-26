@@ -134,13 +134,13 @@
                 </div>
 
                 <!-- Input for Create Folder -->
-                <input v-if="modalState.type === 'create-folder'" id="modal-input" v-model="modalState.inputValue"
-                    @keyup.enter="confirmAction" @keydown.esc="closeModal"
+                <input v-if="['create-folder', 'factory-reset'].includes(modalState.type)" id="modal-input"
+                    v-model="modalState.inputValue" @keyup.enter="confirmAction" @keydown.esc="closeModal"
                     class="w-full bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded px-3 py-2 text-sm outline-none focus:ring-2 ring-blue-500 mb-4 dark:text-white"
-                    placeholder="Folder Name">
+                    :placeholder="modalState.inputPlaceholder || 'Folder Name'">
 
                 <div class="flex justify-end gap-2">
-                    <button @click="closeModal"
+                    <button @click="closeModal" v-if="modalState.cancelText"
                         class="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
                         {{ modalState.cancelText }}
                     </button>
@@ -156,10 +156,81 @@
                         </button>
                     </template>
                     <button v-else @click="confirmAction"
-                        :class="modalState.type && modalState.type.includes('delete') ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-600 hover:bg-blue-700'"
+                        :class="(modalState.type && (modalState.type.includes('delete') || modalState.type.includes('reset'))) ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-600 hover:bg-blue-700'"
                         class="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors shadow-sm">
                         {{ modalState.confirmText }}
                     </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Modal (Compact & Redesigned) -->
+        <div v-if="isSettingsModalOpen"
+            class="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center backdrop-blur-sm"
+            @click.self="closeSettingsModal">
+            <div
+                class="bg-white dark:bg-slate-800 p-10 rounded-3xl shadow-2xl w-80 min-h-[520px] transform transition-all scale-100 border border-slate-200 dark:border-slate-700 relative">
+                <button @click="closeSettingsModal"
+                    class="absolute top-4 right-4 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                    <span class="material-symbols-rounded text-slate-400">close</span>
+                </button>
+
+                <!-- Compact Header -->
+                <div class="flex flex-col items-center mb-8">
+                    <div class="w-20 h-20 mb-4 flex items-center justify-center">
+                        <img src="/static/logo.png" alt="Shynote Logo"
+                            class="w-full h-full object-contain drop-shadow-xl rounded-2xl">
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800 dark:text-white tracking-tight">SHYNOTE</h3>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span
+                            class="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400">v{{
+                            appVersion }}</span>
+                        <span class="text-[10px] text-slate-400 dark:text-slate-500">MIT License</span>
+                    </div>
+                </div>
+
+                <div class="space-y-16">
+                    <!-- Data Management -->
+                    <div>
+                        <h4
+                            class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">
+                            Backup & Restore</h4>
+                        <div class="flex gap-2">
+                            <button @click="backupData"
+                                class="flex-1 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors border border-slate-200 dark:border-slate-600 flex items-center justify-center gap-1.5">
+                                <span class="material-symbols-rounded text-[16px]">download</span>
+                                Backup
+                            </button>
+                            <label
+                                class="flex-1 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors border border-slate-200 dark:border-slate-600 flex items-center justify-center gap-1.5 cursor-pointer">
+                                <span class="material-symbols-rounded text-[16px]">upload</span>
+                                Restore
+                                <input type="file" @change="restoreData" accept=".json" class="hidden">
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Danger Zone -->
+                    <div>
+                        <h4
+                            class="text-[10px] font-bold text-red-500/80 dark:text-red-400/80 uppercase tracking-widest mb-3 flex items-center gap-1">
+                            <span class="material-symbols-rounded text-[14px]">warning</span> Danger Zone
+                        </h4>
+                        <div class="space-y-2">
+                            <button @click="clearLocalCache"
+                                class="w-full py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-amber-50 dark:bg-amber-900/10 hover:bg-amber-100 dark:hover:bg-amber-900/20 rounded-lg transition-colors border border-amber-200/50 dark:border-amber-700/30 flex items-center justify-center gap-2">
+                                <span
+                                    class="material-symbols-rounded text-[16px] text-amber-500">cleaning_services</span>
+                                Clear Local Cache
+                            </button>
+                            <button @click="factoryReset"
+                                class="w-full py-2 text-xs font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors border border-red-200/50 dark:border-red-700/30 flex items-center justify-center gap-2">
+                                <span class="material-symbols-rounded text-[16px]">delete_forever</span>
+                                Factory Reset (All Data)
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -358,7 +429,7 @@
                                             <span class="material-symbols-rounded text-[14px]"
                                                 style="font-variation-settings: 'FILL' 1">edit</span>
                                         </button>
-                                        <button @click.stop="deleteNote(note.id)"
+                                        <button @click.stop="requestDelete(note.id, 'note')"
                                             class="p-0.5 hover:bg-slate-200 dark:hover:bg-slate-600 rounded text-slate-500 hover:text-red-600 dark:text-slate-500 dark:hover:text-red-400"
                                             title="Delete">
                                             <span class="material-symbols-rounded text-[14px]"
@@ -494,7 +565,7 @@
                                                 <span class="material-symbols-rounded text-[14px]"
                                                     style="font-variation-settings: 'FILL' 1">edit</span>
                                             </button>
-                                            <button @click.stop="deleteNote(note.id)"
+                                            <button @click.stop="requestDelete(note.id, 'note')"
                                                 class="p-0.5 hover:bg-slate-200 dark:hover:bg-slate-600 rounded text-slate-500 hover:text-red-600 dark:text-slate-500 dark:hover:text-red-400"
                                                 title="Delete">
                                                 <span class="material-symbols-rounded text-[14px]"
@@ -526,15 +597,24 @@
                     <!-- About Shynote & Pin Button (Combined) -->
                     <div class="p-2 flex items-center transition-all w-full"
                         :class="isSidebarOpen ? 'flex-row px-3 justify-between' : 'flex-col-reverse justify-center px-0 gap-2'">
-                        <button @click.stop="deselectNote"
-                            class="group/about flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700/50 transition-all"
-                            title="About Shynote">
-                            <span
-                                class="material-symbols-rounded text-[18px] text-blue-500 dark:text-blue-400 group-hover/about:scale-110 transition-transform">info</span>
-                            <span v-show="isSidebarOpen"
-                                class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest group-hover/about:text-blue-600 dark:group-hover/about:text-blue-400">About
-                                Shynote</span>
-                        </button>
+                        <div class="flex items-center gap-1" :class="isSidebarOpen ? '' : 'flex-col'">
+                            <button @click.stop="deselectNote"
+                                class="group/about flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700/50 transition-all"
+                                title="About Shynote">
+                                <span
+                                    class="material-symbols-rounded text-[18px] text-blue-500 dark:text-blue-400 group-hover/about:scale-110 transition-transform">info</span>
+                                <span v-show="isSidebarOpen"
+                                    class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest group-hover/about:text-blue-600 dark:group-hover/about:text-blue-400">About</span>
+                            </button>
+                            <button @click.stop="openSettingsModal"
+                                class="group/settings flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700/50 transition-all"
+                                title="Settings">
+                                <span
+                                    class="material-symbols-rounded text-[18px] text-slate-500 dark:text-slate-400 group-hover/settings:scale-110 transition-transform">settings</span>
+                                <span v-show="isSidebarOpen"
+                                    class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest group-hover/settings:text-slate-600 dark:group-hover/settings:text-slate-400">Settings</span>
+                            </button>
+                        </div>
 
                         <button
                             @click.stop="!isSidebarOpen ? (isSidebarOpen = true, isSidebarPinned = true) : toggleSidebarPin()"

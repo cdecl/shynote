@@ -1,7 +1,19 @@
-# v1.2.3 Release Notes
+# v0.2.4 Release Notes
 
 ## Summary
-- **Local-First Sync Architecture** 도입으로 오프라인 작업과 데이터 동기화 안정성을 대폭 강화했습니다. (v1.2.0의 고도화 작업 완료)
+- 설정(Settings) UI를 대폭 개선하고, 데이터 관리(캐시 삭제, 초기화) 기능을 강화했습니다.
+
+## New Features
+- **Settings UI Redesign**: 아이콘 중심의 컴팩트한 디자인 적용 및 화면 비율 최적화.
+- **Danger Zone**: 안전한 앱 관리를 위한 'Clear Cache' 및 'Factory Reset' 기능 추가.
+- **UX 개선**: 리네임 시 텍스트 자동 선택, 노트 삭제 시 확인 절차(Ask) 일관성 강화.
+
+---
+
+# v0.2.3 Release Notes
+
+## Summary
+- **Local-First Sync Architecture** 도입으로 오프라인 작업과 데이터 동기화 안정성을 대폭 강화했습니다. (v0.2.0의 고도화 작업 완료)
 - **Auto Recovery** 및 **Dependency Ordering** 로직을 통해 동기화 오류를 스스로 복구하는 "자가 치유" 시스템을 구축했습니다.
 
 ## New Features & Fixes
@@ -18,7 +30,7 @@
 
 ---
 
-# v1.2.2 Release Notes
+# v0.2.2 Release Notes
 
 ## Summary
 - **사이드바 UI 대폭 개편**: 더 깔끔하고 직관적인 인터페이스로 전환했습니다.
@@ -55,7 +67,7 @@
 
 ---
 
-# v1.2.1 Release Notes
+# v0.2.1 Release Notes
 
 ## Summary
 - **동기화 충돌 해결(Conflict Resolution) UI**를 구현하여 데이터 정합성을 강화했습니다.
@@ -74,7 +86,7 @@
 
 ---
 
-# v1.2.0 Release Notes
+# v0.2.0 Release Notes
 
 ## Summary
 - **Local-first Architecture**를 도입하여 오프라인 환경에서도 끊김 없는 작업 경험을 제공합니다.
@@ -97,7 +109,7 @@
 
 ---
 
-# v1.1.0 Release Notes
+# v0.1.0 Release Notes
 
 ## Summary
 - **CodeMirror 6** 엔진 전면 도입을 통해 성능, 안정성, 확장성을 확보했습니다.
@@ -111,7 +123,7 @@
 
 ---
 
-# v1.0.6 Release Notes
+# v0.0.6 Release Notes
 
 ## Summary
 - 에디터 엔진을 CodeMirror에서 순수 Textarea로 회귀하여 모바일 호환성을 개선하고, 성능 안정화를 위한 대대적인 리팩토링을 진행했습니다.
@@ -140,7 +152,7 @@
 
 ---
 
-# v1.0.5 Release Notes
+# v0.0.5 Release Notes
 
 ## Summary
 - 사이드바 UX 대폭 개선 (고정/오버레이 모드, 폴더 접기 등) 및 디자인 리뉴얼 (아이콘, 헤더 스타일)이 적용되었습니다.
@@ -159,7 +171,7 @@
   - 사이드바 열림/닫힘 애니메이션 속도 향상
 
 
-# v1.0.3 Release Notes
+# v0.0.3 Release Notes
 
 ## Summary
 - 모바일 환경에서의 UI 사용성 개선 및 사이드바 상호작용 수정이 진행되었습니다.
@@ -175,7 +187,7 @@
 - **입력 박스 높이 축소**:
   - 사용자 입력 박스의 크기를 줄여 UI 최적화
 
-# v1.0.2 Release Notes
+# v0.0.2 Release Notes
 
 ## Summary
 - 노트 공유 기능 개선 및 노트 고정(Pin) 기능이 추가되었습니다.

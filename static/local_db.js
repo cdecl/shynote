@@ -210,5 +210,14 @@ export const LocalDB = {
 		});
 
 		await tx.done;
+	},
+
+	async clearAll() {
+		const db = await initDB();
+		const tx = db.transaction(['notes', 'folders', 'pending_logs'], 'readwrite');
+		await tx.objectStore('notes').clear();
+		await tx.objectStore('folders').clear();
+		await tx.objectStore('pending_logs').clear();
+		await tx.done;
 	}
 };

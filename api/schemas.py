@@ -80,3 +80,29 @@ class Folder(FolderBase):
 
     class Config:
         from_attributes = True
+
+
+# --- Backup & Restore Schemas ---
+
+class BackupNote(BaseModel):
+    id: str
+    title: str
+    content: Optional[str] = None
+    folder_id: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+    is_pinned: bool
+
+    class Config:
+        from_attributes = True
+
+class BackupFolder(BaseModel):
+    id: str
+    name: str
+
+    class Config:
+        from_attributes = True
+
+class BackupData(BaseModel):
+    folders: List[BackupFolder]
+    notes: List[BackupNote]

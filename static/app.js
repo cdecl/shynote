@@ -928,6 +928,106 @@ createApp({
 			name: ''
 		})
 
+		// Settings Modal State
+		const isSettingsModalOpen = ref(false)
+
+		const openSettingsModal = () => {
+			isSettingsModalOpen.value = true;
+		}
+
+		const closeSettingsModal = () => {
+			isSettingsModalOpen.value = false;
+		}
+
+		const backupData = async () => {
+			try {
+				const response = await authenticatedFetch('/api/backup');
+				if (response && response.ok) {
+					const data = await response.json();
+					const jsonString = JSON.stringify(data, null, 2);
+					const blob = new Blob([jsonString], { type: 'application/json' });
+					const url = URL.createObjectURL(blob);
+					const a = document.createElement('a');
+					a.href = url;
+					const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+					a.download = `shynote_backup_${timestamp}.json`;
+					document.body.appendChild(a);
+					a.click();
+					document.body.removeChild(a);
+					URL.revokeObjectURL(url);
+					closeSettingsModal();
+				} else {
+					alert('Backup failed.');
+				}
+			} catch (error) {
+				console.error('Backup error:', error);
+				alert('An error occurred during backup.');
+			}
+		};
+
+		const restoreData = async (event) => {
+			const file = event.target.files[0];
+			if (!file) return;
+
+			const reader = new FileReader();
+			reader.onload = async (e) => {
+				try {
+					const backupData = JSON.parse(e.target.result);
+
+					if (!backupData.folders || !backupData.notes) {
+						throw new Error('Invalid backup file format.');
+					}
+
+					const response = await authenticatedFetch('/api/restore', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(backupData)
+					});
+
+					if (response && response.ok) {
+						const result = await response.json();
+						closeSettingsModal();
+
+						modalState.value = {
+							isOpen: true,
+							type: 'info',
+							title: 'Restore Complete',
+							message: `Successfully restored data.\nFolders added: ${result.folders_added}\nNotes added: ${result.notes_added}`,
+							confirmText: 'OK',
+							cancelText: null,
+							inputValue: '',
+							inputPlaceholder: '',
+							targetId: null
+						};
+
+						// Refresh data from server
+						await fetchFolders();
+						await fetchNotes();
+					} else {
+						const error = await response.json();
+						alert(`Restore failed: ${error.detail || 'Unknown error'}`);
+					}
+				} catch (error) {
+					console.error('Restore error:', error);
+					alert(`An error occurred during restore: ${error.message}`);
+				} finally {
+					event.target.value = '';
+				}
+			};
+			reader.readAsText(file);
+		};
+
+		const clearLocalCache = async () => {
+			closeSettingsModal();
+			openModal('clear-cache');
+		};
+
+		const factoryReset = async () => {
+			closeSettingsModal();
+			openModal('factory-reset');
+		};
+
+
 		// Modal State
 		const modalState = ref({
 			isOpen: false,
@@ -935,6 +1035,7 @@ createApp({
 			title: '',
 			message: '',
 			inputValue: '',
+			inputPlaceholder: '',
 			targetId: null,
 			confirmText: 'Confirm',
 			cancelText: 'Cancel'
@@ -945,6 +1046,7 @@ createApp({
 			modalState.value.targetId = targetId
 			modalState.value.isOpen = true
 			modalState.value.inputValue = ''
+			modalState.value.inputPlaceholder = ''
 
 			if (type === 'create-folder') {
 				modalState.value.title = 'New Folder'
@@ -958,9 +1060,19 @@ createApp({
 				modalState.value.title = 'Delete Folder'
 				modalState.value.message = 'Are you sure you want to delete this folder and all its notes?'
 				modalState.value.confirmText = 'Delete'
+			} else if (type === 'clear-cache') {
+				modalState.value.title = 'Clear Local Cache'
+				modalState.value.message = 'This will wipe your local offline data and reload the application. Unsynced changes may be lost.'
+				modalState.value.confirmText = 'Clear & Reload'
+			} else if (type === 'factory-reset') {
+				modalState.value.title = 'Factory Reset'
+				modalState.value.message = 'WARNING: This will PERMANENTLY DELETE ALL your notes and folders.\nTo confirm, type "DELETE" below.'
+				modalState.value.confirmText = 'Reset Everything'
+				modalState.value.inputPlaceholder = 'Type DELETE'
 			}
 
-			if (type === 'create-folder') {
+
+			if (['create-folder', 'factory-reset'].includes(type)) {
 				nextTick(() => {
 					const input = document.getElementById('modal-input')
 					if (input) input.focus()
@@ -984,6 +1096,36 @@ createApp({
 				await deleteNote(targetId)
 			} else if (type === 'delete-folder') {
 				await deleteFolder(targetId)
+			} else if (type === 'clear-cache') {
+				try {
+					const keep = ['access_token', 'shynote_user_id'];
+					for (let i = localStorage.length - 1; i >= 0; i--) {
+						const key = localStorage.key(i);
+						if (!keep.includes(key)) localStorage.removeItem(key);
+					}
+					if (typeof LocalDB !== 'undefined') await LocalDB.clearAll();
+					window.location.reload();
+				} catch (e) { console.error(e); alert(e.message); }
+			} else if (type === 'factory-reset') {
+				if (inputValue !== 'DELETE') {
+					alert("Please type 'DELETE' to confirm.");
+					return;
+				}
+				try {
+					const response = await authenticatedFetch('/api/reset', { method: 'DELETE' });
+					if (response.ok) {
+						const keep = ['access_token', 'shynote_user_id'];
+						for (let i = localStorage.length - 1; i >= 0; i--) {
+							const key = localStorage.key(i);
+							if (!keep.includes(key)) localStorage.removeItem(key);
+						}
+						if (typeof LocalDB !== 'undefined') await LocalDB.clearAll();
+						window.location.reload();
+					} else {
+						const err = await response.json();
+						alert('Reset failed: ' + (err.detail || 'Unknown error'));
+					}
+				} catch (e) { console.error(e); alert(e.message); }
 			}
 			closeModal()
 		}
@@ -1646,7 +1788,10 @@ createApp({
 			// Focus input next tick
 			setTimeout(() => {
 				const input = document.getElementById(`rename-input-${type}-${item.id}`)
-				if (input) input.focus()
+				if (input) {
+					input.focus();
+					input.select();
+				}
 			}, 50)
 		}
 
@@ -2070,6 +2215,14 @@ createApp({
 			renameState,
 			startRename,
 			saveRename,
+
+			isSettingsModalOpen,
+			openSettingsModal,
+			closeSettingsModal,
+			backupData,
+			restoreData,
+			clearLocalCache,
+			factoryReset,
 			deleteConfirmation,
 			requestDelete,
 			confirmDelete,
