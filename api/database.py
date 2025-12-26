@@ -4,6 +4,11 @@ import urllib.parse as urlparse
 
 import os
 
+# .env load
+from dotenv import load_dotenv
+load_dotenv()
+
+
 # Check for Vercel's POSTGRES_URL or generic DATABASE_URL
 SQLALCHEMY_DATABASE_URL = os.getenv("POSTGRES_URL") or os.getenv("DATABASE_URL")
 
