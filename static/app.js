@@ -340,6 +340,30 @@ createApp({
 			}, 1000)
 		}
 
+		const manualSave = async () => {
+			if (debounceTimer) clearTimeout(debounceTimer)
+			if (!selectedNote.value) return
+
+			statusMessage.value = 'Saving...'
+			selectedNote.value.updated_at = new Date().toISOString()
+
+			if (hasIDB) {
+				try {
+					const rawNote = JSON.parse(JSON.stringify(selectedNote.value))
+					if (!rawNote.user_id && currentUserId.value) rawNote.user_id = currentUserId.value
+
+					await LocalDB.saveNote(rawNote)
+					statusMessage.value = 'Saved'
+					syncWorker()
+				} catch (e) {
+					console.error("Manual save failed", e)
+					statusMessage.value = 'Error saving'
+				}
+			} else {
+				await updateNote()
+			}
+		}
+
 		const syncWorker = async () => {
 			if (!hasIDB || isSyncing.value || !isAuthenticated.value) return
 			isSyncing.value = true
@@ -580,7 +604,7 @@ createApp({
 					}),
 					// Custom Keymap for Save/Find/Formatting
 					keymap.of([
-						{ key: "Mod-s", run: () => { updateNote(); return true } },
+						{ key: "Mod-s", run: () => { manualSave(); return true } },
 						{ key: "Mod-f", run: () => { openSearch(); return true } },
 						{ key: "Mod-g", run: () => { executeFind(false); return true } },
 						{ key: "Shift-Mod-g", run: () => { executeFind(true); return true } },
