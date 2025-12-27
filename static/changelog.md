@@ -1,3 +1,31 @@
+# v0.3.1 Release Notes
+
+## Summary
+- **iOS 스타일 UI 적용**: 아이콘 및 레이아웃을 iOS 스타일로 변경하여 더욱 세련된 경험 제공
+- **사이드바 동작 최적화**: 모바일 자동 닫힘 및 데스크톱 닫힘 상태 시각적 결함 수정
+- **사용자 경험 개선**: 폰트 크기 확대 및 새 문서 이름 자동 생성 규칙 변경
+
+## UI/UX Improvements
+
+### 1. iOS-Style Visuals (iOS 스타일 적용)
+- **아이콘 변경**:
+  - 사이드바 닫기 (Back): `arrow_back_ios_new` (얇은 화살표)
+  - 사이드바 열기 (Open): `view_sidebar`
+  - 편집 (Rename): `edit_square`
+- **토글 버튼 위치 최적화**:
+  - 사이드바 **열림**: 닫기 버튼이 사이드바 헤더 내부로 이동 (오른쪽 패널에서 제거)
+  - 사이드바 **닫힘**: 열기 버튼이 메인 툴바/리스트 툴바 왼쪽에 표시
+
+### 2. Sidebar Improvements (사이드바 개선)
+- **모바일 UX**: 폴더 선택 시 사이드바 자동 닫힘 (이벤트 버블링 버그 수정)
+- **데스크톱 시각적 결함 수정**: 사이드바 닫힘 시 콘텐츠가 희미하게 보이는(Ghost Content) 현상 해결
+
+### 3. Readability & Usability (가독성 및 사용성)
+- **폰트 크기 확대**: 노트 리스트 아이템의 폰트 크기 +2px 증가 (Title 16px, Content 14px)
+- **새 문서 명명 규칙**: `Untitled` 대신 `Note YYYY-MM-DD (hash)` 형식으로 자동 생성되어 식별 용이
+
+---
+
 # v0.3.0 Release Notes
 
 ## Summary
