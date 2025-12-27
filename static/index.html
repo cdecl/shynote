@@ -324,9 +324,13 @@
                             <div class="bg-white dark:bg-[#1C1C1E] rounded-xl overflow-hidden shadow-sm">
                                 <!-- Inbox -->
                                 <div @click.stop="selectFolder(null)" @drop="handleDrop(null, $event)" @dragover.prevent
-                                    @dragenter.prevent
-                                    class="relative flex items-center justify-between px-3 py-2.5 cursor-pointer active:bg-slate-100 dark:active:bg-white/10 transition-colors group"
-                                    :class="currentFolderId === null && rightPanelMode === 'list' ? 'bg-blue-50 dark:bg-blue-900/20' : ''">
+                                    @dragenter.prevent="handleDragEnter('inbox')"
+                                    @dragleave.prevent="handleDragLeave('inbox')"
+                                    class="relative flex items-center justify-between px-3 py-2.5 cursor-pointer active:bg-slate-100 dark:active:bg-white/10 transition-all duration-200 group"
+                                    :class="[
+                                        currentFolderId === null && rightPanelMode === 'list' ? 'bg-blue-50 dark:bg-blue-900/20' : '',
+                                        dropTargetId === 'inbox' ? 'translate-x-3 bg-blue-100 dark:bg-blue-800/30' : ''
+                                    ]">
                                     <div class="flex items-center gap-3">
                                         <span class="material-symbols-rounded text-[22px] text-blue-500"
                                             style="font-variation-settings: 'FILL' 1">inbox</span>
@@ -360,12 +364,12 @@
 
                                         <!-- Folder Item -->
                                         <div @click.stop="selectFolder(folder.id)"
-                                            class="relative flex items-center justify-between px-3 py-2.5 cursor-pointer active:bg-slate-100 dark:active:bg-white/10 transition-colors group"
+                                            class="relative flex items-center justify-between px-3 py-2.5 cursor-pointer active:bg-slate-100 dark:active:bg-white/10 transition-all duration-200 group"
                                             :class="[
                                             currentFolderId === folder.id && rightPanelMode === 'list' 
                                                 ? 'bg-amber-50 dark:bg-amber-900/20' 
                                                 : '',
-                                            dropTargetId === folder.id ? 'bg-amber-100 dark:bg-amber-900/30' : ''
+                                            dropTargetId === folder.id ? 'translate-x-3 bg-amber-100 dark:bg-amber-900/30' : ''
                                         ]">
 
                                             <!-- Rename Input -->
@@ -379,7 +383,8 @@
                                                 class="flex items-center gap-3 flex-1 min-w-0">
                                                 <span
                                                     class="material-symbols-rounded text-[22px] text-amber-500 dark:text-yellow-400"
-                                                    style="font-variation-settings: 'FILL' 1">folder</span>
+                                                    style="font-variation-settings: 'FILL' 1">{{ dropTargetId ===
+                                                    folder.id ? 'folder_open' : 'folder' }}</span>
                                                 <span
                                                     class="text-[15px] font-medium text-slate-800 dark:text-white truncate">{{
                                                     folder.name }}</span>
@@ -634,8 +639,9 @@
                                     </h3>
                                     <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                                         <div v-for="note in (currentFolderId === null ? sortedRootNotes : getSortedFolderNotes(currentFolderId)).filter(n => n.is_pinned)"
-                                            :key="note.id" @click="selectNote(note)"
-                                            class="group bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-xl hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-lg transition-all cursor-pointer p-4 flex flex-col relative h-48">
+                                            :key="note.id" @click="selectNote(note)" draggable="true"
+                                            @dragstart="handleDragStart(note, $event)"
+                                            class="group draggable-touch bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-xl hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-lg transition-all cursor-pointer p-4 flex flex-col relative h-48">
 
                                             <!-- Pin Button (Top Right) -->
                                             <button @click.stop="togglePin(note)"
@@ -708,8 +714,9 @@
                                     </h3>
                                     <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                                         <div v-for="note in (currentFolderId === null ? sortedRootNotes : getSortedFolderNotes(currentFolderId)).filter(n => !n.is_pinned)"
-                                            :key="note.id" @click="selectNote(note)"
-                                            class="group bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-xl hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-lg transition-all cursor-pointer p-4 flex flex-col relative h-48">
+                                            :key="note.id" @click="selectNote(note)" draggable="true"
+                                            @dragstart="handleDragStart(note, $event)"
+                                            class="group draggable-touch bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-xl hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-lg transition-all cursor-pointer p-4 flex flex-col relative h-48">
 
                                             <!-- Pin Button (Top Right) -->
                                             <button @click.stop="togglePin(note)"
@@ -943,6 +950,43 @@
                                         <span class="w-[1px] h-3 bg-slate-300 dark:bg-slate-600"></span>
                                         <span>{{ selectedNote.content ? selectedNote.content.length : 0 }}
                                             chars</span>
+                                        <span class="w-[1px] h-3 bg-slate-300 dark:bg-slate-600"></span>
+                                        <div class="relative group">
+                                            <div @click.stop="toggleFolderSelectMenu"
+                                                class="cursor-pointer px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[11px] flex items-center gap-1 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                                                {{ selectedNote.folder_id ? (folders.find(f => f.id ===
+                                                selectedNote.folder_id)?.name ||
+                                                'Unknown') : 'Inbox' }}
+                                                <span
+                                                    class="material-symbols-rounded text-[12px] opacity-70">expand_more</span>
+                                            </div>
+                                            <!-- Custom Dropdown -->
+                                            <div v-if="showFolderSelectMenu"
+                                                class="absolute top-full right-0 mt-1 w-32 bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-lg shadow-xl py-1 z-50 animate-fade-in origin-top-right">
+                                                <!-- Overlay to close -->
+                                                <div @click="closeFolderSelectMenu"
+                                                    class="fixed inset-0 z-40 bg-transparent cursor-default"></div>
+
+                                                <div class="relative z-50 max-h-48 overflow-y-auto custom-scrollbar">
+                                                    <button
+                                                        @click.stop="moveSelectedNote(null); closeFolderSelectMenu()"
+                                                        class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-blue-900/30 flex items-center gap-2 transition-colors">
+                                                        <span
+                                                            class="material-symbols-rounded text-[16px] text-blue-500">inbox</span>
+                                                        Inbox
+                                                    </button>
+                                                    <div class="h-[1px] bg-slate-100 dark:bg-[#434C5E] my-1"
+                                                        v-if="sortedFolders.length > 0"></div>
+                                                    <button v-for="folder in sortedFolders" :key="folder.id"
+                                                        @click.stop="moveSelectedNote(folder.id); closeFolderSelectMenu()"
+                                                        class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-amber-900/30 flex items-center gap-2 transition-colors">
+                                                        <span
+                                                            class="material-symbols-rounded text-[16px] text-amber-500">folder</span>
+                                                        <span class="truncate">{{ folder.name }}</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -977,6 +1021,43 @@
                                         <span class="w-[1px] h-3 bg-slate-300 dark:bg-slate-600"></span>
                                         <span>{{ selectedNote.content ? selectedNote.content.length : 0 }}
                                             chars</span>
+                                        <span class="w-[1px] h-3 bg-slate-300 dark:bg-slate-600"></span>
+                                        <div class="relative group">
+                                            <div @click.stop="toggleFolderSelectMenu"
+                                                class="cursor-pointer px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[11px] flex items-center gap-1 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                                                {{ selectedNote.folder_id ? (folders.find(f => f.id ===
+                                                selectedNote.folder_id)?.name ||
+                                                'Unknown') : 'Inbox' }}
+                                                <span
+                                                    class="material-symbols-rounded text-[12px] opacity-70">expand_more</span>
+                                            </div>
+                                            <!-- Custom Dropdown -->
+                                            <div v-if="showFolderSelectMenu"
+                                                class="absolute top-full right-0 mt-1 w-32 bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-lg shadow-xl py-1 z-50 animate-fade-in origin-top-right">
+                                                <!-- Overlay to close -->
+                                                <div @click="closeFolderSelectMenu"
+                                                    class="fixed inset-0 z-40 bg-transparent cursor-default"></div>
+
+                                                <div class="relative z-50 max-h-48 overflow-y-auto custom-scrollbar">
+                                                    <button
+                                                        @click.stop="moveSelectedNote(null); closeFolderSelectMenu()"
+                                                        class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-blue-900/30 flex items-center gap-2 transition-colors">
+                                                        <span
+                                                            class="material-symbols-rounded text-[16px] text-blue-500">inbox</span>
+                                                        Inbox
+                                                    </button>
+                                                    <div class="h-[1px] bg-slate-100 dark:bg-[#434C5E] my-1"
+                                                        v-if="sortedFolders.length > 0"></div>
+                                                    <button v-for="folder in sortedFolders" :key="folder.id"
+                                                        @click.stop="moveSelectedNote(folder.id); closeFolderSelectMenu()"
+                                                        class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-amber-900/30 flex items-center gap-2 transition-colors">
+                                                        <span
+                                                            class="material-symbols-rounded text-[16px] text-amber-500">folder</span>
+                                                        <span class="truncate">{{ folder.name }}</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="flex-1 overflow-hidden relative">

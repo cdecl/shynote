@@ -2237,6 +2237,55 @@ createApp({
 			}
 			draggedNoteId.value = null
 			dropTargetId.value = null
+			draggedNoteId.value = null
+			dropTargetId.value = null
+		}
+
+		const moveSelectedNote = async (targetFolderId) => {
+			let target = targetFolderId
+			// Handle select value conversion and nulls
+			if (target === null || target === 'null' || target === '') {
+				target = null
+			} else {
+				// Ensure target matches the type of folder.id in folders array
+				// Select value is string, but folder.id might be int.
+				const targetFolder = folders.value.find(f => f.id == target)
+				if (targetFolder) {
+					target = targetFolder.id
+				} else {
+					// Fallback parsing if for some reason folder not found locally yet
+					target = parseInt(target, 10)
+				}
+			}
+
+			const note = selectedNote.value
+			if (!note) return
+			if (note.folder_id === target) return
+
+			// Optimistic
+			const originalFolderId = note.folder_id
+			note.folder_id = target
+
+			try {
+				if (hasIDB) {
+					const base = `${note.id}:${note.title}:${note.content}:${target || 'null'}`
+					const hash = await shynote_hash(base)
+					note.content_hash = hash
+					await LocalDB.saveNote({ ...note }, 'UPDATE')
+				}
+			} catch (e) {
+				console.error("Move failed", e)
+				note.folder_id = originalFolderId
+				alert("Failed to move note")
+			}
+		}
+
+		const showFolderSelectMenu = ref(false)
+		const toggleFolderSelectMenu = () => {
+			showFolderSelectMenu.value = !showFolderSelectMenu.value
+		}
+		const closeFolderSelectMenu = () => {
+			showFolderSelectMenu.value = false
 		}
 
 		const dropTargetId = ref(null) // 'root' or folderId (int)
@@ -2525,7 +2574,15 @@ createApp({
 			handleDrop,
 			dropTargetId,
 			handleDragEnter,
+			handleDragEnter,
 			handleDragLeave,
+			moveSelectedNote,
+			showFolderSelectMenu,
+			toggleFolderSelectMenu,
+			closeFolderSelectMenu,
+			showFolderSelectMenu,
+			toggleFolderSelectMenu,
+			closeFolderSelectMenu,
 
 			focusEditor,
 
