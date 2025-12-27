@@ -150,6 +150,16 @@ html.dark {
 }
 
 /* GitHub Dark Text */
+.dark .markdown-body hr {
+    background-color: #3B4252 !important;
+    height: 1px !important;
+    border: none !important;
+}
+
+.dark .markdown-body h1,
+.dark .markdown-body h2 {
+    border-bottom-color: #3B4252 !important;
+}
 
 
 .dark .markdown-body a {

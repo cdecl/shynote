@@ -129,6 +129,12 @@ createApp({
 		}
 		const collapsedFolders = ref({})
 
+		const sidebarViewMode = ref(localStorage.getItem('shynote_sidebar_view_mode') || 'simple')
+		const setSidebarViewMode = (mode) => {
+			sidebarViewMode.value = mode
+			localStorage.setItem('shynote_sidebar_view_mode', mode)
+		}
+
 		const dbType = ref('...')
 
 		// New UI States
@@ -689,13 +695,6 @@ createApp({
 				case 'italic': wrap = '*'; break;
 				case 'strike': wrap = '~~'; break;
 				case 'code': wrap = '`'; break;
-				case 'link':
-					// Link needs special handling or just wrap for now
-					wrap = '';
-					// Simple implementation for now or use specific command
-					break;
-				default:
-					break;
 			}
 
 			if (wrap) {
@@ -717,26 +716,107 @@ createApp({
 				return
 			}
 
-			// Headings
-			if (type.startsWith('h')) {
-				const level = parseInt(type.replace('h', ''))
-				const prefix = '#'.repeat(level) + ' '
-
+			if (type === 'link') {
 				const transaction = view.state.changeByRange(range => {
-					const line = view.state.doc.lineAt(range.from)
-					const match = line.text.match(/^#+ /)
-					let newText = prefix + line.text.replace(/^#+ /, '')
-					if (match && match[0] === prefix) {
-						if (line.text.startsWith(prefix)) newText = line.text.substring(prefix.length)
-					}
-
+					const slice = view.state.sliceDoc(range.from, range.to)
+					const text = `[${slice}]()`
 					return {
-						changes: { from: line.from, to: line.to, insert: newText },
-						range: EditorSelection.range(range.from + (newText.length - line.text.length), range.to + (newText.length - line.text.length))
+						changes: { from: range.from, to: range.to, insert: text },
+						range: EditorSelection.range(range.from + slice.length + 3, range.from + slice.length + 3)
 					}
 				})
 				view.dispatch(transaction)
+				return
 			}
+
+			if (type === 'codeblock') {
+				const transaction = view.state.changeByRange(range => {
+					const slice = view.state.sliceDoc(range.from, range.to)
+					if (slice.startsWith("```\n") && slice.endsWith("\n```")) {
+						// Unwrap
+						return {
+							changes: { from: range.from, to: range.to, insert: slice.slice(4, -4) },
+							range: EditorSelection.range(range.from, range.to - 8)
+						}
+					} else {
+						// Wrap
+						const text = "```\n" + slice + "\n```"
+						return {
+							changes: { from: range.from, to: range.to, insert: text },
+							range: EditorSelection.range(range.from, range.from + text.length)
+						}
+					}
+				})
+				view.dispatch(transaction)
+				return
+			}
+
+			// Line-based formatting
+			const transaction = view.state.changeByRange(range => {
+				const startLine = view.state.doc.lineAt(range.from)
+				const endLine = view.state.doc.lineAt(range.to)
+
+				// Determine dominant state for checkbox
+				// 0: None, 1: Unchecked, 2: Checked
+				let nextState = 1 // Default to Unchecked
+				if (type === 'checkbox') {
+					let hasUnchecked = false
+					let hasChecked = false
+					let hasNone = false
+
+					for (let l = startLine.number; l <= endLine.number; l++) {
+						const lineText = view.state.doc.line(l).text
+						if (lineText.match(/^- \[ \] /)) hasUnchecked = true
+						else if (lineText.match(/^- \[x\] /)) hasChecked = true
+						else hasNone = true
+					}
+
+					if (hasUnchecked && !hasChecked && !hasNone) nextState = 2 // All unchecked -> Checked
+					else if (hasChecked && !hasUnchecked && !hasNone) nextState = 0 // All checked -> Undo (None)
+					else nextState = 1 // Mixed or None -> Unchecked
+				}
+
+				let newLines = []
+				for (let l = startLine.number; l <= endLine.number; l++) {
+					let lineText = view.state.doc.line(l).text
+
+					if (type.startsWith('h')) {
+						const level = parseInt(type.replace('h', ''))
+						const prefix = '#'.repeat(level) + ' '
+						if (lineText.startsWith(prefix)) {
+							lineText = lineText.substring(prefix.length)
+						} else {
+							lineText = prefix + lineText.replace(/^#+ /, '')
+						}
+					} else if (type === 'dash') {
+						if (lineText.match(/^-\s/)) {
+							lineText = lineText.replace(/^-\s/, '')
+						} else {
+							lineText = '- ' + lineText
+						}
+					} else if (type === 'checkbox') {
+						// Clean existing
+						lineText = lineText.replace(/^- \[[ x]\] /, '').replace(/^-\s/, '')
+
+						if (nextState === 1) {
+							lineText = '- [ ] ' + lineText
+						} else if (nextState === 2) {
+							lineText = '- [x] ' + lineText
+						}
+						// If nextState === 0, we leave it cleaned (Undo)
+					}
+					newLines.push(lineText)
+				}
+
+				const insertText = newLines.join('\n')
+				const lengthDiff = insertText.length - (endLine.to - startLine.from)
+
+				return {
+					changes: { from: startLine.from, to: endLine.to, insert: insertText },
+					range: EditorSelection.range(startLine.from, endLine.to + lengthDiff)
+				}
+			})
+			view.dispatch(transaction)
 		}
 
 
@@ -1671,6 +1751,23 @@ createApp({
 			}
 		}
 
+		// New Item Menu
+		const showNewItemMenu = ref(false)
+		const toggleNewItemMenu = () => {
+			showNewItemMenu.value = !showNewItemMenu.value
+			// Close sort menu if open
+			if (showNewItemMenu.value) showSortMenu.value = false
+		}
+		const closeNewItemMenu = () => {
+			showNewItemMenu.value = false
+		}
+
+		const openEmojiPicker = (folder) => {
+			emojiPickerTarget.value = folder
+			showEmojiPicker.value = true
+			// Calculate position (simple center for now, or near element)
+		}
+
 		const selectNote = async (note) => {
 			// 1. Immediate selection for instant UI
 			selectedNote.value = note
@@ -2209,6 +2306,32 @@ createApp({
 			// Optional: could manually resize if needed, but style binding handles it.
 		})
 
+		const getPlainContent = (content) => {
+			if (!content) return '';
+			// Remove headers
+			let plain = content.replace(/^#+\s+/gm, '');
+			// Remove bold/italic
+			plain = plain.replace(/(\*\*|__)(.*?)\1/g, '$2');
+			plain = plain.replace(/(\*|_)(.*?)\1/g, '$2');
+			// Remove code blocks
+			plain = plain.replace(/```[\s\S]*?```/g, '[Code]');
+			plain = plain.replace(/`([^`]+)`/g, '$1');
+			// Remove links
+			plain = plain.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+			// Remove images
+			plain = plain.replace(/!\[([^\]]*)\]\([^)]+\)/g, '[Image]');
+			// Remove blockquotes
+			plain = plain.replace(/^>\s+/gm, '');
+			// Remove lists
+			plain = plain.replace(/^[\*\-\+]\s+/gm, '');
+			plain = plain.replace(/^\d+\.\s+/gm, '');
+			// Remove tasks
+			plain = plain.replace(/^-\s\[[x ]\]\s+/gm, '');
+
+			// Limit length
+			return plain.slice(0, 150).trim();
+		};
+
 		return {
 			notes,
 			folders,
@@ -2342,6 +2465,7 @@ createApp({
 			formatText,
 			hasSelection,
 			checkSelection,
+			getPlainContent,
 			guestMode: computed(() => !isAuthenticated.value),
 			// Config
 
@@ -2351,7 +2475,12 @@ createApp({
 			isSyncing,
 			conflictState,
 			resolveConflict,
-			dbType
+			dbType,
+			sidebarViewMode,
+			setSidebarViewMode,
+			showNewItemMenu,
+			toggleNewItemMenu,
+			closeNewItemMenu
 		}
 	}
 }).mount('#app')
