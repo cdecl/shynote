@@ -2321,6 +2321,7 @@ createApp({
 		}
 
 		onMounted(async () => {
+			isSidebarOpen.value = true // Force sidebar open on startup (Mobile request)
 			checkAuth()
 			// Init Dark Mode class
 			if (isDarkMode.value) document.documentElement.classList.add('dark')

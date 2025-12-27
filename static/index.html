@@ -243,12 +243,12 @@
         <!-- Sidebar -->
         <!-- Sidebar Wrapper -->
         <div :class="[
-                isSidebarOpen ? 'w-80' : 'w-0', 
+                isSidebarOpen ? 'w-full md:w-80' : 'w-0', 
                 'md:relative absolute inset-y-0 left-0 z-30',
                 'flex-shrink-0 transition-all duration-150 ease-in-out',
                 'md:overflow-visible overflow-hidden'
             ]">
-            <div class="w-80 relative h-full flex flex-col transition-all duration-150 ease-in-out group/sidebar shadow-xl md:shadow-none"
+            <div class="w-full h-full flex flex-col transition-all duration-150 ease-in-out group/sidebar shadow-xl md:shadow-none"
                 :class="[
                     !isSidebarOpen ? 'cursor-pointer' : '',
                     isSidebarOpen ? 'bg-[#F2F0EA] dark:bg-[#242933] border-r border-[#E6E4DD] dark:border-[#3B4252]' : 'bg-transparent border-none'
@@ -389,7 +389,7 @@
                                             <div class="flex items-center gap-1 ml-2">
                                                 <!-- Hover Actions -->
                                                 <div
-                                                    class="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-opacity">
+                                                    class="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center gap-0.5 transition-opacity">
                                                     <button @click.stop="startRename(folder, 'folder')"
                                                         class="p-1 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 rounded transition-colors"
                                                         title="Rename">
@@ -639,9 +639,12 @@
 
                                             <!-- Pin Button (Top Right) -->
                                             <button @click.stop="togglePin(note)"
-                                                class="absolute top-2 right-2 p-0.5 rounded-full z-20 transition-all duration-200"
-                                                :class="note.is_pinned ? 'text-orange-500 bg-orange-50 dark:bg-orange-900/20 opacity-100' : 'text-slate-300 dark:text-slate-600 hover:text-orange-400 opacity-0 group-hover:opacity-100'">
-                                                <span class="material-symbols-rounded text-[10px]"
+                                                class="absolute top-2 right-2 rounded-full z-20 transition-all duration-200"
+                                                :class="note.is_pinned 
+                                                    ? 'p-0.5 text-orange-500 bg-orange-50 dark:bg-orange-900/20 opacity-100' 
+                                                    : 'p-1.5 text-slate-300 dark:text-slate-600 hover:text-orange-400 opacity-100 md:opacity-0 md:group-hover:opacity-100'">
+                                                <span class="material-symbols-rounded"
+                                                    :class="note.is_pinned ? 'text-[10px]' : 'text-[18px]'"
                                                     :style="note.is_pinned ? 'font-variation-settings: \'FILL\' 1' : ''">push_pin</span>
                                             </button>
 
@@ -685,7 +688,7 @@
                                                     <span>{{ note.content ? note.content.length : 0 }} chars</span>
                                                 </div>
                                                 <div
-                                                    class="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                                                    class="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex gap-2">
                                                     <button @click.stop="requestDelete(note.id, 'note')"
                                                         class="hover:text-red-500 transition-colors p-1" title="Delete">
                                                         <span class="material-symbols-rounded text-[18px]">delete</span>
@@ -710,9 +713,12 @@
 
                                             <!-- Pin Button (Top Right) -->
                                             <button @click.stop="togglePin(note)"
-                                                class="absolute top-2 right-2 p-0.5 rounded-full z-20 transition-all duration-200"
-                                                :class="note.is_pinned ? 'text-orange-500 bg-orange-50 dark:bg-orange-900/20 opacity-100' : 'text-slate-300 dark:text-slate-600 hover:text-orange-400 opacity-0 group-hover:opacity-100'">
-                                                <span class="material-symbols-rounded text-[10px]"
+                                                class="absolute top-2 right-2 rounded-full z-20 transition-all duration-200"
+                                                :class="note.is_pinned 
+                                                    ? 'p-0.5 text-orange-500 bg-orange-50 dark:bg-orange-900/20 opacity-100' 
+                                                    : 'p-1.5 text-slate-300 dark:text-slate-600 hover:text-orange-400 opacity-100 md:opacity-0 md:group-hover:opacity-100'">
+                                                <span class="material-symbols-rounded"
+                                                    :class="note.is_pinned ? 'text-[10px]' : 'text-[18px]'"
                                                     :style="note.is_pinned ? 'font-variation-settings: \'FILL\' 1' : ''">push_pin</span>
                                             </button>
 
@@ -756,7 +762,7 @@
                                                     <span>{{ note.content ? note.content.length : 0 }} chars</span>
                                                 </div>
                                                 <div
-                                                    class="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                                                    class="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex gap-2">
                                                     <button @click.stop="requestDelete(note.id, 'note')"
                                                         class="hover:text-red-500 transition-colors p-1" title="Delete">
                                                         <span class="material-symbols-rounded text-[18px]">delete</span>
