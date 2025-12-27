@@ -135,6 +135,13 @@ createApp({
 			localStorage.setItem('shynote_sidebar_view_mode', mode)
 		}
 
+		// New 2-Column Layout State
+		const rightPanelMode = ref('list') // 'list' | 'edit'
+		const currentFolderId = ref(null) // null = Inbox (Root)
+		const showAbout = ref(false)
+		const isSharing = ref(false)
+		const isSortMenuOpen = ref(false)
+
 		const dbType = ref('...')
 
 		// New UI States
@@ -1204,12 +1211,30 @@ createApp({
 				await deleteFolder(targetId)
 			} else if (type === 'clear-cache') {
 				try {
+					// Clear localStorage (except auth tokens)
 					const keep = ['access_token', 'shynote_user_id'];
 					for (let i = localStorage.length - 1; i >= 0; i--) {
 						const key = localStorage.key(i);
 						if (!keep.includes(key)) localStorage.removeItem(key);
 					}
+
+					// Clear IndexedDB
 					if (typeof LocalDB !== 'undefined') await LocalDB.clearAll();
+
+					// Clear Service Worker caches
+					if ('caches' in window) {
+						const cacheNames = await caches.keys();
+						await Promise.all(cacheNames.map(cacheName => caches.delete(cacheName)));
+						console.log('Service Worker caches cleared:', cacheNames);
+					}
+
+					// Unregister service worker (optional - will re-register on reload)
+					if ('serviceWorker' in navigator) {
+						const registrations = await navigator.serviceWorker.getRegistrations();
+						await Promise.all(registrations.map(reg => reg.unregister()));
+						console.log('Service Workers unregistered');
+					}
+
 					window.location.reload();
 				} catch (e) { console.error(e); alert(e.message); }
 			} else if (type === 'factory-reset') {
@@ -1250,7 +1275,7 @@ createApp({
 				await fetchUserProfile();
 				await fetchFolders();
 				await fetchNotes();
-				autoSelectNote();
+				// autoSelectNote(); // Disabled: Default to Inbox list view
 			} else if (storedToken === 'guest' && !isGuestMode) {
 				logout();
 			} else if (storedToken) {
@@ -1258,11 +1283,13 @@ createApp({
 
 				// Optimistic Load (Instant UI)
 				const cachedId = localStorage.getItem(STORAGE_KEYS.USER_ID)
+				let didOptimisticLoad = false
 				if (cachedId) {
-					currentUserId.value = parseInt(cachedId, 10)
+					currentUserId.value = cachedId // Keep as string for UUIDv7
 					// Fire fetches immediately without waiting
 					fetchFolders()
 					fetchNotes()
+					didOptimisticLoad = true
 				}
 
 				const oldId = currentUserId.value
@@ -1270,11 +1297,16 @@ createApp({
 
 				// If user ID changed (or was null), refetch correct data
 				if (currentUserId.value !== oldId) {
+					console.log('User ID changed, refetching data...')
+					fetchFolders()
+					fetchNotes()
+				} else if (!didOptimisticLoad) {
+					// If we didn't do optimistic load (no cached ID), fetch now
 					fetchFolders()
 					fetchNotes()
 				}
 
-				autoSelectNote();
+				// autoSelectNote(); // Disabled: Default to Inbox list view
 			} else {
 				isAuthenticated.value = false;
 			}
@@ -1320,7 +1352,7 @@ createApp({
 					localStorage.setItem(STORAGE_KEYS.TOKEN, data.access_token)
 					isAuthenticated.value = true
 					await Promise.all([fetchUserProfile(), fetchFolders(), fetchNotes()])
-					autoSelectNote()
+					// autoSelectNote() // Disabled: Default to Inbox list view
 				} else {
 					console.error("Login failed")
 					alert("Login failed!")
@@ -1687,10 +1719,13 @@ createApp({
 				notes.value.unshift(newNote)
 				selectedNote.value = newNote
 
-				// Open sidebar if collapsed
-				if (!isSidebarOpen.value) {
-					isSidebarOpen.value = true
-				}
+				// Switch to Edit Mode (New Layout)
+				rightPanelMode.value = 'edit'
+
+				// Open sidebar if collapsed (Legacy behavior, maybe optional now?)
+				// if (!isSidebarOpen.value) {
+				// 	isSidebarOpen.value = true
+				// }
 
 				// Enter rename mode
 				nextTick(() => {
@@ -1768,7 +1803,25 @@ createApp({
 			// Calculate position (simple center for now, or near element)
 		}
 
+		// Navigation Logic (Refactored)
+		const backToList = () => {
+			rightPanelMode.value = 'list'
+		}
+
+		const selectFolder = (folderId) => {
+			console.log('selectFolder', folderId)
+			currentFolderId.value = folderId
+			rightPanelMode.value = 'list'
+			console.log('rightPanelMode set to', rightPanelMode.value)
+			// Optional: Clear selected note or keep it for faster re-selection?
+			// selectedNote.value = null 
+		}
+
+
 		const selectNote = async (note) => {
+			// Switch to Edit Mode
+			rightPanelMode.value = 'edit'
+
 			// 1. Immediate selection for instant UI
 			selectedNote.value = note
 			if (note && note.id) {
@@ -1846,20 +1899,16 @@ createApp({
 				}
 			}
 
-			// Auto collapse sidebar on selection (User Request) - Only if NOT pinned
-			if (isSidebarOpen.value && !isSidebarPinned.value) {
-				// Delay closing to allow for potential double-click (rename)
-				// If user double-clicks, startRename will set renameState
-				// We check renameState before closing
-				setTimeout(() => {
-					// Check if we are currently renaming the SELECTED note
-					// If so, do NOT close the sidebar
-					if (renameState.value.id === note.id && renameState.value.type === 'note') {
-						return
-					}
-					isSidebarOpen.value = false
-				}, 300)
-			}
+
+			// Auto collapse sidebar removed - user wants sidebar to stay open
+			// if (isSidebarOpen.value && !isSidebarPinned.value) {
+			// 	setTimeout(() => {
+			// 		if (renameState.value.id === note.id && renameState.value.type === 'note') {
+			// 			return
+			// 		}
+			// 		isSidebarOpen.value = false
+			// 	}, 300)
+			// }
 		}
 
 
@@ -1974,31 +2023,45 @@ createApp({
 		}
 
 		const deleteFolderImpl = async (id) => {
+			// Optimistic UI Update
+			if (currentFolderId.value === id) {
+				selectFolder(null)
+			}
+			const prevFolders = folders.value
+			const prevNotes = notes.value
+
+			// Remove from UI immediately
+			folders.value = folders.value.filter(f => f.id !== id)
+			notes.value = notes.value.filter(n => n.folder_id !== id)
+
 			try {
 				const response = await authenticatedFetch(`/api/folders/${id}`, { method: 'DELETE' })
 				if (response && response.ok) {
 					if (hasIDB) {
-						// Delete local notes in this folder first to prevent resurrection
-						const folderNotes = notes.value.filter(n => n.folder_id === id)
+						// Delete local notes in this folder
+						// (Optimist: They are already gone from UI)
+						const folderNotes = prevNotes.filter(n => n.folder_id === id)
 						for (const n of folderNotes) {
 							await LocalDB.deleteNote(n.id)
 						}
 						await LocalDB.deleteFolder(id)
 					}
-
-					folders.value = folders.value.filter(f => f.id !== id)
-					// Also remove notes or move them? Currently notes cascade delete or stay orphan?
-					// Backend usually handles cascade. But frontend should refresh notes.
-					fetchNotes()
+				} else {
+					throw new Error("Server deletion failed")
 				}
 			} catch (e) {
-				console.error("Failed to delete folder", e)
+				console.error("Delete folder failed", e)
+				// Revert UI on failure
+				folders.value = prevFolders
+				notes.value = prevNotes
+				alert("Failed to delete folder")
 			}
 		}
 
+
 		// Sharing Logic
 		const toggleShare = async () => {
-			if (!selectedNote.value) return
+			if (!selectedNote.value || isSharing.value) return
 			const note = selectedNote.value
 
 			// If already shared, open the management modal
@@ -2006,6 +2069,7 @@ createApp({
 				openShareModal(note)
 			} else {
 				// Enable sharing first
+				isSharing.value = true
 				try {
 					const response = await authenticatedFetch(`/api/notes/${note.id}/share`, {
 						method: 'PUT',
@@ -2020,6 +2084,8 @@ createApp({
 				} catch (e) {
 					console.error("Share enable failed", e)
 					alert("Failed to enable sharing")
+				} finally {
+					isSharing.value = false
 				}
 			}
 		}
@@ -2082,31 +2148,27 @@ createApp({
 		const togglePin = async (note) => {
 			if (!note) return
 
-			// Optimistic UI update
 			const originalState = note.is_pinned
 			note.is_pinned = !originalState
 
-			// If selected note is the one being toggled, ensure reactivity if needed (though object mutates)
-
 			try {
-				const response = await authenticatedFetch(`/api/notes/${note.id}`, {
-					method: 'PUT',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						is_pinned: note.is_pinned
+				if (hasIDB) {
+					await LocalDB.saveNote({ ...note }, 'UPDATE')
+				} else {
+					const response = await authenticatedFetch(`/api/notes/${note.id}`, {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ is_pinned: note.is_pinned })
 					})
-				})
-
-				if (!response || !response.ok) {
-					// Revert on failure
-					note.is_pinned = originalState
-					alert("Failed to update pin status")
+					if (!response || !response.ok) throw new Error("API failed")
 				}
 			} catch (e) {
+				console.error("Toggle pin failed", e)
 				note.is_pinned = originalState
-				console.error("Pin toggle failed", e)
+				alert("Failed to update pin status")
 			}
 		}
+
 
 		// Drag and Drop Logic
 		const draggedNoteId = ref(null)
@@ -2241,7 +2303,8 @@ createApp({
 		})
 
 		const getFolderNotes = (folderId) => {
-			return notes.value.filter(n => n.folder_id === folderId)
+			// Use loose equality (==) to handle mix of string/number IDs
+			return notes.value.filter(n => n.folder_id == folderId)
 		}
 
 		const getSortedFolderNotes = (folderId) => {
@@ -2280,17 +2343,27 @@ createApp({
 		// Watchers
 		watch(() => selectedNote.value?.id, (newId) => {
 			if (newId) {
+				// Wait for v-if to render if needed
 				nextTick(() => {
+					// Logic handles editorRef check
 					initEditor()
 				})
 			} else {
-				// Destroy if no note
 				if (editorView.value) {
 					editorView.value.destroy()
 					editorView.value = null
 				}
 			}
 		}, { flush: 'post', immediate: true })
+
+		// Watch View Mode Switch (List -> Edit)
+		watch(rightPanelMode, (newMode) => {
+			if (newMode === 'edit' && selectedNote.value?.id) {
+				nextTick(() => {
+					initEditor()
+				})
+			}
+		})
 
 		watch(isDarkMode, (val) => {
 			if (editorView.value) {
@@ -2455,6 +2528,12 @@ createApp({
 
 			changelogContent,
 
+			// Layout State
+			rightPanelMode,
+			currentFolderId,
+			selectFolder,
+			backToList,
+
 			// Search & Edit
 			searchState,
 			openSearch,
@@ -2480,7 +2559,10 @@ createApp({
 			setSidebarViewMode,
 			showNewItemMenu,
 			toggleNewItemMenu,
-			closeNewItemMenu
+			closeNewItemMenu,
+			showAbout,
+			isSharing,
+			isSortMenuOpen
 		}
 	}
 }).mount('#app')
