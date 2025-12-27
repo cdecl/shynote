@@ -1691,7 +1691,9 @@ createApp({
 				// 1. Generate UUID v7
 				const tempId = uuidv7()
 				const now = new Date().toISOString()
-				const initialTitle = 'Untitled'
+				const dateStr = now.split('T')[0]
+				const shortHash = tempId.slice(-4)
+				const initialTitle = `Note ${dateStr} (${shortHash})`
 				const initialContent = ''
 
 				// Calculate Hash
@@ -1813,6 +1815,12 @@ createApp({
 			currentFolderId.value = folderId
 			rightPanelMode.value = 'list'
 			console.log('rightPanelMode set to', rightPanelMode.value)
+			// Auto-close sidebar on mobile when folder is selected
+			if (window.innerWidth < 768 && isSidebarOpen.value) {
+				console.log('[Mobile] Auto-closing sidebar. Width:', window.innerWidth)
+				isSidebarOpen.value = false
+				console.log('[Mobile] Sidebar state after close:', isSidebarOpen.value)
+			}
 			// Optional: Clear selected note or keep it for faster re-selection?
 			// selectedNote.value = null 
 		}
