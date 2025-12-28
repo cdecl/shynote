@@ -1,86 +1,76 @@
-# SHYNOTE 프로젝트 문서
+# SHYNOTE 프로젝트 지침 및 가이드 (Project Guidelines)
 
-## 1. 프로젝트 개요
-**SHYNOTE**는 Obsidian과 유사한 사용자 경험을 제공하는 Markdown 및 텍스트 기반의 노트 필기 애플리케이션입니다. 폴더 기반의 탐색 시스템과 Split View(에디터/미리보기) 기능을 특징으로 합니다.
+본 문서는 **최우선적으로 준수해야 할 프로젝트 규칙과 가이드라인**을 정의합니다. 작업 시작 전 반드시 확인하십시오.
 
-## 2. 기술 스택 (Technology Stack)
+## 1. 핵심 지침 (Core Directives)
+모든 작업 수행 시 다음 규칙을 **엄격히 준수**해야 합니다.
 
-### Server Side
-- **Framework**: FastAPI (Python)
-- **Database**: 
-  - 개발(Dev): SQLite (`SHYNOTE.db`)
-  - 배포(Prod): PostgreSQL (예정)
-- **ORM**: SQLAlchemy
-- **Execution**: Uvicorn
+### 문서화 (Documentation)
+1.  **언어**: 모든 문서는 **한글**로 작성합니다.
+2.  **최신화**: `docs/` 폴더 내의 산출물(`implementation_plan.md`, `walkthrough.md` 등)은 코드 변경 시 **반드시 즉시 업데이트**합니다.
+3.  **위치**: 프로젝트 관련 문서는 `docs/` 폴더에서 관리합니다.
+
+### 릴리즈 및 버전 관리 (Release Process)
+버전을 변경할 때는 다음 3개의 파일이 **항상 동기화**되어야 합니다.
+1.  **`static/version.json`**: 앱 내 표시용 버전.
+2.  **`pyproject.toml`**: 패키지 관리용 버전.
+3.  **`static/changelog.md`**: 변경 이력 기록 (최상단에 최신 버전 추가).
+
+
+---
+
+## 2. 기술 스택 및 제약 사항 (Tech Stack & Constraints)
 
 ### Client Side
 - **Core**: Vanilla JS (ES Modules) + Vue.js 3 (CDN/ESM)
+  - **Rule**: 불필요한 번들링 도구 사용을 지양하고, 브라우저 Native ES Modules를 적극 활용합니다.
 - **Styling**: TailwindCSS
-- **Markdown Rendering**: marked.js
+- **Editor**: **CodeMirror 6** (v0.3.5~)
+  - `textarea` 한계 극복을 위해 도입 완료.
+  - 관련 패키지는 `esm.sh`를 통해 Import합니다.
+
+### Server Side
+- **Framework**: FastAPI (Python)
+- **Database**:
+  - Dev: SQLite (`SHYNOTE.db`)
+  - Prod: PostgreSQL 
+- **Persistence**: SQLAlchemy
 
 ### Project Management
 - **Package Manager**: `uv`
 - **Version Control**: `git`
 
+---
+
 ## 3. 프로젝트 구조 (Project Structure)
-- **`api/`**: 백엔드 소스 코드 (`index.py`, `models.py`, `schemas.py`, `database.py`)
-- **`static/`**: 프론트엔드 리소스
-  - **Core**: `index.html` (Entry), `app.js` (Vue Logic), `local_db.js` (IndexedDB Wrapper)
-  - **Assets**: `style.css`, `sw.js` (Service Worker), `manifest.json` (PWA)
+- **`api/`**: 백엔드 (`index.py`, `models.py`, `schemas.py`, `database.py`)
+- **`static/`**: 프론트엔드
+  - **Core**: `index.html` (Entry), `app.js` (Vue Logic), `local_db.js` (IndexedDB)
+  - **Assets**: `style.css`, `sw.js` (Service Worker)
   - **Meta**: `changelog.md`, `version.json`
-- **`docs/`**: 프로젝트 산출물 및 문서 (`walkthrough.md`, `implementation_plan.md`, `storage.md`)
-  - `implementation_plan` 문서는 지속적으로 업데이트 진행  
-- **`tests/`**: 테스트 코드 디렉토리
+- **`docs/`**: 프로젝트 문서 (지속적 업데이트 대상)
 
-## 4. 주요 기능 (Key Features)
+---
 
-### 사용자 인터페이스 (User Interface)
-- **좌측 패널**: 폴더 계층 구조를 지원하는 노트 리스트
-- **우측 패널**: Split View 에디터
-    - **Editor**: Markdown 편집을 위한 텍스트 영역
-    - **Preview**: 실시간 렌더링된 Markdown 미리보기
+## 4. 로드맵 및 상태 (Roadmap & Status)
+
+### 완료된 주요 기능 (Completed)
+- [x] **인증 (Auth)**: JWT, Google OAuth 2.0
+- [x] **동기화 (Sync)**: Local-First (IndexedDB + Background Sync)
+- [x] **에디터 (Editor)**: CodeMirror 6 기반 (VS Code Keymap, Search Panel, GitHub Theme)
+
+### 진행 중 / 예정 (In Progress / Planned)
+- [x] **DB 마이그레이션**: PostgreSQL 전환 (Vercel)
+- [ ] **테스트**: `pytest` 및 E2E 테스트 도입
+
+---
+
+## 5. 주요 기능 명세 (Feature Specs)
 
 ### 데이터 관리 (Data Management)
-- **노트 (Notes)**: 제목, 내용, 생성/수정 시간 저장
-- **폴더 (Folders)**: 노트를 체계적으로 관리하기 위한 단위
-- **동기화 (Sync)**: **Local-First 아키텍처** 적용 (IndexedDB + Background Sync)
-  - **Process**: Typing -> Saved Locally (1s) -> Synced (5s Loop)
-  - **Consistency**: 멱등성 보장 (Idempotent DELETE) 및 충돌 방지 로직 적용
-- **영속성 (Persistence)**: SQLite/PostgreSQL 사용
+- **Local-First**: Typing -> Saved Locally (1s) -> Synced (5s Loop)
+- **Consistency**: 사용자 데이터 보호를 최우선(Last Write Wins, Dirty State Protection).
 
-## 5. 개발 워크플로우 (Development Workflow)
-- **서버 실행**: `./run.sh` (Host: 0.0.0.0, Port: 8000)
-- **문서 관리**: `docs/` 폴더 내 지속적인 업데이트
-
-## 6. 로드맵 (Roadmap)
-- [x] **인증 (Authentication)**: JWT 기반 로그인 구현 (Google OAuth 2.0 완료)
-- [x] **Local-First 동기화**: IndexedDB 기반 오프라인 지원 및 백그라운드 동기화 구현 완료 (v0.2.5 안정화)
-- [ ] **데이터베이스 마이그레이션**: 배포 환경을 위한 PostgreSQL 전환 (Vercel Postgres 연결 안정화)
-
-## 7. TODO & 결정 필요 사항 (Open Issues)
-프로젝트 진행을 위해 검토 및 결정이 필요한 사항들입니다.
-
-- [x] **배포 전략 수립**: Vercel Serverless Function & PostgreSQL 사용 결정
-- [ ] **상태 관리 라이브러리 도입 여부**: 현재 Vanilla JS 객체(`ref`) 사용 중이나, 복잡도 증가 시 Pinia 등 도입 고려
-- [x] **에디터 고도화**: CodeMirror 6 도입 완료.
-  - Textarea 한계 극복을 위해 CM6로 재이행.
-  - VS Code Keymap, 검색 패널, GitHub 테마 적용 완료.
-- [ ] **테스트 프레임워크 선정**: `pytest` 기반의 백엔드 테스트 및 프론트엔드 E2E 테스트 도구(Playwright 등) 구체화
-- [ ] **폴더 구조 동기화**: 폴더 열람 시 트리 구조 부분 갱신 로직 구현 예정
-
-## 8. 릴리즈 프로세스 (Release Process)
-버전을 올리고 배포를 준비하는 절차입니다.
-1. **`static/version.json` 수정**
-2. **`static/changelog.md` 작성**: 변경 사항 기록
-3. **`pyproject.toml` 버전 수정**: 패키지 버전 동기화
-4. **`npm run build`**: 프론트엔드 빌드 (필요 시)
-
-## 9. 버전/패치을 올리는 프로세스 
-- static/version.json 파일을 수정합니다.
-- static/changelog.md 파일에 변경사항을 기록합니다.
-- pyproject.toml 파일의 버전을 수정합니다.
-
-
-## 10. 문서관리 
-- docs/ 폴더 내 지속적인 업데이트
-- 문서는 한글로 작성.
+### 사용자 인터페이스 (Key Features)
+- **Split View**: Markdown Editor + Preview.
+- **Folder System**: 계층형 폴더 구조.
