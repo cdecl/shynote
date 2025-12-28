@@ -2,8 +2,6 @@ body {
     font-family: 'Spoqa Han Sans Neo', 'Inter', -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
 }
 
-
-
 /* Editor Font Settings */
 textarea {
     font-family: 'Spoqa Han Sans Neo', monospace !important;
@@ -19,52 +17,35 @@ textarea {
     color: #4C566A;
 }
 
-/* Preview Code Block Font */
-.markdown-body pre,
-.markdown-body code {
-    font-family: 'JetBrains Mono', 'Spoqa Han Sans Neo', monospace !important;
+/* CodeMirror Background Override */
+.dark .cm-editor {
+    background-color: #24292F !important;
 }
 
-/* Code Block Styling (GFM-like) */
-.markdown-body pre {
-    padding: 16px !important;
-    border-radius: 6px !important;
-    background-color: #f6f8fa !important;
-    /* GitHub Light bg */
-    line-height: 1.45 !important;
-    overflow: auto !important;
-}
+/* -------------------------------------------------------------------------- */
+/* Markdown Preview Styling (GitHub Flavored)                                 */
+/* -------------------------------------------------------------------------- */
 
-/* Inline code styling */
-.markdown-body :not(pre)>code {
-    padding: 0.2em 0.4em !important;
-    margin: 0 !important;
-    font-size: 85% !important;
-    white-space: break-spaces !important;
-    background-color: #eff1f3 !important;
-    border-radius: 6px !important;
-}
-
-/* Adjustments for GitHub Markdown CSS */
+/* Base Container */
 .markdown-body {
-    font-family: 'Inter', sans-serif !important;
+    font-family: 'Inter', 'Spoqa Han Sans Neo', sans-serif !important;
     box-sizing: border-box;
     min-width: 200px;
     max-width: none !important;
     margin: 0 !important;
-    padding: 20px !important;
+    padding: 24px !important;
     width: 100% !important;
-    overflow-x: auto;
-    /* Allow horizontal scroll */
+    background-color: transparent !important;
+    /* Allow parent bg to show */
 }
 
 @media (max-width: 767px) {
     .markdown-body {
-        padding: 15px;
+        padding: 16px !important;
     }
 }
 
-/* No Wrap Mode for Preview (User Request) */
+/* No Wrap Mode (Optional Helper) */
 .markdown-body.no-wrap p,
 .markdown-body.no-wrap h1,
 .markdown-body.no-wrap h2,
@@ -76,187 +57,144 @@ textarea {
 .markdown-body.no-wrap blockquote {
     white-space: nowrap !important;
     overflow-x: visible;
-    /* Container handles scroll */
 }
 
-.material-symbols-rounded {
-    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-    vertical-align: middle;
+/* Code Blocks & Inline Code Font */
+.markdown-body pre,
+.markdown-body code {
+    font-family: 'JetBrains Mono', 'Spoqa Han Sans Neo', monospace !important;
 }
 
-/* Dark Mode Overrides (Global) */
-html.dark {
-    color-scheme: dark;
+/* -------------------------------------------------------------------------- */
+/* Light Mode Tweaks                                                          */
+/* -------------------------------------------------------------------------- */
+/* We generally trust github-markdown-light.css, but ensure fonts match */
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+    font-family: 'Inter', 'Spoqa Han Sans Neo', sans-serif !important;
+    font-weight: 600 !important;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Dark Mode Overrides (Nord Theme Adapter)                                   */
+/* -------------------------------------------------------------------------- */
+
+/* 
+   GitHub Dark uses #0d1117. We want to match Shynote's #24292F (or Nord #2E3440).
+   We override the CSS variables used by github-markdown-css.
+*/
 .dark .markdown-body {
-    background-color: transparent !important;
-    /* Let container bg show */
-    color: #D8DEE9 !important;
-    /* Nord4 */
+    color-scheme: dark;
+
+    /* Backgrounds */
     --color-canvas-default: #24292F;
-    --color-canvas-subtle: #3B4252;
-    --color-border-default: #434C5E;
+    --color-canvas-subtle: #2E3440;
+    /* Slightly lighter for blockquotes/tables */
+    --color-border-default: #3B4252;
     --color-border-muted: #3B4252;
+
+    /* Text */
     --color-fg-default: #D8DEE9;
-    --color-fg-muted: #D8DEE9;
+    /* Nord4 */
+    --color-fg-muted: #E5E9F0;
+    /* Nord5 */
     --color-accent-fg: #88C0D0;
-    /* Nord8 - Links */
+    /* Nord8 (Links) */
+
+    /* Elements */
+    --color-canvas-overlay: #2E3440;
+    --color-prettylights-syntax-comment: #616E88;
 }
 
-/* Light Mode Header Colors */
-/* Light Mode Header Colors */
-.markdown-body h1 {
-    color: #1F2328 !important;
+/* Explicit Element Overrides for Dark Mode */
+
+/* Links */
+.dark .markdown-body a {
+    color: #88C0D0 !important;
+    text-decoration: none;
 }
 
-.markdown-body h2 {
-    color: #1F2328 !important;
+.dark .markdown-body a:hover {
+    text-decoration: underline;
 }
 
-.markdown-body h3 {
-    color: #1F2328 !important;
+/* Headlines */
+.dark .markdown-body h1,
+.dark .markdown-body h2,
+.dark .markdown-body h3,
+.dark .markdown-body h4,
+.dark .markdown-body h5,
+.dark .markdown-body h6 {
+    color: #ECEFF4 !important;
+    /* Nord6 */
+    border-bottom-color: #3B4252 !important;
 }
 
-.markdown-body h4 {
-    color: #1F2328 !important;
-}
-
-.markdown-body h5 {
-    color: #1F2328 !important;
-}
-
-/* GitHub Light Text */
-
-/* Dark Mode Header Colors overrides generic settings */
-.dark .markdown-body h1 {
-    color: #E6EDF3 !important;
-}
-
-.dark .markdown-body h2 {
-    color: #E6EDF3 !important;
-}
-
-.dark .markdown-body h3 {
-    color: #E6EDF3 !important;
-}
-
-.dark .markdown-body h4 {
-    color: #E6EDF3 !important;
-}
-
-.dark .markdown-body h5 {
-    color: #E6EDF3 !important;
-}
-
-/* GitHub Dark Text */
+/* Horizontal Rule */
 .dark .markdown-body hr {
     background-color: #3B4252 !important;
     height: 1px !important;
     border: none !important;
 }
 
-.dark .markdown-body h1,
-.dark .markdown-body h2 {
-    border-bottom-color: #3B4252 !important;
-}
-
-
-.dark .markdown-body a {
-    color: #88C0D0 !important;
-}
-
+/* Blockquotes */
 .dark .markdown-body blockquote {
-    color: #D8DEE9 !important;
-    border-left-color: #434C5E !important;
+    color: #E5E9F0 !important;
+    border-left-color: #88C0D0 !important;
+    background: transparent !important;
+    /* GitHub css adds padding, we might want bg? */
 }
 
-/* Remove background from code inside pre to avoid font-bg effect */
+/* Tables */
+.dark .markdown-body table tr {
+    background-color: #24292F !important;
+    border-top-color: #3B4252 !important;
+}
+
+.dark .markdown-body table tr:nth-child(2n) {
+    background-color: #2E3440 !important;
+    /* Zebra stripe */
+}
+
+.dark .markdown-body table th,
+.dark .markdown-body table td {
+    border-color: #3B4252 !important;
+    color: #D8DEE9 !important;
+}
+
+/* Code Blocks */
+.dark .markdown-body pre {
+    background-color: #2E3440 !important;
+    /* Nord1 */
+    border: 1px solid #3B4252 !important;
+}
+
 .dark .markdown-body pre code {
     background-color: transparent !important;
-    border: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
+    color: #E5E9F0 !important;
 }
 
-.dark .markdown-body pre {
-    background-color: #24292F !important;
-    /* Nord Dark bg */
-    border: 1px solid #3B4252 !important;
-    /* Slight border distinction */
-}
-
-/* Dark Mode Inline Code */
+/* Inline Code */
 .dark .markdown-body :not(pre)>code {
     background-color: #3B4252 !important;
-    color: #D8DEE9 !important;
+    color: #E5E9F0 !important;
 }
 
-/* List Item Highlighting */
-/* Light Mode */
-/* List Item Highlighting */
-/* Light Mode */
-.markdown-body ul {
-    list-style-type: disc !important;
-    padding-left: 1rem !important;
-    margin-left: 1rem !important;
-    color: #334155 !important;
-    /* Slate 700 */
-}
-
-.markdown-body ol {
-    list-style-type: decimal !important;
-    padding-left: 1rem !important;
-    /* Slate 700 */
-    margin-left: 1rem !important;
-    color: #334155 !important;
-    /* Slate 700 */
-
-}
-
-.markdown-body li::marker {
-    color: #3b82f6 !important;
-    /* Blue 500 */
-    font-weight: bold;
-}
-
-/* Dark Mode */
-/* Dark Mode */
+/* Lists */
 .dark .markdown-body ul,
 .dark .markdown-body ol {
-    color: #E5E9F0 !important;
-    /* Nord5 */
+    color: #D8DEE9 !important;
 }
 
 .dark .markdown-body li::marker {
     color: #88C0D0 !important;
-    /* Nord8 */
 }
 
-/* Blockquote Styling */
-/* Light Mode */
-.markdown-body blockquote {
-    color: #475569 !important;
-    /* Slate 600 */
-    border-left-color: #3b82f6 !important;
-    /* Blue 500 */
-    background-color: #f8fafc !important;
-    /* Slate 50 */
-    padding: 0.5em 1em !important;
-}
-
-/* Dark Mode overrides */
-.dark .markdown-body blockquote {
-    color: #D8DEE9 !important;
-    /* Nord4 */
-    border-left-color: #88C0D0 !important;
-    /* Nord8 */
-    background-color: #3B4252 !important;
-    /* Nord1 */
-}
-
-
-/* Fade In Animation */
+/* Animations */
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -269,62 +207,12 @@ html.dark {
     }
 }
 
-
 .animate-fade-in-up {
     animation: fadeInUp 0.2s ease-out forwards;
 }
 
-/* Table Styling Override (GitHub Markdown CSS might be minimal) */
-.markdown-body table {
-    display: block;
-    width: max-content;
-    max-width: 100%;
-    overflow: auto;
-    border-spacing: 0;
-    border-collapse: collapse;
-}
-
-.markdown-body table tr {
-    background-color: #fff;
-    border-top: 1px solid #c8d1d9;
-}
-
-.markdown-body table tr:nth-child(2n) {
-    background-color: #f6f8fa;
-}
-
-.markdown-body table th,
-.markdown-body table td {
-    padding: 6px 13px;
-    border: 1px solid #d0d7de;
-}
-
-.markdown-body table th {
-    font-weight: 600;
-}
-
-/* Dark Mode Table overrides */
-.dark .markdown-body table tr {
-    background-color: #24292F !important;
-    /* Nord0 */
-    border-top: 1px solid #434C5E !important;
-    /* Nord2 */
-}
-
-.dark .markdown-body table tr:nth-child(2n) {
-    background-color: #3B4252 !important;
-    /* Nord1 */
-}
-
-.dark .markdown-body table th,
-.dark .markdown-body table td {
-    border: 1px solid #434C5E !important;
-    /* Nord2 */
-    color: #D8DEE9 !important;
-    /* Nord4 */
-}
-
-/* CodeMirror Background Override */
-.dark .cm-editor {
-    background-color: #24292F !important;
+/* Material Symbols alignment */
+.material-symbols-rounded {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    vertical-align: middle;
 }

@@ -1478,8 +1478,8 @@ createApp({
 			const highlightLink = document.getElementById('highlight-theme')
 			if (themeLink) {
 				themeLink.href = isDarkMode.value
-					? 'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-dark.min.css'
-					: 'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-light.min.css'
+					? 'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.8.1/github-markdown-dark.min.css'
+					: 'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.8.1/github-markdown-light.min.css'
 			}
 			if (highlightLink) {
 				highlightLink.href = isDarkMode.value
@@ -2503,6 +2503,7 @@ createApp({
 			checkAuth()
 			// Init Dark Mode class
 			if (isDarkMode.value) document.documentElement.classList.add('dark')
+			applyTheme()
 
 			// Wait a bit for Google Script to load if async
 			setTimeout(initGoogleAuth, 500)
