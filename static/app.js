@@ -42,9 +42,7 @@ createApp({
 		const STORAGE_KEYS = {
 			TOKEN: 'access_token',
 			DARK_MODE: 'shynote_dark_mode',
-			SIDEBAR_PINNED: 'shynote_sidebar_pinned',
 			FONT_SIZE: 'shynote_font_size',
-			COLLAPSED_FOLDERS: 'shynote_collapsed_folders',
 			SORT_FIELD: 'shynote_sort_field',
 			SORT_DIRECTION: 'shynote_sort_direction',
 			LAST_NOTE_ID: 'shynote_last_note_id',
@@ -90,9 +88,7 @@ createApp({
 
 		const loadUserSettings = () => {
 			// Settings that depend on user
-			isSidebarPinned.value = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.SIDEBAR_PINNED)) === 'true'
 			fontSize.value = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.FONT_SIZE)) || '14'
-			collapsedFolders.value = JSON.parse(localStorage.getItem(getUserStorageKey(STORAGE_KEYS.COLLAPSED_FOLDERS)) || '{}')
 
 			const field = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.SORT_FIELD)) || 'title'
 			const dir = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.SORT_DIRECTION)) || 'asc'
@@ -116,7 +112,6 @@ createApp({
 		const loading = ref(false)
 		const statusMessage = ref('Ready')
 		const isSidebarOpen = ref(true)
-		const isSidebarPinned = ref(false) // Init defaults
 		const editorRef = ref(null)
 		const previewRef = ref(null)
 		const viewMode = ref('edit')
@@ -133,7 +128,6 @@ createApp({
 			fontSize.value = size
 			saveUserSetting(STORAGE_KEYS.FONT_SIZE, size)
 		}
-		const collapsedFolders = ref({})
 
 		const sidebarViewMode = ref(localStorage.getItem('shynote_sidebar_view_mode') || 'simple')
 		const setSidebarViewMode = (mode) => {
@@ -1404,6 +1398,48 @@ createApp({
 					closeModal()
 				}
 			})
+
+			// Mobile Swipe Gesture Detection
+			let touchStartX = 0
+			let touchStartY = 0
+			let touchEndX = 0
+			let touchEndY = 0
+
+			const handleTouchStart = (e) => {
+				touchStartX = e.changedTouches[0].screenX
+				touchStartY = e.changedTouches[0].screenY
+			}
+
+			const handleTouchEnd = (e) => {
+				touchEndX = e.changedTouches[0].screenX
+				touchEndY = e.changedTouches[0].screenY
+				handleSwipe()
+			}
+
+			const handleSwipe = () => {
+				const deltaX = touchEndX - touchStartX
+				const deltaY = touchEndY - touchStartY
+				const minSwipeDistance = 50
+
+				// Ignore if vertical swipe is dominant (scrolling)
+				if (Math.abs(deltaY) > Math.abs(deltaX)) return
+
+				// Swipe Right (deltaX > 0)
+				if (deltaX > minSwipeDistance) {
+					// Document Detail Screen -> Show List
+					if (rightPanelMode.value === 'edit' && selectedNote.value) {
+						backToList()
+					}
+					// Document List Screen -> Show Sidebar
+					else if (rightPanelMode.value === 'list' && !isSidebarOpen.value) {
+						isSidebarOpen.value = true
+					}
+				}
+			}
+
+			// Attach touch listeners
+			document.addEventListener('touchstart', handleTouchStart, { passive: true })
+			document.addEventListener('touchend', handleTouchEnd, { passive: true })
 		})
 
 		// Expose this globally for Google Callback
@@ -1475,11 +1511,6 @@ createApp({
 
 		const toggleSidebar = () => {
 			isSidebarOpen.value = !isSidebarOpen.value
-		}
-
-		const toggleFolder = (folderId) => {
-			collapsedFolders.value[folderId] = !collapsedFolders.value[folderId]
-			saveUserSetting(STORAGE_KEYS.COLLAPSED_FOLDERS, JSON.stringify(collapsedFolders.value))
 		}
 
 		const applyTheme = () => {
@@ -1856,16 +1887,11 @@ createApp({
 			if (newId) loadUserSettings()
 		}, { immediate: true })
 
-		const toggleSidebarPin = () => {
-			isSidebarPinned.value = !isSidebarPinned.value
-			saveUserSetting(STORAGE_KEYS.SIDEBAR_PINNED, isSidebarPinned.value)
-		}
-
 		const deselectNote = () => {
 			console.log("Navigating to About Shynote page...");
 			selectedNote.value = null
 			// cmEditor.value = null // Clear editor reference to force re-init on fresh DOM
-			if (isSidebarOpen.value && !isSidebarPinned.value) {
+			if (isSidebarOpen.value) {
 				isSidebarOpen.value = false
 			}
 		}
@@ -2664,10 +2690,6 @@ createApp({
 			previewContent,
 			isSidebarOpen,
 			toggleSidebar,
-			isSidebarPinned,
-			toggleSidebarPin,
-			collapsedFolders,
-			toggleFolder,
 			editorRef,
 			previewRef,
 			handleScroll,
@@ -2758,12 +2780,8 @@ createApp({
 			handleDrop,
 			dropTargetId,
 			handleDragEnter,
-			handleDragEnter,
 			handleDragLeave,
 			moveSelectedNote,
-			showFolderSelectMenu,
-			toggleFolderSelectMenu,
-			closeFolderSelectMenu,
 			showFolderSelectMenu,
 			toggleFolderSelectMenu,
 			closeFolderSelectMenu,
@@ -2791,7 +2809,6 @@ createApp({
 			executeFind,
 			executeReplace,
 			searchInputRef,
-			formatText,
 			hasSelection,
 			checkSelection,
 			getPlainContent,
