@@ -692,8 +692,8 @@ createApp({
 					border: isDark ? "1px solid #30363d" : "1px solid #d1d5da",
 					borderRadius: "6px", // GitHub uses slightly rounder
 					padding: "4px 8px",
-					width: "180px",
-					minWidth: "180px",
+					width: "240px", // Approx 30 chars
+					minWidth: "240px",
 					marginRight: "4px"
 				},
 				// Auto-flow items in Row 1 (Labels + Nav)
@@ -711,8 +711,8 @@ createApp({
 					border: isDark ? "1px solid #30363d" : "1px solid #d1d5da",
 					borderRadius: "6px",
 					padding: "4px 8px",
-					width: "180px",
-					minWidth: "180px"
+					width: "240px", // Approx 30 chars
+					minWidth: "240px"
 				},
 				// Auto-flow items in Row 2
 				".cm-search button[name='replace']": { gridRow: "2", gridColumn: "auto" },
