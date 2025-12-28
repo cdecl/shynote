@@ -1,3 +1,50 @@
+# v0.3.4 Release Notes
+
+## Summary
+- **GitHub Markdown 렌더링**: Preview 모드에서 GitHub 스타일의 마크다운 렌더링 적용 (Light/Dark 모드 지원)
+- **YAML Frontmatter 지원**: 문서 상단의 YAML 메타데이터를 테이블 형식으로 표시
+- **모바일 스와이프 네비게이션**: 오른쪽 스와이프로 직관적인 화면 전환
+- **UI 설정 로컬 우선**: 다크 모드 및 뷰 모드 설정을 localStorage에서 관리
+- **성능 최적화**: 중복 초기화 제거 및 로딩 속도 개선
+
+## Changes
+
+### 1. GitHub-Style Markdown Rendering
+- **Preview 모드 개선**: GitHub Markdown CSS 적용으로 전문적인 문서 렌더링
+- **Nord 테마 다크 모드**: 앱 전체 테마와 일관된 Nord 색상 팔레트 적용
+- **동적 테마 전환**: Light/Dark 모드 전환 시 마크다운 CSS 자동 교체
+- **폰트 통일**: Inter, Spoqa Han Sans Neo, JetBrains Mono 일관 적용
+
+### 2. YAML Frontmatter Support
+- **메타데이터 파싱**: 문서 상단의 YAML 블록(`---`)을 자동 감지 및 파싱
+- **테이블 렌더링**: Key-Value 형태의 메타데이터를 구조화된 테이블로 표시
+- **Nord 테마 적용**: 다크 모드에서 Ice Blue 키 색상 적용
+
+### 3. Mobile Swipe Navigation
+- **문서 리스트 화면**: 오른쪽 스와이프 → 사이드바 표시
+- **문서 상세 화면**: 오른쪽 스와이프 → 문서 리스트로 돌아가기
+- **스크롤 보호**: 세로 스크롤과 구분하여 가로 스와이프만 감지 (50px 임계값)
+
+### 4. UI Settings Management
+- **로컬 우선 정책**: `is_dark_mode`, `view_mode` 설정을 서버 대신 localStorage에서 관리
+- **기본 뷰 모드 변경**: Split → Edit 모드로 기본값 변경
+- **일관된 사용자 경험**: 기기 간 설정 충돌 방지
+
+### 5. Performance Improvements
+- **중복 초기화 제거**: `initEditor()` 중복 호출 문제 해결
+- **중복 fetch 제거**: `onMounted` 중복 블록 제거로 데이터 로딩 최적화
+- **즉시 에디터 초기화**: `nextTick` 제거로 문서 로딩 체감 속도 향상
+
+### 6. Code Cleanup
+- **미사용 기능 제거**: `isSidebarPinned`, `collapsedFolders` 관련 코드 완전 제거
+- **중복 export 제거**: 중복된 함수 export 정리
+
+## Bug Fixes
+- **LocalDB 메서드 오류 수정**: `getFolders` → `getAllFolders` 메서드명 수정
+- **Vue 경고 해결**: `onBeforeUnmount` 위치 수정으로 lifecycle hook 경고 제거
+
+---
+
 # v0.3.3 Release Notes
 
 ## Summary
