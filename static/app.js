@@ -8,6 +8,7 @@ import { oneDark } from "https://esm.sh/@codemirror/theme-one-dark@6.1.2?deps=@c
 import { syntaxHighlighting, defaultHighlightStyle, bracketMatching } from "https://esm.sh/@codemirror/language@6.10.0?deps=@codemirror/state@6.4.0"
 import { closeBrackets, closeBracketsKeymap } from "https://esm.sh/@codemirror/autocomplete@6.12.0?deps=@codemirror/state@6.4.0"
 import { MergeView } from "https://esm.sh/@codemirror/merge@6.4.0?deps=@codemirror/state@6.4.0, @codemirror/view@6.23.0"
+import jsyaml from "https://esm.sh/js-yaml@4.1.0"
 import { LocalDB } from "./local_db.js"
 
 const { createApp, ref, computed, watch, nextTick, onMounted, onUnmounted, onBeforeUnmount } = Vue;
@@ -2470,11 +2471,57 @@ createApp({
 
 		const previewContent = computed(() => {
 			if (!selectedNote.value || !selectedNote.value.content) return ''
-			return marked.parse(selectedNote.value.content, {
+
+			let content = selectedNote.value.content
+			let frontmatterHtml = ''
+
+			// Frontmatter Regex: Start of file, ---, content, ---, newline
+			const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n/)
+			if (fmMatch) {
+				try {
+					const yamlContent = fmMatch[1]
+					const metadata = jsyaml.load(yamlContent)
+
+					// Remove frontmatter from markdown content
+					content = content.replace(fmMatch[0], '')
+
+					// Generate Metadata HTML Table
+					if (metadata && typeof metadata === 'object') {
+						let rows = ''
+						for (const [key, value] of Object.entries(metadata)) {
+							let displayValue = value
+							if (Array.isArray(value)) displayValue = value.join(', ')
+							else if (typeof value === 'object') displayValue = JSON.stringify(value)
+
+							rows += `<tr>
+								<td class="fm-key">${key}</td>
+								<td class="fm-val">${displayValue}</td>
+							</tr>`
+						}
+						frontmatterHtml = `<div class="frontmatter-container">
+							<table class="frontmatter-table">
+								<tbody>${rows}</tbody>
+							</table>
+						</div>`
+					}
+				} catch (e) {
+					console.warn('Frontmatter parsing failed', e)
+					// If parsing fails, render as code block or just ignore? 
+					// For now, let marked render the raw --- block if we don't strip it?
+					// Or better: strip it but show error? Let's just fall back to standard rendering if regex matches but yaml fails
+					// Actually, if regex matches, we stripped it. So if load fails, we should probably output the error or raw text.
+					// Let's keep specific behavior simple: if fail, don't render table, text technically removed. 
+					// Let's just not set frontmatterHtml.
+				}
+			}
+
+			const parsedMarkdown = marked.parse(content, {
 				renderer: renderer,
 				gfm: true,
 				breaks: true
 			})
+
+			return frontmatterHtml + parsedMarkdown
 		})
 
 		const sortedRootNotes = computed(() => {

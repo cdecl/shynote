@@ -216,3 +216,57 @@ textarea {
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     vertical-align: middle;
 }
+
+/* -------------------------------------------------------------------------- */
+/* YAML Frontmatter Styling                                                   */
+/* -------------------------------------------------------------------------- */
+.frontmatter-container {
+    margin-bottom: 24px;
+    border-bottom: 1px solid #d0d7de;
+    padding-bottom: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    /* Monospace for metadata */
+}
+
+.dark .frontmatter-container {
+    border-bottom-color: #3B4252;
+}
+
+.frontmatter-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85em;
+    /* Slightly smaller */
+}
+
+.frontmatter-table tr {
+    background: transparent !important;
+    border: none !important;
+}
+
+.frontmatter-table td {
+    padding: 2px 8px 2px 0 !important;
+    border: none !important;
+    vertical-align: top;
+}
+
+.fm-key {
+    font-weight: 600;
+    color: #57606a;
+    width: 100px;
+    /* Fixed width for keys */
+    white-space: nowrap;
+}
+
+.dark .fm-key {
+    color: #88C0D0;
+    /* Nord8 */
+}
+
+.fm-val {
+    color: #24292F;
+}
+
+.dark .fm-val {
+    color: #D8DEE9;
+}
