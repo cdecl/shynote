@@ -149,14 +149,33 @@ def create_note(
         if not folder:
              raise HTTPException(status_code=404, detail="Folder not found")
 
-    db_note = models.Note(
-        id=note.id, # Use Client ID
-        title=note.title, 
-        content=note.content, 
-        folder_id=note.folder_id,
-        user_id=current_user.id
-    )
-    db.add(db_note)
+    # UPSERT: Check if note already exists
+    existing_note = db.query(models.Note).filter(
+        models.Note.id == note.id,
+        models.Note.user_id == current_user.id
+    ).first()
+    
+    if existing_note:
+        # UPDATE: Update existing note
+        existing_note.title = note.title
+        existing_note.content = note.content
+        existing_note.folder_id = note.folder_id
+        if hasattr(note, 'is_pinned'):
+            existing_note.is_pinned = note.is_pinned
+        if hasattr(note, 'is_shared'):
+            existing_note.is_shared = note.is_shared
+        db_note = existing_note
+    else:
+        # INSERT: Create new note
+        db_note = models.Note(
+            id=note.id,
+            title=note.title, 
+            content=note.content, 
+            folder_id=note.folder_id,
+            user_id=current_user.id
+        )
+        db.add(db_note)
+    
     db.commit()
     db.refresh(db_note)
     return db_note
