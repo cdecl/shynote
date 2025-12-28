@@ -350,6 +350,10 @@ createApp({
 						}
 						await LocalDB.saveNote(rawNote)
 						statusMessage.value = 'Saved locally'
+
+						// FIX: Update memory list immediately
+						const idx = notes.value.findIndex(n => n.id === rawNote.id)
+						if (idx !== -1) notes.value[idx] = rawNote
 					} catch (e) {
 						console.error("Local save failed", e)
 						statusMessage.value = 'Error saving'
@@ -374,6 +378,11 @@ createApp({
 
 					await LocalDB.saveNote(rawNote)
 					statusMessage.value = 'Saved'
+
+					// FIX: Update memory list immediately
+					const idx = notes.value.findIndex(n => n.id === rawNote.id)
+					if (idx !== -1) notes.value[idx] = rawNote
+
 					syncWorker()
 				} catch (e) {
 					console.error("Manual save failed", e)
@@ -1296,6 +1305,7 @@ createApp({
 					const pNotes = fetchNotes()
 					await Promise.all([pFolders, pNotes])
 					didOptimisticLoad = true
+					restoreState() // Instant UI Restore
 				}
 
 				const oldId = currentUserId.value
@@ -1307,13 +1317,14 @@ createApp({
 					console.log('User ID changed, refetching data...')
 					loadUserSettings() // Ensure settings are loaded for new ID
 					await Promise.all([fetchFolders(false), fetchNotes(false)])
+					restoreState()
 				} else if (!didOptimisticLoad) {
 					// If we didn't do optimistic load (no cached ID), fetch now
 					await Promise.all([fetchFolders(false), fetchNotes(false)])
+					restoreState()
 				}
 
 				// autoSelectNote(); // Disabled: Default to Inbox list view
-				restoreState()
 			} else {
 				isAuthenticated.value = false;
 			}
@@ -2255,20 +2266,75 @@ createApp({
 		}
 
 
-		const handleDrop = async (targetFolderId, event) => {
-			// Prevent default just to be safe if event is passed (though Vue handles modifiers)
-			// But here we might receive event as second arg if we update template
 
+
+		const handleFiles = async (files) => {
+			if (!files || files.length === 0) return
+
+			let importedCount = 0
+			for (let i = 0; i < files.length; i++) {
+				const file = files[i]
+
+				// 1. Size Limit Check (1MB)
+				if (file.size > 1024 * 1024) {
+					alert(`File '${file.name}' is too large (Max 1MB). Skipped.`)
+					continue
+				}
+
+				try {
+					// 2. Read Content (Text)
+					const text = await file.text()
+
+					// 3. Create Note Object
+					const newNote = {
+						id: uuidv7(),
+						title: file.name, // Extension included? Maybe strip later if desired
+						content: text,
+						folder_id: currentFolderId.value, // Save to current context
+						user_id: currentUserId.value,
+						is_pinned: false,
+						is_shared: false,
+						created_at: new Date().toISOString(),
+						updated_at: new Date().toISOString(),
+						sync_status: 'dirty'
+					}
+
+					// 4. Save Local & Memory
+					if (hasIDB) {
+						const base = `${newNote.id}:${newNote.title}:${newNote.content}:${newNote.folder_id || 'null'}`
+						newNote.content_hash = await shynote_hash(base)
+						await LocalDB.saveNote(newNote, 'CREATE')
+					}
+
+					// Push to UI immediately
+					notes.value.unshift(newNote)
+					importedCount++
+
+				} catch (e) {
+					console.error(`Failed to import file ${file.name}`, e)
+				}
+			}
+
+			if (importedCount > 0) {
+				statusMessage.value = `Imported ${importedCount} files`
+				syncWorker() // Push to server
+			}
+		}
+
+		const handleDrop = async (targetFolderId, event) => {
+			// Check for Files first
+			if (event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+				await handleFiles(event.dataTransfer.files)
+				dropTargetId.value = null
+				return
+			}
+
+			// Existing Note Move Logic
 			const noteId = draggedNoteId.value
 			if (!noteId) return
 
 			const note = notes.value.find(n => n.id === noteId)
-			// Check if we are really moving it
-			// If targetFolderId is null, and note.folder_id is string 'null' or null, we might have issues?
-			// Typically note.folder_id comes from DB as null or int.
-			// Let's coerce for safety: (note.folder_id || null) !== (targetFolderId || null) ?
-			// But note.folder_id could be 0? 0 is falsy. ID should be > 0.
-
+			// ... existing logic ...
 			const currentIds = note.folder_id
 			const targetIds = targetFolderId
 
@@ -2300,8 +2366,6 @@ createApp({
 					alert("Failed to move note")
 				}
 			}
-			draggedNoteId.value = null
-			dropTargetId.value = null
 			draggedNoteId.value = null
 			dropTargetId.value = null
 		}
