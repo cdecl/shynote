@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SHYNOTE</title>
     <link rel="icon" href="/static/favicon.ico">
     <link rel="manifest" href="/static/manifest.json">
@@ -484,18 +484,21 @@
                         <div class="flex bg-slate-100 dark:bg-[#3B4252] rounded-lg p-0.5 gap-0.5">
                             <button @click="setViewMode('edit')"
                                 :class="viewMode === 'edit' ? 'bg-white dark:bg-[#4C566A] shadow-sm text-blue-600 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'"
-                                class="px-3 py-1.5 text-[11px] font-bold rounded-md transition-all flex items-center gap-1">
-                                <span class="material-symbols-rounded text-[14px]">edit</span> Editor
+                                class="px-3 py-1.5 text-[11px] font-bold rounded-md transition-all flex items-center gap-1"
+                                title="Editor">
+                                <span class="material-symbols-rounded text-[14px]">edit</span> E
                             </button>
                             <button @click="setViewMode('preview')"
                                 :class="viewMode === 'preview' ? 'bg-white dark:bg-[#4C566A] shadow-sm text-blue-600 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'"
-                                class="px-3 py-1.5 text-[11px] font-bold rounded-md transition-all flex items-center gap-1">
-                                <span class="material-symbols-rounded text-[14px]">visibility</span> Preview
+                                class="px-3 py-1.5 text-[11px] font-bold rounded-md transition-all flex items-center gap-1"
+                                title="Preview">
+                                <span class="material-symbols-rounded text-[14px]">visibility</span> P
                             </button>
                             <button @click="setViewMode('split')"
                                 :class="viewMode === 'split' ? 'bg-white dark:bg-[#4C566A] shadow-sm text-blue-600 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'"
-                                class="px-3 py-1.5 text-[11px] font-bold rounded-md transition-all flex items-center gap-1">
-                                <span class="material-symbols-rounded text-[14px]">view_column</span> Split
+                                class="px-3 py-1.5 text-[11px] font-bold rounded-md transition-all flex items-center gap-1"
+                                title="Split">
+                                <span class="material-symbols-rounded text-[14px]">view_column</span> S
                             </button>
                         </div>
                     </div>
@@ -619,12 +622,6 @@
                                         : (sortOption.direction === 'asc' ? 'arrow_upward' : 'arrow_downward')
                                         }}
                                     </span>
-                                    <span class="text-[10px] font-semibold uppercase">
-                                        {{ sortOption.field === 'title'
-                                        ? (sortOption.direction === 'asc' ? 'A-Z' : 'Z-A')
-                                        : (sortOption.direction === 'asc' ? 'Old' : 'New')
-                                        }}
-                                    </span>
                                 </button>
                             </div>
                             <!-- Import Hint/Button -->
@@ -634,7 +631,7 @@
                                     class="flex items-center gap-1 px-2 py-1.5 text-slate-400 hover:text-blue-500 hover:bg-slate-100 dark:hover:bg-[#3B4252] rounded-lg transition-all"
                                     title="Import Files (or Drag & Drop)">
                                     <span class="material-symbols-rounded text-[18px]">upload_file</span>
-                                    <span class="text-[10px] font-semibold uppercase">Import</span>
+                                    <span class="text-[10px] font-semibold uppercase hidden md:inline">Import</span>
                                 </button>
                                 <input id="hidden-file-input" type="file" multiple class="hidden"
                                     onchange="handleFiles(this.files); this.value = null;">
