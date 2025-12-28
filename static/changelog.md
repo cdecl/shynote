@@ -1,3 +1,27 @@
+# v0.3.5 Release Notes
+
+## Summary
+- **VS Code 키맵**: `@replit/codemirror-vscode-keymap`을 도입하여 익숙한 단축키(`Alt+Arrows`, `Cmd+D` 등)를 지원합니다.
+- **검색 툴바 버튼**: 에디터 툴바에 전용 검색 버튼(돋보기 아이콘)을 추가했습니다.
+- **검색 토글**: 검색 버튼 클릭 시 패널을 열고 닫을 수 있습니다 (Toggle 방식).
+- **다중 커서 복구**: 다중 커서 및 선택 하이라이팅 기능을 복구하고 키맵 충돌(`Cmd+K`)을 해결했습니다.
+- **가이드 업데이트**: CodeMirror 6 및 새로운 기능을 반영하여 문서를 업데이트했습니다.
+
+## Changes
+- **VS Code Keymap (키맵 적용)**: 표준 단축키 지원을 위해 VS Code Keymap 패키지 추가:
+    - `Alt + ↑ / ↓`: 줄 이동
+    - `Shift + Alt + ↑ / ↓`: 줄 복사
+    - `Cmd + D`: 다음 일치 항목 선택 (다중 커서)
+    - `Mod-k` 충돌 해결 (링크 삽입 정상 작동).
+- **Search Button**: 에디터 툴바에 돋보기 아이콘 추가.
+- **Search Toggle**: 검색 버튼 클릭 시 패널 열기/닫기 동작 구현.
+
+### Fixed
+- **Multi-Cursor**: 다중 커서 기능(`Alt + Click`, `Cmd + D`) 정상 동작 검증 완료.
+- **Editor Guide**: 최신 변경 사항 반영하여 문서 현행화.
+
+---
+
 # v0.3.4 Release Notes
 
 ## Summary

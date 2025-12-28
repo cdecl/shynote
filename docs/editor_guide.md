@@ -37,22 +37,28 @@ SHYNOTE는 **VS Code**와 유사한 단축키 매핑을 지원하여 학습 곡�
 | **실행 취소 (Undo)** | `Cmd + Z` | `Ctrl + Z` |
 | **다시 실행 (Redo)** | `Shift + Cmd + Z` | `Shift + Ctrl + Z` |
 
-### 라인 조작 (Line Operations)
+### 라인 조작 (Line Operations) - VS Code Keymap
 | Action | Shortcut (Mac) | Shortcut (Win/Linux) |
 |--------|----------------|----------------------|
 | **줄 삭제** | `Shift + Cmd + K` | `Shift + Ctrl + K` |
-| **줄 이동 (위/아래)** | `Alt + ↑ / ↓` | `Alt + ↑ / ↓` |
-| **줄 복제 (위/아래)** | `Shift + Alt + ↑ / ↓` | `Shift + Alt + ↑ / ↓` |
+| **줄 이동 (위/아래)** | `Option + ↑ / ↓` | `Alt + ↑ / ↓` |
+| **줄 복제 (위/아래)** | `Shift + Option + ↑ / ↓` | `Shift + Alt + ↑ / ↓` |
 | **들여쓰기 (Indent)** | `Cmd + ]` | `Ctrl + ]` |
 | **내어쓰기 (Outdent)** | `Cmd + [` | `Ctrl + [` |
 
-### 검색 및 다중 커서
+### 검색 및 다중 커서 (Search & Multi-Cursor)
 | Action | Shortcut (Mac) | Shortcut (Win/Linux) |
 |--------|----------------|----------------------|
 | **찾기 (Find)** | `Cmd + F` | `Ctrl + F` |
 | **다음 찾기** | `Cmd + G` | `Ctrl + G` |
 | **이전 찾기** | `Shift + Cmd + G` | `Shift + Ctrl + G` |
-| **다음 일치 항목 선택** (다중 커서) | `Cmd + D` | `Ctrl + D` |
+| **다음 일치 항목 선택** | `Cmd + D` | `Ctrl + D` |
+| **모든 일치 항목 선택** | `Shift + Cmd + L` | `Shift + Ctrl + L` |
+
+> **Tip: 다중 커서 사용법**
+> - **마우스**: `Option(Alt) + 클릭`으로 원하는 위치에 커서를 추가할 수 있습니다.
+> - **박스 선택**: `Shift + Option(Alt) + 드래그`로 사각형 영역을 선택할 수 있습니다.
+> - **키보드**: `Cmd + Option + ↑/↓` 로 위아래 커서를 추가할 수 있습니다. (※ 좌우 이동은 브라우저 탭 전환과 충돌할 수 있으니 주의하세요)
 
 ### 마크다운 서식 (Markdown Formatting)
 | Action | Shortcut (Mac) | Shortcut (Win/Linux) |

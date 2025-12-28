@@ -4,7 +4,7 @@ import { markdown, markdownLanguage } from "https://esm.sh/@codemirror/lang-mark
 import { languages } from "https://esm.sh/@codemirror/language-data@6.4.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
 import { defaultKeymap, history, historyKeymap } from "https://esm.sh/@codemirror/commands@6.3.3?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
 import { vscodeKeymap } from "https://esm.sh/@replit/codemirror-vscode-keymap@6.0.2?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0,@codemirror/commands@6.3.3"
-import { search, searchKeymap, highlightSelectionMatches, setSearchQuery, SearchQuery, findNext, findPrevious, openSearchPanel } from "https://esm.sh/@codemirror/search@6.5.5?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
+import { search, searchKeymap, highlightSelectionMatches, setSearchQuery, SearchQuery, findNext, findPrevious, openSearchPanel, closeSearchPanel } from "https://esm.sh/@codemirror/search@6.5.5?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
 import { githubLight, githubDark } from "https://esm.sh/@uiw/codemirror-theme-github@4.23.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
 import { syntaxHighlighting, defaultHighlightStyle, bracketMatching } from "https://esm.sh/@codemirror/language@6.10.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
 import { closeBrackets, closeBracketsKeymap } from "https://esm.sh/@codemirror/autocomplete@6.12.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
@@ -611,7 +611,8 @@ createApp({
 						{ key: "Mod-s", run: () => { manualSave(); return true } },
 						{ key: "Mod-b", run: () => { formatText('bold'); return true } },
 						{ key: "Mod-i", run: () => { formatText('italic'); return true } },
-						{ key: "Mod-k", run: () => { formatText('link'); return true } }
+						{ key: "Mod-k", run: () => { formatText('link'); return true } },
+						{ key: "Mod-f", run: () => { openSearchPanel(editorView.value); return true } }
 					]),
 					keymap.of(closeBracketsKeymap),
 					keymap.of(historyKeymap),
@@ -2784,6 +2785,23 @@ createApp({
 			titleInputRef,
 
 			formatText,
+			triggerSearch: () => {
+				if (editorView.value) {
+					const panel = document.querySelector('.cm-panel.cm-search')
+					if (panel) {
+						// Toggle Off
+						closeSearchPanel(editorView.value)
+						editorView.value.focus() // Return focus to editor
+					} else {
+						// Toggle On
+						openSearchPanel(editorView.value)
+						setTimeout(() => {
+							const searchInput = document.querySelector('.cm-search input[name="search"]')
+							if (searchInput) searchInput.focus()
+						}, 50)
+					}
+				}
+			},
 			formatDate: (dateStr) => {
 				const date = parseSafeDate(dateStr)
 				if (!date) return dateStr || ''

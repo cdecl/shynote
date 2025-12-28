@@ -888,7 +888,11 @@
                                 <span class="material-symbols-rounded text-[18px]">format_h3</span>
                             </button>
 
-                            <!-- Removed custom search UI - using CodeMirror native search (Cmd+F) -->
+                            <button @mousedown.prevent="triggerSearch()"
+                                class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                title="Find (Cmd+F)">
+                                <span class="material-symbols-rounded text-[18px]">search</span>
+                            </button>
                         </div>
 
                         <!-- Split Columns -->

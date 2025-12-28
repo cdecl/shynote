@@ -62,7 +62,9 @@
 
 - [x] **배포 전략 수립**: Vercel Serverless Function & PostgreSQL 사용 결정
 - [ ] **상태 관리 라이브러리 도입 여부**: 현재 Vanilla JS 객체(`ref`) 사용 중이나, 복잡도 증가 시 Pinia 등 도입 고려
-- [x] **에디터 고도화**: CodeMirror 도입 시도 후 모바일 호환성 및 복잡도 문제로 **Textarea 기반 기능 확장**으로 회귀 결정. (플로팅 툴바, 스마트 인덴트 등 자체 구현)
+- [x] **에디터 고도화**: CodeMirror 6 도입 완료.
+  - Textarea 한계 극복을 위해 CM6로 재이행.
+  - VS Code Keymap, 검색 패널, GitHub 테마 적용 완료.
 - [ ] **테스트 프레임워크 선정**: `pytest` 기반의 백엔드 테스트 및 프론트엔드 E2E 테스트 도구(Playwright 등) 구체화
 - [ ] **폴더 구조 동기화**: 폴더 열람 시 트리 구조 부분 갱신 로직 구현 예정
 
@@ -73,7 +75,12 @@
 3. **`pyproject.toml` 버전 수정**: 패키지 버전 동기화
 4. **`npm run build`**: 프론트엔드 빌드 (필요 시)
 
-## 9. 버전을 올리는 프로세스 
+## 9. 버전/패치을 올리는 프로세스 
 - static/version.json 파일을 수정합니다.
 - static/changelog.md 파일에 변경사항을 기록합니다.
 - pyproject.toml 파일의 버전을 수정합니다.
+
+
+## 10. 문서관리 
+- docs/ 폴더 내 지속적인 업데이트
+- 문서는 한글로 작성.
