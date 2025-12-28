@@ -3,6 +3,7 @@ import { EditorState, Compartment, EditorSelection } from "https://esm.sh/@codem
 import { markdown, markdownLanguage } from "https://esm.sh/@codemirror/lang-markdown@6.2.3?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
 import { languages } from "https://esm.sh/@codemirror/language-data@6.4.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
 import { defaultKeymap, history, historyKeymap } from "https://esm.sh/@codemirror/commands@6.3.3?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
+import { vscodeKeymap } from "https://esm.sh/@replit/codemirror-vscode-keymap@6.0.2?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0,@codemirror/commands@6.3.3"
 import { search, searchKeymap, highlightSelectionMatches, setSearchQuery, SearchQuery, findNext, findPrevious, openSearchPanel } from "https://esm.sh/@codemirror/search@6.5.5?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
 import { githubLight, githubDark } from "https://esm.sh/@uiw/codemirror-theme-github@4.23.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
 import { syntaxHighlighting, defaultHighlightStyle, bracketMatching } from "https://esm.sh/@codemirror/language@6.10.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
@@ -615,6 +616,8 @@ createApp({
 					keymap.of(closeBracketsKeymap),
 					keymap.of(historyKeymap),
 					keymap.of(searchKeymap),
+					// Filter VS Code Keymap to avoid conflict with Mod-k (Link)
+					keymap.of(vscodeKeymap.filter(k => !k.key?.startsWith("Mod-k"))),
 					keymap.of(defaultKeymap)
 				]
 			})
