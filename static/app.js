@@ -119,7 +119,7 @@ createApp({
 		const isSidebarPinned = ref(false) // Init defaults
 		const editorRef = ref(null)
 		const previewRef = ref(null)
-		const viewMode = ref('split')
+		const viewMode = ref('edit')
 
 		// Dark mode is global/device specific usually, but code requested "User Info". 
 		// Let's keep dark mode global for now as per industry standard? 
@@ -1312,6 +1312,11 @@ createApp({
 				const oldId = currentUserId.value
 				await fetchUserProfile(); // Fetches and sets currentUserId from server (Source of Truth)
 
+				console.log('[CheckAuth] Cache ID:', oldId, typeof oldId)
+				console.log('[CheckAuth] DB ID:', currentUserId.value, typeof currentUserId.value)
+
+				console.log('[CheckAuth] ID Compare:', { oldId, newId: currentUserId.value, match: oldId === currentUserId.value })
+
 				// If user ID changed (or was null), refetch correct data
 				// If user ID changed (or was null), refetch correct data
 				if (currentUserId.value !== oldId) {
@@ -1333,6 +1338,7 @@ createApp({
 
 		const restoreState = () => {
 			try {
+				console.log('[RestoreState] Started')
 				const savedFolderId = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.LAST_FOLDER_ID))
 				const savedNoteId = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.LAST_NOTE_ID))
 				const savedPanelMode = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.LAST_PANEL_MODE))
@@ -1362,24 +1368,34 @@ createApp({
 							currentFolderId.value = note.folder_id
 						}
 
-						// We don't call selectNote here to avoid recursive saving, but we need to init editor
-						nextTick(() => {
-							initEditor()
-						})
+						// Editor will be initialized by watch on selectedNote.value?.id
 					} else {
 						// Note not found? Fallback to list
 						rightPanelMode.value = 'list'
 					}
 				}
+				console.log('[RestoreState] Completed.')
 			} catch (e) {
 				console.error('[RestoreState] Failed', e)
 			}
 		}
 
 		onMounted(async () => {
+			isSidebarOpen.value = true // Force sidebar open on startup
 			await checkAuth()
 			fetchAppConfig()
 			fetchChangelog()
+
+			// Init Dark Mode
+			if (localStorage.getItem(STORAGE_KEYS.DARK_MODE) === null) {
+				if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+					isDarkMode.value = true
+					localStorage.setItem(STORAGE_KEYS.DARK_MODE, 'true')
+				}
+			}
+			if (isDarkMode.value) document.documentElement.classList.add('dark')
+			applyTheme()
+
 			initGoogleAuth()
 
 			// Global Esc Key Listener for Modals
@@ -1388,14 +1404,6 @@ createApp({
 					closeModal()
 				}
 			})
-
-			if (localStorage.getItem(STORAGE_KEYS.DARK_MODE) === null) {
-				if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-					isDarkMode.value = true
-					localStorage.setItem(STORAGE_KEYS.DARK_MODE, 'true')
-				}
-			}
-			if (isDarkMode.value) document.documentElement.classList.add('dark')
 		})
 
 		// Expose this globally for Google Callback
@@ -1555,36 +1563,48 @@ createApp({
 
 
 		const fetchFolders = async (waitForRemote = true) => {
-			const uid = currentUserId.value;
-			if (hasIDB && uid) {
-				try {
-					const local = await LocalDB.getAllFolders(uid)
-					if (local && local.length > 0) folders.value = local
-				} catch (e) { console.error("Local Folders Error", e) }
-			}
+			console.log('[fetchFolders] Started')
+			if (!isAuthenticated.value) return
 
-			const remotePromise = (async () => {
-				try {
-					const response = await authenticatedFetch('/api/folders')
-					if (response && response.ok) {
-						const data = await response.json()
-						// Deep check to avoid visual flicker if identical
-						if (JSON.stringify(data) !== JSON.stringify(folders.value)) {
-							folders.value = data
-						}
-
-						// Inject user_id if missing (e.g. from server)
-						if (hasIDB && uid) {
-							const foldersToSave = data.map(f => ({ ...f, user_id: f.user_id || uid }))
-							await LocalDB.saveFoldersBulk(foldersToSave)
-						}
+			try {
+				// 1. Load from LocalDB first (if available)
+				if (hasIDB) {
+					const localFolders = await LocalDB.getAllFolders(currentUserId.value)
+					if (localFolders && localFolders.length > 0) {
+						folders.value = localFolders
 					}
-				} catch (e) {
-					console.error("Failed to fetch folders", e)
 				}
-			})();
 
-			if (waitForRemote) await remotePromise
+				// 2. Fetch from Server (Background if we have local data)
+				// If waitForRemote is false, we don't await the fetch, just fire it.
+				const remoteFetch = async () => {
+					try {
+						const response = await authenticatedFetch('/api/folders')
+						if (response && response.ok) {
+							const serverFolders = await response.json()
+							folders.value = serverFolders
+
+							// Update LocalDB
+							if (hasIDB) {
+								await LocalDB.saveFoldersBulk(serverFolders)
+							}
+						}
+					} catch (e) {
+						console.error("Folder fetch failed", e)
+					}
+				}
+
+				if (waitForRemote) {
+					await remoteFetch()
+				} else {
+					remoteFetch() // Fire and forget (or promise handled by caller if they didn't await outer)
+				}
+
+			} catch (e) {
+				console.error("Error loading folders", e)
+			} finally {
+				console.log('[fetchFolders] Completed')
+			}
 		}
 
 		const fetchUserProfile = async () => {
@@ -1596,13 +1616,7 @@ createApp({
 						currentUserId.value = user.id; // Set ID
 						localStorage.setItem(STORAGE_KEYS.USER_ID, user.id); // Cache ID
 					}
-					if (user.is_dark_mode !== undefined) {
-						isDarkMode.value = user.is_dark_mode
-						applyTheme()
-					}
-					if (user.view_mode) {
-						viewMode.value = user.view_mode
-					}
+					// UI preferences (is_dark_mode, view_mode) are now managed via localStorage only
 				}
 			} catch (e) {
 				console.error("Failed to fetch user profile", e)
@@ -1623,6 +1637,7 @@ createApp({
 		}
 
 		const fetchNotes = async (waitForRemote = true) => {
+			console.log('[fetchNotes] Started')
 			loading.value = true
 			const uid = currentUserId.value;
 
@@ -1709,6 +1724,7 @@ createApp({
 			})();
 
 			if (waitForRemote) await remotePromise
+			console.log('[fetchNotes] Completed')
 		}
 
 		const deleteConfirmation = ref({ id: null, type: null })
@@ -2545,21 +2561,7 @@ createApp({
 			return sortItems(folderNotes)
 		}
 
-		onMounted(async () => {
-			isSidebarOpen.value = true // Force sidebar open on startup (Mobile request)
-			checkAuth()
-			// Init Dark Mode class
-			if (isDarkMode.value) document.documentElement.classList.add('dark')
-			applyTheme()
 
-			// Wait a bit for Google Script to load if async
-			setTimeout(initGoogleAuth, 500)
-
-			// Editor initialized via watcher generally, but we can ensure cleanup
-			onBeforeUnmount(() => {
-				if (editorView.value) editorView.value.destroy()
-			})
-		})
 
 		// Watch authentication state to re-render button if logout
 		Vue.watch(isAuthenticated, (newVal) => {
@@ -2606,6 +2608,11 @@ createApp({
 					effects: themeCompartment.reconfigure(val ? oneDark : [])
 				})
 			}
+		})
+
+		// Editor cleanup
+		onBeforeUnmount(() => {
+			if (editorView.value) editorView.value.destroy()
 		})
 
 		// Other watchers (fontSize, darkMode, viewMode) handled via CSS binding in template
