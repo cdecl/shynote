@@ -1,3 +1,34 @@
+# v0.3.3 Release Notes
+
+## Summary
+- **초기 로딩 최적화**: 데이터를 불러올 때 사이드바 목록이 깜빡이거나 두 번 로딩되는 현상을 제거했습니다.
+- **병렬 데이터 처리**: 폴더와 노트 데이터를 동시에 불러와 앱 구동 속도가 더욱 빨라졌습니다.
+
+## Changes
+- **Optimistic UI Loading**: 로컬 데이터가 있으면 즉시 화면을 표시하고, 네트워크 요청은 백그라운드에서 처리합니다.
+- **Redundant Update Protection**: 서버 데이터가 로컬과 동일할 경우 불필요한 화면 갱신을 방지합니다.
+
+---
+
+# v0.3.2 Release Notes
+
+## Summary
+- **상태 보존(State Persistence)**: 마지막으로 방문한 폴더, 선택한 문서, 뷰 모드(List/Edit)가 새로고침 후에도 유지됩니다.
+- **UI 통일성 강화**: Inbox와 My Folders의 디자인 테마를 Blue 계열로 통일하고 가독성을 개선했습니다.
+- **에디터 툴바 개선**: 툴바 좌측 여백을 제거하여 공간 효율을 높였습니다.
+
+## Changes
+
+### 1. State Persistence (상태 보존)
+- **Last Status**: 앱 실행 시 마지막 작업 위치(폴더/노트)와 화면 모드(List/Split/Left)를 자동 복구합니다.
+- **UX**: 불필요한 내비게이션 단계를 줄여 작업 연속성을 보장합니다.
+
+### 2. UI Refinements (UI 개선)
+- **Unified Theme**: 사용자 폴더(My Folders)의 선택 배경색을 Amber → Blue 테마로 변경하여 Inbox와 일관성을 확보했습니다.
+- **Toolbar Layout**: 에디터 상단 툴바의 불필요한 좌측 마진을 제거하고, 사이드바 토글 버튼이 없을 때의 레이아웃을 최적화했습니다.
+
+---
+
 # v0.3.1 Release Notes
 
 ## Summary

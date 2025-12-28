@@ -22,7 +22,7 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <link rel="stylesheet" href="/static/style.css?v=6">
+    <link rel="stylesheet" href="/static/style.css?v=7">
     <link id="github-theme" rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-light.min.css">
     <link id="highlight-theme" rel="stylesheet" href="https://unpkg.com/nord-highlightjs@0.1/dist/nord.css">
@@ -321,21 +321,20 @@
                         <div v-if="loading" class="text-center text-gray-400 p-4">Loading...</div>
                         <div v-else class="space-y-4">
                             <!-- System Folders Card -->
-                            <div class="bg-white dark:bg-[#1C1C1E] rounded-xl overflow-hidden shadow-sm">
+                            <div class="bg-white dark:bg-[#3C4252] rounded-xl overflow-hidden shadow-sm">
                                 <!-- Inbox -->
                                 <div @click.stop="selectFolder(null)" @drop="handleDrop(null, $event)" @dragover.prevent
                                     @dragenter.prevent="handleDragEnter('inbox')"
                                     @dragleave.prevent="handleDragLeave('inbox')"
                                     class="relative flex items-center justify-between px-3 py-2.5 cursor-pointer active:bg-slate-100 dark:active:bg-white/10 transition-all duration-200 group"
                                     :class="[
-                                        currentFolderId === null && rightPanelMode === 'list' ? 'bg-blue-50 dark:bg-blue-900/20' : '',
                                         dropTargetId === 'inbox' ? 'translate-x-3 bg-blue-100 dark:bg-blue-800/30' : ''
                                     ]">
                                     <div class="flex items-center gap-3">
                                         <span class="material-symbols-rounded text-[22px] text-blue-500"
                                             style="font-variation-settings: 'FILL' 1">inbox</span>
-                                        <span
-                                            class="text-[15px] font-medium text-slate-800 dark:text-white">Inbox</span>
+                                        <span class="text-[15px] font-medium transition-colors duration-200"
+                                            :class="currentFolderId === null ? 'text-[#61A5FA]' : 'text-slate-800 dark:text-white'">Inbox</span>
                                     </div>
                                     <div class="flex items-center gap-1">
                                         <span class="text-slate-500 dark:text-slate-400 font-medium text-[14px]">{{
@@ -356,7 +355,7 @@
                                     class="px-3 mb-2 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                     My Folders
                                 </h2>
-                                <div class="bg-white dark:bg-[#1C1C1E] rounded-xl overflow-hidden shadow-sm">
+                                <div class="bg-white dark:bg-[#3C4252] rounded-xl overflow-hidden shadow-sm">
                                     <div v-for="(folder, index) in sortedFolders" :key="folder.id" @dragover.prevent
                                         @dragenter.prevent="handleDragEnter(folder.id)"
                                         @dragleave.prevent="handleDragLeave(folder.id)"
@@ -366,10 +365,7 @@
                                         <div @click.stop="selectFolder(folder.id)"
                                             class="relative flex items-center justify-between px-3 py-2.5 cursor-pointer active:bg-slate-100 dark:active:bg-white/10 transition-all duration-200 group"
                                             :class="[
-                                            currentFolderId === folder.id && rightPanelMode === 'list' 
-                                                ? 'bg-amber-50 dark:bg-amber-900/20' 
-                                                : '',
-                                            dropTargetId === folder.id ? 'translate-x-3 bg-amber-100 dark:bg-amber-900/30' : ''
+                                            dropTargetId === folder.id ? 'translate-x-3 bg-blue-100 dark:bg-blue-800/30' : ''
                                         ]">
 
                                             <!-- Rename Input -->
@@ -382,11 +378,12 @@
                                             <div v-else @dblclick.stop="startRename(folder, 'folder')"
                                                 class="flex items-center gap-3 flex-1 min-w-0">
                                                 <span
-                                                    class="material-symbols-rounded text-[22px] text-amber-500 dark:text-yellow-400"
+                                                    class="material-symbols-rounded text-[22px] text-blue-500 dark:text-blue-400"
                                                     style="font-variation-settings: 'FILL' 1">{{ dropTargetId ===
                                                     folder.id ? 'folder_open' : 'folder' }}</span>
                                                 <span
-                                                    class="text-[15px] font-medium text-slate-800 dark:text-white truncate">{{
+                                                    class="text-[15px] font-medium truncate transition-colors duration-200"
+                                                    :class="currentFolderId === folder.id ? 'text-[#61A5FA]' : 'text-slate-800 dark:text-white'">{{
                                                     folder.name }}</span>
                                             </div>
 
@@ -472,30 +469,28 @@
             <div class="flex flex-col h-full">
                 <!-- Toolbar -->
                 <div v-if="rightPanelMode !== 'list' && selectedNote"
-                    class="h-12 border-b border-slate-100 dark:border-[#434C5E] bg-white/80 dark:bg-[#24292F]/80 backdrop-blur-sm sticky top-0 z-30 flex justify-between items-center px-4 flex-shrink-0 transition-colors duration-300">
+                    class="h-12 border-b border-slate-100 dark:border-[#434C5E] bg-white/80 dark:bg-[#24292F]/80 backdrop-blur-sm sticky top-0 z-30 flex justify-between items-center pl-1 pr-4 flex-shrink-0 transition-colors duration-300">
                     <div class="flex items-center gap-4">
-                        <div class="flex items-center gap-1">
-                            <button @click.stop="toggleSidebar" v-if="!isSidebarOpen"
-                                class="p-2 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded-lg transition-all flex-shrink-0"
-                                title="Open Sidebar">
-                                <span class="material-symbols-rounded text-[22px]">view_sidebar</span>
-                            </button>
-                        </div>
+                        <button @click.stop="toggleSidebar" v-if="!isSidebarOpen"
+                            class="p-2 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded-lg transition-all flex-shrink-0"
+                            title="Open Sidebar">
+                            <span class="material-symbols-rounded text-[22px]">view_sidebar</span>
+                        </button>
 
                         <!-- View Mode Tabs (Moved to Header) -->
                         <div class="flex bg-slate-100 dark:bg-[#3B4252] rounded-lg p-0.5 gap-0.5">
                             <button @click="setViewMode('edit')"
-                                :class="viewMode === 'edit' ? 'bg-white dark:bg-[#4C566A] shadow-sm text-slate-800 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
+                                :class="viewMode === 'edit' ? 'bg-white dark:bg-[#4C566A] shadow-sm text-blue-600 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'"
                                 class="px-3 py-1.5 text-[11px] font-bold rounded-md transition-all flex items-center gap-1">
                                 <span class="material-symbols-rounded text-[14px]">edit</span> Editor
                             </button>
                             <button @click="setViewMode('preview')"
-                                :class="viewMode === 'preview' ? 'bg-white dark:bg-[#4C566A] shadow-sm text-slate-800 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
+                                :class="viewMode === 'preview' ? 'bg-white dark:bg-[#4C566A] shadow-sm text-blue-600 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'"
                                 class="px-3 py-1.5 text-[11px] font-bold rounded-md transition-all flex items-center gap-1">
                                 <span class="material-symbols-rounded text-[14px]">visibility</span> Preview
                             </button>
                             <button @click="setViewMode('split')"
-                                :class="viewMode === 'split' ? 'bg-white dark:bg-[#4C566A] shadow-sm text-slate-800 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
+                                :class="viewMode === 'split' ? 'bg-white dark:bg-[#4C566A] shadow-sm text-blue-600 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'"
                                 class="px-3 py-1.5 text-[11px] font-bold rounded-md transition-all flex items-center gap-1">
                                 <span class="material-symbols-rounded text-[14px]">view_column</span> Split
                             </button>

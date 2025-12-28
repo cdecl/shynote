@@ -49,8 +49,13 @@ createApp({
 			LAST_NOTE_ID: 'shynote_last_note_id',
 			USER_ID: 'shynote_user_id',
 
-			SPLIT_RATIO: 'shynote_split_ratio'
+			SPLIT_RATIO: 'shynote_split_ratio',
+			LAST_FOLDER_ID: 'shynote_last_folder_id',
+			LAST_PANEL_MODE: 'shynote_last_panel_mode'
 		}
+
+
+		const currentUserId = ref(null)
 
 		// Private Helpers
 		const parseSafeDate = (dateStr) => {
@@ -136,7 +141,7 @@ createApp({
 		}
 
 		// New 2-Column Layout State
-		const rightPanelMode = ref('list') // 'list' | 'edit'
+		const rightPanelMode = ref(localStorage.getItem(getUserStorageKey(STORAGE_KEYS.LAST_PANEL_MODE)) || 'list') // 'list' | 'edit'
 		const currentFolderId = ref(null) // null = Inbox (Root)
 		const showAbout = ref(false)
 		const isSharing = ref(false)
@@ -173,7 +178,7 @@ createApp({
 			saveUserSetting(STORAGE_KEYS.SPLIT_RATIO, splitRatio.value)
 		}
 
-		const currentUserId = ref(null)
+
 
 		// Guest Store (InMemory DB) - Defined Early for authenticatedFetch
 		const guestStore = {
@@ -1286,9 +1291,10 @@ createApp({
 				let didOptimisticLoad = false
 				if (cachedId) {
 					currentUserId.value = cachedId // Keep as string for UUIDv7
-					// Fire fetches immediately without waiting
-					fetchFolders()
-					fetchNotes()
+					// Fire fetches immediately (parallel)
+					const pFolders = fetchFolders()
+					const pNotes = fetchNotes()
+					await Promise.all([pFolders, pNotes])
 					didOptimisticLoad = true
 				}
 
@@ -1296,19 +1302,65 @@ createApp({
 				await fetchUserProfile(); // Fetches and sets currentUserId from server (Source of Truth)
 
 				// If user ID changed (or was null), refetch correct data
+				// If user ID changed (or was null), refetch correct data
 				if (currentUserId.value !== oldId) {
 					console.log('User ID changed, refetching data...')
-					fetchFolders()
-					fetchNotes()
+					loadUserSettings() // Ensure settings are loaded for new ID
+					await Promise.all([fetchFolders(false), fetchNotes(false)])
 				} else if (!didOptimisticLoad) {
 					// If we didn't do optimistic load (no cached ID), fetch now
-					fetchFolders()
-					fetchNotes()
+					await Promise.all([fetchFolders(false), fetchNotes(false)])
 				}
 
 				// autoSelectNote(); // Disabled: Default to Inbox list view
+				restoreState()
 			} else {
 				isAuthenticated.value = false;
+			}
+		}
+
+		const restoreState = () => {
+			try {
+				const savedFolderId = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.LAST_FOLDER_ID))
+				const savedNoteId = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.LAST_NOTE_ID))
+				const savedPanelMode = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.LAST_PANEL_MODE))
+
+				console.log('[RestoreState] Restoring...', { savedFolderId, savedNoteId, savedPanelMode })
+
+				if (savedFolderId && savedFolderId !== 'null') {
+					const fid = isNaN(savedFolderId) ? savedFolderId : Number(savedFolderId) // Handle string/number IDs
+					// Check if folder exists
+					if (folders.value.find(f => f.id == fid)) {
+						currentFolderId.value = fid
+					}
+				}
+
+				if (savedPanelMode) {
+					rightPanelMode.value = savedPanelMode
+				}
+
+				if (savedPanelMode === 'edit' && savedNoteId) {
+					const nid = isNaN(savedNoteId) ? savedNoteId : Number(savedNoteId)
+					const note = notes.value.find(n => n.id == nid)
+					if (note) {
+						selectedNote.value = JSON.parse(JSON.stringify(note))
+
+						// Sync folder ID just in case
+						if (note.folder_id !== undefined) {
+							currentFolderId.value = note.folder_id
+						}
+
+						// We don't call selectNote here to avoid recursive saving, but we need to init editor
+						nextTick(() => {
+							initEditor()
+						})
+					} else {
+						// Note not found? Fallback to list
+						rightPanelMode.value = 'list'
+					}
+				}
+			} catch (e) {
+				console.error('[RestoreState] Failed', e)
 			}
 		}
 
@@ -1490,7 +1542,7 @@ createApp({
 
 
 
-		const fetchFolders = async () => {
+		const fetchFolders = async (waitForRemote = true) => {
 			const uid = currentUserId.value;
 			if (hasIDB && uid) {
 				try {
@@ -1498,21 +1550,29 @@ createApp({
 					if (local && local.length > 0) folders.value = local
 				} catch (e) { console.error("Local Folders Error", e) }
 			}
-			try {
-				const response = await authenticatedFetch('/api/folders')
-				if (response && response.ok) {
-					const data = await response.json()
-					folders.value = data
 
-					// Inject user_id if missing (e.g. from server)
-					if (hasIDB && uid) {
-						const foldersToSave = data.map(f => ({ ...f, user_id: f.user_id || uid }))
-						await LocalDB.saveFoldersBulk(foldersToSave)
+			const remotePromise = (async () => {
+				try {
+					const response = await authenticatedFetch('/api/folders')
+					if (response && response.ok) {
+						const data = await response.json()
+						// Deep check to avoid visual flicker if identical
+						if (JSON.stringify(data) !== JSON.stringify(folders.value)) {
+							folders.value = data
+						}
+
+						// Inject user_id if missing (e.g. from server)
+						if (hasIDB && uid) {
+							const foldersToSave = data.map(f => ({ ...f, user_id: f.user_id || uid }))
+							await LocalDB.saveFoldersBulk(foldersToSave)
+						}
 					}
+				} catch (e) {
+					console.error("Failed to fetch folders", e)
 				}
-			} catch (e) {
-				console.error("Failed to fetch folders", e)
-			}
+			})();
+
+			if (waitForRemote) await remotePromise
 		}
 
 		const fetchUserProfile = async () => {
@@ -1550,7 +1610,7 @@ createApp({
 			}
 		}
 
-		const fetchNotes = async () => {
+		const fetchNotes = async (waitForRemote = true) => {
 			loading.value = true
 			const uid = currentUserId.value;
 
@@ -1561,88 +1621,82 @@ createApp({
 					if (localNotes && localNotes.length > 0) {
 						notes.value = localNotes
 						pinnedNotes.value = localNotes.filter(n => n.is_pinned)
+						loading.value = false // <--- SHOW CONTENT IMMEDIATELY (Optimistic UI)
 					}
 				} catch (e) { console.error("Local Load Error", e) }
 			}
 
-			try {
-				const response = await authenticatedFetch('/api/notes')
-				if (response && response.ok) {
-					const serverNotes = await response.json()
+			const remotePromise = (async () => {
+				try {
+					const response = await authenticatedFetch('/api/notes')
+					if (response && response.ok) {
+						const serverNotes = await response.json()
 
+						if (hasIDB) {
+							const currentUid = currentUserId.value || uid; // Use latest UID
 
-					if (hasIDB) {
-						const currentUid = currentUserId.value || uid; // Use latest UID
+							// 1. Identify Deletions (Server Side Deletion)
+							// Get all local synced notes
+							const localNotesAll = await LocalDB.getAllNotes(currentUid)
+							const serverIds = new Set(serverNotes.map(n => n.id))
 
-						// 1. Identify Deletions (Server Side Deletion)
-						// Get all local synced notes
-						const localNotesAll = await LocalDB.getAllNotes(currentUid)
-						const serverIds = new Set(serverNotes.map(n => n.id))
-
-						for (const ln of localNotesAll) {
-							// If local note is NOT in server list AND it is NOT dirty (waiting to be pushed)
-							// Then it means it was deleted on another device.
-							if (!serverIds.has(ln.id) && ln.sync_status !== 'dirty') {
-								await LocalDB.deleteNote(ln.id)
+							for (const ln of localNotesAll) {
+								if (!serverIds.has(ln.id) && ln.sync_status !== 'dirty') {
+									await LocalDB.deleteNote(ln.id)
+								}
 							}
-						}
 
-						// 2. Compute Hashes & Filter Updates
-						const notesToSave = []
-						for (const n of serverNotes) {
-							// Generate hash for content comparison
-							// Hash basis: id + title + content + folder_id
-							// Ensuring nulls consistencies 
-							const base = `${n.id}:${n.title}:${n.content || ''}:${n.folder_id || 'null'}`
-							n.content_hash = await shynote_hash(base)
-							// Use server provided user_id, or fallback to currentUid
-							n.user_id = n.user_id || currentUid
-							notesToSave.push(n)
-						}
+							// 2. Compute Hashes & Filter Updates
+							const notesToSave = []
+							for (const n of serverNotes) {
+								const base = `${n.id}:${n.title}:${n.content || ''}:${n.folder_id || 'null'}`
+								n.content_hash = await shynote_hash(base)
+								n.user_id = n.user_id || currentUid
+								notesToSave.push(n)
+							}
 
-						await LocalDB.saveNotesBulk(notesToSave)
+							await LocalDB.saveNotesBulk(notesToSave)
 
-						// 3. Check for Conflicts (Dirty vs Server Hash Mismatch)
-						const conflictCandidates = []
-						const currentLocalNotes = await LocalDB.getAllNotes(currentUid)
-						for (const ln of currentLocalNotes) {
-							if (ln.sync_status === 'dirty') {
-								const serverNote = notesToSave.find(sn => sn.id === ln.id)
-								if (serverNote) {
-									console.log(`[Sync Debug] Checking Dirty Note ${ln.id}: Local Hash=${ln.content_hash?.substring(0, 8)} vs Server Hash=${serverNote.content_hash?.substring(0, 8)}`)
-									if (serverNote.content_hash !== ln.content_hash) {
-										// Conflict Detected (Or just pending sync)
-										console.log(`[Sync Info] Local changes differ from server for Note ${ln.title} (Sync pending or conflict)`)
-										conflictCandidates.push({ local: ln, server: serverNote })
+							// 3. Check for Conflicts (Dirty vs Server Hash Mismatch)
+							const conflictCandidates = []
+							const currentLocalNotes = await LocalDB.getAllNotes(currentUid)
+							for (const ln of currentLocalNotes) {
+								if (ln.sync_status === 'dirty') {
+									const serverNote = notesToSave.find(sn => sn.id === ln.id)
+									if (serverNote) {
+										if (serverNote.content_hash !== ln.content_hash) {
+											console.log(`[Sync Info] conflict candidate: ${ln.title}`)
+											conflictCandidates.push({ local: ln, server: serverNote })
+										}
 									}
 								}
 							}
-						}
 
-						if (conflictCandidates.length > 0) {
-							// For simplicity, handle first conflict
-							const conflict = conflictCandidates[0]
-							// Only trigger if we are currently editing this note
-							if (selectedNote.value && selectedNote.value.id === conflict.local.id) {
-								if (!conflictState.value.isConflict) {
-									enterConflictMode(conflict.local, conflict.server)
+							if (conflictCandidates.length > 0) {
+								const conflict = conflictCandidates[0]
+								if (selectedNote.value && selectedNote.value.id === conflict.local.id) {
+									if (!conflictState.value.isConflict) {
+										enterConflictMode(conflict.local, conflict.server)
+									}
 								}
 							}
-						}
 
-						// Reload merged state strictly for this user
-						notes.value = currentLocalNotes
-						pinnedNotes.value = currentLocalNotes.filter(n => n.is_pinned)
-					} else {
-						notes.value = serverNotes
-						pinnedNotes.value = serverNotes.filter(n => n.is_pinned)
+							// Reload merged state
+							notes.value = currentLocalNotes
+							pinnedNotes.value = currentLocalNotes.filter(n => n.is_pinned)
+						} else {
+							notes.value = serverNotes
+							pinnedNotes.value = serverNotes.filter(n => n.is_pinned)
+						}
 					}
+				} catch (e) {
+					console.error("Fetch Notes Error", e)
+				} finally {
+					loading.value = false
 				}
-			} catch (e) {
-				console.error("Failed to fetch notes", e)
-			} finally {
-				loading.value = false
-			}
+			})();
+
+			if (waitForRemote) await remotePromise
 		}
 
 		const deleteConfirmation = ref({ id: null, type: null })
@@ -1815,6 +1869,10 @@ createApp({
 			currentFolderId.value = folderId
 			rightPanelMode.value = 'list'
 			console.log('rightPanelMode set to', rightPanelMode.value)
+
+			saveUserSetting(STORAGE_KEYS.LAST_FOLDER_ID, folderId === null ? 'null' : folderId)
+			saveUserSetting(STORAGE_KEYS.LAST_PANEL_MODE, 'list')
+
 			// Auto-close sidebar on mobile when folder is selected
 			if (window.innerWidth < 768 && isSidebarOpen.value) {
 				console.log('[Mobile] Auto-closing sidebar. Width:', window.innerWidth)
@@ -1832,8 +1890,15 @@ createApp({
 
 			// 1. Immediate selection for instant UI
 			selectedNote.value = note
+			// Update sidebar folder selection to match note
+			if (note) {
+				currentFolderId.value = note.folder_id
+				saveUserSetting(STORAGE_KEYS.LAST_FOLDER_ID, note.folder_id === null ? 'null' : note.folder_id)
+			}
+
 			if (note && note.id) {
 				saveUserSetting(STORAGE_KEYS.LAST_NOTE_ID, note.id)
+				saveUserSetting(STORAGE_KEYS.LAST_PANEL_MODE, 'edit')
 			}
 			// Ensure content is string for marked
 			if (selectedNote.value.content === null) selectedNote.value.content = ""
