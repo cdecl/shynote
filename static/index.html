@@ -33,6 +33,9 @@
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
     <link href='//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSansNeo.css' rel='stylesheet' type='text/css'>
 
+    <!-- CodeMirror Base CSS (includes search panel styles) -->
+    <link rel="stylesheet" href="https://unpkg.com/@codemirror/view@6.23.0/dist/index.css">
+
 
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/default.css">
@@ -79,9 +82,7 @@
             font-family: 'JetBrains Mono', monospace !important;
         }
 
-        .cm-panel.cm-search {
-            display: none !important;
-        }
+        /* CodeMirror 6 search panel is now visible */
     </style>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -887,21 +888,7 @@
                                 <span class="material-symbols-rounded text-[18px]">format_h3</span>
                             </button>
 
-                            <!-- Search & Replace Toggle -->
-                            <div
-                                class="ml-auto flex items-center border-l pl-2 border-slate-200 dark:border-[#4C566A] gap-1">
-                                <button
-                                    @click="searchState.show = !searchState.show; if(searchState.show) setTimeout(()=>$refs.searchInputRef.focus(), 100)"
-                                    :class="searchState.show ? 'text-blue-600 bg-blue-50 dark:bg-[#434C5E]' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'"
-                                    class="p-1 rounded transition-colors" title="Find">
-                                    <span class="material-symbols-rounded text-[18px]">search</span>
-                                </button>
-                                <button @click="openSearch"
-                                    :class="searchState.showReplace ? 'text-blue-600 bg-blue-50 dark:bg-[#434C5E]' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'"
-                                    class="p-1 rounded transition-colors" title="Replace">
-                                    <span class="material-symbols-rounded text-[18px]">find_replace</span>
-                                </button>
-                            </div>
+                            <!-- Removed custom search UI - using CodeMirror native search (Cmd+F) -->
                         </div>
 
                         <!-- Split Columns -->
@@ -927,32 +914,6 @@
                                         <button @click="resolveConflict('use_server')"
                                             class="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700 font-medium">Use
                                             Server Version</button>
-                                    </div>
-                                </div>
-
-                                <!-- Search Widget (Embedded) -->
-                                <div v-if="searchState.show"
-                                    class="bg-gray-50 dark:bg-[#2E3440] border-b border-gray-200 dark:border-[#434C5E] p-2 flex flex-col gap-2 shadow-sm z-20 relative px-4">
-                                    <div class="flex items-center gap-2">
-                                        <input ref="searchInputRef" v-model="searchState.query"
-                                            @keydown.enter.prevent="executeFind(false, false)"
-                                            @keydown.enter.shift.prevent="executeFind(true, false)"
-                                            @keydown.esc="closeSearch" placeholder="Find..."
-                                            class="flex-1 text-sm rounded border border-gray-300 dark:border-[#4C566A] bg-white dark:bg-[#3B4252] dark:text-[#D8DEE9] px-2 py-1 outline-none focus:border-blue-500">
-                                        <button @click="executeFind(true)" class="p-1 hover:bg-gray-200 rounded"><span
-                                                class="material-symbols-rounded text-[18px]">keyboard_arrow_up</span></button>
-                                        <button @click="executeFind(false)" class="p-1 hover:bg-gray-200 rounded"><span
-                                                class="material-symbols-rounded text-[18px]">keyboard_arrow_down</span></button>
-                                        <button @click="closeSearch" class="p-1 hover:bg-gray-200 rounded"><span
-                                                class="material-symbols-rounded text-[18px]">close</span></button>
-                                    </div>
-                                    <div v-if="searchState.showReplace" class="flex items-center gap-2">
-                                        <input v-model="searchState.replaceText" placeholder="Replace with..."
-                                            class="flex-1 text-sm rounded border border-gray-300 dark:border-[#4C566A] bg-white dark:bg-[#3B4252] dark:text-[#D8DEE9] px-2 py-1 outline-none focus:border-blue-500">
-                                        <button @click="executeReplace(false)"
-                                            class="px-2 py-1 bg-white border rounded text-xs">Replace</button>
-                                        <button @click="executeReplace(true)"
-                                            class="px-2 py-1 bg-white border rounded text-xs">All</button>
                                     </div>
                                 </div>
 
@@ -1150,7 +1111,7 @@
             });
         }
     </script>
-    <script src="/static/app.js?v=10" type="module"></script>
+    <script src="/static/app.js?v=18" type="module"></script>
 </body>
 
 </html>

@@ -1,13 +1,13 @@
 import { EditorView, keymap, highlightSpecialChars, drawSelection, dropCursor, crosshairCursor, lineNumbers, highlightActiveLineGutter, placeholder } from "https://esm.sh/@codemirror/view@6.23.0?deps=@codemirror/state@6.4.0"
 import { EditorState, Compartment, EditorSelection } from "https://esm.sh/@codemirror/state@6.4.0"
-import { markdown, markdownLanguage } from "https://esm.sh/@codemirror/lang-markdown@6.2.3?deps=@codemirror/state@6.4.0"
-import { languages } from "https://esm.sh/@codemirror/language-data@6.4.0?deps=@codemirror/state@6.4.0"
-import { defaultKeymap, history, historyKeymap } from "https://esm.sh/@codemirror/commands@6.3.3?deps=@codemirror/state@6.4.0"
-import { search, searchKeymap, highlightSelectionMatches, setSearchQuery, SearchQuery, findNext, findPrevious } from "https://esm.sh/@codemirror/search@6.5.5?deps=@codemirror/state@6.4.0"
-import { oneDark } from "https://esm.sh/@codemirror/theme-one-dark@6.1.2?deps=@codemirror/state@6.4.0"
-import { syntaxHighlighting, defaultHighlightStyle, bracketMatching } from "https://esm.sh/@codemirror/language@6.10.0?deps=@codemirror/state@6.4.0"
-import { closeBrackets, closeBracketsKeymap } from "https://esm.sh/@codemirror/autocomplete@6.12.0?deps=@codemirror/state@6.4.0"
-import { MergeView } from "https://esm.sh/@codemirror/merge@6.4.0?deps=@codemirror/state@6.4.0, @codemirror/view@6.23.0"
+import { markdown, markdownLanguage } from "https://esm.sh/@codemirror/lang-markdown@6.2.3?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
+import { languages } from "https://esm.sh/@codemirror/language-data@6.4.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
+import { defaultKeymap, history, historyKeymap } from "https://esm.sh/@codemirror/commands@6.3.3?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
+import { search, searchKeymap, highlightSelectionMatches, setSearchQuery, SearchQuery, findNext, findPrevious, openSearchPanel } from "https://esm.sh/@codemirror/search@6.5.5?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
+import { githubLight, githubDark } from "https://esm.sh/@uiw/codemirror-theme-github@4.23.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
+import { syntaxHighlighting, defaultHighlightStyle, bracketMatching } from "https://esm.sh/@codemirror/language@6.10.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
+import { closeBrackets, closeBracketsKeymap } from "https://esm.sh/@codemirror/autocomplete@6.12.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
+import { MergeView } from "https://esm.sh/@codemirror/merge@6.4.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
 import jsyaml from "https://esm.sh/js-yaml@4.1.0"
 import { LocalDB } from "./local_db.js"
 
@@ -569,46 +569,25 @@ createApp({
 			const startState = EditorState.create({
 				doc: selectedNote.value ? (selectedNote.value.content || '') : '',
 				extensions: [
-					keymap.of([...defaultKeymap, ...historyKeymap]), // Standard keys
 					history(),
 					drawSelection(),
-					search({ top: true }),
+					search({ top: true }), // Move to Top
 					dropCursor(),
 					EditorState.allowMultipleSelections.of(true),
 					markdown({ base: markdownLanguage, codeLanguages: languages }), // Markdown logic
-					syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+					// syntaxHighlighting(defaultHighlightStyle, { fallback: true }), // Removed to favor Theme's highlighting
 					bracketMatching(),
 					closeBrackets(),
-					keymap.of(closeBracketsKeymap),
 					highlightActiveLineGutter(),
 					highlightSpecialChars(),
 					placeholder('Start typing...'),
-					// Theme Compartment
-					themeCompartment.of(isDarkMode.value ? oneDark : []),
+					// Base Theme Compartment (GitHub Dark / Light)
+					themeCompartment.of(isDarkMode.value ? githubDark : githubLight),
+					// Custom Theme Compartment (Colors, Fonts, Overrides)
+					customThemeCompartment.of(getCustomTheme(isDarkMode.value)),
 					// Word Wrap Compartment
 					wordWrapCompartment.of(EditorView.lineWrapping),
-					// Custom Theme for Caret & Font & Search
-					EditorView.theme({
-						"&": { fontSize: "inherit" },
-						".cm-scroller": { fontFamily: "'JetBrains Mono', monospace" },
-						".cm-content": {
-							fontFamily: "'JetBrains Mono', monospace",
-							padding: "5px !important"
-						},
-						".cm-cursor, .cm-dropCursor": { borderLeftColor: "#528bff" },
-						"&.cm-focused .cm-cursor": { borderLeftColor: "#528bff" },
-						"&.cm-focused .cm-selectionBackground, ::selection": { backgroundColor: isDarkMode.value ? "rgba(104, 151, 187, 0.4) !important" : "#D9D9D9 !important" },
 
-						// Search Match Colors
-						".cm-searchMatch": {
-							backgroundColor: isDarkMode.value ? "#FDD835" : "#FFFF0055",
-							color: isDarkMode.value ? "#000000 !important" : "inherit"
-						},
-						".cm-searchMatch-selected": {
-							backgroundColor: isDarkMode.value ? "#FF9800" : "#FF9900",
-							color: isDarkMode.value ? "#000000 !important" : "inherit"
-						}
-					}),
 					// Update Listener (Sync)
 					EditorView.updateListener.of((update) => {
 						if (update.docChanged) {
@@ -626,17 +605,17 @@ createApp({
 					EditorView.domEventHandlers({
 						scroll: handleScroll
 					}),
-					// Custom Keymap for Save/Find/Formatting
+					// Keymaps
 					keymap.of([
 						{ key: "Mod-s", run: () => { manualSave(); return true } },
-						{ key: "Mod-f", run: () => { openSearch(); return true } },
-						{ key: "Mod-g", run: () => { executeFind(false); return true } },
-						{ key: "Shift-Mod-g", run: () => { executeFind(true); return true } },
-						{ key: "Escape", run: () => { closeSearch(); return false } }, // Fallback escape
 						{ key: "Mod-b", run: () => { formatText('bold'); return true } },
 						{ key: "Mod-i", run: () => { formatText('italic'); return true } },
 						{ key: "Mod-k", run: () => { formatText('link'); return true } }
-					])
+					]),
+					keymap.of(closeBracketsKeymap),
+					keymap.of(historyKeymap),
+					keymap.of(searchKeymap),
+					keymap.of(defaultKeymap)
 				]
 			})
 
@@ -645,6 +624,196 @@ createApp({
 				parent: editorRef.value
 			})
 		}
+
+		// --- Theme Logic ---
+		const customThemeCompartment = new Compartment()
+
+		const getCustomTheme = (isDark) => {
+			return EditorView.theme({
+				"&": { fontSize: "inherit" },
+				".cm-scroller": { fontFamily: "'JetBrains Mono', monospace" },
+				".cm-content": {
+					fontFamily: "'JetBrains Mono', monospace",
+					padding: "5px !important"
+				},
+				// Cursor Color (GitHub Like)
+				".cm-cursor, .cm-dropCursor": { borderLeftColor: isDark ? "#58a6ff" : "#0969da" },
+				"&.cm-focused .cm-cursor": { borderLeftColor: isDark ? "#58a6ff" : "#0969da" },
+				"&.cm-focused .cm-selectionBackground, ::selection": {
+					backgroundColor: isDark ? "rgba(56, 139, 253, 0.4) !important" : "#b6e3ff !important"
+				},
+
+				// Search Match Colors (GitHub Style Highlighting)
+				".cm-searchMatch": {
+					backgroundColor: isDark ? "rgba(242, 204, 96, 0.4) !important" : "#fff8c5 !important",
+					color: "inherit !important"
+				},
+				".cm-searchMatch-selected": {
+					backgroundColor: isDark ? "rgba(242, 204, 96, 1) !important" : "#f2cc60 !important",
+					color: "#000000 !important",
+					outline: "1px solid #7D4E00",
+					fontWeight: "bold"
+				},
+				".cm-selectionMatch": {
+					backgroundColor: isDark ? "rgba(56, 139, 253, 0.3) !important" : "rgba(182, 227, 255, 0.5) !important"
+				},
+
+				// Search Panel Styles
+				".cm-panels": {
+					zIndex: "99999 !important",
+					position: "sticky !important",
+					top: "0 !important",
+					bottom: "auto !important"
+				},
+				".cm-panel.cm-search": {
+					// GitHub Bg Colors
+					background: isDark ? "#0d1117 !important" : "#ffffff !important",
+					color: isDark ? "#c9d1d9 !important" : "#24292f !important",
+					borderBottom: isDark ? "1px solid #30363d" : "1px solid #e1e4e8",
+					borderTop: "none",
+					padding: "8px 12px",
+					// Robust 2-Row Grid
+					display: "grid !important",
+					// All columns auto to hug content (left aligned)
+					gridTemplateColumns: "auto auto auto auto auto auto auto auto",
+					gridTemplateRows: "auto auto", // Row 1, Row 2
+					columnGap: "2px", // Tight gap
+					rowGap: "8px",
+					justifyContent: "start",
+					alignItems: "center"
+				},
+
+				// --- ROW 1: SEARCH ---
+				".cm-search input[name='search']": {
+					gridColumn: "1",
+					gridRow: "1",
+					background: isDark ? "#010409 !important" : "#f6f8fa !important",
+					color: isDark ? "#c9d1d9 !important" : "#24292f !important",
+					border: isDark ? "1px solid #30363d" : "1px solid #d1d5da",
+					borderRadius: "6px", // GitHub uses slightly rounder
+					padding: "4px 8px",
+					width: "180px",
+					minWidth: "180px",
+					marginRight: "4px"
+				},
+				// Auto-flow items in Row 1 (Labels + Nav)
+				".cm-search label": { gridRow: "1", gridColumn: "auto" },
+				".cm-search button[name='next']": { gridRow: "1", gridColumn: "auto" },
+				".cm-search button[name='prev']": { gridRow: "1", gridColumn: "auto" },
+				".cm-search button[name='close']": { gridRow: "1", gridColumn: "auto" },
+
+				// --- ROW 2: REPLACE ---
+				".cm-search input[name='replace']": {
+					gridColumn: "1",
+					gridRow: "2",
+					background: isDark ? "#010409 !important" : "#f6f8fa !important",
+					color: isDark ? "#c9d1d9 !important" : "#24292f !important",
+					border: isDark ? "1px solid #30363d" : "1px solid #d1d5da",
+					borderRadius: "6px",
+					padding: "4px 8px",
+					width: "180px",
+					minWidth: "180px"
+				},
+				// Auto-flow items in Row 2
+				".cm-search button[name='replace']": { gridRow: "2", gridColumn: "auto" },
+				".cm-search button[name='replaceAll']": { gridRow: "2", gridColumn: "auto" },
+
+				// Hide problematic buttons
+				".cm-search button[name='select']": { display: "none !important" },
+
+				// Button Base
+				".cm-search button": {
+					color: isDark ? "#8b949e !important" : "#57606a !important",
+					cursor: "pointer",
+					padding: "4px 4px",
+					textTransform: "uppercase",
+					whiteSpace: "nowrap",
+					border: "1px solid transparent", // Hover border
+					borderRadius: "6px",
+					background: "transparent",
+					// Iconize Logic
+					fontSize: "0 !important",
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "center",
+					width: "24px",
+					height: "24px"
+				},
+				".cm-search button::after": {
+					fontFamily: "'Material Symbols Rounded'",
+					fontSize: "18px",
+					fontWeight: "normal",
+					lineHeight: "1"
+				},
+
+				// Button Icons
+				".cm-search button[name='next']::after": { content: "'arrow_downward'" },
+				".cm-search button[name='prev']::after": { content: "'arrow_upward'" },
+				".cm-search button[name='close']::after": { content: "'close'" },
+				".cm-search button[name='replace']::after": { content: "'find_replace'" },
+				".cm-search button[name='replaceAll']::after": { content: "'done_all'" },
+
+				".cm-search button:hover": {
+					background: isDark ? "rgba(177,186,196,0.12)" : "rgba(209,213,218,0.5)",
+					opacity: "1"
+				},
+
+				// Toggle Badges (Aa, .*, \b)
+				".cm-search label": {
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "center",
+					fontSize: "0 !important", // Force hide text
+					lineHeight: "1",
+					color: "transparent !important", // Ensure text is invisible
+					textTransform: "none",
+					cursor: "pointer",
+					width: "24px",
+					height: "24px",
+					borderRadius: "4px",
+					border: "1px solid transparent",
+					marginRight: "2px"
+				},
+				".cm-search label input": { display: "none" },
+
+				// Badge Content (restoring distinct text)
+				".cm-search label::after": {
+					fontSize: "13px !important",
+					fontWeight: "bold",
+					color: isDark ? "#8b949e" : "#57606a",
+					visibility: "visible"
+				},
+
+				".cm-search label:has(input[name='case'])::after": { content: "'Aa'" },
+				".cm-search label:has(input[name='whole'])::after": { content: "'\\\\b'" },
+				".cm-search label:has(input[name='re'])::after": { content: "'.*'" },
+
+				// Active State
+				".cm-search label:has(input:checked)": {
+					background: isDark ? "rgba(56,139,253,0.15)" : "#ddf4ff",
+					border: isDark ? "1px solid rgba(56,139,253,0.4)" : "1px solid #0969da"
+				},
+				".cm-search label:has(input:checked)::after": {
+					color: isDark ? "#58a6ff" : "#0969da"
+				},
+
+				".cm-search label:hover": {
+					background: isDark ? "rgba(177,186,196,0.12)" : "rgba(209,213,218,0.5)"
+				}
+			})
+		}
+
+		// Watch for Dark Mode changes to update theme
+		watch(isDarkMode, (newVal) => {
+			if (editorView.value) {
+				editorView.value.dispatch({
+					effects: [
+						themeCompartment.reconfigure(newVal ? githubDark : githubLight),
+						customThemeCompartment.reconfigure(getCustomTheme(newVal))
+					]
+				})
+			}
+		})
 
 		// Conflict Logic
 		const conflictState = ref({
@@ -844,67 +1013,8 @@ createApp({
 			}
 		}
 
-		// --- Search Widget Logic (Simplified) ---
-		// Search highlighting is removed as textarea doesn't support it easily.
-		// We implement Find/Next/Replace.
-		const searchState = ref({
-			show: false,
-			showReplace: false,
-			query: '',
-			replaceText: '',
-			caseSensitive: false,
-			useRegex: false
-		})
-		const searchInputRef = ref(null)
-
-		const updateHighlights = () => {
-			// Not supported in Textarea
-		}
-
-		const openSearch = (replace = false) => {
-			searchState.value.show = true
-			if (replace) searchState.value.showReplace = true
-			nextTick(() => {
-				if (searchInputRef.value) searchInputRef.value.focus()
-				const view = editorView.value
-				if (view && !view.state.selection.main.empty) {
-					const range = view.state.selection.main
-					searchState.value.query = view.state.sliceDoc(range.from, range.to)
-				}
-			})
-		}
-
-		const closeSearch = () => {
-			searchState.value.show = false
-			searchState.value.showReplace = false
-			if (editorView.value) editorView.value.focus()
-		}
-
-		watch(() => [searchState.value.query, searchState.value.caseSensitive, searchState.value.useRegex], () => {
-			// No live highlights
-		})
-
-		const executeFind = (reverse = false, focusEditor = true) => {
-			const view = editorView.value
-			if (!view) return
-			const query = searchState.value.query
-			if (!query) return
-
-			const searchQuery = new SearchQuery({
-				search: query,
-				caseSensitive: searchState.value.caseSensitive,
-				regexp: searchState.value.useRegex
-			})
-
-			view.dispatch({ effects: setSearchQuery.of(searchQuery) })
-
-			if (reverse) {
-				findPrevious(view)
-			} else {
-				findNext(view)
-			}
-			if (focusEditor) view.focus()
-		}
+		// --- Custom Search Removed - Using CodeMirror Native Search ---
+		// Use Cmd+F to open search panel
 
 		const hasSelection = ref(false)
 		const checkSelection = () => {
@@ -928,54 +1038,6 @@ createApp({
 				} else if (source === previewRef.value && scrollDOM) {
 					// Preview -> CM
 					const percentage = source.scrollTop / (source.scrollHeight - source.clientHeight)
-					scrollDOM.scrollTop = percentage * (scrollDOM.scrollHeight - scrollDOM.clientHeight)
-				}
-			}
-		}
-
-		const executeReplace = (all = false) => {
-			const view = editorView.value
-			if (!view) return
-			const content = view.state.doc.toString()
-			let query = searchState.value.query
-			let replace = searchState.value.replaceText
-			if (!query) return
-
-			if (all) {
-				const flags = (searchState.value.caseSensitive ? 'g' : 'gi')
-				const regex = new RegExp(searchState.value.useRegex ? query : query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags)
-				const newContent = content.replace(regex, replace)
-
-				view.dispatch({
-					changes: { from: 0, to: content.length, insert: newContent }
-				})
-				// Update everything
-				selectedNote.value.content = newContent
-			} else {
-				// Replace Current Selection OR Next Match
-				// Check if current selection matches query
-				const selection = view.state.selection.main
-				const selText = view.state.sliceDoc(selection.from, selection.to)
-
-				let isMatch = false
-				if (searchState.value.useRegex) {
-					try {
-						const flags = (searchState.value.caseSensitive ? '' : 'i')
-						const match = selText.match(new RegExp('^' + query + '$', flags)) // Anchor
-						isMatch = !!match
-					} catch (e) { isMatch = false }
-				} else {
-					isMatch = searchState.value.caseSensitive ? selText === query : selText.toLowerCase() === query.toLowerCase()
-				}
-
-				if (isMatch && !selection.empty) {
-					view.dispatch({
-						changes: { from: selection.from, to: selection.to, insert: replace },
-						scrollIntoView: true
-					})
-					executeFind(false, false) // keep focus behavior
-				} else {
-					executeFind(false, false)
 				}
 			}
 		}
@@ -2802,13 +2864,7 @@ createApp({
 			selectFolder,
 			backToList,
 
-			// Search & Edit
-			searchState,
-			openSearch,
-			closeSearch,
-			executeFind,
-			executeReplace,
-			searchInputRef,
+			// Edit
 			hasSelection,
 			checkSelection,
 			getPlainContent,
