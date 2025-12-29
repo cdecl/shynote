@@ -84,7 +84,9 @@ The main panel switches between **List Mode** and **Editor Mode**.
 - **Text Area**: CodeMirror Editor / Preview Pane
 
 #### Editor Bottom Area (Fixed at bottom of Editor Pane)
-- **Formatting Toolbar**: *Left-aligned*
+- **Formatting Toolbar**:
+  - **Desktop**: *Left-aligned*, fixed bar.
+  - **Mobile**: *Floating Pill*, bottom-centered, sliding tools.
   - **Search**: Button (Icon: `search`)
   - **Formatting Tools**:
     - **Text Style**: Bold (`B`), Italic (`I`), Strike (`S`)

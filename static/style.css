@@ -297,3 +297,31 @@ textarea {
 .dark .fm-val {
     color: #D8DEE9;
 }
+
+/* Custom Thin Overlay Scrollbar */
+.thin-scrollbar::-webkit-scrollbar {
+    height: 2px;
+    /* Very thin */
+}
+
+.thin-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    /* Hidden by default */
+    border-radius: 10px;
+}
+
+.thin-scrollbar:hover::-webkit-scrollbar-thumb,
+.thin-scrollbar:active::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    /* visible on hover - slate-300 */
+}
+
+.dark .thin-scrollbar:hover::-webkit-scrollbar-thumb,
+.dark .thin-scrollbar:active::-webkit-scrollbar-thumb {
+    background-color: #4b5563;
+    /* dark mode - gray-600 */
+}

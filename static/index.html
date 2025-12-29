@@ -489,7 +489,8 @@
                             title="Back to Notes">
                             <span class="material-symbols-rounded text-[22px]">arrow_back_ios_new</span>
                             <span class="text-sm font-semibold truncate max-w-[150px] hidden sm:inline-block">
-                                {{ selectedNote.folder_id ? (folders.find(f => f.id === selectedNote.folder_id)?.name ||
+                                {{ selectedNote.folder_id ? (sortedFolders.find(f => f.id ===
+                                selectedNote.folder_id)?.name ||
                                 'Unknown') : 'Inbox' }}
                             </span>
                         </button>
@@ -910,12 +911,12 @@
 
                                 <div class="flex-1 relative overflow-hidden flex flex-col">
                                     <!-- CodeMirror 6 Container -->
-                                    <div ref="editorRef" class="w-full flex-1 overflow-hidden"
+                                    <div ref="editorRef" class="w-full flex-1 overflow-hidden pb-20 md:pb-0"
                                         :style="{ fontSize: fontSize + 'px' }"></div>
 
                                     <!-- Bottom Formatting Toolbar -->
                                     <div
-                                        class="h-10 border-t border-slate-100 dark:border-[#434C5E] bg-white dark:bg-[#24292F] px-4 flex items-center justify-start gap-4 flex-none z-10 transition-colors duration-300">
+                                        class="absolute bottom-6 left-4 right-4 md:static md:bottom-auto md:left-auto md:right-auto h-12 md:h-10 rounded-2xl md:rounded-none shadow-xl md:shadow-none border border-slate-200 dark:border-[#434C5E] md:border-t md:border-x-0 md:border-b-0 bg-white/95 dark:bg-[#24292F]/95 md:bg-white md:dark:bg-[#24292F] backdrop-blur-md md:backdrop-blur-none px-4 flex items-center justify-between md:justify-start md:gap-4 flex-none z-20 transition-all duration-300">
                                         <!-- Left: Search -->
                                         <div class="flex items-center">
                                             <button @mousedown.prevent="triggerSearch()"
@@ -927,7 +928,7 @@
 
                                         <!-- Right: Formatting Tools (Scrollable) -->
                                         <div
-                                            class="flex items-center gap-1 overflow-x-auto no-scrollbar mask-gradient-right">
+                                            class="flex items-center gap-1 overflow-x-auto thin-scrollbar mask-gradient-right">
                                             <button @mousedown.prevent="formatText('bold')"
                                                 class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
                                                 title="Bold (Cmd+B)">
