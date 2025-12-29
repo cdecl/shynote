@@ -1,5 +1,5 @@
-const CACHE_NAME = 'shynote-v41';
-const ASSETS_TO_CACHE = [
+const CACHE_NAME = 'shynote-v42'; // Bumped Version
+const CRITICAL_ASSETS = [
 	'/',
 	'/static/index.html',
 	'/static/style.css',
@@ -9,8 +9,10 @@ const ASSETS_TO_CACHE = [
 	'/static/logo.png',
 	'/static/favicon.ico',
 	'/static/icon-192.png',
-	'/static/icon-512.png',
-	// 'https://cdn.tailwindcss.com', // Removed: CORS issues during install. Handled by runtime cache.
+	'/static/icon-512.png'
+];
+
+const EXTERNAL_ASSETS = [
 	'https://unpkg.com/vue@3/dist/vue.global.js',
 	'https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js',
 	'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js',
@@ -27,10 +29,18 @@ const ASSETS_TO_CACHE = [
 
 self.addEventListener('install', (event) => {
 	event.waitUntil(
-		caches.open(CACHE_NAME).then((cache) => {
-			return cache.addAll(ASSETS_TO_CACHE).catch(err => {
-				console.warn('Cache addAll failed for some assets, continuing', err);
-			});
+		caches.open(CACHE_NAME).then(async (cache) => {
+			console.log('[SW] Caching critical assets...');
+			// 1. Critical Assets: Must succeed for SW to install
+			await cache.addAll(CRITICAL_ASSETS);
+
+			console.log('[SW] Caching external assets...');
+			// 2. External Assets: Attempt to cache, but don't fail install if they error (e.g. CORS/Timeout)
+			try {
+				await cache.addAll(EXTERNAL_ASSETS);
+			} catch (err) {
+				console.warn('[SW] Failed to cache some external assets:', err);
+			}
 		})
 	);
 	self.skipWaiting();
@@ -55,11 +65,12 @@ self.addEventListener('fetch', (event) => {
 	// Only handle GET requests
 	if (event.request.method !== 'GET') return;
 
-	// Skip cross-origin requests that might fail or API requests
+	// Skip API requests
 	const url = new URL(event.request.url);
 	if (url.pathname.startsWith('/api/')) return;
+	if (url.pathname.startsWith('/auth/')) return; // Also skip auth
 
-	// Skip unsupported schemes (like chrome-extension://)
+	// Skip unsupported schemes
 	if (!url.protocol.startsWith('http')) return;
 
 	event.respondWith(
@@ -68,27 +79,24 @@ self.addEventListener('fetch', (event) => {
 				return response;
 			}
 
-			// Clone the request stream
 			const fetchRequest = event.request.clone();
 
 			return fetch(fetchRequest).then((response) => {
-				// Check if we received a valid response
-				// Allow opaque responses (status 0, type 'opaque') for CDN scripts like Tailwind
-				if (!response || (response.status !== 200 && response.type !== 'opaque') || (response.type !== 'basic' && response.type !== 'cors' && response.type !== 'opaque')) {
+				if (!response || (response.status !== 200 && response.type !== 'opaque')) {
 					return response;
 				}
 
-				// Clone the response stream
 				const responseToCache = response.clone();
-
 				caches.open(CACHE_NAME).then((cache) => {
 					cache.put(event.request, responseToCache);
 				});
 
 				return response;
 			}).catch(() => {
+				// Offline Fallback
 				if (event.request.mode === 'navigate') {
-					return caches.match('/static/index.html');
+					// Use '/' as the robust fallback for navigation
+					return caches.match('/');
 				}
 			});
 		})
