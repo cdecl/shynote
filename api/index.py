@@ -37,6 +37,13 @@ def read_root():
         return FileResponse(index_path)
     return {"error": "Static files not found", "path": index_path}
 
+@app.get("/sw.js")
+def read_sw():
+    sw_path = os.path.join(STATIC_DIR, "sw.js")
+    if os.path.exists(sw_path):
+        return FileResponse(sw_path, media_type="application/javascript")
+    return {"error": "Service Worker not found", "path": sw_path}
+
 
 # --- Auth Endpoints ---
 @app.get("/auth/config")

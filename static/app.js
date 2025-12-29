@@ -2254,11 +2254,29 @@ createApp({
 
 
 
+		const handleDeleteOutsideClick = (e) => {
+			// Check if click target is inside a validation box or button
+			// Since we use @click.stop on the box itself in HTML, 
+			// any click that reaches document is by definition "outside" or "unhandled".
+			// However, to be safe, we can just cancel.
+			// But we must ensure this listener doesn't fire for the *triggering* click.
+			console.log('Outside click detected, canceling delete')
+			cancelDelete()
+		}
+
 		const requestDelete = (id, type) => {
+			if (deleteConfirmation.value.id) cancelDelete() // Close existing if any
+
 			deleteConfirmation.value = { id, type }
+
+			// Add listener on next tick to avoid immediate trigger by the button click itself
+			setTimeout(() => {
+				document.addEventListener('click', handleDeleteOutsideClick)
+			}, 0)
 		}
 
 		const confirmDelete = async () => {
+			document.removeEventListener('click', handleDeleteOutsideClick)
 			const { id, type } = deleteConfirmation.value
 			if (!id || !type) return
 
@@ -2271,6 +2289,7 @@ createApp({
 		}
 
 		const cancelDelete = () => {
+			document.removeEventListener('click', handleDeleteOutsideClick)
 			deleteConfirmation.value = { id: null, type: null }
 		}
 
