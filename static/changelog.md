@@ -1,3 +1,14 @@
+# v0.4.0 Release Notes
+
+## Summary
+- **오프라인 안정성 강화**: 폴더 삭제 시 원자적 트랜잭션(Atomic Transaction)을 적용하여 오프라인 환경에서의 오류를 해결했습니다.
+
+## Changes
+- **Offline Reliability**:
+    - **Atomic Delete**: 폴더 삭제 시 내부 노트와 폴더를 한 번의 트랜잭션으로 처리하여 데이터 무결성 보장.
+
+---
+
 # v0.3.7 Release Notes
 
 ## Summary
