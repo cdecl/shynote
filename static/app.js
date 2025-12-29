@@ -2637,7 +2637,7 @@ createApp({
 			const parsedMarkdown = marked.parse(content, {
 				renderer: renderer,
 				gfm: true,
-				breaks: true
+				breaks: false // Standard GFM: single newline is a space, double newline is a paragraph
 			})
 
 			return frontmatterHtml + parsedMarkdown
