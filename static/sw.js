@@ -1,4 +1,4 @@
-const CACHE_NAME = 'shynote-v40';
+const CACHE_NAME = 'shynote-v41';
 const ASSETS_TO_CACHE = [
 	'/',
 	'/static/index.html',
@@ -10,7 +10,7 @@ const ASSETS_TO_CACHE = [
 	'/static/favicon.ico',
 	'/static/icon-192.png',
 	'/static/icon-512.png',
-	'https://cdn.tailwindcss.com',
+	// 'https://cdn.tailwindcss.com', // Removed: CORS issues during install. Handled by runtime cache.
 	'https://unpkg.com/vue@3/dist/vue.global.js',
 	'https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js',
 	'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js',
@@ -59,6 +59,9 @@ self.addEventListener('fetch', (event) => {
 	const url = new URL(event.request.url);
 	if (url.pathname.startsWith('/api/')) return;
 
+	// Skip unsupported schemes (like chrome-extension://)
+	if (!url.protocol.startsWith('http')) return;
+
 	event.respondWith(
 		caches.match(event.request).then((response) => {
 			if (response) {
@@ -70,7 +73,8 @@ self.addEventListener('fetch', (event) => {
 
 			return fetch(fetchRequest).then((response) => {
 				// Check if we received a valid response
-				if (!response || response.status !== 200 || (response.type !== 'basic' && response.type !== 'cors')) {
+				// Allow opaque responses (status 0, type 'opaque') for CDN scripts like Tailwind
+				if (!response || (response.status !== 200 && response.type !== 'opaque') || (response.type !== 'basic' && response.type !== 'cors' && response.type !== 'opaque')) {
 					return response;
 				}
 

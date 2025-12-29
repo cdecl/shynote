@@ -292,12 +292,27 @@ createApp({
 				'Authorization': `Bearer ${token}`
 			}
 
-			const response = await fetch(url, { ...options, headers })
-			if (response.status === 401) {
-				logout()
-				return null
+			// Timeout Logic (5s)
+			const controller = new AbortController()
+			const timeoutId = setTimeout(() => controller.abort(), 5000)
+
+			try {
+				const response = await fetch(url, { ...options, headers, signal: controller.signal })
+				clearTimeout(timeoutId)
+
+				if (response.status === 401) {
+					logout()
+					return null
+				}
+				return response
+			} catch (e) {
+				clearTimeout(timeoutId)
+				if (e.name === 'AbortError') {
+					console.warn(`Request timed out: ${url}`)
+					throw new Error('Network timeout')
+				}
+				throw e
 			}
-			return response
 		}
 		// Forward declaration not possible with const, so we change logic order.
 		// We will define debouncedUpdate and updateNote BEFORE handleInput.
@@ -355,7 +370,7 @@ createApp({
 							rawNote.user_id = currentUserId.value
 						}
 						await LocalDB.saveNote(rawNote)
-						statusMessage.value = 'Saved locally'
+						statusMessage.value = 'Save Complete' // Renamed from 'Saved locally'
 
 						// FIX: Update memory list immediately
 						const idx = notes.value.findIndex(n => n.id === rawNote.id)
@@ -423,6 +438,11 @@ createApp({
 							// Default: Overwrite with latest (e.g. UPDATE -> UPDATE, or DELETE)
 							latestUpdates[log.entity_id] = log
 						}
+					}
+
+					// Use 'Pushing...' to indicate active upload
+					if (statusMessage.value !== 'Typing...') {
+						statusMessage.value = 'Pushing...'
 					}
 
 					// Sort updates to handle dependencies (Folders first, then Notes)
@@ -518,8 +538,9 @@ createApp({
 									await LocalDB.markFolderSynced(log.entity_id)
 								}
 
-								if (statusMessage.value === 'Saved locally') {
-									statusMessage.value = 'Synced'
+								if (statusMessage.value === 'Save Complete' || statusMessage.value === 'Pushing...') {
+									statusMessage.value = 'Push Complete'
+									// Persist 'Push Complete' state (No revert to Ready)
 								}
 							} else {
 								console.error(`Sync Failed for ${log.entity} ${log.entity_id}:`, response.status)
@@ -534,8 +555,61 @@ createApp({
 			}
 		}
 
-		if (hasIDB) {
-			setInterval(syncWorker, 5000)
+
+		// --- Smart Sync Logic ---
+		// Initialize isOnline carefully. 
+		// Note: navigator.onLine is true by default in some contexts if undefined.
+		const isOnline = ref(true)
+
+		if (typeof navigator !== 'undefined') {
+			isOnline.value = navigator.onLine
+		}
+
+		let syncInterval = null
+
+		const startSync = () => {
+			if (syncInterval) clearInterval(syncInterval)
+			// Check isOnline again just in case
+			if (isOnline.value && hasIDB) {
+				console.log('[Smart Sync] Online detected. Starting sync loop.')
+				syncWorker() // Run immediately
+				syncInterval = setInterval(syncWorker, 5000)
+			}
+		}
+
+		const stopSync = () => {
+			if (syncInterval) {
+				console.log('[Smart Sync] Offline detected. Pausing sync loop.')
+				clearInterval(syncInterval)
+				syncInterval = null
+			}
+		}
+
+		if (typeof window !== 'undefined') {
+			window.addEventListener('online', () => {
+				isOnline.value = true
+				// 1. Immediate Pull (Load latest data)
+				if (isAuthenticated.value) {
+					console.log('[Smart Sync] Connection restored. Fetching notes...')
+					loadingState.value = { source: 'SYNC', message: 'Pulling...' } // NEW: Explicit "Pull" status
+					fetchNotes(false).then(() => {
+						loadingState.value = { source: 'CLOUD', message: 'Pull Complete' }
+						// Persist 'Pull Complete' state
+					})
+				}
+				// 2. Resume Push Loop
+				startSync()
+			})
+
+			window.addEventListener('offline', () => {
+				isOnline.value = false
+				stopSync()
+			})
+
+			// Initial Start
+			if (hasIDB) {
+				startSync()
+			}
 		}
 
 
@@ -1885,7 +1959,7 @@ createApp({
 						notes.value = localNotes
 						pinnedNotes.value = localNotes.filter(n => n.is_pinned)
 						loading.value = false // <--- SHOW CONTENT IMMEDIATELY (Optimistic UI)
-						loadingState.value = { source: 'IDB', message: 'Loaded from Local DB' } // NEW
+						loadingState.value = { source: 'IDB', message: 'Load Complete' } // Renamed from Loaded from Local DB
 					}
 				} catch (e) { console.error("Local Load Error", e) }
 			}
@@ -1966,7 +2040,7 @@ createApp({
 			})();
 
 			if (waitForRemote) await remotePromise
-			loadingState.value = { source: 'CLOUD', message: 'Synced with Server' } // NEW
+			loadingState.value = { source: 'CLOUD', message: 'Pull Complete' } // Renamed from Synced with Server
 			console.log('[fetchNotes] Completed')
 		}
 
@@ -3084,7 +3158,8 @@ createApp({
 			showAbout,
 			isSharing,
 			isSortMenuOpen,
-			handleFileInput
+			handleFileInput,
+			isOnline // Exposed to template
 		}
 	}
 }).mount('#app')

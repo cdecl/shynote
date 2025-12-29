@@ -87,6 +87,9 @@
         }
 
         /* CodeMirror 6 search panel is now visible */
+        [v-cloak] {
+            display: none !important;
+        }
     </style>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -96,11 +99,20 @@
     <div id="app" class="flex h-full">
         <!-- Splash Screen (Auto-removed when Vue mounts) -->
         <div class="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gray-100 dark:bg-[#24292F]"
-            v-if="false">
-            <img src="/static/logo.png" class="w-24 h-24 rounded-full shadow-2xl animate-pulse" alt="SHYNOTE">
+            v-if="loading && notes.length === 0">
+            <img src="/static/logo.png" class="w-24 h-24 rounded-full shadow-2xl animate-pulse mb-4" alt="SHYNOTE">
+
+            <!-- Status Info on Splash -->
+            <div class="flex flex-col items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400"
+                v-cloak>
+                <span :class="isOnline ? 'text-green-600' : 'text-red-500'">
+                    {{ isOnline ? 'Online' : 'Offline' }}
+                </span>
+                <span>{{ loadingState.message }}</span>
+            </div>
         </div>
         <!-- Login Modal -->
-        <div v-if="!isAuthenticated"
+        <div v-if="!isAuthenticated && !loading"
             class="fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center backdrop-blur-sm">
             <div
                 class="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-2xl w-96 text-center transform transition-all scale-100 dark:text-white">
@@ -1111,7 +1123,17 @@
                 <!-- Status Bar -->
                 <!-- Status Bar -->
                 <footer
-                    class="h-6 bg-slate-100 dark:bg-[#2E3440] border-t border-slate-200 dark:border-[#3B4252] flex items-center justify-end px-3 select-none shrink-0 z-50 transition-colors duration-300">
+                    class="h-6 bg-slate-100 dark:bg-[#2E3440] border-t border-slate-200 dark:border-[#3B4252] flex items-center justify-between px-3 select-none shrink-0 z-50 transition-colors duration-300">
+                    <!-- Left: Online Status -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-extrabold flex items-center gap-1.5 uppercase tracking-wide"
+                            :class="isOnline ? 'text-green-600 dark:text-green-400' : 'text-red-500'">
+                            <span class="w-1.5 h-1.5 rounded-full"
+                                :class="isOnline ? 'bg-green-500' : 'bg-red-500'"></span>
+                            {{ isOnline ? 'Online' : 'Offline' }}
+                        </span>
+                    </div>
+
                     <div class="flex items-center gap-2">
                         <!-- Data Source Indicator (Global) -->
                         <span class="text-[10px] font-extrabold flex items-center gap-1.5" :class="{
@@ -1121,10 +1143,9 @@
                             }">
 
                             <span v-if="loadingState.source === 'IDB'" class="material-symbols-rounded text-[14px]"
-                                title="Loaded from Local IndexedDB">database</span>
+                                title="Local Load Complete">database</span>
                             <span v-else-if="loadingState.source === 'CLOUD'"
-                                class="material-symbols-rounded text-[14px]"
-                                title="Synced with Server">cloud_done</span>
+                                class="material-symbols-rounded text-[14px]" title="Pull Complete">cloud_done</span>
                             <span v-else-if="loadingState.source === 'SYNC'"
                                 class="material-symbols-rounded text-[14px] animate-spin" title="Syncing...">sync</span>
                             <span v-else class="material-symbols-rounded text-[14px]">cloud_off</span>
@@ -1140,7 +1161,7 @@
                             <span v-if="hasIDB" class="material-symbols-rounded text-[10px] mr-1"
                                 :class="isSyncing ? 'animate-spin text-green-500' : ''"
                                 title="Local-First Storage Active">dns</span>
-                            <span class="mr-1">{{ statusMessage === 'Ready' ? 'Locally Saved' : statusMessage }}</span>
+                            <span class="mr-1">{{ statusMessage === 'Ready' ? 'Save Complete' : statusMessage }}</span>
                         </span>
 
                         <span v-if="selectedNote" class="w-[1px] h-2.5 bg-slate-300 dark:bg-slate-600"></span>
