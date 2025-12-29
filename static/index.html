@@ -1142,6 +1142,17 @@
                     </div>
 
                     <div class="flex items-center gap-2">
+                        <!-- Sync Status -->
+                        <span
+                            class="text-[10px] font-medium text-[#1e3a8a] dark:text-[#8FBCBB] uppercase tracking-widest leading-none flex items-center">
+                            <span v-if="hasIDB" class="material-symbols-rounded text-[10px] mr-1"
+                                :class="isSyncing ? 'animate-spin text-green-500' : ''"
+                                title="Local-First Storage Active">dns</span>
+                            <span class="mr-1">{{ statusMessage === 'Ready' ? 'Save Complete' : statusMessage }}</span>
+                        </span>
+
+                        <span class="w-[1px] h-2.5 bg-slate-300 dark:bg-slate-600 mx-1"></span>
+
                         <!-- Data Source Indicator (Global) -->
                         <span class="text-[10px] font-medium flex items-center gap-1.5" :class="{
                                 'text-purple-600 dark:text-purple-400': loadingState.source === 'IDB',
@@ -1158,17 +1169,6 @@
                             <span v-else class="material-symbols-rounded text-[14px]">cloud_off</span>
 
                             <span class="uppercase tracking-wide">{{ loadingState.message }}</span>
-                        </span>
-
-                        <span class="w-[1px] h-2.5 bg-slate-300 dark:bg-slate-600 mx-1"></span>
-
-                        <!-- Sync Status -->
-                        <span
-                            class="text-[10px] font-medium text-[#1e3a8a] dark:text-[#8FBCBB] uppercase tracking-widest leading-none flex items-center">
-                            <span v-if="hasIDB" class="material-symbols-rounded text-[10px] mr-1"
-                                :class="isSyncing ? 'animate-spin text-green-500' : ''"
-                                title="Local-First Storage Active">dns</span>
-                            <span class="mr-1">{{ statusMessage === 'Ready' ? 'Save Complete' : statusMessage }}</span>
                         </span>
 
                         <span v-if="selectedNote"
