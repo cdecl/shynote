@@ -592,7 +592,11 @@ createApp({
 				if (isAuthenticated.value) {
 					console.log('[Smart Sync] Connection restored. Fetching notes...')
 					loadingState.value = { source: 'SYNC', message: 'Pulling...' } // NEW: Explicit "Pull" status
-					fetchNotes(false).then(() => {
+
+					// Fetch Folders AND Notes (Parallel or Sequential)
+					// Folders first to ensure IDs exist? Parallel is fine as they are independent tables usually, 
+					// but UI might need folder to display note properly in sidebar.
+					Promise.all([fetchFolders(false), fetchNotes(false)]).then(() => {
 						loadingState.value = { source: 'CLOUD', message: 'Pull Complete' }
 						// Persist 'Pull Complete' state
 					})
@@ -2290,7 +2294,7 @@ createApp({
 							// Update UI with server version (if still selected)
 							if (selectedNote.value && selectedNote.value.id === note.id) {
 								selectedNote.value = serverNote
-								loadingState.value = { source: 'CLOUD', message: 'Updated from Server' }
+								loadingState.value = { source: 'CLOUD', message: 'Pull Complete' }
 								// Update editor content directly
 								nextTick(() => {
 									if (editorView.value && !conflictState.value.isConflict) {
@@ -2469,19 +2473,20 @@ createApp({
 			notes.value = notes.value.filter(n => n.folder_id !== id)
 
 			try {
-				const response = await authenticatedFetch(`/api/folders/${id}`, { method: 'DELETE' })
-				if (response && response.ok) {
-					if (hasIDB) {
-						// Delete local notes in this folder
-						// (Optimist: They are already gone from UI)
-						const folderNotes = prevNotes.filter(n => n.folder_id === id)
-						for (const n of folderNotes) {
-							await LocalDB.deleteNote(n.id)
-						}
-						await LocalDB.deleteFolder(id)
+				if (hasIDB) {
+					// Local-First: Delete locally (adds logs for SyncWorker)
+					// Delete local notes in this folder first
+					const folderNotes = prevNotes.filter(n => n.folder_id === id)
+					for (const n of folderNotes) {
+						await LocalDB.deleteNote(n.id)
 					}
+					await LocalDB.deleteFolder(id)
+					// We do not await server response here. SyncWorker handles it.
 				} else {
-					throw new Error("Server deletion failed")
+					const response = await authenticatedFetch(`/api/folders/${id}`, { method: 'DELETE' })
+					if (!response || !response.ok) {
+						throw new Error("Server deletion failed")
+					}
 				}
 			} catch (e) {
 				console.error("Delete folder failed", e)
