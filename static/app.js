@@ -111,7 +111,9 @@ createApp({
 		const folders = ref([])
 		const selectedNote = ref(null)
 		const loading = ref(false)
+		const isSyncing = ref(false)
 		const statusMessage = ref('Ready')
+		const loadingState = ref({ source: 'NONE', message: 'Idle' }) // NEW: Data Source Tracking
 		const isSidebarOpen = ref(true)
 		const editorRef = ref(null)
 		const previewRef = ref(null)
@@ -329,7 +331,7 @@ createApp({
 		}
 
 		const hasIDB = typeof window !== 'undefined' && 'indexedDB' in window
-		const isSyncing = ref(false)
+
 
 		const debouncedUpdate = () => {
 			statusMessage.value = 'Typing...'
@@ -635,9 +637,9 @@ createApp({
 		const getCustomTheme = (isDark) => {
 			return EditorView.theme({
 				"&": { fontSize: "inherit" },
-				".cm-scroller": { fontFamily: "'JetBrains Mono', monospace" },
+				".cm-scroller": { fontFamily: "'Pretendard', 'JetBrains Mono', monospace" },
 				".cm-content": {
-					fontFamily: "'JetBrains Mono', monospace",
+					fontFamily: "'Pretendard', 'JetBrains Mono', monospace",
 					padding: "5px !important"
 				},
 				// Cursor Color (GitHub Like)
@@ -1746,8 +1748,14 @@ createApp({
 						notes.value = localNotes
 						pinnedNotes.value = localNotes.filter(n => n.is_pinned)
 						loading.value = false // <--- SHOW CONTENT IMMEDIATELY (Optimistic UI)
+						loadingState.value = { source: 'IDB', message: 'Loaded from Local DB' } // NEW
 					}
 				} catch (e) { console.error("Local Load Error", e) }
+			}
+
+			// Show syncing status if we successfully loaded local data
+			if (!loading.value) {
+				loadingState.value = { source: 'SYNC', message: 'Syncing...' }
 			}
 
 			const remotePromise = (async () => {
@@ -1821,6 +1829,7 @@ createApp({
 			})();
 
 			if (waitForRemote) await remotePromise
+			loadingState.value = { source: 'CLOUD', message: 'Synced with Server' } // NEW
 			console.log('[fetchNotes] Completed')
 		}
 
@@ -2030,6 +2039,7 @@ createApp({
 					if (localNote) {
 						// Update with local data (may be more recent if edited offline)
 						selectedNote.value = localNote
+						loadingState.value = { source: 'IDB', message: 'Local Cache' }
 					}
 				} catch (e) {
 					console.error("Failed to load from IndexedDB", e)
@@ -2069,6 +2079,7 @@ createApp({
 							// Update UI with server version (if still selected)
 							if (selectedNote.value && selectedNote.value.id === note.id) {
 								selectedNote.value = serverNote
+								loadingState.value = { source: 'CLOUD', message: 'Updated from Server' }
 								// Update editor content directly
 								nextTick(() => {
 									if (editorView.value && !conflictState.value.isConflict) {
@@ -2745,6 +2756,7 @@ createApp({
 			selectedNote,
 			loading,
 			statusMessage,
+			loadingState, // NEW
 			createFolder,
 			createNote,
 			createNoteInFolder,
