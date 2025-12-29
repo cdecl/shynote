@@ -1,3 +1,19 @@
+# v0.3.7 Release Notes
+
+## Summary
+- **이미지 업로드**: 드래그 앤 드롭 및 붙여넣기를 통한 이미지 업로드 기능을 추가했습니다.
+- **데이터 안정성**: 폴더 동기화 로직을 개선하여 데이터 유실 없는 안정적인 환경을 구축했습니다.
+
+## Changes
+- **Image Upload**:
+    - **Drag & Drop**: 에디터에 이미지 파일을 드래그하여 즉시 업로드.
+    - **Paste**: 클립보드 이미지를 붙여넣어 업로드.
+    - **Supabase Storage**: 빠르고 안전한 이미지 호스팅 연동.
+- **Bug Fixes**:
+    - **Folder Sync**: 초기 로딩 및 동기화 시 폴더 목록이 깜빡이거나 사라지는 문제 수정.
+    - **Status visibility**: 노트 리스트 화면에서도 동기화 상태(Syncing...)가 보이도록 UI 개선.
+
+---
 # v0.3.6 Release Notes
 
 ## Summary

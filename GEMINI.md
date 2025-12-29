@@ -10,7 +10,7 @@
 2.  **최신화**: `docs/` 폴더 내의 산출물(`implementation_plan.md`, `walkthrough.md` 등)은 코드 변경 시 **반드시 즉시 업데이트**합니다.
 3.  **위치**: 프로젝트 관련 문서는 `docs/` 폴더에서 관리합니다.
 
-### 릴리즈 및 버전 관리 (Release Process)
+### 릴리즈 및 버전, 패치 관리 (Release Process)
 버전을 변경할 때는 다음 3개의 파일이 **항상 동기화**되어야 합니다.
 1.  **`static/version.json`**: 앱 내 표시용 버전.
 2.  **`pyproject.toml`**: 패키지 관리용 버전.
