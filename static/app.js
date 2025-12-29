@@ -210,7 +210,15 @@ createApp({
 				const bad = () => Promise.resolve({ ok: false, status: 400, json: () => Promise.resolve({ error: 'Bad Request' }) })
 
 				const method = options.method || 'GET'
-				const body = options.body ? JSON.parse(options.body) : {}
+				let body = {}
+				if (options.body) {
+					if (options.body instanceof FormData) {
+						body = {}
+						options.body.forEach((value, key) => body[key] = value)
+					} else {
+						try { body = JSON.parse(options.body) } catch (e) { }
+					}
+				}
 
 				// 1. Auth / Profile
 				if (url.includes('/auth/me')) {
@@ -534,11 +542,95 @@ createApp({
 
 
 
-		// New Handlers
 
-		// New Handlers
 
 		const editorView = ref(null)
+
+		// --- Image Upload Logic ---
+		const uploadImage = async (file) => {
+			const formData = new FormData();
+			formData.append('file', file);
+
+			// Note: Do not set Content-Type header for FormData, let browser set boundary
+			const response = await authenticatedFetch('/api/upload', {
+				method: 'POST',
+				body: formData
+			});
+
+			if (response && response.ok) {
+				const data = await response.json();
+				return data.url;
+			}
+			throw new Error('Upload failed');
+		}
+
+		const processImageUpload = async (view, file) => {
+			// 1. Insert Placeholder
+			const id = uuidv7(); // Use our UUID generator
+			const placeholder = `![Uploading ${file.name}...](${id})`;
+
+			const transaction = view.state.update({
+				changes: { from: view.state.selection.main.from, insert: placeholder }
+			});
+			view.dispatch(transaction);
+
+			try {
+				const url = await uploadImage(file);
+
+				// 2. Replace Placeholder with Real Image
+				const currentDoc = view.state.doc.toString();
+				const idx = currentDoc.indexOf(placeholder);
+				if (idx !== -1) {
+					view.dispatch({
+						changes: {
+							from: idx,
+							to: idx + placeholder.length,
+							insert: `![${file.name}](${url})`
+						}
+					});
+				}
+			} catch (e) {
+				console.error("Image upload failed", e);
+				const currentDoc = view.state.doc.toString();
+				const idx = currentDoc.indexOf(placeholder);
+				if (idx !== -1) {
+					view.dispatch({
+						changes: {
+							from: idx,
+							to: idx + placeholder.length,
+							insert: `[Upload Failed: ${file.name}]`
+						}
+					});
+				}
+				alert("Image upload failed. Please try again.");
+			}
+		}
+
+		const handlePaste = (event, view) => {
+			const items = event.clipboardData?.items;
+			if (items) {
+				for (const item of items) {
+					if (item.type.indexOf('image') !== -1) {
+						event.preventDefault();
+						const file = item.getAsFile();
+						processImageUpload(view, file);
+						return;
+					}
+				}
+			}
+		}
+
+		const handleEditorDrop = (event, view) => {
+			const files = event.dataTransfer?.files;
+			if (files && files.length > 0) {
+				const file = files[0];
+				if (file.type.startsWith('image/')) {
+					event.preventDefault();
+					processImageUpload(view, file);
+				}
+			}
+		}
+
 		const themeCompartment = new Compartment()
 		const wordWrapCompartment = new Compartment()
 
@@ -606,7 +698,9 @@ createApp({
 					}),
 					// Check for Scroll Sync
 					EditorView.domEventHandlers({
-						scroll: handleScroll
+						scroll: handleScroll,
+						paste: (event, view) => handlePaste(event, view),
+						drop: (event, view) => handleEditorDrop(event, view)
 					}),
 					// Keymaps
 					keymap.of([
@@ -1683,10 +1777,12 @@ createApp({
 			console.log('[fetchFolders] Started')
 			if (!isAuthenticated.value) return
 
+			const uid = currentUserId.value;
+
 			try {
 				// 1. Load from LocalDB first (if available)
 				if (hasIDB) {
-					const localFolders = await LocalDB.getAllFolders(currentUserId.value)
+					const localFolders = await LocalDB.getAllFolders(uid)
 					if (localFolders && localFolders.length > 0) {
 						folders.value = localFolders
 					}
@@ -1699,11 +1795,34 @@ createApp({
 						const response = await authenticatedFetch('/api/folders')
 						if (response && response.ok) {
 							const serverFolders = await response.json()
-							folders.value = serverFolders
 
-							// Update LocalDB
 							if (hasIDB) {
+								const currentUid = currentUserId.value || uid;
+
+								// A. Identify Deletions (Server Side Deletion)
+								const localFoldersAll = await LocalDB.getAllFolders(currentUid)
+								const serverIds = new Set(serverFolders.map(f => f.id))
+
+								for (const lf of localFoldersAll) {
+									if (!serverIds.has(lf.id) && lf.sync_status !== 'dirty') {
+										await LocalDB.deleteFolder(lf.id)
+									}
+								}
+
+								// B. Save Server Folders (Bulk Save respects dirty flags)
+								// Ensure user_id is set
+								serverFolders.forEach(f => {
+									f.user_id = f.user_id || currentUid
+								})
 								await LocalDB.saveFoldersBulk(serverFolders)
+
+								// C. Merge for UI Display
+								// We want to show: Server Data + Local Dirty Data
+								// Re-read from LocalDB which now has the merged state
+								const mergedFolders = await LocalDB.getAllFolders(currentUid)
+								folders.value = mergedFolders
+							} else {
+								folders.value = serverFolders
 							}
 						}
 					} catch (e) {

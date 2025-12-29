@@ -1,13 +1,14 @@
 import os
 import uuid
 import hashlib
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List
 from . import models, schemas, database
 from .auth import manager, utils
+from .storage import storage_service
 
 # Get the directory of the current file to resolve static paths correctly
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -468,6 +469,29 @@ def view_shared_note(share_id: str, db: Session = Depends(database.get_db)):
     """
     from fastapi.responses import HTMLResponse
     return HTMLResponse(content=html_content, status_code=200)
+
+
+@app.post("/api/upload")
+async def upload_image(
+    file: UploadFile = File(...),
+    current_user: models.User = Depends(utils.get_current_user)
+):
+    # Validate mime type
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Only images allowed")
+        
+    try:
+        content = await file.read()
+        url = storage_service.upload_file(
+            file_content=content,
+            filename=file.filename,
+            content_type=file.content_type,
+            user_id=current_user.id
+        )
+        return {"url": url}
+    except Exception as e:
+        print(f"Upload failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # Vercel will look for 'app' by default for ASGI.

@@ -1113,8 +1113,8 @@
                 <footer
                     class="h-6 bg-slate-100 dark:bg-[#2E3440] border-t border-slate-200 dark:border-[#3B4252] flex items-center justify-end px-3 select-none shrink-0 z-50 transition-colors duration-300">
                     <div class="flex items-center gap-2">
-                        <!-- Data Source Indicator (Only if note selected) -->
-                        <span v-if="selectedNote" class="text-[10px] font-extrabold flex items-center gap-1.5" :class="{
+                        <!-- Data Source Indicator (Global) -->
+                        <span class="text-[10px] font-extrabold flex items-center gap-1.5" :class="{
                                 'text-purple-600 dark:text-purple-400': loadingState.source === 'IDB',
                                 'text-blue-600 dark:text-blue-400': loadingState.source === 'CLOUD' || loadingState.source === 'SYNC',
                                 'text-slate-400 dark:text-slate-500': loadingState.source === 'NONE'
@@ -1132,7 +1132,7 @@
                             <span class="uppercase tracking-wide">{{ loadingState.message }}</span>
                         </span>
 
-                        <span v-if="selectedNote" class="w-[1px] h-2.5 bg-slate-300 dark:bg-slate-600 mx-1"></span>
+                        <span class="w-[1px] h-2.5 bg-slate-300 dark:bg-slate-600 mx-1"></span>
 
                         <!-- Sync Status -->
                         <span
