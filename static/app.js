@@ -2474,13 +2474,10 @@ createApp({
 
 			try {
 				if (hasIDB) {
-					// Local-First: Delete locally (adds logs for SyncWorker)
-					// Delete local notes in this folder first
+					// Local-First: Atomic Bulk Delete
 					const folderNotes = prevNotes.filter(n => n.folder_id === id)
-					for (const n of folderNotes) {
-						await LocalDB.deleteNote(n.id)
-					}
-					await LocalDB.deleteFolder(id)
+					const noteIds = folderNotes.map(n => n.id)
+					await LocalDB.deleteFolderAndNotes(id, noteIds)
 					// We do not await server response here. SyncWorker handles it.
 				} else {
 					const response = await authenticatedFetch(`/api/folders/${id}`, { method: 'DELETE' })
