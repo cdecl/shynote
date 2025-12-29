@@ -477,7 +477,7 @@
             <div class="flex flex-col h-full">
                 <!-- Toolbar -->
                 <div v-if="rightPanelMode !== 'list' && selectedNote"
-                    class="h-12 border-b border-slate-100 dark:border-[#434C5E] bg-white/80 dark:bg-[#24292F]/80 backdrop-blur-sm sticky top-0 z-30 flex justify-between items-center pl-1 pr-4 flex-shrink-0 transition-colors duration-300">
+                    class="h-12 border-b border-slate-100 dark:border-[#434C5E] bg-white/80 dark:bg-[#24292F]/80 backdrop-blur-sm flex justify-between items-center pl-1 pr-4 flex-shrink-0 transition-colors duration-300 z-30">
                     <div class="flex items-center gap-4">
                         <button @click.stop="toggleSidebar" v-if="!isSidebarOpen"
                             class="p-2 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded-lg transition-all flex-shrink-0"
@@ -563,7 +563,7 @@
                     <!-- View: Note List (Folder Content) -->
                     <div v-if="rightPanelMode === 'list'" @dragover.prevent
                         @drop.prevent="handleDrop(currentFolderId, $event)"
-                        class="flex-1 flex flex-col h-full bg-slate-50 dark:bg-[#2E3440] overflow-hidden relative">
+                        class="flex-1 flex flex-col bg-slate-50 dark:bg-[#2E3440] overflow-hidden relative">
                         <!-- List Header -->
                         <div
                             class="h-12 border-b border-slate-200 dark:border-[#3B4252] flex items-center justify-between px-4 bg-white dark:bg-[#2E3440] z-10 shrink-0">
@@ -628,7 +628,7 @@
                                     <span class="text-[10px] font-semibold uppercase hidden md:inline">Import</span>
                                 </button>
                                 <input id="hidden-file-input" type="file" multiple class="hidden"
-                                    onchange="handleFiles(this.files); this.value = null;">
+                                    @change="handleFileInput">
                             </div>
                         </div>
 
@@ -1048,94 +1048,94 @@
                             </div>
                         </div>
                     </div>
-                </div>
-                <!-- About Modal -->
-                <div v-if="showAbout"
-                    class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in"
-                    @click.self="showAbout = false">
-                    <div
-                        class="bg-white dark:bg-[#2E3440] rounded-2xl shadow-xl w-80 overflow-hidden transform transition-all animate-scale-in border border-slate-200 dark:border-[#3B4252]">
-                        <div class="p-6 text-center">
-                            <div class="w-20 h-20 mx-auto mb-4 flex items-center justify-center">
-                                <img src="/static/logo.png" alt="Shynote Logo"
-                                    class="w-full h-full object-contain drop-shadow-xl rounded-2xl">
+                    <!-- About Modal -->
+                    <div v-if="showAbout"
+                        class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in"
+                        @click.self="showAbout = false">
+                        <div
+                            class="bg-white dark:bg-[#2E3440] rounded-2xl shadow-xl w-80 overflow-hidden transform transition-all animate-scale-in border border-slate-200 dark:border-[#3B4252]">
+                            <div class="p-6 text-center">
+                                <div class="w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                                    <img src="/static/logo.png" alt="Shynote Logo"
+                                        class="w-full h-full object-contain drop-shadow-xl rounded-2xl">
+                                </div>
+                                <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2">Shynote</h3>
+                                <p class="text-slate-500 dark:text-slate-400 mb-6">A simple, privacy-focused
+                                    markdown editor with local-first sync.</p>
+                                <div
+                                    class="flex flex-col gap-2 text-sm text-slate-600 dark:text-[#D8DEE9] bg-slate-50 dark:bg-[#3B4252] p-4 rounded-xl mb-6">
+                                    <div class="flex justify-between">
+                                        <span>Version</span>
+                                        <span class="font-mono font-bold">{{ appVersion }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Storage</span>
+                                        <span class="font-bold">{{ dbType }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Changelog</span>
+                                        <a href="https://github.com/cdecl/shynote/blob/main/static/changelog.md"
+                                            target="_blank"
+                                            class="font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
+                                            View
+                                            <span class="material-symbols-rounded text-[14px]">open_in_new</span>
+                                        </a>
+                                    </div>
+                                </div>
+                                <button @click="showAbout = false"
+                                    class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-colors">
+                                    Close
+                                </button>
                             </div>
-                            <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2">Shynote</h3>
-                            <p class="text-slate-500 dark:text-slate-400 mb-6">A simple, privacy-focused
-                                markdown editor with local-first sync.</p>
-                            <div
-                                class="flex flex-col gap-2 text-sm text-slate-600 dark:text-[#D8DEE9] bg-slate-50 dark:bg-[#3B4252] p-4 rounded-xl mb-6">
-                                <div class="flex justify-between">
-                                    <span>Version</span>
-                                    <span class="font-mono font-bold">{{ appVersion }}</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span>Storage</span>
-                                    <span class="font-bold">{{ dbType }}</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span>Changelog</span>
-                                    <a href="https://github.com/cdecl/shynote/blob/main/static/changelog.md"
-                                        target="_blank"
-                                        class="font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
-                                        View
-                                        <span class="material-symbols-rounded text-[14px]">open_in_new</span>
-                                    </a>
-                                </div>
-                            </div>
-                            <button @click="showAbout = false"
-                                class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-colors">
-                                Close
-                            </button>
                         </div>
                     </div>
-                </div>
-            </div> <!-- Close Main Layout -->
-            <!-- Status Bar -->
-            <!-- Status Bar -->
-            <footer
-                class="h-6 bg-slate-100 dark:bg-[#2E3440] border-t border-slate-200 dark:border-[#3B4252] flex items-center justify-end px-3 select-none shrink-0 z-30 transition-colors duration-300">
-                <div class="flex items-center gap-2">
-                    <!-- Data Source Indicator (Only if note selected) -->
-                    <span v-if="selectedNote" class="text-[10px] font-extrabold flex items-center gap-1.5" :class="{
+                </div> <!-- Close Main Layout -->
+                <!-- Status Bar -->
+                <!-- Status Bar -->
+                <footer
+                    class="h-6 bg-slate-100 dark:bg-[#2E3440] border-t border-slate-200 dark:border-[#3B4252] flex items-center justify-end px-3 select-none shrink-0 z-50 transition-colors duration-300">
+                    <div class="flex items-center gap-2">
+                        <!-- Data Source Indicator (Only if note selected) -->
+                        <span v-if="selectedNote" class="text-[10px] font-extrabold flex items-center gap-1.5" :class="{
                                 'text-purple-600 dark:text-purple-400': loadingState.source === 'IDB',
                                 'text-blue-600 dark:text-blue-400': loadingState.source === 'CLOUD' || loadingState.source === 'SYNC',
                                 'text-slate-400 dark:text-slate-500': loadingState.source === 'NONE'
                             }">
 
-                        <span v-if="loadingState.source === 'IDB'" class="material-symbols-rounded text-[14px]"
-                            title="Loaded from Local IndexedDB">database</span>
-                        <span v-else-if="loadingState.source === 'CLOUD'" class="material-symbols-rounded text-[14px]"
-                            title="Synced with Server">cloud_done</span>
-                        <span v-else-if="loadingState.source === 'SYNC'"
-                            class="material-symbols-rounded text-[14px] animate-spin" title="Syncing...">sync</span>
-                        <span v-else class="material-symbols-rounded text-[14px]">cloud_off</span>
+                            <span v-if="loadingState.source === 'IDB'" class="material-symbols-rounded text-[14px]"
+                                title="Loaded from Local IndexedDB">database</span>
+                            <span v-else-if="loadingState.source === 'CLOUD'"
+                                class="material-symbols-rounded text-[14px]"
+                                title="Synced with Server">cloud_done</span>
+                            <span v-else-if="loadingState.source === 'SYNC'"
+                                class="material-symbols-rounded text-[14px] animate-spin" title="Syncing...">sync</span>
+                            <span v-else class="material-symbols-rounded text-[14px]">cloud_off</span>
 
-                        <span class="uppercase tracking-wide">{{ loadingState.message }}</span>
-                    </span>
+                            <span class="uppercase tracking-wide">{{ loadingState.message }}</span>
+                        </span>
 
-                    <span v-if="selectedNote" class="w-[1px] h-2.5 bg-slate-300 dark:bg-slate-600 mx-1"></span>
+                        <span v-if="selectedNote" class="w-[1px] h-2.5 bg-slate-300 dark:bg-slate-600 mx-1"></span>
 
-                    <!-- Sync Status -->
-                    <span
-                        class="text-[10px] font-extrabold text-[#1e3a8a] dark:text-[#8FBCBB] uppercase tracking-widest leading-none flex items-center">
-                        <span v-if="hasIDB" class="material-symbols-rounded text-[10px] mr-1"
-                            :class="isSyncing ? 'animate-spin text-green-500' : ''"
-                            title="Local-First Storage Active">dns</span>
-                        <span class="mr-1">{{ statusMessage === 'Ready' ? 'Locally Saved' : statusMessage }}</span>
-                    </span>
+                        <!-- Sync Status -->
+                        <span
+                            class="text-[10px] font-extrabold text-[#1e3a8a] dark:text-[#8FBCBB] uppercase tracking-widest leading-none flex items-center">
+                            <span v-if="hasIDB" class="material-symbols-rounded text-[10px] mr-1"
+                                :class="isSyncing ? 'animate-spin text-green-500' : ''"
+                                title="Local-First Storage Active">dns</span>
+                            <span class="mr-1">{{ statusMessage === 'Ready' ? 'Locally Saved' : statusMessage }}</span>
+                        </span>
 
-                    <span v-if="selectedNote" class="w-[1px] h-2.5 bg-slate-300 dark:bg-slate-600"></span>
+                        <span v-if="selectedNote" class="w-[1px] h-2.5 bg-slate-300 dark:bg-slate-600"></span>
 
-                    <span v-if="selectedNote"
-                        class="text-[9px] text-[#1e3a8a] dark:text-[#8FBCBB] font-medium opacity-80 whitespace-nowrap leading-none">
-                        {{ formatDateParts(selectedNote.updated_at).date }} {{
-                        formatDateParts(selectedNote.updated_at).time }}
-                    </span>
-                </div>
-            </footer>
-    </div> <!-- Close flex-col -->
-    </main>
+                        <span v-if="selectedNote"
+                            class="text-[9px] text-[#1e3a8a] dark:text-[#8FBCBB] font-medium opacity-80 whitespace-nowrap leading-none">
+                            {{ formatDateParts(selectedNote.updated_at).date }} {{
+                            formatDateParts(selectedNote.updated_at).time }}
+                        </span>
+                    </div>
+                </footer>
+            </div> <!-- Close flex-col -->
+        </main>
     </div> <!-- Close #app -->
 
     <script>

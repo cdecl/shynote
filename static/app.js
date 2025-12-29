@@ -2441,6 +2441,14 @@ createApp({
 			}
 		}
 
+		const handleFileInput = (event) => {
+			const files = event.target.files
+			if (files && files.length > 0) {
+				handleFiles(files)
+			}
+			event.target.value = null // Reset input
+		}
+
 		const handleDrop = async (targetFolderId, event) => {
 			// Check for Files first
 			if (event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length > 0) {
@@ -2918,7 +2926,8 @@ createApp({
 			closeNewItemMenu,
 			showAbout,
 			isSharing,
-			isSortMenuOpen
+			isSortMenuOpen,
+			handleFileInput
 		}
 	}
 }).mount('#app')
