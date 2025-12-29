@@ -1010,6 +1010,24 @@ createApp({
 			view.dispatch(transaction)
 		}
 
+		const toggleCode = () => {
+			const view = editorView.value
+			if (!view) return
+			view.focus()
+
+			// Check if selection spans multiple lines
+			const range = view.state.selection.main
+			const doc = view.state.doc
+			const startLine = doc.lineAt(range.from).number
+			const endLine = doc.lineAt(range.to).number
+
+			if (startLine !== endLine) {
+				formatText('codeblock')
+			} else {
+				formatText('code')
+			}
+		}
+
 
 		console.log('Setup functions defined')
 
@@ -2805,6 +2823,7 @@ createApp({
 			titleInputRef,
 
 			formatText,
+			toggleCode,
 			triggerSearch: () => {
 				if (editorView.value) {
 					const panel = document.querySelector('.cm-panel.cm-search')

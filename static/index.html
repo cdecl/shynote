@@ -484,6 +484,11 @@
                             title="Open Sidebar">
                             <span class="material-symbols-rounded text-[22px]">view_sidebar</span>
                         </button>
+                        <button @click="backToList()"
+                            class="p-2 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded-lg transition-all flex-shrink-0 flex items-center gap-1"
+                            title="Back to Notes">
+                            <span class="material-symbols-rounded text-[22px]">arrow_back_ios_new</span>
+                        </button>
 
                         <!-- View Mode Tabs (Moved to Header) -->
                         <div class="flex bg-slate-100 dark:bg-[#3B4252] rounded-lg p-0.5 gap-0.5">
@@ -491,19 +496,22 @@
                                 :class="viewMode === 'edit' ? 'bg-white dark:bg-[#4C566A] shadow-sm text-blue-600 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'"
                                 class="px-3 py-1.5 text-[11px] font-bold rounded-md transition-all flex items-center gap-1"
                                 title="Editor">
-                                <span class="material-symbols-rounded text-[14px]">edit</span> E
+                                <span class="material-symbols-rounded text-[14px]">edit</span>
+                                <span v-if="viewMode === 'edit'">Editor</span>
                             </button>
                             <button @click="setViewMode('preview')"
                                 :class="viewMode === 'preview' ? 'bg-white dark:bg-[#4C566A] shadow-sm text-blue-600 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'"
                                 class="px-3 py-1.5 text-[11px] font-bold rounded-md transition-all flex items-center gap-1"
                                 title="Preview">
-                                <span class="material-symbols-rounded text-[14px]">visibility</span> P
+                                <span class="material-symbols-rounded text-[14px]">visibility</span>
+                                <span v-if="viewMode === 'preview'">Preview</span>
                             </button>
                             <button @click="setViewMode('split')"
                                 :class="viewMode === 'split' ? 'bg-white dark:bg-[#4C566A] shadow-sm text-blue-600 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'"
                                 class="px-3 py-1.5 text-[11px] font-bold rounded-md transition-all flex items-center gap-1"
                                 title="Split">
-                                <span class="material-symbols-rounded text-[14px]">view_column</span> S
+                                <span class="material-symbols-rounded text-[14px]">view_column</span>
+                                <span v-if="viewMode === 'split'">Split</span>
                             </button>
                         </div>
                     </div>
@@ -813,80 +821,7 @@
                     <div v-if="rightPanelMode === 'edit'"
                         class="flex-1 flex flex-col overflow-hidden bg-white dark:bg-[#2E3440]">
                         <!-- Formatting Toolbar -->
-                        <div
-                            class="h-10 border-b border-slate-100 dark:border-[#434C5E] bg-white dark:bg-[#24292F] px-4 flex items-center gap-1 flex-none z-10 transition-colors duration-300">
-                            <!-- BACK BUTTON -->
-                            <button @click="backToList()"
-                                class="mr-3 text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 flex items-center gap-0.5 pr-3 border-r border-slate-200 dark:border-[#434C5E] h-5"
-                                title="Back to Notes">
-                                <span class="material-symbols-rounded text-[18px]">arrow_back_ios_new</span>
-                                <span class="text-xs font-bold uppercase hidden sm:inline">Notes</span>
-                            </button>
 
-                            <button @mousedown.prevent="formatText('bold')"
-                                class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
-                                title="Bold (Cmd+B)">
-                                <span class="material-symbols-rounded text-[18px]">format_bold</span>
-                            </button>
-                            <button @mousedown.prevent="formatText('italic')"
-                                class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
-                                title="Italic (Cmd+I)">
-                                <span class="material-symbols-rounded text-[18px]">format_italic</span>
-                            </button>
-                            <button @mousedown.prevent="formatText('strike')"
-                                class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
-                                title="Strikethrough">
-                                <span class="material-symbols-rounded text-[18px]">strikethrough_s</span>
-                            </button>
-                            <button @mousedown.prevent="formatText('code')"
-                                class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
-                                title="Inline Code">
-                                <span class="material-symbols-rounded text-[18px]">code</span>
-                            </button>
-                            <button @mousedown.prevent="formatText('codeblock')"
-                                class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
-                                title="Code Block">
-                                <span class="material-symbols-rounded text-[18px]">terminal</span>
-                            </button>
-                            <button @mousedown.prevent="formatText('dash')"
-                                class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
-                                title="Bullet List">
-                                <span class="material-symbols-rounded text-[18px]">format_list_bulleted</span>
-                            </button>
-                            <button @mousedown.prevent="formatText('checkbox')"
-                                class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
-                                title="Task List">
-                                <span class="material-symbols-rounded text-[18px]">check_box</span>
-                            </button>
-                            <div class="w-[1px] h-4 bg-slate-200 dark:bg-[#4C566A] mx-1"></div>
-                            <button @mousedown.prevent="formatText('link')"
-                                class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
-                                title="Link (Cmd+K)">
-                                <span class="material-symbols-rounded text-[18px]">link</span>
-                            </button>
-                            <div class="w-[1px] h-4 bg-slate-200 dark:bg-[#4C566A] mx-1"></div>
-                            <button @mousedown.prevent="formatText('h1')"
-                                class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
-                                title="Heading 1">
-                                <span class="material-symbols-rounded text-[18px]">format_h1</span>
-                            </button>
-                            <button @mousedown.prevent="formatText('h2')"
-                                class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
-                                title="Heading 2">
-                                <span class="material-symbols-rounded text-[18px]">format_h2</span>
-                            </button>
-                            <button @mousedown.prevent="formatText('h3')"
-                                class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
-                                title="Heading 3">
-                                <span class="material-symbols-rounded text-[18px]">format_h3</span>
-                            </button>
-
-                            <button @mousedown.prevent="triggerSearch()"
-                                class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
-                                title="Find (Cmd+F)">
-                                <span class="material-symbols-rounded text-[18px]">search</span>
-                            </button>
-                        </div>
 
                         <!-- Split Columns -->
                         <div class="flex-1 flex overflow-hidden split-container">
@@ -973,6 +908,80 @@
                                     <!-- CodeMirror 6 Container -->
                                     <div ref="editorRef" class="w-full flex-1 overflow-hidden"
                                         :style="{ fontSize: fontSize + 'px' }"></div>
+
+                                    <!-- Bottom Formatting Toolbar -->
+                                    <div
+                                        class="h-10 border-t border-slate-100 dark:border-[#434C5E] bg-white dark:bg-[#24292F] px-4 flex items-center justify-start gap-4 flex-none z-10 transition-colors duration-300">
+                                        <!-- Left: Search -->
+                                        <div class="flex items-center">
+                                            <button @mousedown.prevent="triggerSearch()"
+                                                class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors text-slate-500 dark:text-slate-400"
+                                                title="Find (Cmd+F)">
+                                                <span class="material-symbols-rounded text-[20px]">search</span>
+                                            </button>
+                                        </div>
+
+                                        <!-- Right: Formatting Tools (Scrollable) -->
+                                        <div
+                                            class="flex items-center gap-1 overflow-x-auto no-scrollbar mask-gradient-right">
+                                            <button @mousedown.prevent="formatText('bold')"
+                                                class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                                title="Bold (Cmd+B)">
+                                                <span class="material-symbols-rounded text-[18px]">format_bold</span>
+                                            </button>
+                                            <button @mousedown.prevent="formatText('italic')"
+                                                class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                                title="Italic (Cmd+I)">
+                                                <span class="material-symbols-rounded text-[18px]">format_italic</span>
+                                            </button>
+                                            <button @mousedown.prevent="formatText('strike')"
+                                                class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                                title="Strikethrough">
+                                                <span
+                                                    class="material-symbols-rounded text-[18px]">strikethrough_s</span>
+                                            </button>
+                                            <button @mousedown.prevent="toggleCode()"
+                                                class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                                title="Code (Inline/Block)">
+                                                <span class="material-symbols-rounded text-[18px]">code</span>
+                                            </button>
+                                            <button @mousedown.prevent="formatText('dash')"
+                                                class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                                title="Bullet List">
+                                                <span
+                                                    class="material-symbols-rounded text-[18px]">format_list_bulleted</span>
+                                            </button>
+                                            <button @mousedown.prevent="formatText('checkbox')"
+                                                class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                                title="Task List">
+                                                <span class="material-symbols-rounded text-[18px]">check_box</span>
+                                            </button>
+                                            <div class="w-[1px] h-4 bg-slate-200 dark:bg-[#4C566A] mx-1 flex-shrink-0">
+                                            </div>
+                                            <button @mousedown.prevent="formatText('link')"
+                                                class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                                title="Link (Cmd+K)">
+                                                <span class="material-symbols-rounded text-[18px]">link</span>
+                                            </button>
+                                            <div class="w-[1px] h-4 bg-slate-200 dark:bg-[#4C566A] mx-1 flex-shrink-0">
+                                            </div>
+                                            <button @mousedown.prevent="formatText('h1')"
+                                                class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                                title="Heading 1">
+                                                <span class="material-symbols-rounded text-[18px]">format_h1</span>
+                                            </button>
+                                            <button @mousedown.prevent="formatText('h2')"
+                                                class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                                title="Heading 2">
+                                                <span class="material-symbols-rounded text-[18px]">format_h2</span>
+                                            </button>
+                                            <button @mousedown.prevent="formatText('h3')"
+                                                class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                                title="Heading 3">
+                                                <span class="material-symbols-rounded text-[18px]">format_h3</span>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1047,6 +1056,8 @@
                                 </div>
                             </div>
                         </div>
+
+
                     </div>
                     <!-- About Modal -->
                     <div v-if="showAbout"
@@ -1088,6 +1099,8 @@
                                 </button>
                             </div>
                         </div>
+
+
                     </div>
                 </div> <!-- Close Main Layout -->
                 <!-- Status Bar -->
