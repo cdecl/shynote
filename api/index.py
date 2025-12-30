@@ -1,7 +1,7 @@
 import os
 import uuid
 import hashlib
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, File
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
@@ -61,6 +61,126 @@ def get_auth_config():
 def login(auth_request: schemas.AuthRequest, db: Session = Depends(database.get_db)):
     return manager.authenticate(db, auth_request)
 
+# OAuth 2.0 Callback - GET: Serve Frontend (App loads -> extracts code -> calls POST)
+@app.get("/auth/google/callback")
+def serve_oauth_callback():
+    index_path = os.path.join(STATIC_DIR, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return {"error": "Static files not found", "path": index_path}
+
+# OAuth 2.0 Callback - POST: Handle Token Exchange
+@app.post("/auth/google/callback")
+async def google_oauth_callback(
+    request: Request, 
+    db: Session = Depends(database.get_db)
+):
+    import httpx
+    from .config import GOOGLE_CLIENT_ID
+    
+    # Load Client Secret from Env (Dynamic)
+    GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
+    if not GOOGLE_CLIENT_SECRET:
+         raise HTTPException(status_code=500, detail="Server config error: Missing Client Secret")
+
+    try:
+        data = await request.json()
+        code = data.get('code')
+        
+        if not code:
+            raise HTTPException(status_code=400, detail="No code provided")
+        
+        # 1. Exchange Code for Access Token
+        token_url = "https://oauth2.googleapis.com/token"
+        
+        # Determine redirect_uri based on origin or hardcoded
+        # Usually needs to match exactly what was sent in frontend
+        # For simplicity, we can reconstruct it or trust the referrer? 
+        # Better to be strict. Frontend sent: window.location.origin + '/auth/google/callback'
+        # We need to match that.
+        
+        origin = request.headers.get('origin')
+        if not origin:
+             # Fallback from referer or assume standard
+             referer = request.headers.get('referer')
+             if referer:
+                 from urllib.parse import urlparse
+                 parsed = urlparse(referer)
+                 origin = f"{parsed.scheme}://{parsed.netloc}"
+        
+        if not origin:
+            raise HTTPException(status_code=400, detail="Could not determine origin for redirect_uri")
+
+        redirect_uri = f"{origin}/auth/google/callback"
+        
+        async with httpx.AsyncClient() as client:
+            token_response = await client.post(token_url, data={
+                'code': code,
+                'client_id': GOOGLE_CLIENT_ID,
+                'client_secret': GOOGLE_CLIENT_SECRET,
+                'redirect_uri': redirect_uri,
+                'grant_type': 'authorization_code'
+            })
+            
+            if token_response.status_code != 200:
+                print(f"Token Error: {token_response.text}")
+                raise HTTPException(status_code=400, detail="Failed to exchange code")
+            
+            tokens = token_response.json()
+            access_token = tokens.get('access_token')
+            
+            # 2. Get User Info
+            userinfo_response = await client.get(
+                "https://www.googleapis.com/oauth2/v3/userinfo",
+                headers={'Authorization': f'Bearer {access_token}'}
+            )
+            
+            if userinfo_response.status_code != 200:
+                raise HTTPException(status_code=400, detail="Failed to get user info")
+            
+            user_info = userinfo_response.json()
+        
+        # 3. Create or Get User (Similar to manager.verify_google_token logic)
+        email = user_info.get('email')
+        if not email:
+            raise HTTPException(status_code=400, detail="Email not provided by Google")
+
+        user = db.query(models.User).filter(models.User.email == email).first()
+        
+        if not user:
+            user = models.User(
+                email=email,
+                name=user_info.get('name'),
+                picture=user_info.get('picture'),
+                provider='google'
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        else:
+             # Update info
+            user.name = user_info.get('name')
+            user.picture = user_info.get('picture')
+            db.commit()
+        
+        # 4. Create local JWT
+        jwt_token = manager.create_access_token(data={"sub": str(user.id)})
+        
+        return {
+            "access_token": jwt_token,
+            "token_type": "bearer",
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "picture": user.picture
+            }
+        }
+        
+    except Exception as e:
+        print(f"OAuth callback error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/auth/me", response_model=schemas.User)
 def read_users_me(current_user: models.User = Depends(utils.get_current_user)):
     return current_user
@@ -88,7 +208,15 @@ def create_folder(
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(utils.get_current_user)
 ):
-    # Check if folder exists (Upsert-like behavior or just fail if collision - UUID collision unlikely)
+    # Check if folder exists (Upsert-like behavior)
+    existing_folder = db.query(models.Folder).filter(
+        models.Folder.id == folder.id,
+        models.Folder.user_id == current_user.id
+    ).first()
+
+    if existing_folder:
+        return existing_folder
+
     db_folder = models.Folder(id=folder.id, name=folder.name, user_id=current_user.id)
     db.add(db_folder)
     db.commit()

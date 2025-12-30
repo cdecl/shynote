@@ -1626,6 +1626,13 @@ createApp({
 
 		onMounted(async () => {
 			isSidebarOpen.value = true // Force sidebar open on startup
+
+			// OAuth callback check
+			if (window.location.search.includes('code=')) {
+				handleOAuthCallback();
+				return;
+			}
+
 			await checkAuth()
 			fetchAppConfig()
 			fetchChangelog()
@@ -1720,6 +1727,108 @@ createApp({
 			}
 		}
 
+
+		// ===== OAuth 2.0 Redirect Flow =====
+
+		const useRedirectFlow = ref(false);
+
+		// CSRF
+		const generateRandomState = () => {
+			const array = new Uint8Array(32);
+			crypto.getRandomValues(array);
+			return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+		};
+
+		// Google OAuth Redirect Flow
+		const loginWithGoogleRedirect = async () => {
+			try {
+				const res = await fetch('/auth/config');
+				if (!res.ok) throw new Error('Failed to fetch config');
+				const config = await res.json();
+
+				const clientId = config.google_client_id;
+				const redirectUri = encodeURIComponent(window.location.origin + '/auth/google/callback');
+				const scope = encodeURIComponent('openid email profile');
+				const state = generateRandomState();
+
+				sessionStorage.setItem('oauth_state', state);
+				sessionStorage.setItem('oauth_redirect_time', Date.now().toString());
+
+				const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+					`client_id=${clientId}&` +
+					`redirect_uri=${redirectUri}&` +
+					`response_type=code&` +
+					`scope=${scope}&` +
+					`state=${state}&` +
+					`access_type=offline&` +
+					`prompt=select_account`;
+
+				window.location.href = authUrl;
+			} catch (error) {
+				console.error('Failed to start OAuth flow:', error);
+				alert('Login failed to start.');
+			}
+		};
+
+		// OAuth Callback Handler
+		const handleOAuthCallback = async () => {
+			const urlParams = new URLSearchParams(window.location.search);
+			const code = urlParams.get('code');
+			const state = urlParams.get('state');
+			const error = urlParams.get('error');
+
+			if (error) {
+				console.error('OAuth error:', error);
+				alert('Login Error: ' + error);
+				window.location.href = '/';
+				return;
+			}
+
+			const savedState = sessionStorage.getItem('oauth_state');
+			if (!code || !state || state !== savedState) {
+				console.error('Invalid OAuth callback');
+				window.location.href = '/';
+				return;
+			}
+
+			sessionStorage.removeItem('oauth_state');
+			sessionStorage.removeItem('oauth_redirect_time');
+
+			try {
+				loading.value = true;
+				loadingState.value = { message: 'Authenticating...' };
+
+				const response = await fetch('/auth/google/callback', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ code })
+				});
+
+				if (!response.ok) {
+					throw new Error('Authentication failed');
+				}
+
+				const data = await response.json();
+
+				localStorage.setItem(STORAGE_KEYS.TOKEN, data.access_token);
+				currentUserId.value = data.user.id;
+				isAuthenticated.value = true;
+
+				await Promise.all([fetchUserProfile(), fetchFolders(), fetchNotes()]);
+
+				window.history.replaceState({}, document.title, '/');
+				loadingState.value = { message: 'Login successful' };
+
+			} catch (error) {
+				console.error('OAuth callback error:', error);
+				alert('Login Error: ' + error.message);
+				localStorage.removeItem(STORAGE_KEYS.TOKEN);
+				window.location.href = '/';
+			} finally {
+				loading.value = false;
+			}
+		};
+
 		const initGoogleAuth = async () => {
 			try {
 				const res = await fetch('/auth/config')
@@ -1729,6 +1838,12 @@ createApp({
 					dbType.value = config.db_type
 				}
 
+				// Unified Auth Flow: Always use Redirect Flow
+				// This guarantees functionality across Mobile, Private Mode, and IP-based access
+				console.log('Using Global Redirect Flow');
+				useRedirectFlow.value = true;
+
+				/* Legacy One Tap Logic Removed for Consistency
 				if (window.google) {
 					window.google.accounts.id.initialize({
 						client_id: config.google_client_id,
@@ -1736,12 +1851,9 @@ createApp({
 						auto_select: false,
 						cancel_on_tap_outside: false
 					});
-
-					// If we are showing the modal, render the button
-					if (!isAuthenticated.value) {
-						renderGoogleButton()
-					}
+					if (!isAuthenticated.value) renderGoogleButton()
 				}
+				*/
 			} catch (e) {
 				console.error("Failed to init Google Auth", e)
 			}
@@ -1858,11 +1970,11 @@ createApp({
 					}
 
 					// Ensure Trash Folder Exists (Idempotent)
-					const trashExists = localFolders && localFolders.some(f => f.id === TRASH_FOLDER_ID)
+					const trashExists = localFolders && localFolders.some(f => f.id === TRASH_FOLDER_ID.value)
 					if (!trashExists) {
 						console.log("Initializing Trash Folder...")
 						const trashFolder = {
-							id: TRASH_FOLDER_ID,
+							id: TRASH_FOLDER_ID.value,
 							name: 'Trash',
 							user_id: uid
 						}
@@ -1871,6 +1983,33 @@ createApp({
 						// Optimistically add to list (though filtered out by UI usually)
 						folders.value.push(trashFolder)
 					}
+
+					// --- MIGRATION: Fix Legacy Trash (trash-0000...) ---
+					const LEGACY_TRASH_ID = 'trash-0000-0000-0000-000000000000';
+					const newTrashId = TRASH_FOLDER_ID.value;
+
+					const legacyTrashIndex = folders.value.findIndex(f => f.id === LEGACY_TRASH_ID);
+					if (legacyTrashIndex !== -1 && newTrashId !== LEGACY_TRASH_ID) {
+						console.log('[Migration] Found Legacy Trash Folder. Migrating...');
+
+						// 1. Move notes from Old Trash -> New Trash
+						const legacyNotes = notes.value.filter(n => n.folder_id === LEGACY_TRASH_ID);
+						if (legacyNotes.length > 0) {
+							console.log(`[Migration] Moving ${legacyNotes.length} notes to new Trash.`);
+							legacyNotes.forEach(note => {
+								note.folder_id = newTrashId;
+								note.updated_at = new Date().toISOString();
+								if (hasIDB) LocalDB.saveNote(note);
+								saveToLog('note', note.id, { folder_id: newTrashId }); // Sync change
+							});
+						}
+
+						// 2. Remove Legacy Folder from UI and IDB
+						folders.value.splice(legacyTrashIndex, 1);
+						if (hasIDB) LocalDB.deleteFolder(LEGACY_TRASH_ID);
+						console.log('[Migration] Legacy Trash removed locally.');
+					}
+					// ---------------------------------------------------
 				}
 
 				// 2. Fetch from Server (Background if we have local data)
@@ -2363,8 +2502,15 @@ createApp({
 			}, 0)
 		}
 
+
+
 		// Trash Feature Constants
-		const TRASH_FOLDER_ID = 'trash-0000-0000-0000-000000000000';
+		// Trash Feature Constants
+		// Use computed to generate unique Trash ID per user to prevent DB Primary Key collisions
+		const TRASH_FOLDER_ID = computed(() => {
+			const uid = currentUserId.value;
+			return uid ? `trash-${uid}` : 'trash-guest';
+		});
 
 		const confirmDelete = async () => {
 			document.removeEventListener('click', handleDeleteOutsideClick)
@@ -2392,7 +2538,7 @@ createApp({
 				if (!note) return
 
 				// Case 1: Already in Trash -> Permanent Delete
-				if (note.folder_id === TRASH_FOLDER_ID) {
+				if (note.folder_id === TRASH_FOLDER_ID.value) {
 					// 1. Check if pinned
 					if (note.is_pinned) {
 						pinnedNotes.value = pinnedNotes.value.filter(n => n.id !== id)
@@ -2408,12 +2554,12 @@ createApp({
 				}
 				// Case 2: Move to Trash
 				else {
-					note.folder_id = TRASH_FOLDER_ID
+					note.folder_id = TRASH_FOLDER_ID.value
 					note.updated_at = new Date().toISOString()
 					note.is_pinned = false // Unpin when moving to trash
 
 					// Update UI (Remove from current view if not Trash view)
-					if (currentFolderId.value !== TRASH_FOLDER_ID) {
+					if (currentFolderId.value !== TRASH_FOLDER_ID.value) {
 						if (selectedNote.value && selectedNote.value.id === id) {
 							selectedNote.value = null
 						}
@@ -2509,7 +2655,7 @@ createApp({
 			// 1. Move all notes in folder to Trash
 			const folderNotes = notes.value.filter(n => n.folder_id === id)
 			for (const note of folderNotes) {
-				note.folder_id = TRASH_FOLDER_ID
+				note.folder_id = TRASH_FOLDER_ID.value
 				note.updated_at = new Date().toISOString()
 				note.is_pinned = false
 				if (hasIDB) {
@@ -2540,11 +2686,11 @@ createApp({
 		}
 
 		const emptyTrash = async () => {
-			const trashNotes = notes.value.filter(n => n.folder_id === TRASH_FOLDER_ID)
+			const trashNotes = notes.value.filter(n => n.folder_id === TRASH_FOLDER_ID.value)
 
 			// 1. Clear from UI
-			notes.value = notes.value.filter(n => n.folder_id !== TRASH_FOLDER_ID)
-			if (selectedNote.value && selectedNote.value.folder_id === TRASH_FOLDER_ID) {
+			notes.value = notes.value.filter(n => n.folder_id !== TRASH_FOLDER_ID.value)
+			if (selectedNote.value && selectedNote.value.folder_id === TRASH_FOLDER_ID.value) {
 				selectedNote.value = null
 			}
 
@@ -2973,7 +3119,7 @@ createApp({
 			// Folders always use 'name' instead of 'title', handled in sortItems
 			// Use same sort criteria as notes for consistency
 			// Filter out the Trash folder as it's handled separately in UI
-			const regularFolders = folders.value.filter(f => f.id !== TRASH_FOLDER_ID)
+			const regularFolders = folders.value.filter(f => f.id !== TRASH_FOLDER_ID.value)
 			return sortItems(regularFolders)
 		})
 
@@ -3246,7 +3392,11 @@ createApp({
 			TRASH_FOLDER_ID, // Expose Constant
 			emptyTrash,
 			handleFileInput,
-			isOnline // Exposed to template
+			isOnline, // Exposed to template
+
+			// OAuth
+			useRedirectFlow,
+			loginWithGoogleRedirect
 		}
 	}
 }).mount('#app')

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'shynote-v68'; // Bumped Version
+const CACHE_NAME = 'shynote-v70'; // Bumped Version
 const CRITICAL_ASSETS = [
 	'/',
 	'/static/index.html',
@@ -26,7 +26,7 @@ const EXTERNAL_ASSETS = [
 	'https://esm.sh/@uiw/codemirror-theme-github@4.23.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0',
 	'https://esm.sh/@uiw/codemirror-theme-nord@4.23.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0',
 	'https://esm.sh/@codemirror/language@6.10.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0',
-	'https://unpkg.com/@codemirror/view@6.23.0/dist/index.css',
+
 	'https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/default.css',
 	'https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/index.min.js',
 	'https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/scroll-behaviour.min.js'

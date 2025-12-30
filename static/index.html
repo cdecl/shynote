@@ -43,8 +43,7 @@
     <link rel="stylesheet" as="style" crossorigin
         href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
 
-    <!-- CodeMirror Base CSS (includes search panel styles) -->
-    <link rel="stylesheet" href="https://unpkg.com/@codemirror/view@6.23.0/dist/index.css">
+
 
     <!-- Custom Styles (Loaded last to override libraries) -->
     <link rel="stylesheet" href="/static/style.css?v=20">
@@ -131,7 +130,18 @@
                     <p class="text-gray-500 dark:text-slate-400 text-sm mt-1">Sign in to access your notes</p>
                 </div>
 
-                <div id="google-btn" class="w-full"></div>
+                <!-- Google Login Button -->
+                <div v-if="!isAuthenticated" class="space-y-3">
+                    <!-- Redirect Flow Button (Mobile) -->
+                    <button v-if="useRedirectFlow" @click="loginWithGoogleRedirect"
+                        class="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white dark:bg-[#3B4252] border border-gray-300 dark:border-[#4C566A] rounded-lg hover:bg-gray-50 dark:hover:bg-[#434C5E] transition-colors">
+                        <img src="https://www.google.com/favicon.ico" alt="Google" class="w-5 h-5">
+                        <span class="font-medium text-gray-700 dark:text-[#D8DEE9]">Continue with Google</span>
+                    </button>
+
+                    <!-- One Tap Button (Desktop) -->
+                    <div v-else id="google-btn" class="w-full"></div>
+                </div>
 
                 <p class="mt-6 text-xs text-gray-400 dark:text-slate-500">
                     By continuing, you agree to our Terms of Service and Privacy Policy.
