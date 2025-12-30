@@ -325,3 +325,60 @@ textarea {
     background-color: #4b5563;
     /* dark mode - gray-600 */
 }
+
+/* -------------------------------------------------------------------------- */
+/* Custom Scrollbar for Editor & Split View                                   */
+/* -------------------------------------------------------------------------- */
+
+/* Editor Scroller (CodeMirror) & Preview Scroller */
+.cm-scroller::-webkit-scrollbar,
+.split-container .markdown-body::-webkit-scrollbar,
+.layout-container .sidebar::-webkit-scrollbar,
+.notes-list::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.cm-scroller::-webkit-scrollbar-track,
+.split-container .markdown-body::-webkit-scrollbar-track,
+.layout-container .sidebar::-webkit-scrollbar-track,
+.notes-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.cm-scroller::-webkit-scrollbar-thumb,
+.split-container .markdown-body::-webkit-scrollbar-thumb,
+.layout-container .sidebar::-webkit-scrollbar-thumb,
+.notes-list::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.1);
+    border: 3px solid transparent;
+    background-clip: content-box;
+    border-radius: 99px;
+}
+
+.cm-scroller::-webkit-scrollbar-thumb:hover,
+.split-container .markdown-body::-webkit-scrollbar-thumb:hover,
+.layout-container .sidebar::-webkit-scrollbar-thumb:hover,
+.notes-list::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Dark Mode Scrollbar Overrides */
+.dark .cm-scroller::-webkit-scrollbar-thumb,
+.dark .split-container .markdown-body::-webkit-scrollbar-thumb,
+.dark .layout-container .sidebar::-webkit-scrollbar-thumb,
+.dark .notes-list::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .cm-scroller::-webkit-scrollbar-thumb:hover,
+.dark .split-container .markdown-body::-webkit-scrollbar-thumb:hover,
+.dark .layout-container .sidebar::-webkit-scrollbar-thumb:hover,
+.dark .notes-list::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Hide scrollbar corner */
+.cm-scroller::-webkit-scrollbar-corner {
+    background: transparent;
+}
