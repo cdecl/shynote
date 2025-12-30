@@ -344,31 +344,29 @@
                     <div class="flex-1 overflow-y-auto px-3 py-2 relative" v-show="isSidebarOpen">
                         <div v-if="loading" class="text-center text-gray-400 p-4">Loading...</div>
                         <div v-else class="space-y-4">
-                            <!-- System Folders Card -->
-                            <div class="bg-white dark:bg-[#3C4252] rounded-xl overflow-hidden shadow-sm">
+                            <!-- System Folders (Inbox) -->
+                            <div class="space-y-0.5" id="system-folders">
                                 <!-- Inbox -->
                                 <div @click.stop="selectFolder(null)" @drop="handleDrop(null, $event)" @dragover.prevent
                                     @dragenter.prevent="handleDragEnter('inbox')"
                                     @dragleave.prevent="handleDragLeave('inbox')"
-                                    class="relative flex items-center justify-between px-3 py-2.5 cursor-pointer active:bg-slate-100 dark:active:bg-white/10 transition-all duration-200 group"
+                                    class="relative flex items-center justify-between px-3 py-2 cursor-pointer active:bg-blue-200 dark:active:bg-blue-600/30 transition-all duration-200 group rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 mx-2"
                                     :class="[
-                                        dropTargetId === 'inbox' ? 'translate-x-3 bg-blue-100 dark:bg-blue-800/30' : ''
+                                        dropTargetId === 'inbox' ? 'translate-x-1 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-200 dark:ring-blue-800' : '',
+                                        currentFolderId === null ? 'bg-blue-100 dark:bg-blue-600/20 shadow-sm' : ''
                                     ]">
                                     <div class="flex items-center gap-3">
-                                        <span class="material-symbols-rounded text-[22px] text-blue-500"
-                                            style="font-variation-settings: 'FILL' 1">inbox</span>
-                                        <span class="text-[15px] font-medium transition-colors duration-200"
-                                            :class="currentFolderId === null ? 'text-[#61A5FA]' : 'text-slate-800 dark:text-white'">Inbox</span>
+                                        <span class="material-symbols-rounded text-[22px] transition-colors" :class="[
+                                                dropTargetId === 'inbox' || currentFolderId === null ? 'text-blue-500' : 'text-slate-400 dark:text-slate-500'
+                                            ]" style="font-variation-settings: 'FILL' 1">home</span>
+                                        <span class="text-[14px] font-medium transition-colors duration-200"
+                                            :class="currentFolderId === null ? 'text-slate-800 dark:text-white' : 'text-slate-600 dark:text-slate-400'">Inbox</span>
                                     </div>
                                     <div class="flex items-center gap-1">
-                                        <span class="text-slate-500 dark:text-slate-400 font-medium text-[14px]">{{
-                                            sortedRootNotes.length }}</span>
                                         <span
-                                            class="material-symbols-rounded text-slate-400 dark:text-slate-600 text-[18px]">chevron_right</span>
-                                    </div>
-                                    <!-- Separator -->
-                                    <div
-                                        class="absolute bottom-0 right-0 left-12 h-[0.5px] bg-slate-200 dark:bg-[#38383A]">
+                                            class="text-slate-500 dark:text-slate-400 font-medium text-[12px] bg-slate-200 dark:bg-[#4C566A] px-1.5 py-0.5 rounded-full min-w-[20px] text-center"
+                                            v-if="sortedRootNotes.length > 0">{{
+                                            sortedRootNotes.length }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -376,20 +374,21 @@
                             <!-- User Folders Card -->
                             <div v-if="sortedFolders.length > 0">
                                 <h2
-                                    class="px-3 mb-2 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                    class="px-4 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
                                     My Folders
                                 </h2>
-                                <div class="bg-white dark:bg-[#3C4252] rounded-xl overflow-hidden shadow-sm">
+                                <div class="space-y-0.5">
                                     <div v-for="(folder, index) in sortedFolders" :key="folder.id" @dragover.prevent
                                         @dragenter.prevent="handleDragEnter(folder.id)"
                                         @dragleave.prevent="handleDragLeave(folder.id)"
                                         @drop="handleDrop(folder.id, $event)">
 
-                                        <!-- Folder Item -->
+                                        <!-- Folder Item (Styled like Trash) -->
                                         <div @click.stop="selectFolder(folder.id)"
-                                            class="relative flex items-center justify-between px-3 py-2.5 cursor-pointer active:bg-slate-100 dark:active:bg-white/10 transition-all duration-200 group"
+                                            class="relative flex items-center justify-between px-3 py-2 cursor-pointer active:bg-blue-200 dark:active:bg-blue-600/30 transition-all duration-200 group rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 mx-2"
                                             :class="[
-                                            dropTargetId === folder.id ? 'translate-x-3 bg-blue-100 dark:bg-blue-800/30' : ''
+                                            dropTargetId === folder.id ? 'translate-x-1 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-200 dark:ring-blue-800' : '',
+                                            currentFolderId === folder.id ? 'bg-blue-100 dark:bg-blue-600/20 shadow-sm' : ''
                                         ]">
 
                                             <!-- Rename Input -->
@@ -401,13 +400,15 @@
                                             <!-- Normal Display -->
                                             <div v-else @dblclick.stop="startRename(folder, 'folder')"
                                                 class="flex items-center gap-3 flex-1 min-w-0">
-                                                <span
-                                                    class="material-symbols-rounded text-[22px] text-blue-500 dark:text-blue-400"
-                                                    style="font-variation-settings: 'FILL' 1">{{ dropTargetId ===
+                                                <span class="material-symbols-rounded text-[22px] transition-colors"
+                                                    :class="[
+                                                        dropTargetId === folder.id ? 'text-blue-500' : 'text-slate-400 dark:text-slate-500',
+                                                        currentFolderId === folder.id ? 'text-blue-500 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'
+                                                    ]" style="font-variation-settings: 'FILL' 1">{{ dropTargetId ===
                                                     folder.id ? 'folder_open' : 'folder' }}</span>
                                                 <span
-                                                    class="text-[15px] font-medium truncate transition-colors duration-200"
-                                                    :class="currentFolderId === folder.id ? 'text-[#61A5FA]' : 'text-slate-800 dark:text-white'">{{
+                                                    class="text-[14px] font-medium truncate transition-colors duration-200"
+                                                    :class="currentFolderId === folder.id ? 'text-slate-800 dark:text-white' : 'text-slate-600 dark:text-slate-400'">{{
                                                     folder.name }}</span>
                                             </div>
 
@@ -430,24 +431,19 @@
                                                     </button>
                                                 </div>
                                                 <span
-                                                    class="text-slate-500 dark:text-slate-400 font-medium text-[14px]">{{
-                                                    getSortedFolderNotes(folder.id).length }}</span>
-                                                <span
-                                                    class="material-symbols-rounded text-slate-400 dark:text-slate-600 text-[18px]">chevron_right</span>
-                                            </div>
-
-                                            <!-- Separator (not on last item) -->
-                                            <div v-if="index < sortedFolders.length - 1"
-                                                class="absolute bottom-0 right-0 left-12 h-[0.5px] bg-slate-200 dark:bg-[#38383A]">
+                                                    class="text-slate-500 dark:text-slate-400 font-medium text-[12px] bg-slate-200 dark:bg-[#4C566A] px-1.5 py-0.5 rounded-full min-w-[20px] text-center"
+                                                    v-if="getSortedFolderNotes(folder.id).length > 0">
+                                                    {{ getSortedFolderNotes(folder.id).length }}
+                                                </span>
                                             </div>
                                         </div>
 
                                         <!-- Inline Delete Confirmation -->
                                         <div v-if="deleteConfirmation.id === folder.id && deleteConfirmation.type === 'folder'"
-                                            class="mx-3 mb-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-xs flex items-center justify-between">
-                                            <span class="text-red-700 dark:text-red-300 font-semibold">Delete
-                                                folder?</span>
-                                            <div class="flex items-center gap-2">
+                                            class="mx-3 mb-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-xs flex flex-col gap-2 items-start">
+                                            <span class="text-red-700 dark:text-red-300 font-semibold w-full">Delete
+                                                folder & move notes to Trash?</span>
+                                            <div class="flex items-center gap-2 self-end">
                                                 <button @click.stop="confirmDelete"
                                                     class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-md font-semibold transition-colors text-[11px]">Yes</button>
                                                 <button @click.stop="cancelDelete"
@@ -461,6 +457,58 @@
                         <p class="text-center py-2 text-[#2663EB] text-sm select-none pointer-events-none">
                             Drag notes to folder to move
                         </p>
+
+                        <!-- Trash Folder (Fixed at bottom of list) -->
+                        <div class="mt-4 pt-2 border-t border-slate-200 dark:border-[#3B4252]">
+                            <div @click.stop="selectFolder(TRASH_FOLDER_ID)" @drop="handleDrop(TRASH_FOLDER_ID, $event)"
+                                @dragover.prevent @dragenter.prevent="handleDragEnter(TRASH_FOLDER_ID)"
+                                @dragleave.prevent="handleDragLeave(TRASH_FOLDER_ID)"
+                                class="relative flex items-center justify-between px-3 py-2 cursor-pointer active:bg-blue-200 dark:active:bg-blue-600/30 transition-all duration-200 group rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 mx-2"
+                                :class="[
+									dropTargetId === TRASH_FOLDER_ID ? 'translate-x-1 bg-red-50 dark:bg-red-900/20 ring-1 ring-red-200 dark:ring-red-800' : '',
+									currentFolderId === TRASH_FOLDER_ID ? 'bg-blue-100 dark:bg-blue-600/20 shadow-sm' : ''
+								]">
+
+                                <div class="flex items-center gap-3">
+                                    <span class="material-symbols-rounded text-[22px] transition-colors"
+                                        :class="dropTargetId === TRASH_FOLDER_ID ? 'text-red-500' : 'text-slate-400 dark:text-slate-500'"
+                                        style="font-variation-settings: 'FILL' 1">
+                                        {{ getSortedFolderNotes(TRASH_FOLDER_ID).length > 0 ? 'delete' :
+                                        'delete_outline' }}
+                                    </span>
+                                    <span class="text-[14px] font-medium transition-colors duration-200"
+                                        :class="currentFolderId === TRASH_FOLDER_ID ? 'text-slate-800 dark:text-white' : 'text-slate-600 dark:text-slate-400'">
+                                        Trash
+                                    </span>
+                                </div>
+
+                                <div class="flex items-center gap-2">
+                                    <button v-if="getSortedFolderNotes(TRASH_FOLDER_ID).length > 0"
+                                        @click.stop="deleteConfirmation = { id: TRASH_FOLDER_ID, type: 'trash' }"
+                                        class="p-1 text-slate-400 hover:text-red-500 rounded transition-colors"
+                                        title="Empty Trash">
+                                        <span class="material-symbols-rounded text-[16px]">delete_forever</span>
+                                    </button>
+                                    <span v-if="getSortedFolderNotes(TRASH_FOLDER_ID).length > 0"
+                                        class="bg-slate-200 dark:bg-[#4C566A] text-slate-600 dark:text-slate-300 text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                                        {{ getSortedFolderNotes(TRASH_FOLDER_ID).length }}
+                                    </span>
+                                </div>
+
+                                <!-- Inline Empty Trash Confirmation -->
+                                <div v-if="deleteConfirmation.type === 'trash'"
+                                    class="absolute inset-0 bg-red-50 dark:bg-red-900/90 rounded-lg flex items-center justify-between px-2 z-10 border border-red-200 dark:border-red-800 animate-fade-in"
+                                    @click.stop>
+                                    <span class="text-xs font-bold text-red-600 dark:text-red-300">Empty Trash?</span>
+                                    <div class="flex gap-1">
+                                        <button @click.stop="confirmDelete"
+                                            class="px-2 py-0.5 bg-red-600 hover:bg-red-700 text-white rounded text-[10px] font-bold transition-colors">Yes</button>
+                                        <button @click.stop="cancelDelete"
+                                            class="px-2 py-0.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded text-[10px] font-bold transition-colors">No</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Sidebar Footer -->
@@ -608,12 +656,14 @@
                                 <h2
                                     class="text-sm font-bold text-slate-700 dark:text-[#ECEFF4] flex items-center gap-2">
                                     <span v-if="currentFolderId === null"
-                                        class="material-symbols-rounded text-blue-500 text-[22px]">inbox</span>
+                                        class="material-symbols-rounded text-blue-500 text-[22px]">home</span>
+                                    <span v-else-if="currentFolderId === TRASH_FOLDER_ID"
+                                        class="material-symbols-rounded text-red-500 text-[22px]">delete</span>
                                     <span v-else
                                         class="material-symbols-rounded text-amber-500 text-[22px]">folder</span>
-                                    <span class="text-lg">{{ currentFolderId === null ? 'Inbox' : (folders.find(f =>
-                                        f.id
-                                        === currentFolderId)?.name || 'Folder') }}</span>
+                                    <span class="text-lg">{{ currentFolderId === null ? 'Inbox' : (currentFolderId ===
+                                        TRASH_FOLDER_ID ? 'Trash' : (folders.find(f => f.id === currentFolderId)?.name
+                                        || 'Folder')) }}</span>
                                 </h2>
                                 <!-- Controls: Pin, Settings, About -->
                                 <!-- (Settings/About/Pin removed) -->
@@ -713,8 +763,10 @@
                                             <div v-if="deleteConfirmation.id === note.id && deleteConfirmation.type === 'note'"
                                                 class="absolute inset-x-0 bottom-0 top-auto bg-red-50 dark:bg-red-900/90 p-3 flex items-center justify-between rounded-b-xl z-20 animate-fade-in border-t border-red-200 dark:border-red-800"
                                                 @click.stop>
-                                                <span class="text-xs font-bold text-red-600 dark:text-red-300">Delete
-                                                    Note?</span>
+                                                <span class="text-xs font-bold text-red-600 dark:text-red-300">
+                                                    {{ currentFolderId === TRASH_FOLDER_ID ? 'Delete Permanently?' :
+                                                    'Move to Trash?' }}
+                                                </span>
                                                 <div class="flex gap-2">
                                                     <button @click.stop="confirmDelete"
                                                         class="px-2 py-1 bg-red-600 text-white rounded text-xs font-bold hover:bg-red-700 transition-colors">Yes</button>
@@ -739,7 +791,10 @@
                                                     class="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex gap-2">
                                                     <button @click.stop="requestDelete(note.id, 'note')"
                                                         class="hover:text-red-500 transition-colors p-1" title="Delete">
-                                                        <span class="material-symbols-rounded text-[18px]">delete</span>
+                                                        <span class="material-symbols-rounded text-[18px]">
+                                                            {{ currentFolderId === TRASH_FOLDER_ID ? 'delete_forever' :
+                                                            'delete' }}
+                                                        </span>
                                                     </button>
                                                 </div>
                                             </div>
@@ -788,8 +843,10 @@
                                             <div v-if="deleteConfirmation.id === note.id && deleteConfirmation.type === 'note'"
                                                 class="absolute inset-x-0 bottom-0 top-auto bg-red-50 dark:bg-red-900/90 p-3 flex items-center justify-between rounded-b-xl z-20 animate-fade-in border-t border-red-200 dark:border-red-800"
                                                 @click.stop>
-                                                <span class="text-xs font-bold text-red-600 dark:text-red-300">Delete
-                                                    Note?</span>
+                                                <span class="text-xs font-bold text-red-600 dark:text-red-300">
+                                                    {{ currentFolderId === TRASH_FOLDER_ID ? 'Delete Permanently?' :
+                                                    'Move to Trash?' }}
+                                                </span>
                                                 <div class="flex gap-2">
                                                     <button @click.stop="confirmDelete"
                                                         class="px-2 py-1 bg-red-600 text-white rounded text-xs font-bold hover:bg-red-700 transition-colors">Yes</button>
@@ -814,7 +871,10 @@
                                                     class="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex gap-2">
                                                     <button @click.stop="requestDelete(note.id, 'note')"
                                                         class="hover:text-red-500 transition-colors p-1" title="Delete">
-                                                        <span class="material-symbols-rounded text-[18px]">delete</span>
+                                                        <span class="material-symbols-rounded text-[18px]">
+                                                            {{ currentFolderId === TRASH_FOLDER_ID ? 'delete_forever' :
+                                                            'delete' }}
+                                                        </span>
                                                     </button>
                                                 </div>
                                             </div>

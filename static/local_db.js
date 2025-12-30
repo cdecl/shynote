@@ -212,6 +212,26 @@ export const LocalDB = {
 		await tx.done;
 	},
 
+	async deleteNotesBulk(ids) {
+		const db = await initDB();
+		const tx = db.transaction(['notes', 'pending_logs'], 'readwrite');
+		const notesStore = tx.objectStore('notes');
+		const logStore = tx.objectStore('pending_logs');
+		const timestamp = new Date().toISOString();
+
+		for (const id of ids) {
+			await notesStore.delete(id);
+			await logStore.add({
+				action: 'DELETE',
+				entity: 'note',
+				entity_id: id,
+				created_at: timestamp
+			});
+		}
+
+		await tx.done;
+	},
+
 	async deleteFolderAndNotes(folderId, noteIds) {
 		const db = await initDB();
 		const tx = db.transaction(['notes', 'folders', 'pending_logs'], 'readwrite');
