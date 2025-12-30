@@ -16,9 +16,10 @@ This document lists the UI elements currently present in `index.html`, organized
 - **New Folder**: Button (Icon: `add`)
 
 ### Folder List
-- **Inbox**: Item (Icon: `inbox`, Name: "Inbox", Count)
+- **Inbox**: Item (Icon: `Inbox`, Name: "Inbox", Count)
 - **My Folders**: Section Header
   - **Folder Items**: List (Icon: `folder`, Name: User Defined, Count)
+- **Trash**: Item (Fixed at bottom, Icon: `delete`, Name: "Trash", Count)
 
 ### Footer
 - **About**: Button (Icon: `info`)
@@ -35,7 +36,7 @@ The main panel switches between **List Mode** and **Editor Mode**.
 #### Header
 - **Navigation (Left)**:
   - **Open Sidebar**: Button (Icon: `view_sidebar`) *Visible only when sidebar is closed*
-  - **Folder Icon**: Icon (`inbox` or `folder`)
+  - **Folder Icon**: Icon (`Inbox`, `folder` or `delete`)
   - **Folder Name**: Text
 
 - **Controls (Right)**:

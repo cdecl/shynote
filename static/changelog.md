@@ -1,3 +1,19 @@
+# v0.4.1 Release Notes
+
+## Summary
+- **Trash (휴지통)**: 노트와 폴더를 영구 삭제하기 전에 휴지통으로 이동시키는 안전 장치를 추가했습니다.
+- **오프라인 안정성**: IndexedDB 라이브러리(`idb`) 캐싱을 통해 오프라인 환경에서의 데이터 신뢰성을 보장합니다.
+
+## Changes
+- **Trash (휴지통)**:
+    - **Move to Trash**: 노트/폴더 삭제 시 즉시 제거되지 않고 Trash 폴더로 이동합니다.
+    - **Empty Trash**: 휴지통 비우기 기능을 통해 영구 삭제가 가능합니다.
+    - **Restoration**: Trash 폴더에서 노트를 다른 폴더로 이동하여 복구할 수 있습니다.
+- **Offline Reliability**:
+    - **Cache Dependency**: Service Worker 캐시에 `idb` 라이브러리를 추가하여 오프라인 로드 오류를 방지했습니다.
+
+---
+
 # v0.4.0 Release Notes
 
 ## Summary

@@ -22,6 +22,28 @@ textarea {
     background-color: #24292F !important;
 }
 
+/* Custom Cursor Colors for Better Visibility */
+.cm-content {
+    caret-color: #000000;
+    /* Native Caret: Black */
+}
+
+/* CodeMirror Custom Cursor (PC/Mac) */
+.cm-cursor {
+    border-left-width: 2px !important;
+    /* Thicker Cursor */
+    border-left-color: #000000 !important;
+}
+
+.dark .cm-content {
+    caret-color: #00E5FF;
+    /* Native Caret: Neon Cyan */
+}
+
+.dark .cm-cursor {
+    border-left-color: #00E5FF !important;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Markdown Preview Styling (GitHub Flavored)                                 */
 /* -------------------------------------------------------------------------- */

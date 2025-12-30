@@ -8,7 +8,7 @@
     *   코드상 변수명: `rightPanelMode`
 
 ## 2. 사이드바 구성요소 (Sidebar Components)
-*   **시스템 폴더 (System Folders)**: `Inbox`와 같은 기본 제공 폴더 영역입니다.
+*   **시스템 폴더 (System Folders)**: `Inbox` (Home), `Trash` (휴지통) 등 기본 제공 폴더 영역입니다.
 *   **사용자 폴더 (User Folders)**: 사용자가 생성한 `My Folders` 목록 영역입니다.
 *   **하단 바 (Sidebar Footer)**: 설정(Settings), 정보(About) 버튼이 위치한 하단 영역입니다.
 
