@@ -798,13 +798,15 @@ createApp({
 		// --- Theme Logic ---
 		const customThemeCompartment = new Compartment()
 
+
+
 		const getCustomTheme = (isDark) => {
 			return EditorView.theme({
 				"&": { fontSize: "inherit" },
 				".cm-scroller": { fontFamily: "'Pretendard', 'JetBrains Mono', monospace" },
 				".cm-content": {
 					fontFamily: "'Pretendard', 'JetBrains Mono', monospace",
-					padding: "5px !important"
+					padding: "5px 10px !important"
 				},
 				// Cursor Color (Nord8 for Dark, GitHub Like for Light)
 				".cm-cursor, .cm-dropCursor": { borderLeftColor: isDark ? "#88C0D0" : "#0969da" },
@@ -848,8 +850,7 @@ createApp({
 					gridTemplateColumns: "auto auto auto auto auto auto auto auto",
 					gridTemplateRows: "auto auto", // Row 1, Row 2
 					columnGap: "2px", // Tight gap
-					rowGap: "8px",
-					justifyContent: "start",
+					rowGap: "8px", // Gap between row 1 and 2
 					alignItems: "center"
 				},
 
@@ -1901,6 +1902,16 @@ createApp({
 				document.documentElement.classList.add('dark')
 			} else {
 				document.documentElement.classList.remove('dark')
+			}
+
+			// Update CodeMirror Theme
+			if (editorView.value) {
+				editorView.value.dispatch({
+					effects: [
+						themeCompartment.reconfigure(isDarkMode.value ? nord : githubLight),
+						customThemeCompartment.reconfigure(getCustomTheme(isDarkMode.value))
+					]
+				})
 			}
 		}
 
