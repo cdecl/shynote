@@ -2958,7 +2958,9 @@ createApp({
 		const sortedFolders = computed(() => {
 			// Folders always use 'name' instead of 'title', handled in sortItems
 			// Use same sort criteria as notes for consistency
-			return sortItems(folders.value)
+			// Filter out the Trash folder as it's handled separately in UI
+			const regularFolders = folders.value.filter(f => f.id !== TRASH_FOLDER_ID)
+			return sortItems(regularFolders)
 		})
 
 		const getFolderNotes = (folderId) => {

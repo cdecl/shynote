@@ -364,8 +364,7 @@
                                     </div>
                                     <div class="flex items-center gap-1">
                                         <span
-                                            class="text-slate-500 dark:text-slate-400 font-medium text-[12px] bg-slate-200 dark:bg-[#4C566A] px-1.5 py-0.5 rounded-full min-w-[20px] text-center"
-                                            v-if="sortedRootNotes.length > 0">{{
+                                            class="text-slate-500 dark:text-slate-400 font-medium text-[12px] bg-slate-200 dark:bg-[#4C566A] px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{{
                                             sortedRootNotes.length }}</span>
                                     </div>
                                 </div>
@@ -431,8 +430,7 @@
                                                     </button>
                                                 </div>
                                                 <span
-                                                    class="text-slate-500 dark:text-slate-400 font-medium text-[12px] bg-slate-200 dark:bg-[#4C566A] px-1.5 py-0.5 rounded-full min-w-[20px] text-center"
-                                                    v-if="getSortedFolderNotes(folder.id).length > 0">
+                                                    class="text-slate-500 dark:text-slate-400 font-medium text-[12px] bg-slate-200 dark:bg-[#4C566A] px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
                                                     {{ getSortedFolderNotes(folder.id).length }}
                                                 </span>
                                             </div>
@@ -489,7 +487,7 @@
                                         title="Empty Trash">
                                         <span class="material-symbols-rounded text-[16px]">delete_forever</span>
                                     </button>
-                                    <span v-if="getSortedFolderNotes(TRASH_FOLDER_ID).length > 0"
+                                    <span
                                         class="bg-slate-200 dark:bg-[#4C566A] text-slate-600 dark:text-slate-300 text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
                                         {{ getSortedFolderNotes(TRASH_FOLDER_ID).length }}
                                     </span>
