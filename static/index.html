@@ -325,16 +325,20 @@
                     <div class="px-3 py-2 border-b border-[#E6E4DD] dark:border-[#3B4252] flex items-center bg-[#F2F0EA] dark:bg-[#242933] flex-shrink-0 gap-2 transition-all"
                         :class="isSidebarOpen ? 'justify-between flex-row' : 'flex-col justify-center py-4 gap-4'">
                         <!-- Sort Dropdown Trigger -->
-                        <div
-                            class="h-10 border-b border-slate-200 dark:border-[#3B4252] flex items-center justify-between px-3 shrink-0">
-                            <span class="text-xs font-bold text-slate-500 dark:text-slate-400">FOLDERS</span>
-                            <div class="flex items-center gap-1">
+                        <div class="h-10 border-b border-slate-200 dark:border-[#3B4252] flex items-center px-3 w-full">
+                            <div class="flex items-center gap-0.5 flex-1">
+                                <span class="text-xs font-bold text-slate-500 dark:text-slate-400">FOLDERS</span>
                                 <button @click="createFolder()"
                                     class="p-1 hover:bg-slate-200 dark:hover:bg-[#4C566A] rounded text-slate-500 dark:text-slate-400 transition-colors"
                                     title="New Folder">
-                                    <span class="material-symbols-rounded text-[20px]">add</span>
+                                    <span class="material-symbols-rounded text-[18px]">create_new_folder</span>
                                 </button>
                             </div>
+                            <button @click="createNoteInFolder(null)"
+                                class="p-1 hover:bg-slate-200 dark:hover:bg-[#4C566A] rounded text-slate-500 dark:text-slate-400 transition-colors"
+                                title="New Note in Inbox">
+                                <span class="material-symbols-rounded text-[20px]">note_add</span>
+                            </button>
                         </div>
                     </div>
 
