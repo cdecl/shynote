@@ -10,8 +10,6 @@
     - **Redirect Flow**: `invalid_client` 및 Origin 에러를 해결하기 위해 구글 로그인 프로세스 변경.
     - **Global Redirect**: PC/Mobile 구분 없이 리다이렉트 방식 통일로 안정성 확보.
 - **Mobile UX**:
-    - **Swipe Navigation**: 왼쪽 스와이프(닫기) 및 오른쪽 스와이프(열기/뒤로가기) 로직 통합.
-- **Bug Fixes**:
     - **Trash Sync**: 동적 Trash ID(`trash-{userId}`) 적용 및 마이그레이션으로 500 에러 해결.
     - **CodeMirror**: 불필요한 CSS 링크 제거로 404 콘솔 에러 해결.
 
