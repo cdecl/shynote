@@ -2136,10 +2136,11 @@ createApp({
 				// Switch to Edit Mode (New Layout)
 				rightPanelMode.value = 'edit'
 
-				// Open sidebar if collapsed (Legacy behavior, maybe optional now?)
-				// if (!isSidebarOpen.value) {
-				// 	isSidebarOpen.value = true
-				// }
+				// Close sidebar on mobile for better UX
+				if (window.innerWidth < 768) {
+					isSidebarOpen.value = false
+				}
+
 
 				// Enter rename mode
 				nextTick(() => {
@@ -3030,7 +3031,7 @@ createApp({
 		watch(isDarkMode, (val) => {
 			if (editorView.value) {
 				editorView.value.dispatch({
-					effects: themeCompartment.reconfigure(val ? oneDark : [])
+					effects: themeCompartment.reconfigure(val ? nord : [])
 				})
 			}
 		})
