@@ -9,6 +9,10 @@
     - **Move to Trash**: 노트/폴더 삭제 시 즉시 제거되지 않고 Trash 폴더로 이동합니다.
     - **Empty Trash**: 휴지통 비우기 기능을 통해 영구 삭제가 가능합니다.
     - **Restoration**: Trash 폴더에서 노트를 다른 폴더로 이동하여 복구할 수 있습니다.
+- **Trash (휴지통)** 기능 추가 (영구 삭제, 복구 가능)
+- **Offline Reliability**: Service Worker 캐시에 `idb` 라이브러리 추가
+- **UI Refinement**: 에디터 다크모드 테마를 **Nord**로 변경 및 UI 폰트 크기 조정
+- **UI consistency**: 폴더 및 휴지통의 문서 개수(0포함)를 항상 표시하도록 수정
 - **Offline Reliability**:
     - **Cache Dependency**: Service Worker 캐시에 `idb` 라이브러리를 추가하여 오프라인 로드 오류를 방지했습니다.
 

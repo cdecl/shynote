@@ -6,6 +6,7 @@ import { defaultKeymap, history, historyKeymap } from "https://esm.sh/@codemirro
 import { vscodeKeymap } from "https://esm.sh/@replit/codemirror-vscode-keymap@6.0.2?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0,@codemirror/commands@6.3.3"
 import { search, searchKeymap, highlightSelectionMatches, setSearchQuery, SearchQuery, findNext, findPrevious, openSearchPanel, closeSearchPanel } from "https://esm.sh/@codemirror/search@6.5.5?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
 import { githubLight, githubDark } from "https://esm.sh/@uiw/codemirror-theme-github@4.23.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
+import { nord } from "https://esm.sh/@uiw/codemirror-theme-nord@4.23.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
 import { syntaxHighlighting, defaultHighlightStyle, bracketMatching } from "https://esm.sh/@codemirror/language@6.10.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
 import { closeBrackets, closeBracketsKeymap } from "https://esm.sh/@codemirror/autocomplete@6.12.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
 import { MergeView } from "https://esm.sh/@codemirror/merge@6.4.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
@@ -754,8 +755,8 @@ createApp({
 					highlightActiveLineGutter(),
 					highlightSpecialChars(),
 					placeholder('Start typing...'),
-					// Base Theme Compartment (GitHub Dark / Light)
-					themeCompartment.of(isDarkMode.value ? githubDark : githubLight),
+					// Base Theme Compartment (Nord for Dark / GitHub Light)
+					themeCompartment.of(isDarkMode.value ? nord : githubLight),
 					// Custom Theme Compartment (Colors, Fonts, Overrides)
 					customThemeCompartment.of(getCustomTheme(isDarkMode.value)),
 					// Word Wrap Compartment
@@ -814,26 +815,26 @@ createApp({
 					fontFamily: "'Pretendard', 'JetBrains Mono', monospace",
 					padding: "5px !important"
 				},
-				// Cursor Color (GitHub Like)
-				".cm-cursor, .cm-dropCursor": { borderLeftColor: isDark ? "#58a6ff" : "#0969da" },
-				"&.cm-focused .cm-cursor": { borderLeftColor: isDark ? "#58a6ff" : "#0969da" },
+				// Cursor Color (Nord8 for Dark, GitHub Like for Light)
+				".cm-cursor, .cm-dropCursor": { borderLeftColor: isDark ? "#88C0D0" : "#0969da" },
+				"&.cm-focused .cm-cursor": { borderLeftColor: isDark ? "#88C0D0" : "#0969da" },
 				"&.cm-focused .cm-selectionBackground, ::selection": {
-					backgroundColor: isDark ? "rgba(56, 139, 253, 0.4) !important" : "#b6e3ff !important"
+					backgroundColor: isDark ? "rgba(67, 76, 94, 0.7) !important" : "#b6e3ff !important" // Nord2 for Dark
 				},
 
-				// Search Match Colors (GitHub Style Highlighting)
+				// Search Match Colors (Nord13 for Dark)
 				".cm-searchMatch": {
-					backgroundColor: isDark ? "rgba(242, 204, 96, 0.4) !important" : "#fff8c5 !important",
+					backgroundColor: isDark ? "rgba(235, 203, 139, 0.4) !important" : "#fff8c5 !important",
 					color: "inherit !important"
 				},
 				".cm-searchMatch-selected": {
-					backgroundColor: isDark ? "rgba(242, 204, 96, 1) !important" : "#f2cc60 !important",
+					backgroundColor: isDark ? "rgba(235, 203, 139, 1) !important" : "#f2cc60 !important",
 					color: "#000000 !important",
-					outline: "1px solid #7D4E00",
+					outline: isDark ? "1px solid #D08770" : "1px solid #7D4E00",
 					fontWeight: "bold"
 				},
 				".cm-selectionMatch": {
-					backgroundColor: isDark ? "rgba(56, 139, 253, 0.3) !important" : "rgba(182, 227, 255, 0.5) !important"
+					backgroundColor: isDark ? "rgba(136, 192, 208, 0.3) !important" : "rgba(182, 227, 255, 0.5) !important" // Nord8 for Dark
 				},
 
 				// Search Panel Styles
@@ -844,10 +845,10 @@ createApp({
 					bottom: "auto !important"
 				},
 				".cm-panel.cm-search": {
-					// GitHub Bg Colors
-					background: isDark ? "#0d1117 !important" : "#ffffff !important",
-					color: isDark ? "#c9d1d9 !important" : "#24292f !important",
-					borderBottom: isDark ? "1px solid #30363d" : "1px solid #e1e4e8",
+					// Nord / GitHub Bg Colors
+					background: isDark ? "#2E3440 !important" : "#ffffff !important",
+					color: isDark ? "#D8DEE9 !important" : "#24292f !important",
+					borderBottom: isDark ? "1px solid #3B4252" : "1px solid #e1e4e8",
 					borderTop: "none",
 					padding: "8px 12px",
 					// Robust 2-Row Grid
@@ -865,9 +866,9 @@ createApp({
 				".cm-search input[name='search']": {
 					gridColumn: "1",
 					gridRow: "1",
-					background: isDark ? "#010409 !important" : "#f6f8fa !important",
-					color: isDark ? "#c9d1d9 !important" : "#24292f !important",
-					border: isDark ? "1px solid #30363d" : "1px solid #d1d5da",
+					background: isDark ? "#3B4252 !important" : "#f6f8fa !important",
+					color: isDark ? "#ECEFF4 !important" : "#24292f !important",
+					border: isDark ? "1px solid #4C566A" : "1px solid #d1d5da",
 					borderRadius: "6px", // GitHub uses slightly rounder
 					padding: "4px 8px",
 					width: "240px", // Approx 30 chars
