@@ -1864,6 +1864,21 @@ createApp({
 					if (localFolders && localFolders.length > 0) {
 						folders.value = localFolders
 					}
+
+					// Ensure Trash Folder Exists (Idempotent)
+					const trashExists = localFolders && localFolders.some(f => f.id === TRASH_FOLDER_ID)
+					if (!trashExists) {
+						console.log("Initializing Trash Folder...")
+						const trashFolder = {
+							id: TRASH_FOLDER_ID,
+							name: 'Trash',
+							user_id: uid
+						}
+						// Save Local & Sync will pick it up to create on server
+						await LocalDB.saveFolder(trashFolder, 'CREATE')
+						// Optimistically add to list (though filtered out by UI usually)
+						folders.value.push(trashFolder)
+					}
 				}
 
 				// 2. Fetch from Server (Background if we have local data)
@@ -1998,6 +2013,7 @@ createApp({
 							for (const n of serverNotes) {
 								const base = `${n.id}:${n.title}:${n.content || ''}:${n.folder_id || 'null'}`
 								n.content_hash = await shynote_hash(base)
+
 								n.user_id = n.user_id || currentUid
 								notesToSave.push(n)
 							}
