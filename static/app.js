@@ -5,7 +5,7 @@ import { languages } from "https://esm.sh/@codemirror/language-data@6.4.0?deps=@
 import { defaultKeymap, history, historyKeymap } from "https://esm.sh/@codemirror/commands@6.3.3?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
 import { vscodeKeymap } from "https://esm.sh/@replit/codemirror-vscode-keymap@6.0.2?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0,@codemirror/commands@6.3.3"
 import { search, searchKeymap, highlightSelectionMatches, setSearchQuery, SearchQuery, findNext, findPrevious, openSearchPanel, closeSearchPanel } from "https://esm.sh/@codemirror/search@6.5.5?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
-import { githubLight, githubDark } from "https://esm.sh/@uiw/codemirror-theme-github@4.23.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
+import { githubLight } from "https://esm.sh/@uiw/codemirror-theme-github@4.23.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
 import { nord } from "https://esm.sh/@uiw/codemirror-theme-nord@4.23.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
 import { syntaxHighlighting, defaultHighlightStyle, bracketMatching } from "https://esm.sh/@codemirror/language@6.10.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
 import { closeBrackets, closeBracketsKeymap } from "https://esm.sh/@codemirror/autocomplete@6.12.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
@@ -589,21 +589,12 @@ createApp({
 		if (typeof window !== 'undefined') {
 			window.addEventListener('online', () => {
 				isOnline.value = true
-				// 1. Immediate Pull (Load latest data)
+				startSync()
 				if (isAuthenticated.value) {
-					console.log('[Smart Sync] Connection restored. Fetching notes...')
-					loadingState.value = { source: 'SYNC', message: 'Pulling...' } // NEW: Explicit "Pull" status
-
-					// Fetch Folders AND Notes (Parallel or Sequential)
-					// Folders first to ensure IDs exist? Parallel is fine as they are independent tables usually, 
-					// but UI might need folder to display note properly in sidebar.
 					Promise.all([fetchFolders(false), fetchNotes(false)]).then(() => {
 						loadingState.value = { source: 'CLOUD', message: 'Pull Complete' }
-						// Persist 'Pull Complete' state
 					})
 				}
-				// 2. Resume Push Loop
-				startSync()
 			})
 
 			window.addEventListener('offline', () => {
@@ -987,7 +978,7 @@ createApp({
 			if (editorView.value) {
 				editorView.value.dispatch({
 					effects: [
-						themeCompartment.reconfigure(newVal ? githubDark : githubLight),
+						themeCompartment.reconfigure(newVal ? nord : githubLight),
 						customThemeCompartment.reconfigure(getCustomTheme(newVal))
 					]
 				})
@@ -2886,6 +2877,9 @@ createApp({
 
 		const renderer = new marked.Renderer()
 		renderer.code = function (code, language) {
+			if (language === 'mermaid') {
+				return `<div class="mermaid my-4 flex justify-center bg-white dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700 overflow-x-auto">${code}</div>`
+			}
 			const validLang = hljs.getLanguage(language) ? language : 'plaintext'
 			const highlighted = hljs.highlight(code, { language: validLang }).value
 			return `<div class="relative group my-4">
@@ -2895,6 +2889,7 @@ createApp({
 				<pre class="!my-0"><code class="hljs language-${validLang}">${highlighted}</code></pre>
 			</div>`
 		}
+
 
 		const previewContent = computed(() => {
 			if (!selectedNote.value || !selectedNote.value.content) return ''
@@ -2949,6 +2944,23 @@ createApp({
 			})
 
 			return frontmatterHtml + parsedMarkdown
+		})
+
+		// Re-run Mermaid when preview content changes
+		watch(previewContent, () => {
+			nextTick(async () => {
+				const nodes = document.querySelectorAll('.mermaid')
+				if (window.mermaid && nodes.length > 0) {
+					try {
+						await mermaid.run({
+							nodes: nodes,
+							suppressErrors: true // Avoid throwing globally on parse error
+						})
+					} catch (err) {
+						console.warn('Mermaid rendering failed:', err)
+					}
+				}
+			})
 		})
 
 		const sortedRootNotes = computed(() => {

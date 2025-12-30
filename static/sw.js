@@ -1,4 +1,4 @@
-const CACHE_NAME = 'shynote-v60'; // Bumped Version
+const CACHE_NAME = 'shynote-v65'; // Bumped Version
 const CRITICAL_ASSETS = [
 	'/',
 	'/static/index.html',
@@ -17,6 +17,8 @@ const EXTERNAL_ASSETS = [
 	'https://esm.sh/idb@7.1.1',
 	'https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js',
 	'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js',
+	'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js',
+	'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css',
 	'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.8.1/github-markdown-light.min.css',
 	'https://unpkg.com/nord-highlightjs@0.1/dist/nord.css',
 	'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap',

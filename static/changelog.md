@@ -1,3 +1,17 @@
+# v0.4.2 Release Notes
+
+## Summary
+- **Mermaid Support**: 프리뷰 창에서 다이어그램 및 차트를 렌더링 할 수 있는 Mermaid.js를 통합했습니다.
+- **Theme Optimization**: 다크 모드 테마 일관성을 위해 Nord 테마를 강제 적용하고 불필요한 테마 로딩을 최적화했습니다.
+
+## Changes
+- **Diagrams**: ` ```mermaid ` 블록을 통한 다이어그램 렌더링 기능 추가
+- **Nord Theme**: 다크 모드 전환 시 Nord 테마가 명확하게 적용되도록 로직 수정
+- **CDN Stability**: CodeMirror CSS를 `unpkg`로 복구하여 로딩 안정성 확보
+- **Asset Fix**: 누락되었던 Pretendard 폰트 캐싱 복구
+
+---
+
 # v0.4.1 Release Notes
 
 ## Summary
