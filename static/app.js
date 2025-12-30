@@ -2093,10 +2093,11 @@ createApp({
 			try {
 				// 1. Generate UUID v7
 				const tempId = uuidv7()
-				const now = new Date().toISOString()
-				const dateStr = now.split('T')[0]
-				const shortHash = tempId.slice(-4)
-				const initialTitle = `Note ${dateStr} (${shortHash})`
+				const nowObj = new Date()
+				const now = nowObj.toISOString()
+
+				const pad = (n) => String(n).padStart(2, '0')
+				const initialTitle = `${nowObj.getFullYear()}-${pad(nowObj.getMonth() + 1)}-${pad(nowObj.getDate())} ${pad(nowObj.getHours())}:${pad(nowObj.getMinutes())}`
 				const initialContent = ''
 
 				// Calculate Hash
