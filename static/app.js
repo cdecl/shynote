@@ -1681,7 +1681,7 @@ createApp({
 				// Ignore if vertical swipe is dominant (scrolling)
 				if (Math.abs(deltaY) > Math.abs(deltaX)) return
 
-				// Swipe Right (deltaX > 0)
+				// Swipe Right (deltaX > 0) -> Open / Back
 				if (deltaX > minSwipeDistance) {
 					// Document Detail Screen -> Show List
 					if (rightPanelMode.value === 'edit' && selectedNote.value) {
@@ -1689,7 +1689,14 @@ createApp({
 					}
 					// Document List Screen -> Show Sidebar
 					else if (rightPanelMode.value === 'list' && !isSidebarOpen.value) {
-						isSidebarOpen.value = true
+						toggleSidebar()
+					}
+				}
+				// Swipe Left (deltaX < 0) -> Close / Forward
+				else if (deltaX < -minSwipeDistance) {
+					// Sidebar Open -> Close Sidebar
+					if (isSidebarOpen.value) {
+						toggleSidebar()
 					}
 				}
 			}
@@ -2279,6 +2286,14 @@ createApp({
 				if (window.innerWidth < 768) {
 					isSidebarOpen.value = false
 				}
+
+				// Auto-focus and select title for immediate renaming
+				nextTick(() => {
+					if (titleInputRef.value) {
+						titleInputRef.value.focus()
+						titleInputRef.value.select()
+					}
+				})
 
 
 				// Enter rename mode

@@ -1,3 +1,22 @@
+# v0.4.3 Release Notes
+
+## Summary
+- **Google OAuth (리다이렉트)**: 모바일 및 시크릿 모드 호환성을 위해 로그인 방식을 팝업에서 **리다이렉트(Redirect)** 방식으로 전면 변경했습니다.
+- **모바일 스와이프**: 왼쪽/오른쪽 스와이프로 사이드바 열기/닫기 및 뒤로가기 제스처를 완성했습니다.
+- **안정성 강화**: Trash 폴더 동기화 에러 및 CodeMirror 404 에러 등 치명적인 버그를 수정했습니다.
+
+## Changes
+- **Auth**:
+    - **Redirect Flow**: `invalid_client` 및 Origin 에러를 해결하기 위해 구글 로그인 프로세스 변경.
+    - **Global Redirect**: PC/Mobile 구분 없이 리다이렉트 방식 통일로 안정성 확보.
+- **Mobile UX**:
+    - **Swipe Navigation**: 왼쪽 스와이프(닫기) 및 오른쪽 스와이프(열기/뒤로가기) 로직 통합.
+- **Bug Fixes**:
+    - **Trash Sync**: 동적 Trash ID(`trash-{userId}`) 적용 및 마이그레이션으로 500 에러 해결.
+    - **CodeMirror**: 불필요한 CSS 링크 제거로 404 콘솔 에러 해결.
+
+---
+
 # v0.4.2 Release Notes
 
 ## Summary
