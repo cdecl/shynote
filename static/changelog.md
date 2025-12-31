@@ -1,3 +1,22 @@
+# v0.4.4 Release Notes
+
+## Summary
+- **List View Refinement**: 문서 목록 보기(List View)의 가독성을 대폭 개선하고, Grid/List 모드 전환 토글을 추가했습니다.
+- **Editor Readability**: 다크 모드에서 선택된 텍스트의 가독성을 높이기 위해 노란색(Nord13) 하이라이트를 적용했습니다.
+- **Unified Navigation**: 에디터와 리스트 간의 이동을 더욱 직관적인 버튼으로 개선했습니다.
+
+## Changes
+- **List View UI**:
+    - **Header**: 폴더 정보를 컨텐츠 영역 상단으로 이동하여 툴바 공간 확보.
+    - **Compact Mode**: 리스트 높이를 줄여 정보 밀도 최적화.
+    - **Pin Visibility**: 리스트 뷰에서도 고정된 문서를 명확하게 구분(Push Pin 아이콘).
+- **UX Improvements**:
+    - **View Mode Persistence**: 마지막으로 사용한 보기 모드(List/Grid) 및 에디터 모드를 기억.
+    - **Selection Highlighting**: CodeMirror 다크 모드 선택 영역 색상 개선 (`Nord13`).
+    - **Standardized Date**: 모든 날짜 표기를 `YYYY-MM-DD HH:MM` 형식으로 통일.
+
+---
+
 # v0.4.3 Release Notes
 
 ## Summary

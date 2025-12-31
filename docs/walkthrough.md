@@ -1,98 +1,62 @@
-# Walkthrough - Sync with GEMINI.md
+# Walkthrough - Document Listing Mode & Toggle
 
-I have updated the project to align with `GEMINI.md` requirements, introducing Folder support, Split View editor, and **Google JWT Authentication**.
+I have added a Document Listing Mode to the Main Panel and implemented a toggle switch to easily transition between editing a note and viewing the folder list.
 
 ## Changes
 
-### Authentication
-- **Google Sign-In**: Implemented JWT-based authentication using Google OAuth 2.0.
-- **Data Isolation**: Notes and Folders are now strictly isolated per user.
-- **Configurable**: Client ID is managed via `config.json`, separating secrets from code.
+### 1. Main Panel Toolbar (Editor Mode)
+The "Back to Notes" button has been upgraded to a "Return to Folder View" button.
+- **Icon**: `drive_folder_upload` (Parent Folder)
+- **Behavior**: Switches the main view to the Document List, showing the parent folder of the current note.
 
-### Documentation
-- Created `docs/` directory.
-- Populated `docs/` with project artifacts.
+### 2. Main Panel Header (List Mode)
+A new "Return to Editor" button appears in the List View header when a note is active.
+- **Icon**: `edit_note` (Edit)
+- **Condition**: Only visible if you have a note selected.
+- **Behavior**: Instantly switches back to the Editor for the active note.
 
-### Sidebar & Folders
-- **Folders**: Implemented folder creation and management.
-- **Organization**: Notes can now be created within folders or at the root level.
-- **UI**: Sidebar displaying folders and their contents hierarchically.
+### 3. Logic (`app.js`)
+- **State Persistence**: The application now remembers your last view mode (`list` or `edit`) via `localStorage`.
+- **Toggle Logic**: Robust switching ensures you don't lose context. If no note is selected, the "Edit" toggle is hidden (since there's nothing to edit).
 
-### Editor
-- **Split View**: Implemented a side-by-side Editor and Markdown Preview.
-- **Markdown**: Integrated `marked.js` for real-time markdown rendering.
+### 4. Layout Toggle (New)
+A new toggle in the Document List header allows switching between **Grid** (Card) and **List** (Row) layouts.
+- **Icon**: `grid_view` / `view_list`
+- **Preference**: Your choice is remembered via `localStorage`.
+- **Design**:
+    - **Grid**: classic card view with previews.
+    - **List**: compact rows with truncated previews, perfect for scanning many files.
 
-### UI Improvements
-- **Material Icons**: Integrated genuine **VS Code Material Icon Theme** SVGs for directories and Markdown files, providing a familiar and high-quality visual hierarchy.
-- **Sidebar Toggle**: Added a collapsible sidebar feature with smooth transitions, controllable via a toggle button in the editor toolbar.
+### 5. Content Header (New)
+Moved the folder information from the sticky toolbar to the content area for a unified "File Explorer" feel.
+- **Location**: Top of the scrollable list.
+- **Layout**: Single line header: `[Icon] [Folder Name] · [Item Count]`
+- **Behavior**: Scrolls with the content, leaving more space for tools in the toolbar.
 
-## Authentication Setup (Google OAuth)
-To enable Google Sign-In, you need to configure a Google Cloud Project:
+### 6. Date Format
+- **Date Format**: Standardized date display (YYYY-MM-DD HH:MM) across Grid and List views.
+- **Pin Button Refinement**: Wrapped pin button in `w-8 h-8` container and adjusted padding to `p-0.5` to ensure consistent alignment and spacing for both pinned and unpinned states.
 
-1.  **Go to Google Cloud Console**:
-    -   Visit [Google Cloud Credentials](https://console.cloud.google.com/apis/credentials).
-2.  **Create Credentials**:
-    -   Click **Create Credentials** > **OAuth client ID**.
-    -   Application type: **Web application**.
-    -   Name: `Shynotes Local` (or any name).
-3.  **Configure Origins**:
-    -   Under **Authorized JavaScript origins**, add:
-        -   `http://localhost:8000`
-        -   `http://127.0.0.1:8000`
-    -   Click **CREATE**.
-4.  **Update Configuration**:
-    -   Copy the **Client ID** (e.g., `12345...apps.googleusercontent.com`).
-    -   Open `config.json` in the project root.
-    -   Paste your ID:
-        ```json
-        {
-          "GOOGLE_CLIENT_ID": "YOUR_CLIENT_ID_HERE"
-        }
-        ```
-    -   Restart the server: `./run.sh restart`.
+### 7. Pinned List Indication
+Pinned items in the list view now display a visible **Push Pin** icon on the left to clearly distinguish them from regular notes.
 
-## Verification
+### 8. Compact List View
+Reduced the list item height (padding `py-3` → `py-2`, gap `4` → `3`) to approximately 1/4 of the Grid Card height for a denser, information-rich layout.
 
-### User Interaction
-1.  **Sidebar Actions**:
-    -   **Toggle**: Click the double-arrow icon in the toolbar to collapse/expand the sidebar.
-    -   **Delete**: Hover over any folder or note in the sidebar to reveal the **Trash** icon. Click to delete (with confirmation for folders).
-    -   **Create**: Use the styled icons in the header to create new Folders or Notes.
+### 9. Unified Pin Button Style
+The List View now uses the same absolute-positioned "Push Pin" button logic as the Grid View, ensuring consistent visual feedback and behavior (visible on mobile, hover on desktop for unpinned items).
 
-### Browser Automation
-I verified the following workflows:
-1.  **Folder Creation**: Created "Projects" and "Ideas" folders.
-2.  **Note Creation**: Created "ProjectPlan" inside "Projects".
-3.  **Editing**: Verified markdown content (Headers, Lists, Bold text).
-4.  **Preview**: Confirmed the Preview pane renders markdown correctly.
-5.  **Navigation**: Verified sidebar structure matches the folder hierarchy.
+### 10. Editor Readability
+- **Selection Visibility**: Enhanced the text selection background color in Dark Mode to `rgba(235, 203, 139, 0.4)` (Nord13 Yellow), creating a high-contrast 'yellowish' highlight for better readability.
 
-![Folder and Split View Verification](file:///Users/cdecl/.gemini/antigravity/brain/1d220aa3-893b-4506-aa3f-6ff27a9e7687/folder_split_feature_verification_retry_1766207215745.webp)
-*Figure 1: Verification of Folders and Split View.*
+## Verification Results
 
-## How to Run
+### Manual Test Scenarios
 
-The `run.sh` script has been updated to run as a background service.
-
-### Start Server
-```bash
-./run.sh start
-```
-*   Starts the server in the background (Port 8000).
-*   Logs are written to `SHYNOTE.log`.
-
-### Stop Server
-```bash
-./run.sh stop
-```
-
-### Restart Server
-```bash
-./run.sh restart
-```
-
-**Note**: The database schema has been updated. If you encounter errors, you may need to reset the database:
-```bash
-rm SHYNOTE.db
-./run.sh start
-```
+| Scenario | Action | Expected Result |
+| :--- | :--- | :--- |
+| **Switch to List Mode** | Click `List` icon in Editor | View changes to Folder List. Current note remains "selected" internally. |
+| **Return to Edit** | Click `Edit` icon in List Header | View changes back to Editor. Content matches selected note. |
+| **Grid/List Toggle** | Click `Grid/List` icon in Folder Header | View toggles between Card Grid and Compact List row layout. |
+| **Change Note** | Click a different note in List | View switches to Editor for the *new* note. |
+| **Empty State** | Go to List, reload app | App remembers List mode (persisted). |
