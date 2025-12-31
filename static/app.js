@@ -118,7 +118,10 @@ createApp({
 		const isSidebarOpen = ref(true)
 		const editorRef = ref(null)
 		const previewRef = ref(null)
-		const viewMode = ref('edit')
+		const viewMode = ref(localStorage.getItem('shynote_view_mode') || 'edit')
+		watch(viewMode, (newVal) => {
+			localStorage.setItem('shynote_view_mode', newVal)
+		})
 
 		// Dark mode is global/device specific usually, but code requested "User Info". 
 		// Let's keep dark mode global for now as per industry standard? 
@@ -137,6 +140,13 @@ createApp({
 		const setSidebarViewMode = (mode) => {
 			sidebarViewMode.value = mode
 			localStorage.setItem('shynote_sidebar_view_mode', mode)
+		}
+
+		// List View Mode (Grid vs List)
+		const listViewMode = ref(localStorage.getItem('shynote_list_view_mode') || 'grid')
+		const toggleListViewMode = () => {
+			listViewMode.value = listViewMode.value === 'grid' ? 'list' : 'grid'
+			localStorage.setItem('shynote_list_view_mode', listViewMode.value)
 		}
 
 		// New 2-Column Layout State
@@ -2381,6 +2391,22 @@ createApp({
 		// Navigation Logic (Refactored)
 		const backToList = () => {
 			rightPanelMode.value = 'list'
+			saveUserSetting(STORAGE_KEYS.LAST_PANEL_MODE, 'list')
+		}
+
+		const toggleRightPanelMode = () => {
+			if (rightPanelMode.value === 'list') {
+				if (selectedNote.value) {
+					rightPanelMode.value = 'edit'
+					saveUserSetting(STORAGE_KEYS.LAST_PANEL_MODE, 'edit')
+				} else {
+					// Optional: Shake or warn if no note selected?
+					console.warn('Cannot switch to edit mode: No note selected')
+				}
+			} else {
+				rightPanelMode.value = 'list'
+				saveUserSetting(STORAGE_KEYS.LAST_PANEL_MODE, 'list')
+			}
 		}
 
 		const selectFolder = (folderId) => {
@@ -3389,7 +3415,10 @@ createApp({
 
 			// Layout State
 			rightPanelMode,
+			listViewMode,
+			toggleListViewMode,
 			currentFolderId,
+			toggleRightPanelMode,
 			selectFolder,
 			backToList,
 
