@@ -856,12 +856,22 @@ createApp({
 					padding: "8px 12px",
 					// Robust 2-Row Grid
 					display: "grid !important",
-					// All columns auto to hug content (left aligned)
-					gridTemplateColumns: "auto auto auto auto auto auto auto auto",
+					// Force items to pack to the left
+					gridTemplateColumns: "max-content max-content max-content max-content max-content max-content max-content max-content",
 					gridTemplateRows: "auto auto", // Row 1, Row 2
-					columnGap: "2px", // Tight gap
-					rowGap: "8px", // Gap between row 1 and 2
-					alignItems: "center"
+					columnGap: "6px",
+					rowGap: "8px",
+					alignItems: "center",
+					justifyContent: "start"
+				},
+
+				// Generic Button/Label Reset for Search
+				".cm-search button, .cm-search label": {
+					margin: "0 !important",
+					cursor: "pointer",
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "center"
 				},
 
 				// --- ROW 1: SEARCH ---
@@ -871,11 +881,10 @@ createApp({
 					background: isDark ? "#3B4252 !important" : "#f6f8fa !important",
 					color: isDark ? "#ECEFF4 !important" : "#24292f !important",
 					border: isDark ? "1px solid #4C566A" : "1px solid #d1d5da",
-					borderRadius: "6px", // GitHub uses slightly rounder
+					borderRadius: "6px",
 					padding: "4px 8px",
-					width: "240px", // Approx 30 chars
-					minWidth: "240px",
-					marginRight: "4px"
+					width: "240px",
+					minWidth: "240px"
 				},
 				// Auto-flow items in Row 1 (Labels + Nav)
 				".cm-search label": { gridRow: "1", gridColumn: "auto" },
@@ -892,7 +901,7 @@ createApp({
 					border: isDark ? "1px solid #30363d" : "1px solid #d1d5da",
 					borderRadius: "6px",
 					padding: "4px 8px",
-					width: "240px", // Approx 30 chars
+					width: "240px",
 					minWidth: "240px"
 				},
 				// Auto-flow items in Row 2
