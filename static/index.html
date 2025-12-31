@@ -605,7 +605,7 @@
                         <!-- Font Size Selector -->
                         <div class="relative group flex items-center gap-1.5 p-1 rounded bg-transparent">
                             <span
-                                class="text-slate-400 dark:text-[#D8DEE9] text-[10px] font-bold uppercase tracking-wider hidden sm:inline-block">Size</span>
+                                class="material-symbols-rounded text-slate-400 dark:text-[#D8DEE9] text-[20px] hidden sm:inline-block">text_fields</span>
                             <div class="relative">
                                 <select :value="fontSize" @change="setFontSize($event.target.value)"
                                     class="appearance-none bg-slate-100 dark:bg-[#434C5E] text-slate-600 dark:text-[#D8DEE9] text-xs font-bold py-1 pl-2 pr-6 rounded-lg cursor-pointer outline-none hover:bg-slate-200 dark:hover:bg-[#4C566A] transition-colors h-[26px]">
@@ -625,13 +625,13 @@
                         <div class="w-[1px] h-4 bg-slate-200 dark:bg-[#434C5E] mx-1 hidden sm:block"></div>
 
                         <button @click="toggleShare" :disabled="isSharing" :class="selectedNote.is_shared 
-                                ? 'text-blue-600 bg-blue-100 dark:bg-blue-500 dark:text-white ring-2 ring-blue-300 dark:ring-blue-700 shadow-md transform scale-105' 
+                                ? 'text-blue-600 bg-blue-100 dark:bg-blue-500 dark:text-white ring-1 ring-blue-300 dark:ring-blue-700' 
                                 : 'text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600'"
                             class="p-1 px-2 rounded transition-all duration-200 flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                             :title="isSharing ? 'Sharing...' : (selectedNote.is_shared ? 'Manage Sharing' : 'Share Note')">
-                            <span v-if="!isSharing" class="material-symbols-rounded text-[18px] block"
-                                :style="selectedNote.is_shared ? 'font-variation-settings: \'FILL\' 1' : ''">share</span>
-                            <svg v-else class="animate-spin h-[18px] w-[18px]" xmlns="http://www.w3.org/2000/svg"
+                            <span v-if="!isSharing" class="material-symbols-rounded text-[16px] block"
+                                :style="selectedNote.is_shared ? 'font-variation-settings: \'FILL\' 1' : ''">ios_share</span>
+                            <svg v-else class="animate-spin h-[16px] w-[16px]" xmlns="http://www.w3.org/2000/svg"
                                 fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
                                     stroke-width="4"></circle>
