@@ -192,10 +192,41 @@ This document tracks the cumulative implementation details of the SHYNOTE projec
 
 ---
 
-## 8. Future Roadmap (To Be Implemented)
+---
+
+## 9. List View & UI Refinements
+**Date**: 2025-12-31
+**Status**: Completed
+
+### List View Interface
+- [x] **Grid/List Toggle**:
+    - [x] Implemented toggle in Folder Header.
+    - [x] Persisted user preference in `localStorage`.
+- [x] **Compact List Mode**:
+    - [x] Optimized padding and row height for dense information display.
+    - [x] Unified "Push Pin" button behavior (absolute positioned, fixed wrapper).
+    - [x] Consistent alignment of icons (Pin, Date, Trash).
+- [x] **Header Redesign**:
+    - [x] Moved Folder Info from Toolbar to Content Area (Unified Header).
+    - [x] Removed Breadcrumb navigation for cleaner look.
+    - [x] Updated typography (Text-2xl) and icon sizing.
+
+### Navigation & UX
+- [x] **Document Listing Mode**:
+    - [x] "Return to Folder View" button in Editor (`drive_folder_upload`).
+    - [x] "Return to Editor" button in List View (`edit_note`).
+    - [x] Persisted `viewMode` state (List vs Edit) across reloads.
+- [x] **Visual Polish**:
+    - [x] **Date Format**: Standardized `YYYY-MM-DD HH:MM` across app.
+    - [x] **Selection Visibility**: Enhanced Dark Mode text selection color (Nord13 Yellow).
+    - [x] **Pin Indication**: Added clear visual indicators for pinned items in list view.
+
+---
+
+## 10. Future Roadmap (To Be Implemented)
 - [ ] **Database Migration**: Fully transition to PostgreSQL for production (Vercel Postgres).
 - [ ] **State Management**: Refactor vanilla `ref` to Pinia if complexity grows.
 - [ ] **Testing**: Implement `pytest` suite and E2E tests.
 - [ ] **Folder Structure Sync**:
-    - [ ] Implement smart refresh of folder structure (e.g., on folder toggle or visibility change) to keep the tree view consistent across devices.
-    - [ ] List UI "Dirty Check" refining.
+    - [ ] Implement smart refresh of folder structure.
+

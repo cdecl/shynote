@@ -33,6 +33,8 @@
 | `shynote_split_ratio` | 화면 분할 비율 | `50` (%) |
 | `shynote_sort_field` | 정렬 기준 필드 | `updated_at` |
 | `shynote_sort_direction` | 정렬 방향 | `desc` |
+| `shynote_view_mode` | 에디터 보기 모드 | `edit`, `preview`, `split` |
+| `shynote_list_view_mode` | 목록 보기 모드 (그리드/리스트) | `grid`, `list` |
 
 
 ---

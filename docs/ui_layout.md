@@ -36,18 +36,19 @@ The main panel switches between **List Mode** and **Editor Mode**.
 #### Header
 - **Navigation (Left)**:
   - **Open Sidebar**: Button (Icon: `view_sidebar`) *Visible only when sidebar is closed*
-  - **Folder Icon**: Icon (`Inbox`, `folder` or `delete`)
-  - **Folder Name**: Text
+  - **Return to Editor**: Button (Icon: `edit_note`) *Visible when a note is active*
 
 - **Controls (Right)**:
+  - **Grid/List Toggle**: Button (Icon: `grid_view` / `view_list`)
   - **Sort Field**: Button Group (Title / Date)
   - **Sort Direction**: Button (Icon: Arrow Up/Down)
   - **Divider**: Vertical Line
   - **Import**: Button (Icon: `upload_file`, Text: "Import")
 
 #### Content
-- **Pinned Notes**: Section (Grid of note cards)
-- **Other Notes**: Section (Grid of note cards)
+- **Folder Header**: Large Icon + Name + Item Count
+- **Pinned Notes**: Section (Grid Cards or Compact Rows)
+- **Other Notes**: Section (Grid Cards or Compact Rows)
 - **Empty State**: Icon & Text (if no notes)
 
 #### Floating Action Button (FAB)
@@ -63,7 +64,7 @@ The main panel switches between **List Mode** and **Editor Mode**.
 - **Navigation (Left)**:
   - **Open Sidebar**: Button (Icon: `view_sidebar`) *Visible only when sidebar is closed*
   - **Navigation (Left)**:
-    - **Back to Notes**: Button (Icon: `arrow_back_ios_new`, Text: "NOTES") 
+    - **Return to Folder View**: Button (Icon: `drive_folder_upload`, Title: "Return to Folder View") 
   - **View Mode Tabs**: Segmented Control
     - `Editor`: Button (Icon: `edit`, Text: "Editor" - *Visible when active*)
     - `Preview`: Button (Icon: `visibility`, Text: "Preview" - *Visible when active*)
