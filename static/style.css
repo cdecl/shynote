@@ -404,3 +404,9 @@ textarea {
 .cm-scroller::-webkit-scrollbar-corner {
     background: transparent;
 }
+
+/* CodeMirror Selection Override for Dark Mode */
+.dark .cm-editor .cm-selectionBackground,
+.dark .cm-editor ::selection {
+    background-color: rgba(235, 203, 139, 0.4) !important;
+}

@@ -822,7 +822,7 @@ createApp({
 				".cm-cursor, .cm-dropCursor": { borderLeftColor: isDark ? "#88C0D0" : "#0969da" },
 				"&.cm-focused .cm-cursor": { borderLeftColor: isDark ? "#88C0D0" : "#0969da" },
 				"&.cm-focused .cm-selectionBackground, ::selection": {
-					backgroundColor: isDark ? "rgba(67, 76, 94, 0.7) !important" : "#b6e3ff !important" // Nord2 for Dark
+					backgroundColor: isDark ? "rgba(235, 203, 139, 0.4) !important" : "#b6e3ff !important" // Nord13 (Yellow) for Dark
 				},
 
 				// Search Match Colors (Nord13 for Dark)
