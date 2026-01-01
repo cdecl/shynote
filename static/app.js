@@ -3530,25 +3530,45 @@ createApp({
 
 		const startDragSelection = (event) => {
 			const target = event.target
-			// Ignore if clicking interactive elements
-			if (target.closest('.note-item') || target.closest('button') || target.closest('input') || target.closest('.no-drag-start')) return
+			// 2. Ignore elements
+			const tag = event.target.tagName
+			if (tag === 'BUTTON' || tag === 'INPUT' || tag === 'A' || event.target.closest('button') || event.target.closest('.note-item')) return
+
+			// 3. Ignore Sidebar (New)
+			if (event.target.closest('#app-sidebar')) return
+
+			// Left click only
+			if (event.button !== 0) return
 
 			isSelecting.value = true
-			isSelectionMode.value = true
+			// Don't enable selection mode immediately. Wait for drag.
+			// isSelectionMode.value = true 
 			selectionStart.value = { x: event.clientX, y: event.clientY }
 			selectionCurrent.value = { x: event.clientX, y: event.clientY }
 
-			if (marqueeEl.value) {
-				updateMarqueeStyle()
-				marqueeEl.value.classList.remove('hidden')
-			}
-			// event.preventDefault() // prevent dragging image ghost if clicked on img 
+			// if (marqueeEl.value) {
+			// 	updateMarqueeStyle()
+			// 	marqueeEl.value.classList.remove('hidden')
+			// }
 		}
 
 		const updateDragSelection = (event) => {
 			if (!isSelecting.value) return
 			selectionCurrent.value = { x: event.clientX, y: event.clientY }
-			updateMarqueeStyle()
+
+			// Calculate distance to determine if it's a drag
+			if (!isSelectionMode.value) {
+				const dx = Math.abs(event.clientX - selectionStart.value.x)
+				const dy = Math.abs(event.clientY - selectionStart.value.y)
+				if (dx > 5 || dy > 5) {
+					isSelectionMode.value = true
+					if (marqueeEl.value) marqueeEl.value.classList.remove('hidden')
+				}
+			}
+
+			if (isSelectionMode.value) {
+				updateMarqueeStyle()
+			}
 		}
 
 		const updateMarqueeStyle = () => {
