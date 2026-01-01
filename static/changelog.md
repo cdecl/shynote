@@ -1,3 +1,21 @@
+# v0.4.5 Release Notes
+
+## Summary
+- **Multi-Select & Bulk Actions**: 여러 노트를 선택하여 한 번에 이동하거나 삭제할 수 있는 기능을 추가했습니다.
+- **Improved Sidebar UX**: 사이드바의 '새 폴더' 및 '새 노트' 버튼 위치를 직관적인 곳으로 재배치하고 상시 표시하도록 개선했습니다.
+
+## New Features
+- **Multi-Select**:
+    - **Header Button**: 폴더 헤더의 'Select' 버튼으로 선택 모드 진입.
+    - **Shortcuts**: `Cmd+A`로 전체 선택, `Esc`로 선택 취소.
+    - **Section Select**: Pinned 및 Notes 섹션별 전체 선택 지원.
+- **Bulk Drag & Drop**: 선택된 여러 노트를 드래그하여 폴더 간 이동 지원.
+- **Sidebar Actions**:
+    - **New Folder**: 'My Folders' 헤더 우측으로 이동.
+    - **New Note**: Inbox 항목 우측으로 이동.
+
+---
+
 # v0.4.4 Release Notes
 
 ## Summary
