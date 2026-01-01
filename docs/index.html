@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHYNOTE - 당신의 생각을 담는 조용한 공간</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --nord0: #2E3440;
+            --nord1: #3B4252;
+            --nord3: #4C566A;
+            --nord4: #D8DEE9;
+            --nord6: #ECEFF4;
+            --nord7: #8FBCBB;
+            --nord8: #88C0D0;
+            --nord9: #81A1C1;
+            --nord10: #5E81AC;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            background-color: var(--nord1);
+            color: var(--nord4);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        header {
+            text-align: center;
+            padding: 60px 20px 50px;
+        }
+        header h1 {
+            font-size: 3rem;
+            margin: 0;
+            color: var(--nord6);
+            font-weight: 700;
+            letter-spacing: -1.5px;
+        }
+        header p {
+            font-size: 1.15rem;
+            color: var(--nord8);
+            margin: 10px 0 30px;
+        }
+        .cta-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .cta-button {
+            display: inline-block;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease-in-out;
+            border: 2px solid transparent;
+        }
+        .primary {
+            background-color: var(--nord9);
+            color: var(--nord0);
+        }
+        .primary:hover {
+            background-color: var(--nord8);
+            transform: translateY(-2px);
+        }
+        .secondary {
+            color: var(--nord7);
+            border-color: var(--nord3);
+        }
+        .secondary:hover {
+            background-color: var(--nord3);
+            color: var(--nord6);
+            transform: translateY(-2px);
+        }
+        section {
+            padding: 50px 0;
+            border-top: 1px solid var(--nord3);
+        }
+        h2 {
+            text-align: center;
+            font-size: 2.2rem;
+            color: var(--nord6);
+            margin-bottom: 40px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 25px;
+        }
+        .feature-card {
+            background-color: var(--nord0);
+            padding: 25px;
+            border-radius: 10px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .feature-card h3 {
+            font-size: 1.25rem;
+            color: var(--nord7);
+            margin-top: 0;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+        }
+        .feature-card h3::before {
+            content: attr(data-icon);
+            margin-right: 10px;
+            font-size: 1.5rem;
+        }
+        .feature-card p {
+            color: var(--nord4);
+            font-size: 0.95rem;
+            margin-bottom: 0;
+        }
+        #tech-stack ul, #philosophy ul {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+        #tech-stack li, #philosophy li {
+            background-color: var(--nord3);
+            color: var(--nord4);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            margin-top: 40px;
+            border-top: 1px solid var(--nord3);
+            color: var(--nord4);
+            font-size: 0.9rem;
+        }
+        footer a {
+            color: var(--nord9);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <h1>SHYNOTE</h1>
+            <p>당신의 생각을 담는 조용하고 미니멀한 마크다운 노트</p>
+            <div class="cta-buttons">
+                <a href="https://shynote.vercel.app/" class="cta-button primary">라이브 데모</a>
+                <a href="https://github.com/cdecl/shynote" class="cta-button secondary">GitHub 소스코드</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section id="features">
+            <h2>주요 기능</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3 data-icon="✍️">몰입형 글쓰기 환경</h3>
+                    <p>에디터, 스플릿 뷰, 미리보기 모드를 자유롭게 전환하세요. Nord 테마 기반의 다크 모드와 GitHub 스타일 렌더링이 더해져, 오롯이 글쓰기에만 집중할 수 있습니다.</p>
+                </div>
+                <div class="feature-card">
+                    <h3 data-icon="🚀">강력한 에디터 엔진</h3>
+                    <p>CodeMirror 6 기반 에디터는 VS Code 단축키, 멀티 커서, 정규식 검색 등 강력한 기능을 지원합니다. 대용량 문서도 지연 없이 부드럽게 다룰 수 있습니다.</p>
+                </div>
+                <div class="feature-card">
+                    <h3 data-icon="🗂️">직관적인 파일 관리</h3>
+                    <p>드래그 앤 드롭으로 노트를 폴더 간에 쉽게 이동하고, 무한 계층 구조로 생각을 체계적으로 정리하세요. 중요한 노트는 목록 상단에 고정할 수 있습니다.</p>
+                </div>
+                <div class="feature-card">
+                    <h3 data-icon="💾">로컬 우선 아키텍처</h3>
+                    <p>모든 내용은 1초마다 로컬 DB에 자동 저장되어 데이터 유실 위험이 없습니다. 오프라인에서도 모든 기능이 동작하며, 연결 시 자동으로 동기화됩니다.</p>
+                </div>
+                <div class="feature-card">
+                    <h3 data-icon="🌐">간편한 인증 및 공유</h3>
+                    <p>Google 계정으로 빠르게 로그인하고, 게스트 모드로 즉시 사용해볼 수 있습니다. 작성한 노트는 고유 링크를 생성하여 외부에 안전하게 공유하세요.</p>
+                </div>
+                <div class="feature-card">
+                    <h3 data-icon="📱">완벽한 모바일 경험</h3>
+                    <p>스와이프 제스처와 반응형 UI를 통해 모바일에서도 데스크톱과 동일한 사용자 경험을 제공합니다. 언제 어디서나 생각을 기록하고 정리하세요.</p>
+                </div>
+                <div class="feature-card">
+                    <h3 data-icon="👨‍🚀">게스트 모드</h3>
+                    <p>로그인 없이 즉시 모든 기능을 체험할 수 있습니다. 가상 인메모리 백엔드를 통해 노트 생성, 수정, 삭제 등 모든 CRUD 작업이 가능합니다.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="philosophy">
+            <h2>개발 철학</h2>
+            <ul>
+                <li>Local-First: 당신의 데이터는 당신의 것입니다.</li>
+                <li>Minimalism: 불필요한 기능 없이 핵심에 집중합니다.</li>
+                <li>Portability: 웹 표준 기술로 어디서든 접근 가능합니다.</li>
+            </ul>
+        </section>
+
+        <section id="tech-stack">
+            <h2>기술 스택</h2>
+            <ul>
+                <li>Vue.js 3</li>
+                <li>FastAPI</li>
+                <li>TailwindCSS</li>
+                <li>CodeMirror 6</li>
+                <li>IndexedDB</li>
+                <li>PostgreSQL</li>
+                <li>SQLAlchemy</li>
+                <li>Vanilla JS</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 SHYNOTE. Made by <a href="https://github.com/cdecl" target="_blank">cdecl</a>. | <a href="./walkthrough.md">기능 둘러보기</a></p>
+        </div>
+    </footer>
+
+</body>
+</html>

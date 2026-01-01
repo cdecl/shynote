@@ -118,6 +118,11 @@ createApp({
 		const isSidebarOpen = ref(true)
 		const editorRef = ref(null)
 		const previewRef = ref(null)
+		const currentUserEmail = ref(null) // Added for UI
+
+		// Multi-Select State
+		const isSelectionMode = ref(false)
+		const selectedNoteIds = ref(new Set())
 		const viewMode = ref(localStorage.getItem('shynote_view_mode') || 'edit')
 		watch(viewMode, (newVal) => {
 			localStorage.setItem('shynote_view_mode', newVal)
@@ -2985,10 +2990,22 @@ createApp({
 		const draggedNoteId = ref(null)
 
 		const handleDragStart = (note, event) => {
-			draggedNoteId.value = note.id
-			if (event && event.dataTransfer) {
-				event.dataTransfer.effectAllowed = 'move'
-				event.dataTransfer.setData('text/plain', String(note.id))
+			if (isSelectionMode.value && selectedNoteIds.value.has(note.id)) {
+				// Multi-Select Drag
+				draggedNoteId.value = null // Clear single drag
+				if (event && event.dataTransfer) {
+					event.dataTransfer.effectAllowed = 'move'
+					const ids = Array.from(selectedNoteIds.value) // Keep user defined selection
+					event.dataTransfer.setData('application/shynote-ids', JSON.stringify(ids))
+					event.dataTransfer.setData('text/plain', `Moving ${ids.length} notes`)
+				}
+			} else {
+				// Single Drag (Standard)
+				draggedNoteId.value = note.id
+				if (event && event.dataTransfer) {
+					event.dataTransfer.effectAllowed = 'move'
+					event.dataTransfer.setData('text/plain', String(note.id))
+				}
 			}
 		}
 
@@ -3048,16 +3065,56 @@ createApp({
 			}
 		}
 
-		const handleFileInput = (event) => {
-			const files = event.target.files
-			if (files && files.length > 0) {
-				handleFiles(files)
+		const handleFileInput = async (event) => {
+			const files = Array.from(event.target.files || [])
+			if (files.length > 0) {
+				await handleFiles(files)
 			}
 			event.target.value = null // Reset input
 		}
 
 		const handleDrop = async (targetFolderId, event) => {
-			// Check for Files first
+			// 0. Check for Multi-Select Notes
+			if (event.dataTransfer && event.dataTransfer.types.includes('application/shynote-ids')) {
+				const rawIds = event.dataTransfer.getData('application/shynote-ids')
+				if (rawIds) {
+					const ids = JSON.parse(rawIds)
+					// console.log("Dropping Multiple Notes:", ids, "to", targetFolderId)
+
+					// Iterate and Move
+					for (const id of ids) {
+						const note = notes.value.find(n => n.id === id)
+						if (!note || note.folder_id === targetFolderId) continue
+
+						// Optimistic Update (Copy of Single Logic)
+						const originalFolderId = note.folder_id
+						note.folder_id = targetFolderId
+
+						try {
+							if (hasIDB) {
+								const base = `${note.id}:${note.title}:${note.content}:${targetFolderId || 'null'}`
+								const hash = await shynote_hash(base)
+								note.content_hash = hash
+								await LocalDB.saveNote({ ...note }, 'UPDATE')
+							}
+						} catch (e) {
+							console.error("Bulk move failed for", id, e)
+							note.folder_id = originalFolderId
+						}
+					}
+
+					// Clear Selection after successful drop? 
+					// User might want to keep selection if moving to multiple folders? 
+					// Standard behavior usually clears selection on move.
+					selectedNoteIds.value.clear()
+					isSelectionMode.value = false
+
+					dropTargetId.value = null
+					return
+				}
+			}
+
+			// 1. Check for Files
 			if (event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length > 0) {
 				await handleFiles(event.dataTransfer.files)
 				dropTargetId.value = null
@@ -3388,10 +3445,190 @@ createApp({
 			return plain.slice(0, 150).trim();
 		};
 
+		// Multi-Select Logic
+		const toggleSelectionMode = () => {
+			isSelectionMode.value = !isSelectionMode.value
+			if (!isSelectionMode.value) {
+				selectedNoteIds.value.clear()
+			}
+		}
+
+		const toggleNoteSelection = (noteId) => {
+			if (selectedNoteIds.value.has(noteId)) {
+				selectedNoteIds.value.delete(noteId)
+			} else {
+				selectedNoteIds.value.add(noteId)
+			}
+		}
+
+		// Section Selection Logic
+		const getVisibleNotes = () => {
+			return (currentFolderId.value === null ? sortedRootNotes.value : getSortedFolderNotes(currentFolderId.value))
+		}
+
+		const isSectionSelected = (type) => { // type: 'pinned' | 'regular'
+			const notes = getVisibleNotes().filter(n => type === 'pinned' ? n.is_pinned : !n.is_pinned)
+			if (notes.length === 0) return false
+			return notes.every(n => selectedNoteIds.value.has(n.id))
+		}
+
+		const toggleSectionSelection = (type) => {
+			const notes = getVisibleNotes().filter(n => type === 'pinned' ? n.is_pinned : !n.is_pinned)
+			const allSelected = notes.every(n => selectedNoteIds.value.has(n.id))
+
+			if (allSelected) {
+				// Deselect all in section
+				notes.forEach(n => selectedNoteIds.value.delete(n.id))
+			} else {
+				// Select all in section
+				notes.forEach(n => selectedNoteIds.value.add(n.id))
+			}
+		}
+
+		// Drag Selection (Rubberband) Logic
+		const isSelecting = ref(false)
+		const selectionStart = ref({ x: 0, y: 0 })
+		const selectionCurrent = ref({ x: 0, y: 0 })
+		const marqueeEl = ref(null)
+
+		onMounted(() => {
+			marqueeEl.value = document.getElementById('selection-marquee')
+			window.addEventListener('mousemove', updateDragSelection)
+			window.addEventListener('mouseup', endDragSelection)
+			window.addEventListener('keydown', handleKeydown)
+		})
+
+		onBeforeUnmount(() => {
+			window.removeEventListener('mousemove', updateDragSelection)
+			window.removeEventListener('mouseup', endDragSelection)
+			window.removeEventListener('keydown', handleKeydown)
+		})
+
+		const handleKeydown = (event) => {
+			// Cmd+A or Ctrl+A
+			if ((event.metaKey || event.ctrlKey) && event.key === 'a') {
+				// Ignore if focus is in input/textarea/contenteditable
+				const tag = event.target.tagName
+				if (tag === 'INPUT' || tag === 'TEXTAREA' || event.target.isContentEditable) return
+
+				event.preventDefault()
+
+				// Enter Selection Mode
+				isSelectionMode.value = true
+
+				// Select All Visible Notes
+				const visible = getVisibleNotes()
+				visible.forEach(n => selectedNoteIds.value.add(n.id))
+			}
+
+			// Escape to Cancel Selection
+			if (event.key === 'Escape' && isSelectionMode.value) {
+				isSelectionMode.value = false
+				selectedNoteIds.value.clear()
+			}
+		}
+
+		const startDragSelection = (event) => {
+			const target = event.target
+			// Ignore if clicking interactive elements
+			if (target.closest('.note-item') || target.closest('button') || target.closest('input') || target.closest('.no-drag-start')) return
+
+			isSelecting.value = true
+			isSelectionMode.value = true
+			selectionStart.value = { x: event.clientX, y: event.clientY }
+			selectionCurrent.value = { x: event.clientX, y: event.clientY }
+
+			if (marqueeEl.value) {
+				updateMarqueeStyle()
+				marqueeEl.value.classList.remove('hidden')
+			}
+			// event.preventDefault() // prevent dragging image ghost if clicked on img 
+		}
+
+		const updateDragSelection = (event) => {
+			if (!isSelecting.value) return
+			selectionCurrent.value = { x: event.clientX, y: event.clientY }
+			updateMarqueeStyle()
+		}
+
+		const updateMarqueeStyle = () => {
+			if (!marqueeEl.value) return
+			const x = Math.min(selectionStart.value.x, selectionCurrent.value.x)
+			const y = Math.min(selectionStart.value.y, selectionCurrent.value.y)
+			const width = Math.abs(selectionCurrent.value.x - selectionStart.value.x)
+			const height = Math.abs(selectionCurrent.value.y - selectionStart.value.y)
+
+			marqueeEl.value.style.left = `${x}px`
+			marqueeEl.value.style.top = `${y}px`
+			marqueeEl.value.style.width = `${width}px`
+			marqueeEl.value.style.height = `${height}px`
+		}
+
+		const endDragSelection = (event) => {
+			if (!isSelecting.value) return
+
+			// Calculate Final Selection
+			const marqueeRect = {
+				left: Math.min(selectionStart.value.x, selectionCurrent.value.x),
+				top: Math.min(selectionStart.value.y, selectionCurrent.value.y),
+				right: Math.max(selectionStart.value.x, selectionCurrent.value.x),
+				bottom: Math.max(selectionStart.value.y, selectionCurrent.value.y)
+			}
+
+			// Threshold to treat as click (ignore small jitter)
+			if (Math.abs(marqueeRect.right - marqueeRect.left) > 5 || Math.abs(marqueeRect.bottom - marqueeRect.top) > 5) {
+				const noteEls = document.querySelectorAll('.note-item')
+				noteEls.forEach(el => {
+					const rect = el.getBoundingClientRect()
+					if (rect.left < marqueeRect.right &&
+						rect.right > marqueeRect.left &&
+						rect.top < marqueeRect.bottom &&
+						rect.bottom > marqueeRect.top) {
+						const id = el.getAttribute('data-id')
+						if (id) selectedNoteIds.value.add(id)
+					}
+				})
+			}
+
+			isSelecting.value = false
+			if (marqueeEl.value) marqueeEl.value.classList.add('hidden')
+		}
+
+		// REVISED endDragSelection to be cleaner once data-id is added
+		// const finalizeSelection = () => {
+		// 	const marqueeRect = {
+		// 		left: Math.min(selectionStart.value.x, selectionCurrent.value.x),
+		// 		top: Math.min(selectionStart.value.y, selectionCurrent.value.y),
+		// 		right: Math.max(selectionStart.value.x, selectionCurrent.value.x),
+		// 		bottom: Math.max(selectionStart.value.y, selectionCurrent.value.y)
+		// 	}
+
+		// 	// Small drag threshold to avoid accidental clears on click
+		// 	if (marqueeRect.right - marqueeRect.left < 5 && marqueeRect.bottom - marqueeRect.top < 5) return
+
+		// 	const noteEls = document.querySelectorAll('.note-item') // I will add this class
+		// 	noteEls.forEach(el => {
+		// 		const rect = el.getBoundingClientRect()
+		// 		if (rect.left < marqueeRect.right &&
+		// 			rect.right > marqueeRect.left &&
+		// 			rect.top < marqueeRect.bottom &&
+		// 			rect.bottom > marqueeRect.top) {
+		// 			const id = el.getAttribute('data-id')
+		// 			if (id) selectedNoteIds.value.add(id)
+		// 		}
+		// 	})
+		// }
 		return {
 			notes,
 			folders,
 			selectedNote,
+			isSelectionMode,
+			selectedNoteIds,
+			toggleSelectionMode,
+			toggleNoteSelection,
+			isSectionSelected,
+			toggleSectionSelection,
+			startDragSelection, // Expose for @mousedown
 			loading,
 			statusMessage,
 			loadingState, // NEW
