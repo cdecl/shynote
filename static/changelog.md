@@ -1,3 +1,18 @@
+# v0.4.6 Release Notes
+
+## Summary
+- **Sync Architecture**: 동기화 로직을 대대적으로 개선하여 성능과 안정성을 확보했습니다.
+
+## Bug Fixes
+- **Editor Tab Reset**: 새 노트 생성 시, 이전에 사용하던 View Mode(Preview/Split)와 관계없이 즉시 Editor 탭으로 자동 전환됩니다.
+
+## Internal Changes
+- **Leader Election**: `navigator.locks` 도입으로 멀티 탭 환경에서의 중복 동기화 방지.
+- **Hybrid Sync**: Folder(Sequential) + Note(Parallel) 하이브리드 동기화로 속도 개선.
+- **Transactional Deletion**: 로그 삭제 로직 개선(`removeLogsBulk`)으로 데이터 안전성 강화.
+
+---
+
 # v0.4.5 Release Notes
 
 ## Summary
