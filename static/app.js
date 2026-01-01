@@ -231,7 +231,10 @@ createApp({
 
 		const selectSearchResult = (note) => {
 			selectNote(note)
-			// Keep search open or close? Let's keep it open for now.
+			// Auto-close sidebar on mobile
+			if (window.innerWidth < 768) {
+				isSidebarOpen.value = false
+			}
 		}
 
 		const getHighlightedText = (text) => {
