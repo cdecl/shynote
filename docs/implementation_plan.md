@@ -18,7 +18,11 @@ This document tracks the cumulative implementation details of the SHYNOTE projec
 ### Frontend Logic (Vue.js) Checklist
 - [x] **State Management**: Reactive `notes` and `folders` arrays using Vue `ref`.
 - [x] **Navigation**: Folder-based filtering of notes (`getFolderNotes`).
-- [x] **Editor Integation**: 
+    - [x] **Editor Integration**: CodeMirror 6 with Two-way Binding and Vue State Synchronization
+    - [x] **Modern Sync Architecture**: Leader Election with Web Lock API, Background Worker, Race Condition Prevention
+    - [x] **Enhanced Error Handling**: Retry logic with exponential backoff and recovery mechanisms
+    - [x] **Performance Optimizations**: Batch processing, bulk log deletion, and network-aware synchronization
+    - [x] **UI/UX Improvements**: Accurate status messaging, work tracking, and proper conflict resolution
     - [x] Split View (Editor + Live Preview).
     - [x] Real-time Markdown rendering with `marked.js`.
     - [x] Syntax Highlighting with `highlight.js`.

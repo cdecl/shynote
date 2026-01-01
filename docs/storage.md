@@ -51,20 +51,29 @@
         -   Schema: `{ id, entity, entity_id, action, payload, timestamp }`
         -   Action: `CREATE`, `UPDATE`, `DELETE`
 
-2.  **Background Sync Worker (5초 주기)**:
-    -   `setInterval`로 `pending_logs`를 주기적으로 확인.
-    -   **Log Deduplication & Optimization**:
-        -   동일 Entity에 대한 여러 변경사항 압축 (Latest Write Wins).
-        -   **Merge Logic**: `CREATE` 후 `UPDATE` 발생 시 -> 단일 `CREATE` (Merged Payload)로 변환.
-    -   **Dependency Ordering (중요)**:
-        -   **Folders First**: 폴더 생성/수정을 노트 작업보다 먼저 실행하여 `Invalid Folder ID` (400) 오류 방지.
-        -   Order: `Folder (Create/Update)` → `Note (All Actions)` → `Folder (Delete)`
+2.  **Background Sync Worker (5초 주기 & Triggered)**:
+    -   **Leader Election (Concurrency Control) 🔒**:
+        -   **Web Locks API** (`navigator.locks`)를 사용하여 여러 탭/창이 열려있어도 **단 하나의 리더(Leader)** 탭만 동기화를 수행합니다.
+        -   Lock Name: `shynote_sync_lock`
+        -   이를 통해 중복 요청 및 Race Condition을 원천 차단합니다.
+
+    -   **Snapshot & Dedup**:
+        -   동기화 시작 시점의 `pending_logs` 스냅샷을 캡처하여 처리합니다.
+        -   동일 Entity에 대한 중복 로그는 하나로 병합(Latest Write Wins)하여 API 요청 수를 최소화합니다.
+
+    -   **Hybrid Execution Strategy (Hybrid Sync)**:
+        -   **Folders (Sequential) 1️⃣**: 폴더는 계층 구조 의존성(부모-자식)이 있으므로 순차적으로 처리합니다.
+        -   **Notes (Parallel) 2️⃣**: 노트 작업은 의존성이 없으므로 **배치(Batch)** 단위로 나누어 **병렬(Parallel)** 처리합니다. (예: 5개씩 동시 전송 `Promise.all`)
+        -   이를 통해 대량의 변경 사항도 빠르게 동기화합니다.
+
+    -   **Transactional Deletion (Data Safety) 🛡️**:
+        -   단순 `removeLogsForEntity` 대신, 처리가 완료된 특정 로그 ID만을 삭제하는 **`removeLogsBulk(logIds)`**를 사용합니다.
+        -   동기화 도중 사용자가 추가로 발생시킨 새로운 변경사항(New Dirty State)이 실수로 삭제되는 것을 방지합니다.
 
 3.  **Server Execution & Auto Recovery (자가 치유)**:
     -   서버 API 호출 (`PUT`, `POST`, `DELETE`).
-    -   **Self-Healing Logic**:
-        -   `PUT` (Update) 요청이 `404 Not Found` 실패 시 -> 자동으로 `POST` (Create/Upsert)로 전환하여 유실된 데이터 복구.
-    -   성공 시 로컬 `pending_logs` 삭제.
+    -   **Retry & Resilience**: 네트워크 오류 발생 시 자동으로 재시도하며, 일시적 장애를 견딥니다.
+    -   **Self-Healing**: `PUT` 실패(404) 시 자동으로 `POST`로 전환(Upsert)하여 데이터 일관성을 복구합니다.
 
 ---
 
