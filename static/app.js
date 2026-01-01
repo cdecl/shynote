@@ -602,11 +602,17 @@ createApp({
 			isSyncingProcess = true
 			isSyncing.value = true
 
+			// ✅ Track actual work performed
+			let didWork = false
+
 			try {
 				const logs = await LocalDB.getPendingLogs()
 				syncQueueCount.value = logs ? logs.length : 0
 
 				if (logs && logs.length > 0) {
+					// ✅ Mark that we attempted work
+					didWork = true
+
 					// Leader Election:
 					// Using navigator.locks ensures that across all Tabs, Windows, and PWAs (sharing the same Origin),
 					// only ONE instance will process the sync queue at a time.
@@ -619,6 +625,7 @@ createApp({
 							}
 
 							// --- We are the Leader ---
+							console.log('[Sync] Acquired lock, starting sync...')
 
 							// 1. Dedup: Collapse multiple updates
 							const latestUpdates = {}
@@ -731,7 +738,122 @@ createApp({
 							// Re-check
 							const remaining = await LocalDB.getPendingLogs()
 							syncQueueCount.value = remaining ? remaining.length : 0
+							console.log('[Sync] Lock releasing...')
 						})
+					} else {
+						// ✅ Fallback for browsers without Web Lock API
+						console.warn('[Sync] Web Lock API not supported, proceeding without lock')
+
+						// 1. Dedup: Collapse multiple updates
+						const latestUpdates = {}
+						for (const log of logs) {
+							const existing = latestUpdates[log.entity_id]
+							if (existing && existing.action === 'CREATE' && log.action === 'UPDATE') {
+								latestUpdates[log.entity_id] = { ...log, action: 'CREATE', payload: { ...existing.payload, ...log.payload } }
+							} else {
+								latestUpdates[log.entity_id] = log
+							}
+						}
+
+						if (statusMessage.value !== 'Typing...') {
+							statusMessage.value = `Pushing (${logs.length})...`
+						}
+
+						// Split Folders / Notes
+						const folderUpdates = []
+						const noteUpdates = []
+						Object.values(latestUpdates).forEach(log => {
+							if (log.entity === 'folder') folderUpdates.push(log)
+							else noteUpdates.push(log)
+						})
+
+						let successCount = 0
+
+						// --- Phase 1: Folders (Sequential) ---
+						for (const log of folderUpdates) {
+							const { url, method, body, isDelete } = buildRequest(log)
+
+							try {
+								const response = await syncWithRetry(url, {
+									method,
+									headers: { 'Content-Type': 'application/json' },
+									body: JSON.stringify(body)
+								})
+
+								if (response.ok || (isDelete && response.status === 404)) {
+									// Transactional cleanup - Safe Bulk Delete
+									const processedLogIds = logs
+										.filter(l => l.entity === log.entity && l.entity_id === log.entity_id)
+										.map(l => l.id)
+
+									await LocalDB.removeLogsBulk(processedLogIds)
+									await LocalDB.markFolderSynced(log.entity_id)
+
+									syncQueueCount.value = Math.max(0, syncQueueCount.value - processedLogIds.length)
+									statusMessage.value = `Pushing (${syncQueueCount.value})...`
+									successCount++
+								} else {
+									console.error(`Sync Failed for folder ${log.entity_id}:`, response.status)
+								}
+							} catch (e) {
+								console.error(`Sync Error folder ${log.entity_id}:`, e)
+							}
+						}
+
+						// --- Phase 2: Notes (Parallel Batches) ---
+						const BATCH_SIZE = 10
+						for (let i = 0; i < noteUpdates.length; i += BATCH_SIZE) {
+							const batch = noteUpdates.slice(i, i + BATCH_SIZE)
+
+							await Promise.all(batch.map(async (log) => {
+								const { url, method, body, isDelete } = buildRequest(log)
+
+								try {
+									let response = await syncWithRetry(url, {
+										method,
+										headers: { 'Content-Type': 'application/json' },
+										body: JSON.stringify(body)
+									})
+
+									// Recovery: PUT 404 -> POST
+									if (!response.ok && response.status === 404 && method === 'PUT') {
+										console.warn(`[Sync Recovery] Note ${log.entity_id} missing. Attempting re-creation...`)
+										const recoveryBody = { id: log.entity_id, ...log.payload }
+										response = await syncWithRetry('/api/notes', {
+											method: 'POST',
+											headers: { 'Content-Type': 'application/json' },
+											body: JSON.stringify(recoveryBody)
+										})
+									}
+
+									if (response.ok || (isDelete && response.status === 404)) {
+										// Success: Delete processed logs from snapshot
+										const processedLogIds = logs
+											.filter(l => l.entity === log.entity && l.entity_id === log.entity_id)
+											.map(l => l.id)
+
+										await LocalDB.removeLogsBulk(processedLogIds)
+										await LocalDB.markNoteSynced(log.entity_id)
+
+										syncQueueCount.value = Math.max(0, syncQueueCount.value - processedLogIds.length)
+										statusMessage.value = `Pushing (${syncQueueCount.value})...`
+										successCount++
+									} else {
+										console.error(`Sync Failed for note ${log.entity_id}:`, response.status)
+									}
+								} catch (e) {
+									console.error(`Sync Error note ${log.entity_id}:`, e)
+								}
+							}))
+						}
+
+						if (successCount > 0) {
+							lastSyncTime.value = new Date()
+						}
+
+						// Re-check
+						const remaining = await LocalDB.getPendingLogs()
+						syncQueueCount.value = remaining ? remaining.length : 0
 					}
 				}
 			} catch (e) {
@@ -740,8 +862,11 @@ createApp({
 				isSyncingProcess = false
 				isSyncing.value = false
 
-				if (statusMessage.value.startsWith('Pushing')) {
+				// ✅ Only show completion message if we actually did work
+				if (didWork && statusMessage.value.startsWith('Pushing')) {
 					statusMessage.value = 'Push Complete'
+				} else if (!didWork && statusMessage.value.startsWith('Pushing')) {
+					statusMessage.value = 'Ready'  // Reset if no work was done
 				}
 			}
 		}
