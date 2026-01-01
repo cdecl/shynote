@@ -138,14 +138,12 @@ textarea {
 */
 .dark .markdown-body {
     color-scheme: dark;
-
     /* Backgrounds */
     --color-canvas-default: #24292F;
     --color-canvas-subtle: #2E3440;
     /* Slightly lighter for blockquotes/tables */
     --color-border-default: #3B4252;
     --color-border-muted: #3B4252;
-
     /* Text */
     --color-fg-default: #D8DEE9;
     /* Nord4 */
@@ -153,7 +151,6 @@ textarea {
     /* Nord5 */
     --color-accent-fg: #88C0D0;
     /* Nord8 (Links) */
-
     /* Elements */
     --color-canvas-overlay: #2E3440;
     --color-prettylights-syntax-comment: #616E88;
@@ -409,4 +406,14 @@ textarea {
 .dark .cm-editor .cm-selectionBackground,
 .dark .cm-editor ::selection {
     background-color: rgba(235, 203, 139, 0.4) !important;
+}
+
+/* Search Highlight in Sidebar */
+.search-highlight {
+    background-color: rgba(255, 235, 59, 0.5);
+    border-radius: 2px;
+}
+.dark .search-highlight {
+    background-color: rgba(235, 203, 139, 0.6);
+    color: white;
 }

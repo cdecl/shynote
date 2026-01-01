@@ -335,23 +335,85 @@
                         </div>
                     </div>
 
+                    <!-- Search Toolbar -->
+                    <div class="px-3 py-2 border-b border-[#E6E4DD] dark:border-[#3B4252] flex flex-col gap-2 transition-all bg-[#F2F0EA] dark:bg-[#242933]"
+                        :class="searchQuery ? 'flex-1 overflow-hidden' : 'flex-shrink-0'" v-show="isSidebarOpen">
+
+                        <!-- Search Input -->
+                        <div
+                            class="flex items-center gap-2 bg-white dark:bg-[#2E3440] border border-slate-200 dark:border-[#434C5E] rounded-lg px-2 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/50">
+                            <span class="material-symbols-rounded text-slate-400 text-[18px]">search</span>
+                            <input type="text" v-model="searchQuery"
+                                class="flex-1 bg-transparent text-sm text-slate-700 dark:text-white placeholder-slate-400 outline-none min-w-0"
+                                placeholder="Search notes...">
+                            <div class="flex items-center gap-0.5 mr-1">
+                                <button @click="searchOptions.caseSensitive = !searchOptions.caseSensitive"
+                                    class="px-1.5 py-0.5 text-[10px] font-bold border rounded transition-colors"
+                                    :class="searchOptions.caseSensitive ? 'bg-blue-100 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800' : 'bg-transparent text-slate-400 border-transparent hover:bg-slate-200 dark:hover:bg-[#4C566A]'"
+                                    title="Case Sensitive">
+                                    Aa
+                                </button>
+                                <button @click="searchOptions.useRegex = !searchOptions.useRegex"
+                                    class="px-1.5 py-0.5 text-[10px] font-bold border rounded transition-colors"
+                                    :class="searchOptions.useRegex ? 'bg-blue-100 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800' : 'bg-transparent text-slate-400 border-transparent hover:bg-slate-200 dark:hover:bg-[#4C566A]'"
+                                    title="Regular Expression">
+                                    .*
+                                </button>
+                            </div>
+                            <button @click="searchQuery = ''" v-show="searchQuery"
+                                class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                                <span class="material-symbols-rounded text-[16px]">close</span>
+                            </button>
+                        </div>
+
+                        <!-- Results Count -->
+                        <div class="flex items-center justify-end px-1" v-if="searchQuery">
+                            <span class="text-[10px] text-slate-400">{{ searchResults.length }} results</span>
+                        </div>
+
+                        <!-- Search Results List (Only when searching) -->
+                        <div v-if="searchQuery"
+                            class="flex flex-col gap-1 overflow-y-auto thin-scrollbar mt-1 pr-1 flex-1">
+                            <div v-if="searchResults.length === 0" class="text-xs text-slate-400 text-center py-2">
+                                No results found
+                            </div>
+                            <div v-else v-for="(result, idx) in searchResults" :key="result.note.id + '_' + idx"
+                                @click="selectSearchResult(result.note)"
+                                class="p-2 rounded hover:bg-white dark:hover:bg-[#3B4252] cursor-pointer group border border-transparent hover:border-slate-200 dark:hover:border-[#434C5E] transition-all">
+                                <div class="flex items-center gap-1.5 mb-0.5 max-w-full overflow-hidden">
+                                    <span class="material-symbols-rounded text-[14px] text-slate-400">description</span>
+                                    <span class="text-xs font-bold text-slate-700 dark:text-[#ECEFF4] truncate"
+                                        v-html="getHighlightedText(result.note.title || 'Untitled')"></span>
+                                </div>
+                                <div v-if="result.snippet"
+                                    class="text-[10px] text-slate-500 dark:text-slate-400 pl-5 line-clamp-4 leading-tight font-mono break-all"
+                                    v-html="getHighlightedText(result.snippet)"></div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Toolbar (Sort & New) -->
                     <div class="px-3 py-2 border-b border-[#E6E4DD] dark:border-[#3B4252] flex items-center bg-[#F2F0EA] dark:bg-[#242933] flex-shrink-0 gap-2 transition-all"
-                        :class="isSidebarOpen ? 'justify-between flex-row' : 'flex-col justify-center py-4 gap-4'">
+                        :class="isSidebarOpen && !searchQuery ? 'justify-between flex-row' : (isSidebarOpen && searchQuery ? 'hidden' : 'flex-col justify-center py-4 gap-4')">
                         <!-- Sort Dropdown Trigger -->
                         <div class="h-10 border-b border-slate-200 dark:border-[#3B4252] flex items-center px-3 w-full">
                             <div class="flex items-center gap-0.5 flex-1">
-                                <span class="text-xs font-bold text-slate-500 dark:text-slate-400">FOLDERS</span>
                                 <button @click="createFolder()"
                                     class="p-1 hover:bg-slate-200 dark:hover:bg-[#4C566A] rounded text-slate-500 dark:text-slate-400 transition-colors"
                                     title="New Folder">
-                                    <span class="material-symbols-rounded text-[18px]">create_new_folder</span>
+                                    <span class="material-symbols-rounded text-[27px]">create_new_folder</span>
                                 </button>
                             </div>
                             <button @click="createNoteInFolder(null)"
                                 class="p-1 hover:bg-slate-200 dark:hover:bg-[#4C566A] rounded text-slate-500 dark:text-slate-400 transition-colors"
                                 title="New Note in Inbox">
-                                <span class="material-symbols-rounded text-[20px]">note_add</span>
+                                <div class="relative w-[28px] h-[28px] flex items-center justify-center">
+                                    <span
+                                        class="material-symbols-rounded text-[24px] text-slate-500 dark:text-slate-400">description</span>
+                                    <span
+                                        class="material-symbols-rounded text-[16px] text-amber-500 absolute -bottom-0.5 -right-0.5 bg-[#F2F0EA] dark:bg-[#242933] rounded-full px-[1px]"
+                                        style="font-variation-settings: 'FILL' 1">bolt</span>
+                                </div>
                             </button>
                         </div>
                     </div>
@@ -360,7 +422,7 @@
                     <div class="flex-1" v-if="!isSidebarOpen"></div>
 
                     <!-- List -->
-                    <div class="flex-1 overflow-y-auto px-3 py-2 relative" v-show="isSidebarOpen">
+                    <div class="flex-1 overflow-y-auto px-3 py-2 relative" v-show="isSidebarOpen && !searchQuery">
                         <div v-if="loading" class="text-center text-gray-400 p-4">Loading...</div>
                         <div v-else class="space-y-4">
                             <!-- System Folders (Inbox) -->

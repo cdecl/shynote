@@ -156,7 +156,115 @@ createApp({
 		const isSharing = ref(false)
 		const isSortMenuOpen = ref(false)
 
+		// Search State
+		const searchQuery = ref('')
+		const searchOptions = ref({ caseSensitive: false, useRegex: false })
+		const isSearchOpen = ref(false)
+
+
+		const searchResults = computed(() => {
+			if (!searchQuery.value) return []
+
+			const query = searchQuery.value
+			const { caseSensitive, useRegex } = searchOptions.value
+			let regex
+
+			try {
+				const flags = caseSensitive ? 'g' : 'gi'
+				if (useRegex) {
+					regex = new RegExp(query, flags)
+				} else {
+					const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+					regex = new RegExp(escaped, flags)
+				}
+			} catch (e) {
+				return []
+			}
+
+			const results = []
+			// Search all notes
+			// We search in sortedRootNotes + all folder notes? 
+			// Better to search 'notes.value' directly as it contains everything.
+			for (const note of notes.value) {
+				let noteMatched = false
+				const matchedLines = []
+
+				// Title Match
+				regex.lastIndex = 0
+				if (regex.test(note.title)) {
+					noteMatched = true
+				}
+
+				// Content Matches (Find All and Aggregate)
+				regex.lastIndex = 0
+				const content = note.content || ''
+				let match
+
+				while ((match = regex.exec(content)) !== null) {
+					const lineStart = content.lastIndexOf('\n', match.index) + 1
+					let lineEnd = content.indexOf('\n', match.index)
+					if (lineEnd === -1) lineEnd = content.length
+
+					const line = content.substring(lineStart, lineEnd).trim()
+					if (line) matchedLines.push(line)
+					noteMatched = true
+
+					if (match.index === regex.lastIndex) regex.lastIndex++
+					if (matchedLines.length >= 4) break
+				}
+
+				if (noteMatched) {
+					const uniqueLines = [...new Set(matchedLines)]
+					const snippet = uniqueLines.join(' ... ')
+					results.push({ note, snippet })
+				}
+
+				if (results.length > 50) break
+			}
+			return results
+		})
+
+		const selectSearchResult = (note) => {
+			selectNote(note)
+			// Keep search open or close? Let's keep it open for now.
+		}
+
+		const getHighlightedText = (text) => {
+			if (!text || !searchQuery.value) return text
+			const { caseSensitive, useRegex } = searchOptions.value
+			try {
+				const flags = caseSensitive ? 'g' : 'gi'
+				let pattern = searchQuery.value
+				if (!useRegex) {
+					pattern = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+				}
+				const regex = new RegExp(`(${pattern})`, flags)
+				// Start with escaping HTML to prevent XSS from note content
+				const safeText = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+				// But highlighting needs to match the Original text logic? 
+				// If we escape first, the regex might fail if it contains special chars.
+				// Correct approach: Split by regex, escape parts, wrap matches.
+
+				const parts = text.split(regex)
+				return parts.map(part => {
+					// We need to check if 'part' matches the regex pattern.
+					// The split with capturing group returns the delimiter (match) as well.
+					// So if proper regex, every odd element is a match?
+					// RegExp(`(${pattern})`) creates capturing group 1.
+					// splitting 'aXc' by /(X)/ gives ['a', 'X', 'c']
+					// splitting 'abc' by /(X)/ gives ['abc']
+
+					if (new RegExp('^' + regex.source + '$', flags.replace('g', '')).test(part)) {
+						return `<span class="search-highlight">${part.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>`
+					} else {
+						return part.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+					}
+				}).join('')
+			} catch (e) { return text }
+		}
+
 		const dbType = ref('...')
+
 
 		// New UI States
 		const splitRatio = ref(50)
@@ -3453,6 +3561,14 @@ createApp({
 			showAbout,
 			isSharing,
 			isSortMenuOpen,
+			// Search
+			searchQuery,
+			searchOptions,
+			searchResults,
+			isSearchOpen,
+			selectSearchResult,
+			getHighlightedText,
+
 			TRASH_FOLDER_ID, // Expose Constant
 			emptyTrash,
 			handleFileInput,
