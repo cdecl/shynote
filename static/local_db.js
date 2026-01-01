@@ -168,6 +168,18 @@ export const LocalDB = {
 		await db.delete('pending_logs', logId);
 	},
 
+	async removeLogsBulk(logIds) {
+		const db = await initDB();
+		const tx = db.transaction('pending_logs', 'readwrite');
+		const store = tx.objectStore('pending_logs');
+
+		for (const id of logIds) {
+			await store.delete(id);
+		}
+
+		await tx.done;
+	},
+
 	async markNoteSynced(id) {
 		const db = await initDB();
 		const tx = db.transaction('notes', 'readwrite');

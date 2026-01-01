@@ -544,158 +544,195 @@ createApp({
 		const lastSyncTime = ref(null)
 		const syncQueueCount = ref(0) // New State
 		let isSyncingProcess = false
+		// --- Sync Helpers ---
+		const buildRequest = (log) => {
+			const isCreate = log.action === 'CREATE'
+			const isDelete = log.action === 'DELETE'
+			const type = log.entity === 'folder' ? 'folders' : 'notes'
+
+			let url, method, body
+
+			if (isDelete) {
+				url = `/api/${type}/${log.entity_id}`
+				method = 'DELETE'
+			} else if (isCreate) {
+				url = `/api/${type}`
+				method = 'POST'
+				// Construct body safely
+				body = { id: log.entity_id, ...log.payload }
+			} else {
+				// UPDATE
+				url = `/api/${type}/${log.entity_id}`
+				method = 'PUT'
+				body = log.payload
+			}
+			return { url, method, body, isDelete, isCreate }
+		}
+
+		const syncWithRetry = async (url, options, retries = 0) => {
+			const MAX_RETRIES = 2
+			const DELAY = 1000
+
+			try {
+				const response = await authenticatedFetch(url, options)
+				// If server error or rate limit, retry
+				if (!response.ok && (htmlStatus(response.status).serverError || response.status === 429) && retries < MAX_RETRIES) {
+					console.warn(`Sync retry ${retries + 1}/${MAX_RETRIES} for ${url}`)
+					await new Promise(r => setTimeout(r, DELAY * (retries + 1)))
+					return syncWithRetry(url, options, retries + 1)
+				}
+				return response
+			} catch (e) {
+				if (retries < MAX_RETRIES) {
+					// Network error, retry
+					console.warn(`Sync retry ${retries + 1}/${MAX_RETRIES} (Network) for ${url}`)
+					await new Promise(r => setTimeout(r, DELAY * (retries + 1)))
+					return syncWithRetry(url, options, retries + 1)
+				}
+				throw e
+			}
+		}
+
+		// Helper since we don't have a global htmlStatus helper yet in this scope
+		const htmlStatus = (s) => ({ serverError: s >= 500 && s < 600 })
+
 		const syncWorker = async () => {
 			if (!hasIDB || isSyncing.value || !isAuthenticated.value) return
-			isSyncing.value = true
-			// Guard against re-entrant calls (Manual Sync + Auto Sync race)
 			if (isSyncingProcess) return
 			isSyncingProcess = true
+			isSyncing.value = true
 
 			try {
 				const logs = await LocalDB.getPendingLogs()
-				syncQueueCount.value = logs ? logs.length : 0 // Update Count
+				syncQueueCount.value = logs ? logs.length : 0
 
 				if (logs && logs.length > 0) {
-					// 1. Dedup: Collapse multiple updates to the same entity
-					const latestUpdates = {}
-					for (const log of logs) {
-						const existing = latestUpdates[log.entity_id]
-						if (existing && existing.action === 'CREATE' && log.action === 'UPDATE') {
-							// Merge: Keep CREATE, update payload (e.g. content updates before first sync)
-							latestUpdates[log.entity_id] = { ...log, action: 'CREATE', payload: { ...existing.payload, ...log.payload } }
-						} else {
-							// Default: Overwrite with latest (e.g. Move A->B then B->C = Move to C)
-							latestUpdates[log.entity_id] = log
-						}
-					}
-
-					// Update Message
-					if (statusMessage.value !== 'Typing...') {
-						statusMessage.value = `Pushing (${logs.length})...`
-					}
-
-					const folderUpdates = []
-					const noteUpdates = []
-					Object.values(latestUpdates).forEach(log => {
-						if (log.entity === 'folder') folderUpdates.push(log)
-						else noteUpdates.push(log)
-					})
-
-					let successCount = 0;
-
-					// Phase 1: Folders (Sequential)
-					for (const log of folderUpdates) {
-						let url, method, body;
-						const isCreate = log.action === 'CREATE';
-						const isDelete = log.action === 'DELETE';
-
-						if (isDelete) {
-							url = `/api/folders/${log.entity_id}`
-							method = 'DELETE'
-						} else {
-							if (isCreate) {
-								url = '/api/folders'
-								method = 'POST'
-								body = { id: log.entity_id, name: log.payload.name }
-							} else {
-								url = `/api/folders/${log.entity_id}`
-								method = 'PUT'
-								body = { name: log.payload.name }
-							}
-						}
-
-						try {
-							const response = await authenticatedFetch(url, {
-								method: method,
-								headers: { 'Content-Type': 'application/json' },
-								body: JSON.stringify(body)
-							})
-							if (response.ok || (isDelete && response.status === 404)) {
-								// Success
-								// Remove ALL logs for this entity to prevent re-processing
-								const processedLogs = logs.filter(l => l.entity === log.entity && l.entity_id === log.entity_id)
-								for (const pl of processedLogs) await LocalDB.removeLog(pl.id);
-								await LocalDB.markFolderSynced(log.entity_id);
-
-								syncQueueCount.value = Math.max(0, syncQueueCount.value - processedLogs.length)
-								statusMessage.value = `Pushing (${syncQueueCount.value})...`
-								successCount++;
-							} else {
-								console.error(`Sync Failed for folder ${log.entity_id}:`, response.status)
-							}
-						} catch (e) {
-							console.error(`Sync Error folder ${log.entity_id}:`, e)
-						}
-					}
-
-					// Phase 2: Notes (Parallel Batches)
-					const BATCH_SIZE = 10;
-					for (let i = 0; i < noteUpdates.length; i += BATCH_SIZE) {
-						const batch = noteUpdates.slice(i, i + BATCH_SIZE);
-
-						await Promise.all(batch.map(async (log) => {
-							let url, method, body;
-							const isCreate = log.action === 'CREATE';
-							const isDelete = log.action === 'DELETE';
-
-							if (isDelete) {
-								url = `/api/notes/${log.entity_id}`
-								method = 'DELETE'
-							} else if (isCreate) {
-								const { title, content, folder_id, is_pinned, is_shared } = log.payload
-								url = '/api/notes'
-								method = 'POST'
-								body = { id: log.entity_id, title, content, folder_id, is_pinned, is_shared }
-							} else {
-								// UPDATE
-								const { title, content, folder_id, is_pinned, is_shared } = log.payload
-								url = `/api/notes/${log.entity_id}`
-								method = 'PUT'
-								body = { title, content, folder_id, is_pinned, is_shared }
+					// Leader Election:
+					// Using navigator.locks ensures that across all Tabs, Windows, and PWAs (sharing the same Origin),
+					// only ONE instance will process the sync queue at a time.
+					// This prevents "Double Sync" where the Web App and Browser both try to push the same data.
+					if (navigator.locks) {
+						await navigator.locks.request('shynote_sync_lock', { ifAvailable: true }, async (lock) => {
+							if (!lock) {
+								console.log('[Sync] Skipped (Another instance is leader)')
+								return
 							}
 
-							try {
-								let response = await authenticatedFetch(url, {
-									method: method,
-									headers: { 'Content-Type': 'application/json' },
-									body: JSON.stringify(body)
-								})
+							// --- We are the Leader ---
 
-								// Recovery Logic: If PUT fails with 404, try POST (Upsert Recovery)
-								if (!response.ok && response.status === 404 && method === 'PUT') {
-									console.warn(`[Sync Recovery] Note ${log.entity_id} missing. Attempting re-creation...`)
-									const { title, content, folder_id, is_pinned, is_shared } = log.payload
-									response = await authenticatedFetch('/api/notes', {
-										method: 'POST',
-										headers: { 'Content-Type': 'application/json' },
-										body: JSON.stringify({ id: log.entity_id, title, content, folder_id, is_pinned, is_shared })
-									})
-								}
-
-								if (response.ok || (isDelete && response.status === 404)) {
-									const processedLogs = logs.filter(l => l.entity === log.entity && l.entity_id === log.entity_id)
-									for (const pl of processedLogs) await LocalDB.removeLog(pl.id);
-									await LocalDB.markNoteSynced(log.entity_id);
-
-									syncQueueCount.value = Math.max(0, syncQueueCount.value - processedLogs.length)
-									statusMessage.value = `Pushing (${syncQueueCount.value})...`
-									successCount++;
+							// 1. Dedup: Collapse multiple updates
+							const latestUpdates = {}
+							for (const log of logs) {
+								const existing = latestUpdates[log.entity_id]
+								if (existing && existing.action === 'CREATE' && log.action === 'UPDATE') {
+									latestUpdates[log.entity_id] = { ...log, action: 'CREATE', payload: { ...existing.payload, ...log.payload } }
 								} else {
-									console.error(`Sync Failed for note ${log.entity_id}:`, response.status)
+									latestUpdates[log.entity_id] = log
 								}
-							} catch (e) {
-								console.error(`Sync Error note ${log.entity_id}:`, e)
 							}
-						}));
-					}
 
-					if (successCount > 0) {
-						lastSyncTime.value = new Date()
-					}
+							if (statusMessage.value !== 'Typing...') {
+								statusMessage.value = `Pushing (${logs.length})...`
+							}
 
-					// Re-check count
-					const remaining = await LocalDB.getPendingLogs()
-					syncQueueCount.value = remaining ? remaining.length : 0
+							// Split Folders / Notes
+							const folderUpdates = []
+							const noteUpdates = []
+							Object.values(latestUpdates).forEach(log => {
+								if (log.entity === 'folder') folderUpdates.push(log)
+								else noteUpdates.push(log)
+							})
+
+							let successCount = 0
+
+							// --- Phase 1: Folders (Sequential) ---
+							for (const log of folderUpdates) {
+								const { url, method, body, isDelete } = buildRequest(log)
+
+								try {
+									const response = await syncWithRetry(url, {
+										method,
+										headers: { 'Content-Type': 'application/json' },
+										body: JSON.stringify(body)
+									})
+
+									if (response.ok || (isDelete && response.status === 404)) {
+										// Transactional cleanup - Safe Bulk Delete
+										// Only delete logs that match the ID we actually processed
+										const processedLogIds = logs
+											.filter(l => l.entity === log.entity && l.entity_id === log.entity_id)
+											.map(l => l.id)
+
+										await LocalDB.removeLogsBulk(processedLogIds)
+										await LocalDB.markFolderSynced(log.entity_id)
+
+										syncQueueCount.value = Math.max(0, syncQueueCount.value - processedLogIds.length)
+										statusMessage.value = `Pushing (${syncQueueCount.value})...`
+										successCount++
+									} else {
+										console.error(`Sync Failed for folder ${log.entity_id}:`, response.status)
+									}
+								} catch (e) {
+									console.error(`Sync Error folder ${log.entity_id}:`, e)
+								}
+							}
+
+							// --- Phase 2: Notes (Parallel Batches) ---
+							const BATCH_SIZE = 10
+							for (let i = 0; i < noteUpdates.length; i += BATCH_SIZE) {
+								const batch = noteUpdates.slice(i, i + BATCH_SIZE)
+
+								await Promise.all(batch.map(async (log) => {
+									const { url, method, body, isDelete } = buildRequest(log)
+
+									try {
+										let response = await syncWithRetry(url, {
+											method,
+											headers: { 'Content-Type': 'application/json' },
+											body: JSON.stringify(body)
+										})
+
+										// Recovery: PUT 404 -> POST
+										if (!response.ok && response.status === 404 && method === 'PUT') {
+											console.warn(`[Sync Recovery] Note ${log.entity_id} missing. Attempting re-creation...`)
+											const recoveryBody = { id: log.entity_id, ...log.payload }
+											response = await syncWithRetry('/api/notes', {
+												method: 'POST',
+												headers: { 'Content-Type': 'application/json' },
+												body: JSON.stringify(recoveryBody)
+											})
+										}
+
+										if (response.ok || (isDelete && response.status === 404)) {
+											// Success: Delete processed logs from snapshot
+											const processedLogIds = logs
+												.filter(l => l.entity === log.entity && l.entity_id === log.entity_id)
+												.map(l => l.id)
+
+											await LocalDB.removeLogsBulk(processedLogIds)
+											await LocalDB.markNoteSynced(log.entity_id)
+
+											syncQueueCount.value = Math.max(0, syncQueueCount.value - processedLogIds.length)
+											statusMessage.value = `Pushing (${syncQueueCount.value})...`
+											successCount++
+										} else {
+											console.error(`Sync Failed for note ${log.entity_id}:`, response.status)
+										}
+									} catch (e) {
+										console.error(`Sync Error note ${log.entity_id}:`, e)
+									}
+								}))
+							}
+
+							if (successCount > 0) {
+								lastSyncTime.value = new Date()
+							}
+
+							// Re-check
+							const remaining = await LocalDB.getPendingLogs()
+							syncQueueCount.value = remaining ? remaining.length : 0
+						})
+					}
 				}
 			} catch (e) {
 				console.error("Sync Error", e)
