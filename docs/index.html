@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,6 +20,7 @@
             --nord9: #81A1C1;
             --nord10: #5E81AC;
         }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
@@ -28,15 +30,18 @@
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
+
         .container {
             max-width: 900px;
             margin: 0 auto;
             padding: 0 20px;
         }
+
         header {
             text-align: center;
             padding: 60px 20px 50px;
         }
+
         header h1 {
             font-size: 3rem;
             margin: 0;
@@ -44,17 +49,20 @@
             font-weight: 700;
             letter-spacing: -1.5px;
         }
+
         header p {
             font-size: 1.15rem;
             color: var(--nord8);
             margin: 10px 0 30px;
         }
+
         .cta-buttons {
             display: flex;
             justify-content: center;
             gap: 15px;
             flex-wrap: wrap;
         }
+
         .cta-button {
             display: inline-block;
             padding: 12px 30px;
@@ -65,27 +73,33 @@
             transition: all 0.2s ease-in-out;
             border: 2px solid transparent;
         }
+
         .primary {
             background-color: var(--nord9);
             color: var(--nord0);
         }
+
         .primary:hover {
             background-color: var(--nord8);
             transform: translateY(-2px);
         }
+
         .secondary {
             color: var(--nord7);
             border-color: var(--nord3);
         }
+
         .secondary:hover {
             background-color: var(--nord3);
             color: var(--nord6);
             transform: translateY(-2px);
         }
+
         section {
             padding: 50px 0;
             border-top: 1px solid var(--nord3);
         }
+
         h2 {
             text-align: center;
             font-size: 2.2rem;
@@ -94,21 +108,25 @@
             font-weight: 600;
             letter-spacing: -0.5px;
         }
+
         .features-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
             gap: 25px;
         }
+
         .feature-card {
             background-color: var(--nord0);
             padding: 25px;
             border-radius: 10px;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
+
         .feature-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
         }
+
         .feature-card h3 {
             font-size: 1.25rem;
             color: var(--nord7);
@@ -118,17 +136,21 @@
             align-items: center;
             font-weight: 600;
         }
+
         .feature-card h3::before {
             content: attr(data-icon);
             margin-right: 10px;
             font-size: 1.5rem;
         }
+
         .feature-card p {
             color: var(--nord4);
             font-size: 0.95rem;
             margin-bottom: 0;
         }
-        #tech-stack ul, #philosophy ul {
+
+        #tech-stack ul,
+        #philosophy ul {
             list-style: none;
             padding: 0;
             display: flex;
@@ -136,7 +158,9 @@
             justify-content: center;
             gap: 10px;
         }
-        #tech-stack li, #philosophy li {
+
+        #tech-stack li,
+        #philosophy li {
             background-color: var(--nord3);
             color: var(--nord4);
             padding: 8px 16px;
@@ -144,6 +168,7 @@
             font-size: 0.85rem;
             font-weight: 500;
         }
+
         footer {
             text-align: center;
             padding: 30px 20px;
@@ -152,16 +177,19 @@
             color: var(--nord4);
             font-size: 0.9rem;
         }
+
         footer a {
             color: var(--nord9);
             text-decoration: none;
             font-weight: 500;
         }
+
         footer a:hover {
             text-decoration: underline;
         }
     </style>
 </head>
+
 <body>
 
     <header>
@@ -169,7 +197,8 @@
             <h1>SHYNOTE</h1>
             <p>당신의 생각을 담는 조용하고 미니멀한 마크다운 노트</p>
             <div class="cta-buttons">
-                <a href="https://shynote.vercel.app/" class="cta-button primary">라이브 데모</a>
+                <a href="https://shynote.vercel.app/" class="cta-button primary">시작하기</a>
+                <a href="https://shynote.vercel.app/?mode=guest" class="cta-button secondary">게스트 모드</a>
                 <a href="https://github.com/cdecl/shynote" class="cta-button secondary">GitHub 소스코드</a>
             </div>
         </div>
@@ -181,11 +210,13 @@
             <div class="features-grid">
                 <div class="feature-card">
                     <h3 data-icon="✍️">몰입형 글쓰기 환경</h3>
-                    <p>에디터, 스플릿 뷰, 미리보기 모드를 자유롭게 전환하세요. Nord 테마 기반의 다크 모드와 GitHub 스타일 렌더링이 더해져, 오롯이 글쓰기에만 집중할 수 있습니다.</p>
+                    <p>에디터, 스플릿 뷰, 미리보기 모드를 자유롭게 전환하세요. Nord 테마 기반의 다크 모드와 GitHub 스타일 렌더링이 더해져, 오롯이 글쓰기에만 집중할 수 있습니다.
+                    </p>
                 </div>
                 <div class="feature-card">
                     <h3 data-icon="🚀">강력한 에디터 엔진</h3>
-                    <p>CodeMirror 6 기반 에디터는 VS Code 단축키, 멀티 커서, 정규식 검색 등 강력한 기능을 지원합니다. 대용량 문서도 지연 없이 부드럽게 다룰 수 있습니다.</p>
+                    <p>CodeMirror 6 기반 에디터는 VS Code 단축키, 멀티 커서, 정규식 검색 등 강력한 기능을 지원합니다. 대용량 문서도 지연 없이 부드럽게 다룰 수 있습니다.
+                    </p>
                 </div>
                 <div class="feature-card">
                     <h3 data-icon="🗂️">직관적인 파일 관리</h3>
@@ -236,9 +267,11 @@
 
     <footer>
         <div class="container">
-            <p>&copy; 2026 SHYNOTE. Made by <a href="https://github.com/cdecl" target="_blank">cdecl</a>. | <a href="./walkthrough.md">기능 둘러보기</a></p>
+            <p>&copy; 2026 SHYNOTE. Made by <a href="https://github.com/cdecl" target="_blank">cdecl</a>. | <a
+                    href="./walkthrough.md">기능 둘러보기</a></p>
         </div>
     </footer>
 
 </body>
+
 </html>
