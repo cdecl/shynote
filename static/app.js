@@ -136,6 +136,7 @@ createApp({
 		const isDarkMode = ref(localStorage.getItem(STORAGE_KEYS.DARK_MODE) === null ? true : localStorage.getItem(STORAGE_KEYS.DARK_MODE) === 'true')
 
 		const isAuthenticated = ref(false)
+		const serverDbType = ref(null) // Added for DB Type Logic
 		const fontSize = ref('14')
 		const setFontSize = (size) => {
 			fontSize.value = size
@@ -272,7 +273,12 @@ createApp({
 			} catch (e) { return text }
 		}
 
-		const dbType = computed(() => hasIDB ? 'IndexedDB' : 'Memory')
+		const dbType = computed(() => {
+			if (currentUserId.value === 'guest') {
+				return hasIDB ? 'IndexedDB' : 'Memory'
+			}
+			return serverDbType.value || 'Memory'
+		})
 
 
 		// New UI States
@@ -2205,8 +2211,8 @@ createApp({
 				const res = await fetch('/auth/config')
 				if (!res.ok) return
 				const config = await res.json()
-				// config.db_type is server side. Client side we use local detection.
-				// if (config.db_type) { dbType.value = config.db_type }
+				// config.db_type is server side.
+				if (config.db_type) { serverDbType.value = config.db_type }
 
 				// Unified Auth Flow: Always use Redirect Flow
 				// This guarantees functionality across Mobile, Private Mode, and IP-based access

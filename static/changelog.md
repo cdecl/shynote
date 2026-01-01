@@ -1,3 +1,10 @@
+# v0.4.7 Release Notes
+
+## Summary
+- **DB Type Indicator**: "About" 및 "Settings" 모달에서 사용자의 DB 유형(IndexedDB, SQLite, PostgreSQL)을 정확하게 표시하도록 로직을 복구했습니다.
+
+---
+
 # v0.4.6 Release Notes
 
 ## Summary
