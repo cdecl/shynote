@@ -57,6 +57,7 @@ createApp({
 
 
 		const currentUserId = ref(null)
+		const hasIDB = typeof window !== 'undefined' && 'indexedDB' in window
 
 		// Private Helpers
 		const parseSafeDate = (dateStr) => {
@@ -271,7 +272,7 @@ createApp({
 			} catch (e) { return text }
 		}
 
-		const dbType = ref('...')
+		const dbType = computed(() => hasIDB ? 'IndexedDB' : 'Memory')
 
 
 		// New UI States
@@ -480,7 +481,7 @@ createApp({
 			}
 		}
 
-		const hasIDB = typeof window !== 'undefined' && 'indexedDB' in window
+
 
 
 		const debouncedUpdate = () => {
@@ -1594,7 +1595,7 @@ createApp({
 		}
 
 		// App Version & Config
-		const appVersion = ref('...')
+		const appVersion = ref('0.4.7')
 		const fetchAppConfig = async () => {
 			try {
 				const res = await fetch('/static/version.json?v=' + Date.now())
@@ -2204,9 +2205,8 @@ createApp({
 				const res = await fetch('/auth/config')
 				if (!res.ok) return
 				const config = await res.json()
-				if (config.db_type) {
-					dbType.value = config.db_type
-				}
+				// config.db_type is server side. Client side we use local detection.
+				// if (config.db_type) { dbType.value = config.db_type }
 
 				// Unified Auth Flow: Always use Redirect Flow
 				// This guarantees functionality across Mobile, Private Mode, and IP-based access

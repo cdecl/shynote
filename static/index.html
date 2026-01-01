@@ -275,6 +275,47 @@
             </div>
         </div>
 
+        <!-- About Modal -->
+        <div v-if="showAbout"
+            class="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4 animate-fade-in"
+            @click.self="showAbout = false">
+            <div
+                class="bg-white dark:bg-[#2E3440] rounded-2xl shadow-xl w-80 overflow-hidden transform transition-all animate-scale-in border border-slate-200 dark:border-[#3B4252]">
+                <div class="p-6 text-center">
+                    <div class="w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                        <img src="/static/logo.png" alt="Shynote Logo"
+                            class="w-full h-full object-contain drop-shadow-xl rounded-2xl">
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2">Shynote</h3>
+                    <p class="text-slate-500 dark:text-slate-400 mb-6">A simple, privacy-focused
+                        markdown editor with local-first sync.</p>
+                    <div
+                        class="flex flex-col gap-2 text-sm text-slate-600 dark:text-[#D8DEE9] bg-slate-50 dark:bg-[#3B4252] p-4 rounded-xl mb-6">
+                        <div class="flex justify-between">
+                            <span>Version</span>
+                            <span class="font-mono font-bold">{{ appVersion }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Storage</span>
+                            <span class="font-bold">{{ dbType }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Changelog</span>
+                            <a href="https://github.com/cdecl/shynote/blob/main/static/changelog.md" target="_blank"
+                                class="font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
+                                View
+                                <span class="material-symbols-rounded text-[14px]">open_in_new</span>
+                            </a>
+                        </div>
+                    </div>
+                    <button @click="showAbout = false"
+                        class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-colors">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Sidebar -->
         <!-- Sidebar -->
         <!-- Sidebar Wrapper -->
@@ -412,25 +453,18 @@
                                         dropTargetId === 'inbox' ? 'translate-x-1 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-200 dark:ring-blue-800' : '',
                                         currentFolderId === null ? 'bg-blue-100 dark:bg-blue-600/20 shadow-sm' : ''
                                     ]">
-                                    <div class="flex items-center gap-3">
-                                        <span class="material-symbols-rounded text-[22px] transition-colors" :class="[
+                                    <div class="flex items-center">
+                                        <span class="material-symbols-rounded text-[22px] transition-colors mr-3"
+                                            :class="[
                                                 dropTargetId === 'inbox' || currentFolderId === null ? 'text-blue-500' : 'text-slate-400 dark:text-slate-500'
                                             ]" style="font-variation-settings: 'FILL' 1">home</span>
                                         <span class="text-[14px] font-medium transition-colors duration-200"
                                             :class="currentFolderId === null ? 'text-slate-800 dark:text-white' : 'text-slate-600 dark:text-slate-400'">Inbox</span>
+
+
                                     </div>
                                     <div class="flex items-center gap-1">
-                                        <!-- New Note Action -->
-                                        <button @click.stop="createNoteInFolder(null)" @mousedown.stop
-                                            class="p-1 hover:bg-slate-200 dark:hover:bg-[#4C566A] rounded-full text-slate-400 dark:text-slate-500 hover:text-blue-500 transition-colors"
-                                            title="New Note">
-                                            <div class="relative w-[20px] h-[20px] flex items-center justify-center">
-                                                <span class="material-symbols-rounded text-[18px]">description</span>
-                                                <span
-                                                    class="material-symbols-rounded text-[10px] text-amber-500 absolute -bottom-0.5 -right-0.5"
-                                                    style="font-variation-settings: 'FILL' 1">bolt</span>
-                                            </div>
-                                        </button>
+
                                         <span
                                             class="text-slate-500 dark:text-slate-400 font-medium text-[12px] bg-slate-200 dark:bg-[#4C566A] px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{{
                                             sortedRootNotes.length }}</span>
@@ -441,13 +475,26 @@
                             <!-- User Folders Card -->
                             <div v-if="sortedFolders.length >= 0">
                                 <div class="px-4 mb-2 flex items-center justify-between group/header">
-                                    <h2
-                                        class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                                        My Folders
-                                    </h2>
-                                    <button @click.stop="createFolder()" @mousedown.stop
-                                        class="text-slate-400 hover:text-blue-500 transition-colors" title="New Folder">
-                                        <span class="material-symbols-rounded text-[18px]">create_new_folder</span>
+                                    <div class="flex items-center gap-2">
+                                        <h2
+                                            class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                                            My Folders
+                                        </h2>
+                                        <button @click.stop="createFolder()" @mousedown.stop
+                                            class="text-slate-400 hover:text-blue-500 transition-colors"
+                                            title="New Folder">
+                                            <span class="material-symbols-rounded text-[22px]">create_new_folder</span>
+                                        </button>
+                                    </div>
+                                    <button @click.stop="createNoteInFolder(null)" @mousedown.stop
+                                        class="p-1 hover:bg-slate-200 dark:hover:bg-[#4C566A] rounded-full text-slate-400 dark:text-slate-500 hover:text-blue-500 transition-colors"
+                                        title="New Note">
+                                        <div class="relative w-[20px] h-[20px] flex items-center justify-center">
+                                            <span class="material-symbols-rounded text-[20px]">description</span>
+                                            <span
+                                                class="material-symbols-rounded text-[10px] text-amber-500 absolute -bottom-0.5 -right-0.5"
+                                                style="font-variation-settings: 'FILL' 1">bolt</span>
+                                        </div>
                                     </button>
                                 </div>
                                 <div class="space-y-0.5">
@@ -1456,49 +1503,7 @@
                             <p class="text-sm font-medium">No note selected</p>
                         </div>
 
-                        <!-- About Modal -->
-                        <div v-if="showAbout"
-                            class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in"
-                            @click.self="showAbout = false">
-                            <div
-                                class="bg-white dark:bg-[#2E3440] rounded-2xl shadow-xl w-80 overflow-hidden transform transition-all animate-scale-in border border-slate-200 dark:border-[#3B4252]">
-                                <div class="p-6 text-center">
-                                    <div class="w-20 h-20 mx-auto mb-4 flex items-center justify-center">
-                                        <img src="/static/logo.png" alt="Shynote Logo"
-                                            class="w-full h-full object-contain drop-shadow-xl rounded-2xl">
-                                    </div>
-                                    <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2">Shynote</h3>
-                                    <p class="text-slate-500 dark:text-slate-400 mb-6">A simple, privacy-focused
-                                        markdown editor with local-first sync.</p>
-                                    <div
-                                        class="flex flex-col gap-2 text-sm text-slate-600 dark:text-[#D8DEE9] bg-slate-50 dark:bg-[#3B4252] p-4 rounded-xl mb-6">
-                                        <div class="flex justify-between">
-                                            <span>Version</span>
-                                            <span class="font-mono font-bold">{{ appVersion }}</span>
-                                        </div>
-                                        <div class="flex justify-between">
-                                            <span>Storage</span>
-                                            <span class="font-bold">{{ dbType }}</span>
-                                        </div>
-                                        <div class="flex justify-between">
-                                            <span>Changelog</span>
-                                            <a href="https://github.com/cdecl/shynote/blob/main/static/changelog.md"
-                                                target="_blank"
-                                                class="font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
-                                                View
-                                                <span class="material-symbols-rounded text-[14px]">open_in_new</span>
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <button @click="showAbout = false"
-                                        class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-colors">
-                                        Close
-                                    </button>
-                                </div>
-                            </div>
 
-
-                        </div>
                     </div> <!-- Close Main Layout -->
                     <!-- Status Bar -->
                     <!-- Status Bar -->
