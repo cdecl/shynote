@@ -2616,6 +2616,7 @@ createApp({
 
 				// Switch to Edit Mode (New Layout)
 				rightPanelMode.value = 'edit'
+				viewMode.value = 'edit' // Reset to Editor Tab
 
 				// Close sidebar on mobile for better UX
 				if (window.innerWidth < 768) {
