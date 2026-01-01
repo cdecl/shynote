@@ -493,8 +493,8 @@ createApp({
 				if (hasIDB) {
 					try {
 						const rawNote = JSON.parse(JSON.stringify(selectedNote.value))
-						if (!rawNote.user_id && currentUserId.value) {
-							rawNote.user_id = currentUserId.value
+						if (!rawNote.user_id) {
+							rawNote.user_id = currentUserId.value || 'guest'
 						}
 						await LocalDB.saveNote(rawNote)
 						statusMessage.value = 'Save Complete' // Renamed from 'Saved locally'
@@ -522,7 +522,7 @@ createApp({
 			if (hasIDB) {
 				try {
 					const rawNote = JSON.parse(JSON.stringify(selectedNote.value))
-					if (!rawNote.user_id && currentUserId.value) rawNote.user_id = currentUserId.value
+					if (!rawNote.user_id) rawNote.user_id = currentUserId.value || 'guest'
 
 					await LocalDB.saveNote(rawNote)
 					statusMessage.value = 'Saved'
@@ -555,16 +555,26 @@ createApp({
 			if (isDelete) {
 				url = `/api/${type}/${log.entity_id}`
 				method = 'DELETE'
-			} else if (isCreate) {
-				url = `/api/${type}`
-				method = 'POST'
-				// Construct body safely
-				body = { id: log.entity_id, ...log.payload }
 			} else {
-				// UPDATE
-				url = `/api/${type}/${log.entity_id}`
-				method = 'PUT'
-				body = log.payload
+				// CREATE or UPDATE
+				url = isCreate ? `/api/${type}` : `/api/${type}/${log.entity_id}`
+				method = isCreate ? 'POST' : 'PUT'
+
+				// Safe Body Construction
+				const rawBody = isCreate ? { id: log.entity_id, ...log.payload } : log.payload
+				body = { ...rawBody }
+
+				// Sanitize & Remap fields
+				const LEGACY_TRASH_ID = 'trash-0000-0000-0000-000000000000'
+
+				if (body.folder_id === 'null' || body.folder_id === '') {
+					body.folder_id = null
+				} else if (body.folder_id === LEGACY_TRASH_ID) {
+					// Fix Legacy Trash ID in pending logs
+					if (typeof TRASH_FOLDER_ID !== 'undefined' && TRASH_FOLDER_ID.value) {
+						body.folder_id = TRASH_FOLDER_ID.value
+					}
+				}
 			}
 			return { url, method, body, isDelete, isCreate }
 		}
@@ -596,8 +606,36 @@ createApp({
 		// Helper since we don't have a global htmlStatus helper yet in this scope
 		const htmlStatus = (s) => ({ serverError: s >= 500 && s < 600 })
 
+
+		// Sync Queue Logic (Sequential Folders, Parallel Notes)
+		const saveToLog = (type, id, data = {}) => {
+			if (!isAuthenticated.value || currentUserId.value === 'guest') return // Guest Mode Limit
+
+			const change = {
+				type,
+				id,
+				timestamp: Date.now(),
+				...data
+			}
+			changeLog.value.push(change)
+			debouncedSync()
+		}
+
+		// Helper: Debounce
+		const debounce = (func, wait) => {
+			let timeout
+			return (...args) => {
+				clearTimeout(timeout)
+				timeout = setTimeout(() => func(...args), wait)
+			}
+		}
+
+		const debouncedSync = debounce(() => {
+			syncWorker()
+		}, 2000)
+
 		const syncWorker = async () => {
-			if (!hasIDB || isSyncing.value || !isAuthenticated.value) return
+			if (!hasIDB || isSyncing.value || !isAuthenticated.value || currentUserId.value === 'guest') return
 			if (isSyncingProcess) return
 			isSyncingProcess = true
 			isSyncing.value = true
@@ -2299,9 +2337,9 @@ createApp({
 
 		const fetchFolders = async (waitForRemote = true) => {
 			console.log('[fetchFolders] Started')
-			if (!isAuthenticated.value) return
+			// if (!isAuthenticated.value) return // Removed to allow LocalDB load for Guest
 
-			const uid = currentUserId.value;
+			const uid = currentUserId.value || 'guest';
 
 			try {
 				// 1. Load from LocalDB first (if available)
@@ -2358,6 +2396,8 @@ createApp({
 				// If waitForRemote is false, we don't await the fetch, just fire it.
 				const remoteFetch = async () => {
 					try {
+						if (!isAuthenticated.value || currentUserId.value === 'guest') return // Guest Mode: Skip Remote
+
 						const response = await authenticatedFetch('/api/folders')
 						if (response && response.ok) {
 							const serverFolders = await response.json()
@@ -2441,7 +2481,7 @@ createApp({
 		const fetchNotes = async (waitForRemote = true) => {
 			console.log('[fetchNotes] Started')
 			loading.value = true
-			const uid = currentUserId.value;
+			const uid = currentUserId.value || 'guest';
 
 			// 1. Instant Load from LocalDB
 			if (hasIDB && uid) {
@@ -2463,6 +2503,8 @@ createApp({
 
 			const remotePromise = (async () => {
 				try {
+					if (!isAuthenticated.value || currentUserId.value === 'guest') return // Guest Mode
+
 					const response = await authenticatedFetch('/api/notes')
 					if (response && response.ok) {
 						const serverNotes = await response.json()
@@ -2552,7 +2594,7 @@ createApp({
 				const newFolder = {
 					id: tempId,
 					name: name,
-					user_id: currentUserId.value,
+					user_id: currentUserId.value || 'guest',
 					notes: []
 				}
 
@@ -2599,7 +2641,7 @@ createApp({
 					content: initialContent,
 					content_hash: initialHash, // ✅ Add Hash
 					folder_id: folderId,
-					user_id: currentUserId.value,
+					user_id: currentUserId.value || 'guest',
 					created_at: now,
 					updated_at: now,
 					sync_status: 'dirty'
@@ -3126,6 +3168,7 @@ createApp({
 			}
 		}
 
+
 		const stopSharing = async () => {
 			if (!selectedNote.value) return
 			const note = selectedNote.value
@@ -3228,7 +3271,7 @@ createApp({
 						title: file.name, // Extension included? Maybe strip later if desired
 						content: text,
 						folder_id: currentFolderId.value, // Save to current context
-						user_id: currentUserId.value,
+						user_id: currentUserId.value || 'guest',
 						is_pinned: false,
 						is_shared: false,
 						created_at: new Date().toISOString(),
@@ -3592,6 +3635,15 @@ createApp({
 				})
 			}
 		})
+
+		// Update Title
+		watch(selectedNote, (newNote) => {
+			if (newNote && newNote.title) {
+				document.title = `${newNote.title} - SHYNOTE`
+			} else {
+				document.title = 'SHYNOTE'
+			}
+		}, { deep: true })
 
 		watch(isDarkMode, (val) => {
 			if (editorView.value) {

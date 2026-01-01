@@ -382,7 +382,8 @@
                                 class="p-2 rounded hover:bg-white dark:hover:bg-[#3B4252] cursor-pointer group border border-transparent hover:border-slate-200 dark:hover:border-[#434C5E] transition-all">
                                 <div class="flex items-center gap-1.5 mb-0.5 max-w-full overflow-hidden">
                                     <span class="material-symbols-rounded text-[14px] text-slate-400">description</span>
-                                    <span class="text-xs font-bold text-slate-700 dark:text-[#ECEFF4] truncate"
+                                    <span v-if="result.note"
+                                        class="text-xs font-bold text-slate-700 dark:text-[#ECEFF4] truncate"
                                         v-html="getHighlightedText(result.note.title || 'Untitled')"></span>
                                 </div>
                                 <div v-if="result.snippet"

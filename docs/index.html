@@ -4,10 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SHYNOTE - 당신의 생각을 담는 조용한 공간</title>
+    <title>SHYNOTE - 프로젝트 문서</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Spoqa+Han+Sans+Neo:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --nord0: #2E3440;
@@ -22,7 +22,7 @@
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'Spoqa Han Sans Neo', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
             background-color: var(--nord1);
             color: var(--nord4);
@@ -105,7 +105,7 @@
             font-size: 2.2rem;
             color: var(--nord6);
             margin-bottom: 40px;
-            font-weight: 600;
+            font-weight: 700;
             letter-spacing: -0.5px;
         }
 
@@ -120,6 +120,8 @@
             padding: 25px;
             border-radius: 10px;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            flex-direction: column;
         }
 
         .feature-card:hover {
@@ -136,36 +138,29 @@
             align-items: center;
             font-weight: 600;
         }
-
-        .feature-card h3::before {
-            content: attr(data-icon);
-            margin-right: 10px;
-            font-size: 1.5rem;
-        }
-
+        
         .feature-card p {
             color: var(--nord4);
             font-size: 0.95rem;
             margin-bottom: 0;
+            flex-grow: 1;
         }
 
-        #tech-stack ul,
-        #philosophy ul {
+        .tech-list {
             list-style: none;
             padding: 0;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 10px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            text-align: center;
         }
 
-        #tech-stack li,
-        #philosophy li {
+        .tech-list li {
             background-color: var(--nord3);
             color: var(--nord4);
-            padding: 8px 16px;
+            padding: 12px 18px;
             border-radius: 6px;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             font-weight: 500;
         }
 
@@ -197,7 +192,7 @@
             <h1>SHYNOTE</h1>
             <p>당신의 생각을 담는 조용하고 미니멀한 마크다운 노트</p>
             <div class="cta-buttons">
-                <a href="https://shynote.vercel.app/" class="cta-button primary">시작하기</a>
+                <a href="https://shynote.vercel.app/" class="cta-button primary">앱 실행하기</a>
                 <a href="https://shynote.vercel.app/?mode=guest" class="cta-button secondary">게스트 모드</a>
                 <a href="https://github.com/cdecl/shynote" class="cta-button secondary">GitHub 소스코드</a>
             </div>
@@ -209,58 +204,64 @@
             <h2>주요 기능</h2>
             <div class="features-grid">
                 <div class="feature-card">
-                    <h3 data-icon="✍️">몰입형 글쓰기 환경</h3>
-                    <p>에디터, 스플릿 뷰, 미리보기 모드를 자유롭게 전환하세요. Nord 테마 기반의 다크 모드와 GitHub 스타일 렌더링이 더해져, 오롯이 글쓰기에만 집중할 수 있습니다.
-                    </p>
+                    <h3>🚀 고성능 에디터 코어</h3>
+                    <p>CodeMirror 6 엔진을 통합하여 VS Code 키맵, 정규식 검색, 다중 커서 등 고급 편집 기능을 웹 환경에서 제공하며, 대용량 파일 처리의 성능 최적화를 달성했습니다.</p>
                 </div>
                 <div class="feature-card">
-                    <h3 data-icon="🚀">강력한 에디터 엔진</h3>
-                    <p>CodeMirror 6 기반 에디터는 VS Code 단축키, 멀티 커서, 정규식 검색 등 강력한 기능을 지원합니다. 대용량 문서도 지연 없이 부드럽게 다룰 수 있습니다.
-                    </p>
+                    <h3>💾 로컬 우선 & 백그라운드 동기화</h3>
+                    <p>IndexedDB를 통한 Local-First 아키텍처를 구현, 1초 자동 저장 및 오프라인 작업을 지원합니다. 네트워크 연결 시 `navigator.locks` 기반의 충돌 방지 로직과 함께 지능형 백그라운드 동기화가 이루어집니다.</p>
                 </div>
                 <div class="feature-card">
-                    <h3 data-icon="🗂️">직관적인 파일 관리</h3>
-                    <p>드래그 앤 드롭으로 노트를 폴더 간에 쉽게 이동하고, 무한 계층 구조로 생각을 체계적으로 정리하세요. 중요한 노트는 목록 상단에 고정할 수 있습니다.</p>
+                    <h3>🗂️ 계층적 데이터 모델 & 관리 API</h3>
+                    <p>무한 계층 폴더 구조를 지원하며, 드래그앤드롭, 다중 선택/일괄 처리, 노트 고정, 그리고 데이터 무결성을 보장하는 휴지통 관리 API를 통해 효율적인 노트 구성을 가능하게 합니다.</p>
                 </div>
                 <div class="feature-card">
-                    <h3 data-icon="💾">로컬 우선 아키텍처</h3>
-                    <p>모든 내용은 1초마다 로컬 DB에 자동 저장되어 데이터 유실 위험이 없습니다. 오프라인에서도 모든 기능이 동작하며, 연결 시 자동으로 동기화됩니다.</p>
+                    <h3>🎨 GitHub Flavored Markdown (GFM) & Mermaid 렌더링</h3>
+                    <p>GitHub 스타일 마크다운 렌더링과 YAML Frontmatter 파싱을 제공합니다. Mermaid.js와의 통합을 통해 다이어그램 및 차트 시각화 기능을 에디터 내에서 지원하여 문서의 표현력을 확장합니다.</p>
                 </div>
                 <div class="feature-card">
-                    <h3 data-icon="🌐">간편한 인증 및 공유</h3>
-                    <p>Google 계정으로 빠르게 로그인하고, 게스트 모드로 즉시 사용해볼 수 있습니다. 작성한 노트는 고유 링크를 생성하여 외부에 안전하게 공유하세요.</p>
+                    <h3>📱 크로스플랫폼 반응형 UI/UX</h3>
+                    <p>데스크톱과 모바일 환경 모두에서 최적화된 반응형 UI와 직관적인 스와이프 제스처를 제공하여, 단일 코드베이스로 일관된 사용자 경험을 보장합니다.</p>
                 </div>
                 <div class="feature-card">
-                    <h3 data-icon="📱">완벽한 모바일 경험</h3>
-                    <p>스와이프 제스처와 반응형 UI를 통해 모바일에서도 데스크톱과 동일한 사용자 경험을 제공합니다. 언제 어디서나 생각을 기록하고 정리하세요.</p>
-                </div>
-                <div class="feature-card">
-                    <h3 data-icon="👨‍🚀">게스트 모드</h3>
-                    <p>로그인 없이 즉시 모든 기능을 체험할 수 있습니다. 가상 인메모리 백엔드를 통해 노트 생성, 수정, 삭제 등 모든 CRUD 작업이 가능합니다.</p>
+                    <h3>🔐 OAuth 2.0 & 게스트 세션 관리</h3>
+                    <p>Google OAuth 2.0 리다이렉트 플로우를 통해 안전하고 효율적인 사용자 인증을 제공합니다. 영구 저장되지 않으며 로컬 브라우저 DB에만 저장되는 게스트 모드를 통해 즉각적인 기능 탐색을 지원합니다.</p>
                 </div>
             </div>
         </section>
 
         <section id="philosophy">
             <h2>개발 철학</h2>
-            <ul>
-                <li>Local-First: 당신의 데이터는 당신의 것입니다.</li>
-                <li>Minimalism: 불필요한 기능 없이 핵심에 집중합니다.</li>
-                <li>Portability: 웹 표준 기술로 어디서든 접근 가능합니다.</li>
-            </ul>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>🌐 Local-First Architecture</h3>
+                    <p>네트워크 연결에 구애받지 않는 안정적인 경험을 제공합니다. 모든 데이터는 먼저 브라우저(IndexedDB)에 저장된 후, 백그라운드에서 서버와 동기화되어 데이터의 소유권을 사용자에게 돌려줍니다.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>⚡️ No-Build Vanilla Stack</h3>
+                    <p>복잡한 번들링 도구 없이 브라우저 네이티브 ES Modules를 적극 활용합니다. Vanilla JS와 CDN 기반 Vue.js를 통해 빠르고 가벼우며 유지보수가 용이한 프론트엔드를 지향합니다.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>✍️ Best-in-class Editor</h3>
+                    <p>단순한 `textarea`의 한계를 넘어, CodeMirror 6를 도입하여 데스크톱 수준의 강력한 편집 경험(VSCode 키맵, 다중 커서 등)을 웹에서 구현하는 것을 목표로 합니다.</p>
+                </div>
+            </div>
         </section>
 
         <section id="tech-stack">
             <h2>기술 스택</h2>
-            <ul>
-                <li>Vue.js 3</li>
+            <ul class="tech-list">
+                <li>Vanilla JS (ESM)</li>
+                <li>Vue.js 3 (CDN)</li>
                 <li>FastAPI</li>
                 <li>TailwindCSS</li>
                 <li>CodeMirror 6</li>
                 <li>IndexedDB</li>
                 <li>PostgreSQL</li>
                 <li>SQLAlchemy</li>
-                <li>Vanilla JS</li>
+                <li>uv</li>
+                <li>git</li>
+                <li>Vercel</li>
             </ul>
         </section>
     </main>
