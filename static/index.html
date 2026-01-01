@@ -1511,6 +1511,26 @@
                             <span class="mr-1">{{ statusMessage === 'Ready' ? 'Save Complete' : statusMessage }}</span>
                         </span>
 
+
+                        <!-- Sync Queue / Retry -->
+                        <button v-if="syncQueueCount > 0" @click="manualSync"
+                            class="flex items-center gap-1 text-[10px] bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                            title="Items pending sync. Click to retry immediately.">
+                            <span class="material-symbols-rounded text-[12px]"
+                                :class="isSyncing ? 'animate-spin' : ''">sync</span>
+                            <span class="font-bold">{{ syncQueueCount }}</span>
+                        </button>
+
+                        <span v-if="syncQueueCount > 0"
+                            class="w-[1px] h-2.5 bg-slate-300 dark:bg-slate-600 mx-1"></span>
+
+                        <!-- Last Sync Time -->
+                        <span v-if="lastSyncTime"
+                            class="text-[10px] text-slate-500 dark:text-slate-400 font-mono hidden sm:inline-block"
+                            title="Last Successful Sync">
+                            {{ formatDateParts(lastSyncTime).time }}
+                        </span>
+
                         <span class="w-[1px] h-2.5 bg-slate-300 dark:bg-slate-600 mx-1"></span>
 
                         <!-- Data Source Indicator (Global) -->
@@ -1531,13 +1551,6 @@
                             <span class="uppercase tracking-wide">{{ loadingState.message }}</span>
                         </span>
 
-                        <span v-if="selectedNote"
-                            class="w-[1px] h-2.5 bg-slate-300 dark:bg-slate-600 mx-1 hidden sm:block"></span>
-
-                        <span v-if="selectedNote"
-                            class="text-[10px] text-[#1e3a8a] dark:text-[#8FBCBB] font-medium opacity-80 whitespace-nowrap leading-none hidden sm:inline">
-                            {{ formatDateParts(selectedNote.updated_at).date }} {{
-                            formatDateParts(selectedNote.updated_at).time }}
                         </span>
                     </div>
                 </footer>

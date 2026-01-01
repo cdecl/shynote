@@ -26,9 +26,51 @@ def on_startup():
         # Application continues; logs will show the issue.
 
 
+
 # Mount static files
 if os.path.exists(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+@app.on_event("startup")
+def configure_logging():
+    import logging
+    import sys
+    import time
+    
+    class MillisecondFormatter(logging.Formatter):
+        def formatTime(self, record, datefmt=None):
+            from datetime import datetime
+            ct = datetime.fromtimestamp(record.created)
+            if datefmt:
+                s = ct.strftime(datefmt)
+            else:
+                s = ct.strftime("%Y-%m-%d %H:%M:%S.%f")
+            return s
+
+    formatter = MillisecondFormatter(
+        fmt='[%(asctime)s] %(levelname)s: %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S.%f'
+    )
+    
+    # Configure Root Logger
+    logging.basicConfig(level=logging.INFO)
+    root = logging.getLogger()
+    if root.handlers:
+        for handler in root.handlers:
+            handler.setFormatter(formatter)
+            
+    # Configure Uvicorn Loggers specifically (since they might have their own handlers)
+    for logger_name in ["uvicorn", "uvicorn.access", "uvicorn.error"]:
+        logger = logging.getLogger(logger_name)
+        if logger.handlers:
+            for handler in logger.handlers:
+                handler.setFormatter(formatter)
+        else:
+             # If uvicorn hasn't added handlers yet (rare if running via CLI), add one
+             h = logging.StreamHandler(sys.stdout)
+             h.setFormatter(formatter)
+             logger.addHandler(h)
+             logger.setLevel(logging.INFO)
 
 @app.get("/")
 def read_root():
@@ -209,12 +251,18 @@ def create_folder(
     current_user: models.User = Depends(utils.get_current_user)
 ):
     # Check if folder exists (Upsert-like behavior)
-    existing_folder = db.query(models.Folder).filter(
-        models.Folder.id == folder.id,
-        models.Folder.user_id == current_user.id
-    ).first()
+    # Check if folder exists (Upsert-like behavior)
+    # Check by ID only first to detect collisions with other users
+    existing_folder = db.query(models.Folder).filter(models.Folder.id == folder.id).first()
 
     if existing_folder:
+        if existing_folder.user_id != current_user.id:
+             # ID collision with another user
+             print(f"Collision: Folder {folder.id} exists for user {existing_folder.user_id}, but requested by {current_user.id}")
+             raise HTTPException(status_code=409, detail="Folder ID collision with another user")
+        
+        # If user matches, it's an idempotent retry. Return existing.
+        # Note: We don't update name on POST (use PUT for updates), just ensure existence.
         return existing_folder
 
     db_folder = models.Folder(id=folder.id, name=folder.name, user_id=current_user.id)
@@ -286,13 +334,18 @@ def create_note(
              raise HTTPException(status_code=404, detail="Folder not found")
 
     # UPSERT: Check if note already exists
-    existing_note = db.query(models.Note).filter(
-        models.Note.id == note.id,
-        models.Note.user_id == current_user.id
-    ).first()
+    # Check by ID only first to detect collisions even if user_id doesn't match
+    existing_note = db.query(models.Note).filter(models.Note.id == note.id).first()
     
     if existing_note:
-        # UPDATE: Update existing note
+        if existing_note.user_id != current_user.id:
+             # ID collision with another user (or ghost data)
+             print(f"Collision: Note {note.id} exists for user {existing_note.user_id}, but requested by {current_user.id}")
+             # We return 409 Conflict. Client should handle this, or we just fail gracefully.
+             # For now, let's treat it as a critical error but not 500.
+             raise HTTPException(status_code=409, detail="Note ID collision with another user")
+
+        # UPDATE: Update existing note (User matches)
         existing_note.title = note.title
         existing_note.content = note.content
         existing_note.folder_id = note.folder_id
