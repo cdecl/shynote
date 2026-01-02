@@ -442,39 +442,9 @@
                     <div class="flex-1 overflow-y-auto px-3 py-2 relative" v-show="isSidebarOpen && !searchQuery">
                         <div v-if="loading" class="text-center text-gray-400 p-4">Loading...</div>
                         <div v-else class="space-y-4">
-                            <!-- System Folders (Inbox) -->
-                            <div class="space-y-0.5" id="system-folders">
-                                <!-- Inbox -->
-                                <div @click.stop="selectFolder(null)" @drop="handleDrop(null, $event)" @dragover.prevent
-                                    @dragenter.prevent="handleDragEnter('inbox')"
-                                    @dragleave.prevent="handleDragLeave('inbox')"
-                                    class="relative flex items-center justify-between px-3 py-2 cursor-pointer active:bg-blue-200 dark:active:bg-blue-600/30 transition-all duration-200 group rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 mx-2"
-                                    :class="[
-                                        dropTargetId === 'inbox' ? 'translate-x-1 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-200 dark:ring-blue-800' : '',
-                                        currentFolderId === null ? 'bg-blue-100 dark:bg-blue-600/20 shadow-sm' : ''
-                                    ]">
-                                    <div class="flex items-center">
-                                        <span class="material-symbols-rounded text-[22px] transition-colors mr-3"
-                                            :class="[
-                                                dropTargetId === 'inbox' || currentFolderId === null ? 'text-blue-500' : 'text-slate-400 dark:text-slate-500'
-                                            ]" style="font-variation-settings: 'FILL' 1">home</span>
-                                        <span class="text-[14px] font-medium transition-colors duration-200"
-                                            :class="currentFolderId === null ? 'text-slate-800 dark:text-white' : 'text-slate-600 dark:text-slate-400'">INBOX</span>
-
-
-                                    </div>
-                                    <div class="flex items-center gap-1">
-
-                                        <span
-                                            class="text-slate-500 dark:text-slate-400 font-medium text-[12px] bg-slate-200 dark:bg-[#4C566A] px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{{
-                                            sortedRootNotes.length }}</span>
-                                    </div>
-                                </div>
-                            </div>
-
                             <!-- User Folders Card -->
                             <div v-if="sortedFolders.length >= 0">
-                                <div class="px-4 mb-2 flex items-center justify-between group/header">
+                                <div class="px-4 mb-1 flex items-center justify-between group/header">
                                     <div class="flex items-center gap-2">
                                         <h2
                                             class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
@@ -498,6 +468,36 @@
                                     </button>
                                 </div>
                                 <div class="space-y-0.5">
+                                    <!-- System Folders (Inbox) -->
+                                    <div class="space-y-0.5 mb-0.5" id="system-folders">
+                                        <!-- Inbox -->
+                                        <div @click.stop="selectFolder(null)" @drop="handleDrop(null, $event)"
+                                            @dragover.prevent @dragenter.prevent="handleDragEnter('inbox')"
+                                            @dragleave.prevent="handleDragLeave('inbox')"
+                                            class="relative flex items-center justify-between px-3 py-1.5 cursor-pointer active:bg-blue-200 dark:active:bg-blue-600/30 transition-all duration-200 group rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 mx-2"
+                                            :class="[
+                                        dropTargetId === 'inbox' ? 'translate-x-1 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-200 dark:ring-blue-800' : '',
+                                        currentFolderId === null ? 'bg-blue-100 dark:bg-blue-600/20 shadow-sm' : ''
+                                    ]">
+                                            <div class="flex items-center">
+                                                <span
+                                                    class="material-symbols-rounded text-[22px] transition-colors mr-3"
+                                                    :class="[
+                                                dropTargetId === 'inbox' || currentFolderId === null ? 'text-blue-500' : 'text-slate-400 dark:text-slate-500'
+                                            ]" style="font-variation-settings: 'FILL' 1">home</span>
+                                                <span class="text-[14px] font-medium transition-colors duration-200"
+                                                    :class="currentFolderId === null ? 'text-slate-800 dark:text-white' : 'text-slate-600 dark:text-slate-400'">INBOX</span>
+
+
+                                            </div>
+                                            <div class="flex items-center gap-1">
+
+                                                <span
+                                                    class="text-slate-500 dark:text-slate-400 font-medium text-[12px] bg-slate-200 dark:bg-[#4C566A] px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{{
+                                                    sortedRootNotes.length }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <div v-for="(folder, index) in sortedFolders" :key="folder.id" @dragover.prevent
                                         @dragenter.prevent="handleDragEnter(folder.id)"
                                         @dragleave.prevent="handleDragLeave(folder.id)"
@@ -505,7 +505,7 @@
 
                                         <!-- Folder Item (Styled like Trash) -->
                                         <div @click.stop="selectFolder(folder.id)"
-                                            class="relative flex items-center justify-between px-3 py-2 cursor-pointer active:bg-blue-200 dark:active:bg-blue-600/30 transition-all duration-200 group rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 mx-2"
+                                            class="relative flex items-center justify-between px-3 py-1.5 cursor-pointer active:bg-blue-200 dark:active:bg-blue-600/30 transition-all duration-200 group rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 mx-2"
                                             :class="[
                                             dropTargetId === folder.id ? 'translate-x-1 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-200 dark:ring-blue-800' : '',
                                             currentFolderId === folder.id ? 'bg-blue-100 dark:bg-blue-600/20 shadow-sm' : ''
@@ -572,13 +572,17 @@
                                     </div>
                                 </div>
                             </div>
+
+
+
+
                         </div>
                         <!-- Trash Folder (Fixed at bottom of list) -->
                         <div class="mt-4 pt-2 border-t border-slate-200 dark:border-[#3B4252]">
                             <div @click.stop="selectFolder(TRASH_FOLDER_ID)" @drop="handleDrop(TRASH_FOLDER_ID, $event)"
                                 @dragover.prevent @dragenter.prevent="handleDragEnter(TRASH_FOLDER_ID)"
                                 @dragleave.prevent="handleDragLeave(TRASH_FOLDER_ID)"
-                                class="relative flex items-center justify-between px-3 py-2 cursor-pointer active:bg-blue-200 dark:active:bg-blue-600/30 transition-all duration-200 group rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 mx-2"
+                                class="relative flex items-center justify-between px-3 py-1.5 cursor-pointer active:bg-blue-200 dark:active:bg-blue-600/30 transition-all duration-200 group rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 mx-2"
                                 :class="[
 									dropTargetId === TRASH_FOLDER_ID ? 'translate-x-1 bg-red-50 dark:bg-red-900/20 ring-1 ring-red-200 dark:ring-red-800' : '',
 									currentFolderId === TRASH_FOLDER_ID ? 'bg-blue-100 dark:bg-blue-600/20 shadow-sm' : ''
