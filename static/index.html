@@ -593,7 +593,7 @@
                                     </span>
                                     <span class="text-[14px] font-medium transition-colors duration-200"
                                         :class="currentFolderId === TRASH_FOLDER_ID ? 'text-slate-800 dark:text-white' : 'text-slate-600 dark:text-slate-400'">
-                                        Trash
+                                        TRASH
                                     </span>
                                 </div>
 
@@ -848,14 +848,15 @@
 
                                 <!-- Folder Name -->
                                 <h1 class="text-2xl font-bold text-slate-800 dark:text-[#ECEFF4] tracking-tight">
-                                    {{ currentFolderId === null ? 'Inbox' : (currentFolderId === TRASH_FOLDER_ID ?
-                                    'Trash' : (folders.find(f => f.id === currentFolderId)?.name || 'Folder')) }}
+                                    {{ currentFolderId === null ? 'INBOX' : (currentFolderId === TRASH_FOLDER_ID ?
+                                    'TRASH' : (folders.find(f => f.id === currentFolderId)?.name || 'Folder')) }}
                                 </h1>
 
                                 <!-- Count -->
                                 <div class="flex items-center gap-2 mt-1">
                                     <span class="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
-                                    <span class="text-base text-slate-400 dark:text-slate-500 font-medium">{{
+                                    <span
+                                        class="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">{{
                                         (currentFolderId === null ? sortedRootNotes :
                                         getSortedFolderNotes(currentFolderId)).length }} items</span>
 
