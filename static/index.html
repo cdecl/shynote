@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, height=device-height, viewport-fit=cover, minimal-ui">
+        content="width=device-width, initial-scale=1.0, maximum-scale=3.0, height=device-height, viewport-fit=cover">
     <title>SHYNOTE</title>
     <link rel="icon" href="/static/favicon.ico">
     <link rel="manifest" href="/static/manifest.json">
@@ -35,14 +35,28 @@
             document.documentElement.style.setProperty('--vh', `${vh}px`);
         }
 
+        function forceAddressBarHide() {
+            // Force scroll to hide address bar even when zoomed
+            if (window.scrollY < 1) {
+                window.scrollTo(0, 1);
+            }
+            setViewportHeight();
+        }
+
         // Set initial viewport height
         setViewportHeight();
+
+        // Force address bar hide on load
+        setTimeout(forceAddressBarHide, 100);
 
         // Update on resize and orientation change
         let resizeTimer;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(setViewportHeight, 100);
+            resizeTimer = setTimeout(() => {
+                setViewportHeight();
+                forceAddressBarHide();
+            }, 100);
         });
 
         // Update on scroll to handle address bar show/hide
@@ -52,7 +66,14 @@
             clearTimeout(scrollTimer);
             const currentScrollY = window.scrollY;
             
-            // Only update if scroll position changed significantly (indicates address bar change)
+            // Update viewport height on any scroll when zoomed
+            if (window.innerWidth < 768 && window.outerHeight > window.innerHeight) {
+                scrollTimer = setTimeout(() => {
+                    setViewportHeight();
+                }, 50);
+            }
+            
+            // Only update if scroll position changed significantly
             if (Math.abs(currentScrollY - lastScrollY) > 50) {
                 scrollTimer = setTimeout(() => {
                     setViewportHeight();
@@ -63,8 +84,110 @@
 
         // Handle orientation change
         window.addEventListener('orientationchange', () => {
-            setTimeout(setViewportHeight, 500);
+            setTimeout(() => {
+                setViewportHeight();
+                forceAddressBarHide();
+            }, 500);
         });
+
+        // Touch event handling for zoom scenarios
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (e) => {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                setTimeout(forceAddressBarHide, 300);
+            }
+            lastTouchEnd = now;
+        });
+
+        // Text selection detection to prevent swipe conflicts
+        let isSelectingText = false;
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let selectionTimer = null;
+
+        function isTouchInEditor(touch) {
+            const editor = document.querySelector('.cm-editor');
+            if (!editor) return false;
+            
+            const rect = editor.getBoundingClientRect();
+            return touch.clientX >= rect.left && touch.clientX <= rect.right &&
+                   touch.clientY >= rect.top && touch.clientY <= rect.bottom;
+        }
+
+        function detectTextSelection(touch) {
+            // Check if we're in text selection mode
+            const selection = window.getSelection();
+            if (selection && selection.toString().length > 0) {
+                return true;
+            }
+            
+            // Check if touch moved significantly (indicating selection)
+            const moveThreshold = 10;
+            const deltaX = Math.abs(touch.clientX - touchStartX);
+            const deltaY = Math.abs(touch.clientY - touchStartY);
+            
+            return deltaX > moveThreshold || deltaY > moveThreshold;
+        }
+
+        document.addEventListener('touchstart', (e) => {
+            const touch = e.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+            isSelectingText = false;
+            
+            // Clear previous timer
+            if (selectionTimer) {
+                clearTimeout(selectionTimer);
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchmove', (e) => {
+            const touch = e.touches[0];
+            
+            // Only apply to editor areas
+            if (!isTouchInEditor(touch)) return;
+            
+            // Detect text selection
+            if (detectTextSelection(touch)) {
+                isSelectingText = true;
+                
+                // Temporarily disable drag detection during text selection
+                const draggables = document.querySelectorAll('.draggable-touch');
+                draggables.forEach(el => {
+                    el.style.pointerEvents = 'none';
+                });
+                
+                // Re-enable after selection ends
+                if (selectionTimer) clearTimeout(selectionTimer);
+                selectionTimer = setTimeout(() => {
+                    isSelectingText = false;
+                    const draggables = document.querySelectorAll('.draggable-touch');
+                    draggables.forEach(el => {
+                        el.style.pointerEvents = '';
+                    });
+                }, 500);
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchend', () => {
+            if (isSelectingText) {
+                // Reset draggables after text selection
+                setTimeout(() => {
+                    const draggables = document.querySelectorAll('.draggable-touch');
+                    draggables.forEach(el => {
+                        el.style.pointerEvents = '';
+                    });
+                }, 100);
+            }
+        }, { passive: true });
+
+        // Handle visual viewport API for better zoom detection
+        if ('visualViewport' in window) {
+            window.visualViewport.addEventListener('resize', () => {
+                setViewportHeight();
+            });
+        }
     </script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
@@ -97,7 +220,9 @@
             // enable these if you want to prevent scrolling while dragging
             dragImageTranslateOverride: MobileDragDrop.scrollBehaviourDragImageTranslateOverride,
             // holdToDrag: delay in ms to start the drag (prevents conflict with click/scroll)
-            holdToDrag: 300,
+            holdToDrag: 500,
+            // Higher threshold to prevent conflicts with text selection
+            startThreshold: 15,
             // Allow text selection in input areas
             ignoreSelector: 'input, textarea, .cm-content, .cm-scroller, .cm-editor'
         };
@@ -123,10 +248,23 @@
         .cm-scroller,
         textarea,
         input {
-            touch-action: auto !important;
+            touch-action: manipulation !important;
             -webkit-user-select: text !important;
             user-select: text !important;
             -webkit-touch-callout: text !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+
+        /* Prevent horizontal swipe during text selection */
+        .cm-content::-webkit-scrollbar,
+        .cm-scroller::-webkit-scrollbar {
+            width: auto;
+            height: auto;
+        }
+
+        .cm-content:active,
+        .cm-scroller:active {
+            touch-action: pan-x pan-y !important;
         }
 
         /* Ensure drag image background is visible if polyfill uses clone */

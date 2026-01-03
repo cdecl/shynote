@@ -39,12 +39,24 @@ textarea {
 }
 
 .cm-content {
-    touch-action: auto !important;
+    touch-action: pan-y pinch-zoom !important;
     -webkit-touch-callout: text !important;
     -webkit-user-select: text !important;
     user-select: text !important;
     -webkit-user-drag: auto !important;
     user-drag: auto !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+.cm-scroller {
+    touch-action: pan-y pinch-zoom !important;
+    overscroll-behavior-x: contain;
+    overflow-x: auto;
+}
+
+.cm-editor {
+    touch-action: pan-y pinch-zoom !important;
+    overscroll-behavior: contain;
 }
 
 /* Custom Cursor Colors for Better Visibility */
