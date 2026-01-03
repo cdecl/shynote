@@ -100,87 +100,105 @@
             lastTouchEnd = now;
         });
 
-        // Text selection detection to prevent swipe conflicts
-        let isSelectingText = false;
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let selectionTimer = null;
+        // CodeMirror-specific text selection handling
+        let isTextSelectionActive = false;
+        let selectionStartPoint = null;
+        let selectionResetTimer = null;
 
-        function isTouchInEditor(touch) {
-            const editor = document.querySelector('.cm-editor');
-            if (!editor) return false;
-            
-            const rect = editor.getBoundingClientRect();
-            return touch.clientX >= rect.left && touch.clientX <= rect.right &&
-                   touch.clientY >= rect.top && touch.clientY <= rect.bottom;
+        function initializeCodeMirrorTextSelection() {
+            // Wait for Vue to mount and CodeMirror to initialize
+            setTimeout(() => {
+                const cmEditor = document.querySelector('.cm-editor');
+                if (!cmEditor) return;
+
+                // Override CodeMirror's default touch behavior
+                const cmContent = cmEditor.querySelector('.cm-content');
+                const cmScroller = cmEditor.querySelector('.cm-scroller');
+
+                if (cmContent) {
+                    // Prevent default drag behavior during text selection
+                    cmContent.addEventListener('touchstart', (e) => {
+                        selectionStartPoint = {
+                            x: e.touches[0].clientX,
+                            y: e.touches[0].clientY,
+                            time: Date.now()
+                        };
+                        isTextSelectionActive = false;
+                        
+                        if (selectionResetTimer) {
+                            clearTimeout(selectionResetTimer);
+                            selectionResetTimer = null;
+                        }
+                    }, { passive: true, capture: true });
+
+                    cmContent.addEventListener('touchmove', (e) => {
+                        if (!selectionStartPoint) return;
+
+                        const currentPoint = {
+                            x: e.touches[0].clientX,
+                            y: e.touches[0].clientY
+                        };
+
+                        const deltaX = Math.abs(currentPoint.x - selectionStartPoint.x);
+                        const deltaY = Math.abs(currentPoint.y - selectionStartPoint.y);
+                        const timeDelta = Date.now() - selectionStartPoint.time;
+
+                        // Detect horizontal text selection (rightward expansion)
+                        if (deltaX > 15 && deltaY < 30 && timeDelta > 100) {
+                            isTextSelectionActive = true;
+                            
+                            // Disable all drag-drop functionality globally during selection
+                            document.querySelectorAll('.draggable-touch').forEach(el => {
+                                el.classList.add('text-selection-active');
+                                el.setAttribute('data-no-drag', 'true');
+                            });
+                        }
+                    }, { passive: true, capture: true });
+
+                    cmContent.addEventListener('touchend', () => {
+                        if (isTextSelectionActive) {
+                            // Reset after selection ends
+                            selectionResetTimer = setTimeout(() => {
+                                isTextSelectionActive = false;
+                                document.querySelectorAll('.draggable-touch').forEach(el => {
+                                    el.classList.remove('text-selection-active');
+                                    el.removeAttribute('data-no-drag');
+                                });
+                                selectionStartPoint = null;
+                                selectionResetTimer = null;
+                            }, 300);
+                        } else {
+                            selectionStartPoint = null;
+                        }
+                    }, { passive: true, capture: true });
+                }
+
+                // Additional touchmove prevention for horizontal swipes in editor
+                cmScroller.addEventListener('touchmove', (e) => {
+                    const touch = e.touches[0];
+                    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+                    
+                    if (target && (target.classList.contains('cm-content') || 
+                                  target.closest('.cm-content'))) {
+                        // Allow vertical scrolling but prevent horizontal swipes
+                        if (Math.abs(e.touches[0].movementX) > Math.abs(e.touches[0].movementY) * 2) {
+                            e.stopPropagation();
+                        }
+                    }
+                }, { passive: true, capture: true });
+
+            }, 1000); // Wait for Vue and CodeMirror to fully initialize
         }
 
-        function detectTextSelection(touch) {
-            // Check if we're in text selection mode
-            const selection = window.getSelection();
-            if (selection && selection.toString().length > 0) {
-                return true;
-            }
-            
-            // Check if touch moved significantly (indicating selection)
-            const moveThreshold = 10;
-            const deltaX = Math.abs(touch.clientX - touchStartX);
-            const deltaY = Math.abs(touch.clientY - touchStartY);
-            
-            return deltaX > moveThreshold || deltaY > moveThreshold;
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeCodeMirrorTextSelection);
+        } else {
+            initializeCodeMirrorTextSelection();
         }
 
-        document.addEventListener('touchstart', (e) => {
-            const touch = e.touches[0];
-            touchStartX = touch.clientX;
-            touchStartY = touch.clientY;
-            isSelectingText = false;
-            
-            // Clear previous timer
-            if (selectionTimer) {
-                clearTimeout(selectionTimer);
-            }
-        }, { passive: true });
-
-        document.addEventListener('touchmove', (e) => {
-            const touch = e.touches[0];
-            
-            // Only apply to editor areas
-            if (!isTouchInEditor(touch)) return;
-            
-            // Detect text selection
-            if (detectTextSelection(touch)) {
-                isSelectingText = true;
-                
-                // Temporarily disable drag detection during text selection
-                const draggables = document.querySelectorAll('.draggable-touch');
-                draggables.forEach(el => {
-                    el.style.pointerEvents = 'none';
-                });
-                
-                // Re-enable after selection ends
-                if (selectionTimer) clearTimeout(selectionTimer);
-                selectionTimer = setTimeout(() => {
-                    isSelectingText = false;
-                    const draggables = document.querySelectorAll('.draggable-touch');
-                    draggables.forEach(el => {
-                        el.style.pointerEvents = '';
-                    });
-                }, 500);
-            }
-        }, { passive: true });
-
-        document.addEventListener('touchend', () => {
-            if (isSelectingText) {
-                // Reset draggables after text selection
-                setTimeout(() => {
-                    const draggables = document.querySelectorAll('.draggable-touch');
-                    draggables.forEach(el => {
-                        el.style.pointerEvents = '';
-                    });
-                }, 100);
-            }
-        }, { passive: true });
+        // Re-initialize when switching between notes (Vue lifecycle)
+        window.addEventListener('vue-note-changed', initializeCodeMirrorTextSelection);
 
         // Handle visual viewport API for better zoom detection
         if ('visualViewport' in window) {
@@ -224,7 +242,43 @@
             // Higher threshold to prevent conflicts with text selection
             startThreshold: 15,
             // Allow text selection in input areas
-            ignoreSelector: 'input, textarea, .cm-content, .cm-scroller, .cm-editor'
+            ignoreSelector: 'input, textarea, .cm-content, .cm-scroller, .cm-editor',
+            // Additional configuration for better text selection handling
+            dragStartClass: 'drag-starting',
+            elementDragClass: 'element-dragging'
+        };
+
+        // Enhanced mobile drag-drop polyfill with text selection detection
+        const originalPolyfill = MobileDragDrop.polyfill;
+        MobileDragDrop.polyfill = function(options) {
+            const result = originalPolyfill.call(this, options);
+            
+            // Override drag start detection
+            document.addEventListener('touchstart', function(e) {
+                const touch = e.touches[0];
+                const target = document.elementFromPoint(touch.clientX, touch.clientY);
+                
+                // Check if touch is in editor area
+                if (target && target.closest('.cm-editor')) {
+                    // Temporarily disable drag detection
+                    const draggables = document.querySelectorAll('.draggable-touch');
+                    draggables.forEach(el => {
+                        if (el.contains(target)) return;
+                        el.setAttribute('data-selection-mode', 'true');
+                    });
+                }
+            }, { passive: true, capture: true });
+            
+            document.addEventListener('touchend', function() {
+                // Re-enable drag detection after touch ends
+                setTimeout(() => {
+                    document.querySelectorAll('[data-selection-mode="true"]').forEach(el => {
+                        el.removeAttribute('data-selection-mode');
+                    });
+                }, 200);
+            }, { passive: true });
+            
+            return result;
         };
         // wait for the resources to be loaded
         document.addEventListener('DOMContentLoaded', function () {
@@ -265,6 +319,26 @@
         .cm-content:active,
         .cm-scroller:active {
             touch-action: pan-x pan-y !important;
+        }
+
+        /* Disable drag functionality during text selection */
+        [data-no-drag="true"] {
+            pointer-events: none !important;
+            touch-action: none !important;
+            -webkit-user-select: none !important;
+            user-select: none !important;
+        }
+
+        .text-selection-active {
+            opacity: 0.6 !important;
+            transition: opacity 0.2s ease;
+        }
+
+        /* Prevent drag-drop polyfill during text selection */
+        .text-selection-active.draggable-touch {
+            cursor: text !important;
+            -webkit-user-drag: none !important;
+            user-drag: none !important;
         }
 
         /* Ensure drag image background is visible if polyfill uses clone */
