@@ -4,12 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+        content="width=device-width, initial-scale=1.0, height=device-height, viewport-fit=cover, minimal-ui">
     <title>SHYNOTE</title>
     <link rel="icon" href="/static/favicon.ico">
     <link rel="manifest" href="/static/manifest.json">
     <link rel="apple-touch-icon" href="/static/icon-192.png">
     <meta name="theme-color" content="#24292F">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -26,6 +28,43 @@
         if (localStorage.getItem('shynote_dark_mode') !== 'false') {
             document.documentElement.classList.add('dark');
         }
+
+        // Fix iPhone Safari viewport height for address bar hiding
+        function setViewportHeight() {
+            const vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        }
+
+        // Set initial viewport height
+        setViewportHeight();
+
+        // Update on resize and orientation change
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(setViewportHeight, 100);
+        });
+
+        // Update on scroll to handle address bar show/hide
+        let scrollTimer;
+        let lastScrollY = 0;
+        window.addEventListener('scroll', () => {
+            clearTimeout(scrollTimer);
+            const currentScrollY = window.scrollY;
+            
+            // Only update if scroll position changed significantly (indicates address bar change)
+            if (Math.abs(currentScrollY - lastScrollY) > 50) {
+                scrollTimer = setTimeout(() => {
+                    setViewportHeight();
+                    lastScrollY = currentScrollY;
+                }, 100);
+            }
+        });
+
+        // Handle orientation change
+        window.addEventListener('orientationchange', () => {
+            setTimeout(setViewportHeight, 500);
+        });
     </script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
@@ -103,7 +142,8 @@
 </head>
 
 <body
-    class="bg-gray-100 dark:bg-[#24292F] h-[100dvh] overflow-hidden overscroll-none text-gray-800 dark:text-[#D8DEE9] font-sans transition-colors duration-300">
+    class="bg-gray-100 dark:bg-[#24292F] h-screen overflow-hidden overscroll-none text-gray-800 dark:text-[#D8DEE9] font-sans transition-colors duration-300"
+    style="height: calc(var(--vh, 1vh) * 100);">
     <div id="app" class="flex h-full">
         <!-- Splash Screen (Auto-removed when Vue mounts) -->
         <div class="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gray-100 dark:bg-[#24292F]"
