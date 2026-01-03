@@ -3594,6 +3594,10 @@ createApp({
 				}
 			}
 
+			// GFM Table Fix: Ensure tables are surrounded by newlines if missing
+			// Finds: Non-newline -> Newline -> Header Row (containing |) -> Newline -> Delimiter Row (containing | and -)
+			content = content.replace(/([^\n])\n(\s*\|.*?\|.*?)\n(\s*\|[:\s-]+\|)/g, '$1\n\n$2\n$3')
+
 			const parsedMarkdown = marked.parse(content, {
 				renderer: renderer,
 				gfm: true,
