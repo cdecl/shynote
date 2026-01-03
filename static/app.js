@@ -2996,7 +2996,11 @@ createApp({
 					}
 					// 2. Update UI
 					notes.value = notes.value.filter(n => n.id !== id)
-					selectedNote.value = null
+					if (selectedNote.value && selectedNote.value.id === id) {
+						selectedNote.value = null
+						// Return to list view
+						rightPanelMode.value = 'list'
+					}
 
 					// 3. Local-First Delete
 					if (hasIDB) {
@@ -3013,6 +3017,8 @@ createApp({
 					if (currentFolderId.value !== TRASH_FOLDER_ID.value) {
 						if (selectedNote.value && selectedNote.value.id === id) {
 							selectedNote.value = null
+							// Return to list view
+							rightPanelMode.value = 'list'
 						}
 					}
 
@@ -3650,12 +3656,13 @@ createApp({
 		const swipeState = ref({
 			id: null,
 			startX: 0,
+			startY: 0,
 			currentX: 0,
 			offset: 0,
 			isSwiping: false
 		})
 
-		const SWIPE_THRESHOLD = 80 // px
+		const SWIPE_THRESHOLD = 50 // px
 
 		const handleNoteTouchStart = (note, e) => {
 			// Don't start swipe if we are in selection mode
@@ -3664,6 +3671,7 @@ createApp({
 
 			swipeState.value.id = note.id
 			swipeState.value.startX = e.touches[0].clientX
+			swipeState.value.startY = e.touches[0].clientY // Capture Start Y
 			swipeState.value.currentX = e.touches[0].clientX
 			swipeState.value.offset = 0
 			swipeState.value.isSwiping = true
@@ -3676,12 +3684,26 @@ createApp({
 			if (!swipeState.value.isSwiping) return
 			if (e.touches.length > 1) return // Ignore multi-touch
 
-			swipeState.value.currentX = e.touches[0].clientX
-			const rawOffset = swipeState.value.currentX - swipeState.value.startX
+			const currentX = e.touches[0].clientX
+			const currentY = e.touches[0].clientY
 
-			// Limit swipe range (-100px to 100px) with resistance
-			// Dampen the drag
-			swipeState.value.offset = rawOffset
+			const deltaX = currentX - swipeState.value.startX
+			const deltaY = currentY - swipeState.value.startY
+
+			// If vertical scroll is dominant, cancel swipe
+			if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 10) {
+				swipeState.value.isSwiping = false
+				swipeState.value.id = null
+				return
+			}
+
+			swipeState.value.currentX = currentX
+			swipeState.value.offset = deltaX
+
+			// Prevent default ONLY if horizontal swipe is detected to stop browser nav
+			if (Math.abs(deltaX) > 10) {
+				if (e.cancelable) e.preventDefault()
+			}
 		}
 
 		const handleNoteTouchEnd = (e) => {
@@ -4045,6 +4067,15 @@ createApp({
 			requestDelete,
 			confirmDelete,
 			cancelDelete,
+			showToolbarDeleteConfirm: computed(() => {
+				return deleteConfirmation.value.id === selectedNote.value?.id &&
+					deleteConfirmation.value.type === 'note' &&
+					rightPanelMode.value === 'edit'
+			}),
+			deleteButtonLabel: computed(() => {
+				return currentFolderId.value === TRASH_FOLDER_ID.value ? 'Delete Permanently?' : 'Move to Trash?'
+			}),
+
 			titleInputRef,
 
 			formatText,

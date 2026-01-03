@@ -703,6 +703,34 @@
                                 <span v-if="viewMode === 'split'">Split</span>
                             </button>
                         </div>
+
+                        <!-- Separator -->
+                        <div class="w-[1px] h-6 bg-slate-200 dark:bg-[#434C5E] mx-1"></div>
+
+                        <!-- Delete Note Button & Confirmation -->
+                        <div class="relative">
+                            <button @click.stop="requestDelete(selectedNote.id, 'note')"
+                                class="p-2 text-slate-400 dark:text-[#D8DEE9] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all flex-shrink-0"
+                                title="Delete Note">
+                                <span class="material-symbols-rounded text-[20px]">delete</span>
+                            </button>
+
+                            <!-- Toolbar Confirmation Popup (Teleported to Body to avoid clipping) -->
+                            <teleport to="body">
+                                <div v-if="showToolbarDeleteConfirm"
+                                    class="fixed top-14 right-4 mt-2 w-48 bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-lg shadow-xl p-3 z-[9999] flex flex-col gap-2 animate-fade-in origin-top-right">
+                                    <span class="text-xs font-bold text-slate-700 dark:text-slate-200 text-center">
+                                        {{ deleteButtonLabel }}
+                                    </span>
+                                    <div class="flex gap-2 justify-center">
+                                        <button @click.stop="confirmDelete"
+                                            class="flex-1 px-2 py-1.5 bg-red-600 text-white rounded text-xs font-bold hover:bg-red-700 transition-colors">Yes</button>
+                                        <button @click.stop="cancelDelete"
+                                            class="flex-1 px-2 py-1.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded text-xs font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">No</button>
+                                    </div>
+                                </div>
+                            </teleport>
+                        </div>
                     </div>
 
                     <div class="flex items-center gap-2 flex-shrink-0">
@@ -1080,7 +1108,7 @@
                                             <div v-for="note in (currentFolderId === null ? sortedRootNotes : getSortedFolderNotes(currentFolderId)).filter(n => !n.is_pinned)"
                                                 :key="note.id" @click="selectNote(note)" draggable="true"
                                                 @dragstart="handleDragStart(note, $event)" :data-id="note.id"
-                                                class="note-item group draggable-touch bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-xl hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer p-3 flex flex-col relative h-36">
+                                                class="note-item group draggable-touch touch-pan-y bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-xl hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer p-3 flex flex-col relative h-36">
 
                                                 <!-- Selection Checkbox -->
                                                 <div v-if="isSelectionMode"
@@ -1162,7 +1190,7 @@
                                         <div v-for="note in (currentFolderId === null ? sortedRootNotes : getSortedFolderNotes(currentFolderId)).filter(n => !n.is_pinned)"
                                             :key="note.id" @click="selectNote(note)" draggable="true"
                                             @dragstart="handleDragStart(note, $event)" :data-id="note.id"
-                                            class="note-item group draggable-touch hover:bg-slate-50 dark:hover:bg-[#434C5E] transition-colors cursor-pointer px-3 py-1 flex items-center gap-3 relative">
+                                            class="note-item group draggable-touch touch-pan-y hover:bg-slate-50 dark:hover:bg-[#434C5E] transition-colors cursor-pointer px-3 py-1 flex items-center gap-3 relative">
 
                                             <!-- Selection Checkbox -->
                                             <div v-if="isSelectionMode" @click.stop class="mr-1">
@@ -1197,7 +1225,7 @@
 
                                                 <!-- Actions -->
                                                 <div
-                                                    class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    class="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                                     <!-- Pin Toggle -->
                                                     <button @click.stop="togglePin(note)"
                                                         class="p-1 text-slate-300 dark:text-slate-500 hover:text-orange-500 rounded hover:bg-slate-200 dark:hover:bg-[#4C566A]"
@@ -1595,7 +1623,7 @@
             });
         }
     </script>
-    <script src="/static/app.js?v=21" type="module"></script>
+    <script src="/static/app.js?v=25" type="module"></script>
 </body>
 
 </html>
