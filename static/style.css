@@ -22,6 +22,31 @@ textarea {
     background-color: #24292F !important;
 }
 
+.cm-editor {
+    touch-action: auto !important;
+    -webkit-touch-callout: text !important;
+    -webkit-user-select: text !important;
+    user-select: text !important;
+}
+
+.cm-scroller {
+    touch-action: auto !important;
+    -webkit-touch-callout: text !important;
+    -webkit-user-select: text !important;
+    user-select: text !important;
+    -webkit-user-drag: auto !important;
+    user-drag: auto !important;
+}
+
+.cm-content {
+    touch-action: auto !important;
+    -webkit-touch-callout: text !important;
+    -webkit-user-select: text !important;
+    user-select: text !important;
+    -webkit-user-drag: auto !important;
+    user-drag: auto !important;
+}
+
 /* Custom Cursor Colors for Better Visibility */
 .cm-content {
     caret-color: #000000;
@@ -262,7 +287,7 @@ html, body {
     body {
         height: calc(var(--vh, 1vh) * 100);
         min-height: calc(var(--vh, 1vh) * 100);
-        touch-action: pan-y;
+        touch-action: manipulation;
     }
     
     #app {

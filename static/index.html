@@ -10,7 +10,7 @@
     <link rel="manifest" href="/static/manifest.json">
     <link rel="apple-touch-icon" href="/static/icon-192.png">
     <meta name="theme-color" content="#24292F">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -93,12 +93,13 @@
     <script src="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/index.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/scroll-behaviour.min.js"></script>
     <script>
-        // options are optional ;)
         var mobileDragDropOptions = {
             // enable these if you want to prevent scrolling while dragging
             dragImageTranslateOverride: MobileDragDrop.scrollBehaviourDragImageTranslateOverride,
             // holdToDrag: delay in ms to start the drag (prevents conflict with click/scroll)
-            holdToDrag: 300
+            holdToDrag: 300,
+            // Allow text selection in input areas
+            ignoreSelector: 'input, textarea, .cm-content, .cm-scroller, .cm-editor'
         };
         // wait for the resources to be loaded
         document.addEventListener('DOMContentLoaded', function () {
@@ -115,6 +116,17 @@
             user-select: none;
             -webkit-touch-callout: none;
             touch-action: manipulation;
+        }
+
+        /* Ensure text selection works in non-draggable areas */
+        .cm-content,
+        .cm-scroller,
+        textarea,
+        input {
+            touch-action: auto !important;
+            -webkit-user-select: text !important;
+            user-select: text !important;
+            -webkit-touch-callout: text !important;
         }
 
         /* Ensure drag image background is visible if polyfill uses clone */
