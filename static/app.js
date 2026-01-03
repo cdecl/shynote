@@ -138,6 +138,18 @@ createApp({
 		const isAuthenticated = ref(false)
 		const serverDbType = ref(null) // Added for DB Type Logic
 		const fontSize = ref('14')
+		const isMobile = ref(window.innerWidth < 768)
+
+		const handleWindowResize = () => {
+			isMobile.value = window.innerWidth < 768
+		}
+
+		onMounted(() => {
+			window.addEventListener('resize', handleWindowResize)
+		})
+		onUnmounted(() => {
+			window.removeEventListener('resize', handleWindowResize)
+		})
 		const setFontSize = (size) => {
 			fontSize.value = size
 			saveUserSetting(STORAGE_KEYS.FONT_SIZE, size)
@@ -2033,6 +2045,7 @@ createApp({
 			let touchEndY = 0
 
 			const handleTouchStart = (e) => {
+				if (e.touches.length > 1) return // Ignore multi-touch
 				touchStartX = e.changedTouches[0].screenX
 				touchStartY = e.changedTouches[0].screenY
 			}
@@ -2074,6 +2087,29 @@ createApp({
 			// Attach touch listeners
 			document.addEventListener('touchstart', handleTouchStart, { passive: true })
 			document.addEventListener('touchend', handleTouchEnd, { passive: true })
+
+			// PC View Mode Shortcuts (Cmd+1, 2, 3)
+			window.addEventListener('keydown', (e) => {
+				// Ignore if modal is open (except global shortcuts if needed)
+				if (modalState.value.isOpen) return
+
+				if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey) {
+					switch (e.key) {
+						case '1':
+							e.preventDefault()
+							setViewMode('edit')
+							break
+						case '2':
+							e.preventDefault()
+							setViewMode('preview')
+							break
+						case '3':
+							e.preventDefault()
+							setViewMode('split')
+							break
+					}
+				}
+			})
 		})
 
 		// Expose this globally for Google Callback
@@ -3610,6 +3646,75 @@ createApp({
 			}
 		})
 
+		// Note List Swipe Logic
+		const swipeState = ref({
+			id: null,
+			startX: 0,
+			currentX: 0,
+			offset: 0,
+			isSwiping: false
+		})
+
+		const SWIPE_THRESHOLD = 80 // px
+
+		const handleNoteTouchStart = (note, e) => {
+			// Don't start swipe if we are in selection mode
+			if (isSelectionMode.value) return
+			if (e.touches.length > 1) return // Ignore multi-touch
+
+			swipeState.value.id = note.id
+			swipeState.value.startX = e.touches[0].clientX
+			swipeState.value.currentX = e.touches[0].clientX
+			swipeState.value.offset = 0
+			swipeState.value.isSwiping = true
+
+			// Stop propagation to prevent global swipe
+			e.stopPropagation()
+		}
+
+		const handleNoteTouchMove = (e) => {
+			if (!swipeState.value.isSwiping) return
+			if (e.touches.length > 1) return // Ignore multi-touch
+
+			swipeState.value.currentX = e.touches[0].clientX
+			const rawOffset = swipeState.value.currentX - swipeState.value.startX
+
+			// Limit swipe range (-100px to 100px) with resistance
+			// Dampen the drag
+			swipeState.value.offset = rawOffset
+		}
+
+		const handleNoteTouchEnd = (e) => {
+			if (!swipeState.value.isSwiping) return
+
+			const offset = swipeState.value.offset
+			const noteId = swipeState.value.id
+
+			if (offset < -SWIPE_THRESHOLD) {
+				// Swipe Left -> Delete
+				if (confirm('Delete this note?')) {
+					// find note by id and delete
+					const note = notes.value.find(n => n.id === noteId)
+					if (note) deleteNote(note)
+				}
+			} else if (offset > SWIPE_THRESHOLD) {
+				// Swipe Right -> Pin
+				// togglePin is defined in scope
+				const note = notes.value.find(n => n.id === noteId)
+				if (note) togglePin(note)
+			}
+
+			// Reset
+			swipeState.value = {
+				id: null,
+				startX: 0,
+				currentX: 0,
+				offset: 0,
+				isSwiping: false
+			}
+		}
+
+
 
 
 
@@ -4088,7 +4193,15 @@ createApp({
 
 			// OAuth
 			useRedirectFlow,
-			loginWithGoogleRedirect
+			loginWithGoogleRedirect,
+
+			// Swipe
+			swipeState,
+			handleNoteTouchStart,
+			handleNoteTouchMove,
+			handleNoteTouchMove,
+			handleNoteTouchEnd,
+			isMobile
 		}
 	}
 }).mount('#app')
