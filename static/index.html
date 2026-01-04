@@ -65,14 +65,14 @@
         window.addEventListener('scroll', () => {
             clearTimeout(scrollTimer);
             const currentScrollY = window.scrollY;
-            
+
             // Update viewport height on any scroll when zoomed
             if (window.innerWidth < 768 && window.outerHeight > window.innerHeight) {
                 scrollTimer = setTimeout(() => {
                     setViewportHeight();
                 }, 50);
             }
-            
+
             // Only update if scroll position changed significantly
             if (Math.abs(currentScrollY - lastScrollY) > 50) {
                 scrollTimer = setTimeout(() => {
@@ -124,7 +124,7 @@
                             time: Date.now()
                         };
                         isTextSelectionActive = false;
-                        
+
                         if (selectionResetTimer) {
                             clearTimeout(selectionResetTimer);
                             selectionResetTimer = null;
@@ -146,7 +146,7 @@
                         // Detect horizontal text selection (rightward expansion)
                         if (deltaX > 15 && deltaY < 30 && timeDelta > 100) {
                             isTextSelectionActive = true;
-                            
+
                             // Disable all drag-drop functionality globally during selection
                             document.querySelectorAll('.draggable-touch').forEach(el => {
                                 el.classList.add('text-selection-active');
@@ -177,9 +177,9 @@
                 cmScroller.addEventListener('touchmove', (e) => {
                     const touch = e.touches[0];
                     const target = document.elementFromPoint(touch.clientX, touch.clientY);
-                    
-                    if (target && (target.classList.contains('cm-content') || 
-                                  target.closest('.cm-content'))) {
+
+                    if (target && (target.classList.contains('cm-content') ||
+                        target.closest('.cm-content'))) {
                         // Allow vertical scrolling but prevent horizontal swipes
                         if (Math.abs(e.touches[0].movementX) > Math.abs(e.touches[0].movementY) * 2) {
                             e.stopPropagation();
@@ -226,7 +226,7 @@
 
 
     <!-- Custom Styles (Loaded last to override libraries) -->
-    <link rel="stylesheet" href="/static/style.css?v=23">
+    <link rel="stylesheet" href="/static/style.css?v=24">
 
 
 
@@ -250,14 +250,14 @@
 
         // Enhanced mobile drag-drop polyfill with text selection detection
         const originalPolyfill = MobileDragDrop.polyfill;
-        MobileDragDrop.polyfill = function(options) {
+        MobileDragDrop.polyfill = function (options) {
             const result = originalPolyfill.call(this, options);
-            
+
             // Override drag start detection
-            document.addEventListener('touchstart', function(e) {
+            document.addEventListener('touchstart', function (e) {
                 const touch = e.touches[0];
                 const target = document.elementFromPoint(touch.clientX, touch.clientY);
-                
+
                 // Check if touch is in editor area
                 if (target && target.closest('.cm-editor')) {
                     // Temporarily disable drag detection
@@ -268,8 +268,8 @@
                     });
                 }
             }, { passive: true, capture: true });
-            
-            document.addEventListener('touchend', function() {
+
+            document.addEventListener('touchend', function () {
                 // Re-enable drag detection after touch ends
                 setTimeout(() => {
                     document.querySelectorAll('[data-selection-mode="true"]').forEach(el => {
@@ -277,7 +277,7 @@
                     });
                 }, 200);
             }, { passive: true });
-            
+
             return result;
         };
         // wait for the resources to be loaded
@@ -1801,16 +1801,15 @@
 
 
                     </div>
-                    
-                    <div v-if="isEditModeActive && isMobile && rightPanelMode === 'edit'"
-                         class="fixed bottom-20 left-1/2 transform -translate-x-1/2 
+
+                    <div v-if="isEditModeActive && isMobile && rightPanelMode === 'edit'" class="fixed bottom-20 left-1/2 transform -translate-x-1/2 
                                 bg-blue-500 text-white px-4 py-2 rounded-full 
                                 text-sm animate-pulse z-40 transition-all duration-300
                                 shadow-lg flex items-center gap-2">
                         <span class="material-symbols-rounded text-16">swipe_right</span>
                         <span>Swipe right to exit editing</span>
                     </div>
-                    
+
                     <!-- Status Bar -->
                     <!-- Status Bar -->
                     <footer
@@ -1897,7 +1896,7 @@
             });
         }
     </script>
-    <script src="/static/app.js?v=26" type="module"></script>
+    <script src="/static/app.js?v=27" type="module"></script>
 </body>
 
 </html>
