@@ -1142,7 +1142,10 @@ createApp({
 					EditorView.domEventHandlers({
 						scroll: handleScroll,
 						paste: (event, view) => handlePaste(event, view),
-						drop: (event, view) => handleEditorDrop(event, view)
+						drop: (event, view) => handleEditorDrop(event, view),
+						// Blur/Focus for Swipe Logic
+						focus: () => { isEditModeActive.value = true },
+						blur: () => { isEditModeActive.value = false }
 					}),
 					// Keymaps
 					keymap.of([
@@ -2038,19 +2041,22 @@ createApp({
 				}
 			})
 
-			// Mobile Swipe Gesture Detection
 			let touchStartX = 0
 			let touchStartY = 0
 			let touchEndX = 0
 			let touchEndY = 0
 
+			const isEditModeActive = ref(false)
+
 			const handleTouchStart = (e) => {
-				if (e.touches.length > 1) return // Ignore multi-touch
+				if (isEditModeActive.value) return
+				if (e.touches.length > 1) return
 				touchStartX = e.changedTouches[0].screenX
 				touchStartY = e.changedTouches[0].screenY
 			}
 
 			const handleTouchEnd = (e) => {
+				if (isEditModeActive.value) return
 				touchEndX = e.changedTouches[0].screenX
 				touchEndY = e.changedTouches[0].screenY
 				handleSwipe()
@@ -2061,30 +2067,37 @@ createApp({
 				const deltaY = touchEndY - touchStartY
 				const minSwipeDistance = 50
 
-				// Ignore if vertical swipe is dominant (scrolling)
 				if (Math.abs(deltaY) > Math.abs(deltaX)) return
 
-				// Swipe Right (deltaX > 0) -> Open / Back
 				if (deltaX > minSwipeDistance) {
-					// Document Detail Screen -> Show List
 					if (rightPanelMode.value === 'edit' && selectedNote.value) {
 						backToList()
-					}
-					// Document List Screen -> Show Sidebar
-					else if (rightPanelMode.value === 'list' && !isSidebarOpen.value) {
+						if (navigator.vibrate && isMobile.value) {
+							navigator.vibrate(50)
+						}
+					} else if (rightPanelMode.value === 'list' && !isSidebarOpen.value) {
 						toggleSidebar()
 					}
-				}
-				// Swipe Left (deltaX < 0) -> Close / Forward
-				else if (deltaX < -minSwipeDistance) {
-					// Sidebar Open -> Close Sidebar
+				} else if (deltaX < -minSwipeDistance) {
 					if (isSidebarOpen.value) {
 						toggleSidebar()
 					}
 				}
 			}
 
-			// Attach touch listeners
+			const handleEditModeEnter = () => {
+				isEditModeActive.value = true
+				console.log('[EditMode] Swipe gestures disabled')
+			}
+
+			const handleEditModeExit = () => {
+				isEditModeActive.value = false
+				console.log('[EditMode] Swipe gestures enabled')
+			}
+
+			// Watchers for Edit Mode (Removed in favor of Focus/Blur)
+
+
 			document.addEventListener('touchstart', handleTouchStart, { passive: true })
 			document.addEventListener('touchend', handleTouchEnd, { passive: true })
 
@@ -4230,13 +4243,13 @@ createApp({
 			useRedirectFlow,
 			loginWithGoogleRedirect,
 
-			// Swipe
 			swipeState,
 			handleNoteTouchStart,
 			handleNoteTouchMove,
 			handleNoteTouchMove,
 			handleNoteTouchEnd,
-			isMobile
+			isMobile,
+			isEditModeActive
 		}
 	}
 }).mount('#app')
