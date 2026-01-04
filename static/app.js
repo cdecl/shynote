@@ -139,6 +139,7 @@ createApp({
 		const serverDbType = ref(null) // Added for DB Type Logic
 		const fontSize = ref('14')
 		const isMobile = ref(window.innerWidth < 768)
+		const isEditModeActive = ref(false)
 
 		const handleWindowResize = () => {
 			isMobile.value = window.innerWidth < 768
@@ -2009,6 +2010,49 @@ createApp({
 			}
 		}
 
+		// Define Touch Handlers outside onMounted
+		let touchStartX = 0
+		let touchStartY = 0
+		let touchEndX = 0
+		let touchEndY = 0
+
+		const handleTouchStart = (e) => {
+			if (isEditModeActive.value) return
+			if (e.touches.length > 1) return
+			touchStartX = e.changedTouches[0].screenX
+			touchStartY = e.changedTouches[0].screenY
+		}
+
+		const handleTouchEnd = (e) => {
+			if (isEditModeActive.value) return
+			touchEndX = e.changedTouches[0].screenX
+			touchEndY = e.changedTouches[0].screenY
+			handleSwipe()
+		}
+
+		const handleSwipe = () => {
+			const deltaX = touchEndX - touchStartX
+			const deltaY = touchEndY - touchStartY
+			const minSwipeDistance = 50
+
+			if (Math.abs(deltaY) > Math.abs(deltaX)) return
+
+			if (deltaX > minSwipeDistance) {
+				if (rightPanelMode.value === 'edit' && selectedNote.value) {
+					backToList()
+					if (navigator.vibrate && isMobile.value) {
+						navigator.vibrate(50)
+					}
+				} else if (rightPanelMode.value === 'list' && !isSidebarOpen.value) {
+					toggleSidebar()
+				}
+			} else if (deltaX < -minSwipeDistance) {
+				if (isSidebarOpen.value) {
+					toggleSidebar()
+				}
+			}
+		}
+
 		onMounted(async () => {
 			isSidebarOpen.value = true // Force sidebar open on startup
 
@@ -2041,63 +2085,7 @@ createApp({
 				}
 			})
 
-			let touchStartX = 0
-			let touchStartY = 0
-			let touchEndX = 0
-			let touchEndY = 0
-
-			const isEditModeActive = ref(false)
-
-			const handleTouchStart = (e) => {
-				if (isEditModeActive.value) return
-				if (e.touches.length > 1) return
-				touchStartX = e.changedTouches[0].screenX
-				touchStartY = e.changedTouches[0].screenY
-			}
-
-			const handleTouchEnd = (e) => {
-				if (isEditModeActive.value) return
-				touchEndX = e.changedTouches[0].screenX
-				touchEndY = e.changedTouches[0].screenY
-				handleSwipe()
-			}
-
-			const handleSwipe = () => {
-				const deltaX = touchEndX - touchStartX
-				const deltaY = touchEndY - touchStartY
-				const minSwipeDistance = 50
-
-				if (Math.abs(deltaY) > Math.abs(deltaX)) return
-
-				if (deltaX > minSwipeDistance) {
-					if (rightPanelMode.value === 'edit' && selectedNote.value) {
-						backToList()
-						if (navigator.vibrate && isMobile.value) {
-							navigator.vibrate(50)
-						}
-					} else if (rightPanelMode.value === 'list' && !isSidebarOpen.value) {
-						toggleSidebar()
-					}
-				} else if (deltaX < -minSwipeDistance) {
-					if (isSidebarOpen.value) {
-						toggleSidebar()
-					}
-				}
-			}
-
-			const handleEditModeEnter = () => {
-				isEditModeActive.value = true
-				console.log('[EditMode] Swipe gestures disabled')
-			}
-
-			const handleEditModeExit = () => {
-				isEditModeActive.value = false
-				console.log('[EditMode] Swipe gestures enabled')
-			}
-
-			// Watchers for Edit Mode (Removed in favor of Focus/Blur)
-
-
+			// Add Listeners using the functions defined above
 			document.addEventListener('touchstart', handleTouchStart, { passive: true })
 			document.addEventListener('touchend', handleTouchEnd, { passive: true })
 
