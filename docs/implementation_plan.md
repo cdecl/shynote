@@ -234,3 +234,19 @@ This document tracks the cumulative implementation details of the SHYNOTE projec
 - [ ] **Folder Structure Sync**:
     - [ ] Implement smart refresh of folder structure.
 
+## 11. CodeMirror Dynamic Autocomplete
+**Date**: 2026-01-04
+**Status**: Implemented
+
+### Features Checklist
+- [x] **Dynamic Variables**:
+    - [x] `$date` (YYYY-MM-DD), `$time` (HH:mm), `$datetime` (ISO).
+    - [x] `$file` (Note Title), `$user` (User Name).
+- [x] **Snippets**:
+    - [x] `$table`: Markdown Table template with tabstops.
+    - [x] `$code`: Code block template.
+    - [x] `$lorem`: Lorem Ipsum text.
+- [x] **Integration**:
+    - [x] `autocompletion` extension with custom `variableCompletion` source.
+
+

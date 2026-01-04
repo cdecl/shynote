@@ -8,7 +8,7 @@ import { search, searchKeymap, highlightSelectionMatches, setSearchQuery, Search
 import { githubLight } from "https://esm.sh/@uiw/codemirror-theme-github@4.23.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
 import { nord } from "https://esm.sh/@uiw/codemirror-theme-nord@4.23.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
 import { syntaxHighlighting, defaultHighlightStyle, bracketMatching } from "https://esm.sh/@codemirror/language@6.10.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
-import { closeBrackets, closeBracketsKeymap } from "https://esm.sh/@codemirror/autocomplete@6.12.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
+import { closeBrackets, closeBracketsKeymap, autocompletion, snippet } from "https://esm.sh/@codemirror/autocomplete@6.12.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
 import { MergeView } from "https://esm.sh/@codemirror/merge@6.4.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
 import jsyaml from "https://esm.sh/js-yaml@4.1.0"
 import { LocalDB } from "./local_db.js"
@@ -1104,6 +1104,78 @@ createApp({
 				return
 			}
 
+			// Dynamic Variable Completion
+			const variableCompletion = (context) => {
+				let word = context.matchBefore(/\$(\w*)$/)
+				if (!word) return null
+				if (word.from == word.to && !context.explicit) return null
+
+				return {
+					from: word.from,
+					options: [
+						{
+							label: "$date",
+							detail: "Current Date",
+							apply: (view, completion, from, to) => {
+								const today = new Date().toISOString().split('T')[0]
+								view.dispatch({ changes: { from, to, insert: today } })
+							}
+						},
+						{
+							label: "$time",
+							detail: "Current Time",
+							apply: (view, completion, from, to) => {
+								const time = new Date().toTimeString().split(' ')[0].substring(0, 5)
+								view.dispatch({ changes: { from, to, insert: time } })
+							}
+						},
+						{
+							label: "$datetime",
+							detail: "ISO Datetime",
+							apply: (view, completion, from, to) => {
+								const dt = new Date().toISOString().replace('T', ' ').substring(0, 19)
+								view.dispatch({ changes: { from, to, insert: dt } })
+							}
+						},
+						{
+							label: "$file",
+							detail: "File Name",
+							apply: (view, completion, from, to) => {
+								const title = selectedNote.value ? selectedNote.value.title : 'Untitled'
+								view.dispatch({ changes: { from, to, insert: title } })
+							}
+						},
+						{
+							label: "$user",
+							detail: "User Name",
+							apply: (view, completion, from, to) => {
+								const user = currentUserEmail.value || (currentUserId.value === 'guest' ? 'Guest' : 'User')
+								view.dispatch({ changes: { from, to, insert: user } })
+							}
+						},
+						{
+							label: "$table",
+							detail: "Markdown Table",
+							info: "Insert a 2x2 Markdown table",
+							apply: snippet("| ${1:Header 1} | ${2:Header 2} |\n| --- | --- |\n| ${3:Content 1} | ${4:Content 2} |")
+						},
+						{
+							label: "$code",
+							detail: "Code Block",
+							apply: snippet("```${1:lang}\n${2:code}\n```")
+						},
+						{
+							label: "$lorem",
+							detail: "Lorem Ipsum",
+							apply: (view, completion, from, to) => {
+								const lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+								view.dispatch({ changes: { from, to, insert: lorem } })
+							}
+						}
+					]
+				}
+			}
+
 			const startState = EditorState.create({
 				doc: selectedNote.value ? (selectedNote.value.content || '') : '',
 				extensions: [
@@ -1116,6 +1188,7 @@ createApp({
 					// syntaxHighlighting(defaultHighlightStyle, { fallback: true }), // Removed to favor Theme's highlighting
 					bracketMatching(),
 					closeBrackets(),
+					autocompletion({ override: [variableCompletion] }),
 					highlightActiveLineGutter(),
 					highlightSpecialChars(),
 					placeholder('Start typing...'),
