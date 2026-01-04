@@ -239,14 +239,15 @@ This document tracks the cumulative implementation details of the SHYNOTE projec
 **Status**: Implemented
 
 ### Features Checklist
+### Features Checklist
 - [x] **Dynamic Variables**:
-    - [x] `$date` (YYYY-MM-DD), `$time` (HH:mm), `$datetime` (ISO).
-    - [x] `$file` (Note Title), `$user` (User Name).
+    - [x] `/date` (YYYY-MM-DD), `/time` (HH:mm), `/datetime` (Local).
+    - [x] `/file` (Note Title).
 - [x] **Snippets**:
-    - [x] `$table`: Markdown Table template with tabstops.
-    - [x] `$code`: Code block template.
-    - [x] `$lorem`: Lorem Ipsum text.
+    - [x] `/table1` ~ `/table5`: Markdown Table templates (1-5 columns).
+    - [x] `/code`: Code block template.
 - [x] **Integration**:
-    - [x] `autocompletion` extension with custom `variableCompletion` source.
+    - [x] `autocompletion` extension with custom `variableCompletion` source (Trigger: `/`).
+    - [x] **Styling**: Applied global font (`Pretendard`) to autocomplete tooltip.
 
 

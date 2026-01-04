@@ -1,3 +1,19 @@
+# v0.4.9 Release Notes
+
+## Summary
+- **Dynamic Autocomplete (Slash Commands)**: 에디터에서 `/` 키를 입력하여 날짜, 시간, 파일명 등을 빠르게 입력하고, 자주 사용하는 테이블/코드 블록 스니펫을 삽입할 수 있는 기능을 추가했습니다.
+- **Improved UX**: 자동완성 툴팁의 폰트를 앱 전역 폰트와 통일하고, 날짜 변수를 Local Time 기준으로 변경하여 사용성을 개선했습니다.
+
+## New Features
+- **Slash Commands (`/`)**:
+    - **Variables**: `/date`, `/time`, `/datetime` (Local Time 적용), `/file`.
+    - **Snippets**:
+        - `/table1` ~ `/table5`: 1~5열 테이블 템플릿 (Tab 이동 지원).
+        - `/code`: 코드 블록 템플릿.
+- **Autocomplete Styling**: CodeMirror 자동완성 툴팁(`cm-tooltip-autocomplete`)에 `Pretendard` 폰트 적용.
+
+---
+
 # v0.4.8 Release Notes
 
 ## Summary

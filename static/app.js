@@ -1106,7 +1106,7 @@ createApp({
 
 			// Dynamic Variable Completion
 			const variableCompletion = (context) => {
-				let word = context.matchBefore(/\$(\w*)$/)
+				let word = context.matchBefore(/\/(\w*)$/)
 				if (!word) return null
 				if (word.from == word.to && !context.explicit) return null
 
@@ -1114,15 +1114,17 @@ createApp({
 					from: word.from,
 					options: [
 						{
-							label: "$date",
+							label: "/date",
 							detail: "Current Date",
 							apply: (view, completion, from, to) => {
-								const today = new Date().toISOString().split('T')[0]
-								view.dispatch({ changes: { from, to, insert: today } })
+								const now = new Date()
+								const offset = now.getTimezoneOffset() * 60000
+								const localDate = new Date(now - offset).toISOString().split('T')[0]
+								view.dispatch({ changes: { from, to, insert: localDate } })
 							}
 						},
 						{
-							label: "$time",
+							label: "/time",
 							detail: "Current Time",
 							apply: (view, completion, from, to) => {
 								const time = new Date().toTimeString().split(' ')[0].substring(0, 5)
@@ -1130,15 +1132,17 @@ createApp({
 							}
 						},
 						{
-							label: "$datetime",
-							detail: "ISO Datetime",
+							label: "/datetime",
+							detail: "Local Datetime",
 							apply: (view, completion, from, to) => {
-								const dt = new Date().toISOString().replace('T', ' ').substring(0, 19)
-								view.dispatch({ changes: { from, to, insert: dt } })
+								const now = new Date()
+								const offset = now.getTimezoneOffset() * 60000
+								const localDt = new Date(now - offset).toISOString().replace('T', ' ').substring(0, 19)
+								view.dispatch({ changes: { from, to, insert: localDt } })
 							}
 						},
 						{
-							label: "$file",
+							label: "/file",
 							detail: "File Name",
 							apply: (view, completion, from, to) => {
 								const title = selectedNote.value ? selectedNote.value.title : 'Untitled'
@@ -1146,31 +1150,34 @@ createApp({
 							}
 						},
 						{
-							label: "$user",
-							detail: "User Name",
-							apply: (view, completion, from, to) => {
-								const user = currentUserEmail.value || (currentUserId.value === 'guest' ? 'Guest' : 'User')
-								view.dispatch({ changes: { from, to, insert: user } })
-							}
-						},
-						{
-							label: "$table",
-							detail: "Markdown Table",
-							info: "Insert a 2x2 Markdown table",
-							apply: snippet("| ${1:Header 1} | ${2:Header 2} |\n| --- | --- |\n| ${3:Content 1} | ${4:Content 2} |")
-						},
-						{
-							label: "$code",
+							label: "/code",
 							detail: "Code Block",
 							apply: snippet("```${1:lang}\n${2:code}\n```")
 						},
 						{
-							label: "$lorem",
-							detail: "Lorem Ipsum",
-							apply: (view, completion, from, to) => {
-								const lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-								view.dispatch({ changes: { from, to, insert: lorem } })
-							}
+							label: "/table1",
+							detail: "Table (1 col)",
+							apply: snippet("| ${1:Header} |\n| --- |\n| ${2:Content} |")
+						},
+						{
+							label: "/table2",
+							detail: "Table (2 cols)",
+							apply: snippet("| ${1:Header 1} | ${2:Header 2} |\n| --- | --- |\n| ${3:Content 1} | ${4:Content 2} |")
+						},
+						{
+							label: "/table3",
+							detail: "Table (3 cols)",
+							apply: snippet("| ${1:H1} | ${2:H2} | ${3:H3} |\n| --- | --- | --- |\n| ${4:C1} | ${5:C2} | ${6:C3} |")
+						},
+						{
+							label: "/table4",
+							detail: "Table (4 cols)",
+							apply: snippet("| ${1:H1} | ${2:H2} | ${3:H3} | ${4:H4} |\n| --- | --- | --- | --- |\n| ${5:C1} | ${6:C2} | ${7:C3} | ${8:C4} |")
+						},
+						{
+							label: "/table5",
+							detail: "Table (5 cols)",
+							apply: snippet("| ${1:H1} | ${2:H2} | ${3:H3} | ${4:H4} | ${5:H5} |\n| --- | --- | --- | --- | --- |\n| ${6:C1} | ${7:C2} | ${8:C3} | ${9:C4} | ${10:C5} |")
 						}
 					]
 				}
@@ -1256,6 +1263,19 @@ createApp({
 				".cm-content": {
 					fontFamily: "'Pretendard', 'JetBrains Mono', monospace",
 					padding: "5px 10px !important"
+				},
+				// Autocomplete Tooltip Font
+				".cm-tooltip, .cm-tooltip-autocomplete": {
+					fontFamily: "'Pretendard', 'Inter', sans-serif !important"
+				},
+				".cm-completionLabel": {
+					fontFamily: "'Pretendard', 'Inter', sans-serif !important",
+					fontSize: "13px"
+				},
+				".cm-completionDetail": {
+					fontFamily: "'Pretendard', 'Inter', sans-serif !important",
+					fontStyle: "normal",
+					opacity: "0.6"
 				},
 				// Cursor Color (Nord8 for Dark, GitHub Like for Light)
 				".cm-cursor, .cm-dropCursor": { borderLeftColor: isDark ? "#88C0D0" : "#0969da" },
