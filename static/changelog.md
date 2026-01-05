@@ -1,3 +1,16 @@
+# v0.5.0 Release Notes
+
+## Summary
+- **Minor Version Upgrade**: 전반적인 안정성 향상 및 UI/UX 개선을 포함한 마이너 버전 업데이트를 진행했습니다.
+- **Command Palette**: 파레트 위치를 화면 상단 1/3 지점에 고정하고, 단축키(`Cmd+P`) 초기화 지연 문제를 해결하여 즉각적인 반응성을 확보했습니다.
+
+## Changes
+- **Command Palette**:
+    - **Fixed Position**: 화면 정중앙 대신 상단 1/3 지점(`top: 30vh`)에 고정하여 가독성 개선.
+    - **Optimization**: 키보드 이벤트 리스너 등록 시점 최적화로 초기 로딩 즉시 단축키 사용 가능.
+
+---
+
 # v0.4.9 Release Notes
 
 ## Summary
