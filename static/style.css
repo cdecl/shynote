@@ -1,5 +1,6 @@
 body {
     font-family: 'Pretendard', 'Inter', -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+    padding-top: calc(env(safe-area-inset-top) + 8px);
 }
 
 /* Editor Font Settings */
@@ -315,12 +316,12 @@ body {
 @keyframes fadeInUp {
     from {
         opacity: 0;
-        transform: translate(-50%, 10px);
+        transform: translateY(10px);
     }
 
     to {
         opacity: 1;
-        transform: translate(-50%, 0);
+        transform: translateY(0);
     }
 }
 
@@ -488,4 +489,38 @@ body {
 .dark .search-highlight {
     background-color: rgba(235, 203, 139, 0.6);
     color: white;
+}
+
+/* Zen Mode Styles */
+body.zen-mode #app-sidebar,
+body.zen-mode .bg-white.border-b,
+/* Editor Header (roughly) */
+body.zen-mode .border-b
+
+/* Generic borders might be risky, let's target specific IDs if possible or use generic safe approach */
+    {
+    /* We need to be specific. Let's inspect index.html classes first? 
+      Actually, the editor header usually has 'flex justify-between items-center px-4 py-2 border-b'. 
+      Let's rely on the body class to hide the sidebar and maybe just maximize the editor container.
+   */
+}
+
+body.zen-mode #app-sidebar {
+    display: none !important;
+    width: 0 !important;
+}
+
+/* Hide header bars in Zen Mode */
+body.zen-mode .flex.h-14.items-center,
+/* Sidebar Header */
+body.zen-mode .h-12.border-b
+
+/* Editor Toolbar */
+    {
+    display: none !important;
+}
+
+/* In Zen Mode, Editor should be clean */
+body.zen-mode .cm-editor {
+    height: 100vh !important;
 }

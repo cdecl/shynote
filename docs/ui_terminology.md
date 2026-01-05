@@ -32,3 +32,21 @@
     *   **Editor**: 편집 전용 모드.
     *   **Preview**: 읽기 전용 모드.
     *   **Split**: 편집 화면과 미리보기를 동시에 표시하는 모드.
+
+## 4. Command Palette (파레트 메뉴)
+
+### 기본 개념
+*   **Command Palette (파레트 메뉴)**: 키보드 단축키(`Cmd+P`)로 호출하는 모달 형식의 명령 실행 인터페이스입니다. (User: '명령 팔레트', '빠른 실행')
+
+### 구성요소
+*   **Search Bar (검색창)**: 명령어 또는 검색어를 입력하는 영역입니다.
+*   **Results List (결과 목록)**: 검색어에 매칭되는 항목들의 목록입니다.
+*   **Mode (모드)**: 팔레트의 현재 상태를 나타냅니다.
+    *   **Commands**: 기본 모드, 명령어 실행
+    *   **Notes**: 노트 검색/선택 모드
+    *   **Folders**: 폴더 탐색 모드
+    *   **Move-dest**: 노트 이동 대상 선택 모드
+
+### 관련 파일
+*   코드상 변수명: `showCommandPalette`, `paletteMode`, `paletteQuery`, `paletteIndex`
+*   관련 함수: `openCommandPalette()`, `closeCommandPalette()`, `setPaletteMode()`

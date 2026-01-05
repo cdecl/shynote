@@ -67,6 +67,16 @@ SHYNOTE는 사용자가 온전히 글쓰기에 집중할 수 있도록 설계된
   - 서로 다른 기기에서 수정 시 충돌 발생 시 Diff & Merge UI 제공
   - CodeMirror MergeView를 통해 변경 사항을 비교하고 선택적으로 병합
 
+### 8. 명령 팔레트 (Command Palette)
+- **단축키**: `Cmd+P` (Mac) / `Ctrl+P` (Windows)
+- **기능**: 키보드만으로 빠른 탐색 및 명령 실행
+  - 노트/폴더 검색 및 이동
+  - 새 노트 생성, 이름 수정, 삭제
+  - 뷰 모드 전환, 다크 모드 토글
+  - 글자 크기 조절, 강제 동기화
+  - 캐시 초기화, 앱 새로고침
+- **UX**: 키보드 네비게이션 완전 지원 (↑/↓/Enter/Esc)
+
 ## 🛠 기술 스택 (Tech Stack)
 - **Frontend**: Vue.js 3 (ES Modules), TailwindCSS, CodeMirror 6
 - **Backend**: FastAPI, SQLite (Dev) / PostgreSQL (Prod), SQLAlchemy

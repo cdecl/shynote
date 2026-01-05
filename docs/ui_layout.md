@@ -96,3 +96,28 @@ The main panel switches between **List Mode** and **Editor Mode**.
   - **Sync Queue**: Button (Icon: `sync` + Count) - *Visible when pending items exist*
   - **Last Sync**: Time (e.g. "14:30")
   - **Data Source**: Icon (`database`/`cloud_done`) + Message ("Local Load Complete")
+
+---
+
+## 3. Command Palette (Global Overlay)
+
+### Overview
+*Modal dialog activated by `Cmd+P` / `Ctrl+P`.*
+
+### Structure
+- **Backdrop**: Fixed overlay (`fixed inset-0 z-[1000]`)
+- **Container**: Centered modal (`flex items-center justify-center`)
+- **Max Size**: `max-w-2xl` width, `max-h-[60vh]` height
+
+### Components
+- **Search Input**: Text input with placeholder
+- **Results List**: Scrollable list of filtered items
+- **Keyboard Navigation**: Arrow keys, Enter, Escape
+
+### Modes
+| Mode | Purpose |
+|------|---------|
+| commands | Command search/execution |
+| notes | Note search/selection |
+| folders | Folder navigation |
+| move-dest | Note relocation |

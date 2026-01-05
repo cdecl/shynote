@@ -3,7 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, height=device-height">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>SHYNOTE</title>
     <link rel="icon" href="/static/favicon.ico">
     <link rel="manifest" href="/static/manifest.json">
@@ -225,7 +226,7 @@
 
 
     <!-- Custom Styles (Loaded last to override libraries) -->
-    <link rel="stylesheet" href="/static/style.css?v=26">
+    <link rel="stylesheet" href="/static/style.css?v=27">
 
 
 
@@ -420,7 +421,20 @@
             <div
                 class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-2xl w-72 transform transition-all scale-100 border border-slate-200 dark:border-slate-700">
                 <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-2">{{ modalState.title }}</h3>
-                <p class="text-slate-600 dark:text-slate-300 text-sm mb-4">{{ modalState.message }}</p>
+                <p v-if="modalState.message"
+                    class="text-slate-600 dark:text-slate-300 text-sm mb-4 whitespace-pre-line">{{ modalState.message }}
+                </p>
+
+                <!-- File Info Content -->
+                <div v-if="modalState.type === 'file-info'" class="mb-6">
+                    <div class="space-y-3">
+                        <div v-for="(value, key) in modalState.data" :key="key"
+                            class="flex justify-between items-center text-sm border-b border-slate-100 dark:border-[#3B4252] pb-2 last:border-0 last:pb-0">
+                            <span class="text-slate-500 dark:text-slate-400 capitalize font-medium">{{ key }}</span>
+                            <span class="text-slate-800 dark:text-[#ECEFF4] font-mono">{{ value }}</span>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Share Note Content -->
                 <div v-if="modalState.type === 'share-note'">
@@ -582,7 +596,9 @@
 
         <!-- Sidebar -->
         <!-- Sidebar -->
-        <!-- Sidebar Wrapper -->
+
+
+        <!-- Mobile Sidebar Overlay -->
         <div id="app-sidebar" :class="[
                 isSidebarOpen ? 'w-full md:w-80' : 'w-0', 
                 'md:relative absolute inset-y-0 left-0 z-20',
@@ -923,9 +939,95 @@
             class="fixed left-0 top-1/2 -translate-y-1/2 w-1.5 h-10 bg-slate-300 dark:bg-slate-600 rounded-r-md transition-all duration-300 shadow-md transform opacity-60 hover:opacity-100 hover:translate-x-0.5 hover:bg-blue-400 hover:w-2 cursor-pointer z-40">
         </div>
 
+        <!-- Command Palette Modal (Upper Center) -->
+        <div v-if="showCommandPalette" class="fixed inset-0 z-[1000] transition-all duration-200" v-cloak>
+            <!-- Backdrop -->
+            <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeCommandPalette"></div>
+
+            <!-- Palette Container Wrapper (Positioning) -->
+            <div class="absolute top-[33vh] left-1/2 -translate-x-1/2 w-[90%] sm:w-full max-w-2xl z-[1001]" @click.stop>
+                <!-- Animated Content Box -->
+                <div
+                    class="w-full bg-white dark:bg-[#2E3440] rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[40vh] border border-gray-200 dark:border-[#3B4252] animate-fade-in-up">
+
+                    <!-- Input Area -->
+                    <div class="flex items-center p-2 border-b border-gray-100 dark:border-[#3B4252]">
+                        <span
+                            class="material-symbols-rounded text-gray-400 dark:text-gray-500 mr-3 select-none text-[20px]">
+                            {{ paletteMode === 'notes' ? 'search' : (paletteMode === 'folders' ? 'folder' : 'terminal')
+                            }}
+                        </span>
+                        <input ref="paletteInput" v-model="paletteQuery"
+                            class="flex-1 bg-transparent border-none outline-none text-base text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 font-sans h-8"
+                            :placeholder="palettePlaceholder" @keydown="handlePaletteKeydown" spellcheck="false"
+                            autocomplete="off">
+                        <div class="flex gap-1">
+                            <span v-if="paletteMode !== 'commands'"
+                                class="px-1.5 py-0.5 text-[10px] bg-gray-100 dark:bg-[#3B4252] text-gray-500 dark:text-gray-400 rounded cursor-pointer hover:bg-gray-200 dark:hover:bg-[#434C5E]"
+                                @click="setPaletteMode('commands')">
+                                Esc
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Results List -->
+                    <div class="overflow-y-auto flex-1 p-1 scrollbar-hide" ref="paletteList">
+                        <div v-if="filteredPaletteItems.length === 0"
+                            class="p-4 text-center text-gray-400 dark:text-gray-500 text-sm">
+                            No matching results
+                        </div>
+
+                        <div v-for="(item, index) in filteredPaletteItems" :key="item.id"
+                            class="flex items-center justify-between px-3 py-1.5 rounded-md cursor-pointer transition-colors duration-150 group"
+                            :class="{ 'bg-blue-50 dark:bg-[#3B4252]': index === paletteIndex, 'hover:bg-gray-50 dark:hover:bg-[#3B4252]': index !== paletteIndex }"
+                            @click="executePaletteItem(item)" @mouseenter="paletteIndex = index">
+
+                            <div class="flex items-center gap-2.5 overflow-hidden">
+                                <span class="material-symbols-rounded text-[18px]"
+                                    :class="index === paletteIndex ? 'text-blue-500 dark:text-[#88C0D0]' : 'text-gray-400 dark:text-gray-500'">
+                                    {{ item.icon || 'terminal' }}
+                                </span>
+                                <div class="flex flex-col truncate">
+                                    <span
+                                        class="text-[13px] font-medium text-gray-700 dark:text-gray-200 truncate leading-tight"
+                                        :class="{ 'text-blue-600 dark:text-[#88C0D0]': index === paletteIndex }">
+                                        {{ item.title }}
+                                    </span>
+                                    <span v-if="item.desc"
+                                        class="text-[11px] text-gray-400 dark:text-gray-500 truncate leading-tight">
+                                        {{ item.desc }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div v-if="item.shortcut"
+                                class="text-[10px] text-gray-400 dark:text-gray-500 font-mono opacity-60 group-hover:opacity-100">
+                                {{ item.shortcut }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer Hints -->
+                    <div
+                        class="px-4 py-2 bg-gray-50 dark:bg-[#24292F] border-t border-gray-100 dark:border-[#3B4252] text-[10px] text-gray-400 flex justify-between">
+                        <span>
+                            <span class="font-bold">↑↓</span> to navigate
+                            <span class="mx-1.5">|</span>
+                            <span class="font-bold">Enter</span> to select
+                            <span class="mx-1.5">|</span>
+                            <span class="font-bold">Esc</span> to close
+                        </span>
+                        <span v-if="paletteMode === 'commands'">Type 'Go to' to search files</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Main Editor -->
-        <main class="flex-1 flex flex-col bg-white dark:bg-[#24292F] overflow-hidden"
+        <main class="flex-1 flex flex-col bg-white dark:bg-[#24292F] overflow-hidden relative"
             :class="isSidebarOpen ? 'md:block hidden' : 'block'">
+
+
             <div class="flex flex-col h-full">
                 <!-- Toolbar -->
                 <div v-if="rightPanelMode !== 'list' && selectedNote"
@@ -1064,7 +1166,8 @@
                                 <button @click.stop="toggleSidebar" v-if="!isSidebarOpen"
                                     class="p-1.5 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded-lg transition-all"
                                     title="Open Sidebar">
-                                    <span class="material-symbols-rounded text-[22px]">{{ isMobile ? 'chevron_left' :
+                                    <span class="material-symbols-rounded text-[22px]">{{ isMobile ? 'chevron_left'
+                                        :
                                         'view_sidebar' }}</span>
                                 </button>
                                 <button v-if="selectedNote" @click="toggleRightPanelMode()"
@@ -1250,11 +1353,13 @@
                                                 <div v-else
                                                     class="text-[10px] text-slate-400 mt-2 flex justify-between items-end border-t border-slate-100 dark:border-[#434C5E] pt-1.5">
                                                     <div class="flex items-center gap-2 font-medium">
-                                                        <span>{{ formatDateParts(note.updated_at).date.replace(/\./g,
+                                                        <span>{{
+                                                            formatDateParts(note.updated_at).date.replace(/\./g,
                                                             '-')
                                                             }}</span>
                                                         <span class="w-[1px] h-2 bg-slate-300 dark:bg-slate-600"></span>
-                                                        <span>{{ note.content ? note.content.length : 0 }} chars</span>
+                                                        <span>{{ note.content ? note.content.length : 0 }}
+                                                            chars</span>
                                                     </div>
                                                     <div
                                                         class="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex gap-2">
@@ -1306,7 +1411,8 @@
                                             <div class="flex items-center gap-4 shrink-0">
                                                 <span
                                                     class="text-[10px] text-slate-400 font-medium tabular-nums hidden sm:block">
-                                                    {{ formatDateParts(note.updated_at).date.replace(/\./g, '-') }} {{
+                                                    {{ formatDateParts(note.updated_at).date.replace(/\./g, '-') }}
+                                                    {{
                                                     formatDateParts(note.updated_at).time.substring(0, 5) }}
                                                 </span>
 
@@ -1427,11 +1533,13 @@
                                                 <div v-else
                                                     class="text-[10px] text-slate-400 mt-2 flex justify-between items-end border-t border-slate-100 dark:border-[#434C5E] pt-1.5">
                                                     <div class="flex items-center gap-2 font-medium">
-                                                        <span>{{ formatDateParts(note.updated_at).date.replace(/\./g,
+                                                        <span>{{
+                                                            formatDateParts(note.updated_at).date.replace(/\./g,
                                                             '-')
                                                             }}</span>
                                                         <span class="w-[1px] h-2 bg-slate-300 dark:bg-slate-600"></span>
-                                                        <span>{{ note.content ? note.content.length : 0 }} chars</span>
+                                                        <span>{{ note.content ? note.content.length : 0 }}
+                                                            chars</span>
                                                     </div>
                                                     <div
                                                         class="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex gap-2">
@@ -1483,7 +1591,8 @@
                                             <div class="flex items-center gap-4 shrink-0">
                                                 <span
                                                     class="text-[10px] text-slate-400 font-medium tabular-nums hidden sm:block">
-                                                    {{ formatDateParts(note.updated_at).date.replace(/\./g, '-') }} {{
+                                                    {{ formatDateParts(note.updated_at).date.replace(/\./g, '-') }}
+                                                    {{
                                                     formatDateParts(note.updated_at).time.substring(0, 5) }}
                                                 </span>
 
@@ -1609,7 +1718,8 @@
                                                     class="absolute top-full right-0 mt-1 w-32 bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-lg shadow-xl py-1 z-50 animate-fade-in origin-top-right">
                                                     <!-- Overlay to close -->
                                                     <div @click="closeFolderSelectMenu"
-                                                        class="fixed inset-0 z-40 bg-transparent cursor-default"></div>
+                                                        class="fixed inset-0 z-40 bg-transparent cursor-default">
+                                                    </div>
 
                                                     <div
                                                         class="relative z-50 max-h-48 overflow-y-auto custom-scrollbar">
@@ -1759,7 +1869,8 @@
                                                     class="absolute top-full right-0 mt-1 w-32 bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-lg shadow-xl py-1 z-50 animate-fade-in origin-top-right">
                                                     <!-- Overlay to close -->
                                                     <div @click="closeFolderSelectMenu"
-                                                        class="fixed inset-0 z-40 bg-transparent cursor-default"></div>
+                                                        class="fixed inset-0 z-40 bg-transparent cursor-default">
+                                                    </div>
 
                                                     <div
                                                         class="relative z-50 max-h-48 overflow-y-auto custom-scrollbar">

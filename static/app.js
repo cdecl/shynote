@@ -139,6 +139,12 @@ createApp({
 		const serverDbType = ref(null) // Added for DB Type Logic
 		const fontSize = ref('14')
 		const isMobile = ref(window.innerWidth < 768)
+		const showCommandPalette = ref(false)
+		const paletteMode = ref('commands') // 'commands', 'notes', 'folders', 'move-dest'
+		const paletteQuery = ref('')
+		const paletteIndex = ref(0)
+		const paletteInput = ref(null)
+		const paletteList = ref(null)
 		const isEditModeActive = ref(false)
 
 		const handleWindowResize = () => {
@@ -278,7 +284,7 @@ createApp({
 					// splitting 'abc' by /(X)/ gives ['abc']
 
 					if (new RegExp('^' + regex.source + '$', flags.replace('g', '')).test(part)) {
-						return `<span class="search-highlight">${part.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>`
+						return `<span class="search-highlight">${part.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}.</span>`
 					} else {
 						return part.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 					}
@@ -1890,12 +1896,14 @@ createApp({
 			inputPlaceholder: '',
 			targetId: null,
 			confirmText: 'Confirm',
-			cancelText: 'Cancel'
+			cancelText: 'Cancel',
+			data: null
 		})
 
-		const openModal = (type, targetId = null) => {
+		const openModal = (type, targetId = null, data = null) => {
 			modalState.value.type = type
 			modalState.value.targetId = targetId
+			modalState.value.data = data // Pass custom data
 			modalState.value.isOpen = true
 			modalState.value.inputValue = ''
 			modalState.value.inputPlaceholder = ''
@@ -1921,6 +1929,10 @@ createApp({
 				modalState.value.message = 'WARNING: This will PERMANENTLY DELETE ALL your notes and folders.\nTo confirm, type "DELETE" below.'
 				modalState.value.confirmText = 'Reset Everything'
 				modalState.value.inputPlaceholder = 'Type DELETE'
+			} else if (type === 'file-info') {
+				modalState.value.title = 'File Info'
+				modalState.value.confirmText = null // No action button needed
+				modalState.value.cancelText = 'Close'
 			}
 
 
@@ -1930,6 +1942,29 @@ createApp({
 					if (input) input.focus()
 				})
 			}
+		}
+
+		// ... (skipping unchanged parts)
+
+		const showFileInfo = () => {
+			if (!selectedNote.value) return
+			const n = selectedNote.value
+			const content = n.content || ''
+
+			// Find Folder Name
+			const folder = folders.value.find(f => f.id === n.folder_id)
+			const folderName = folder ? folder.name : (n.folder_id === TRASH_FOLDER_ID.value ? 'Trash' : 'Root')
+
+			const stats = {
+				title: n.title || 'Untitled',
+				folder: folderName,
+				created: formatDate(n.created_at),
+				updated: formatDate(n.updated_at),
+				size: `${content.length} chars`,
+				lines: `${content.split('\n').length} lines`,
+				words: `${content.trim().split(/\s+/).length} words`
+			}
+			openModal('file-info', null, stats)
 		}
 
 		const closeModal = () => {
@@ -2148,6 +2183,33 @@ createApp({
 		}
 
 		onMounted(async () => {
+			// PC View Mode Shortcuts (Cmd+1, 2, 3)
+			window.addEventListener('keydown', (e) => {
+				// Ignore if modal is open (except global shortcuts if needed)
+				if (modalState.value.isOpen || showCommandPalette.value) return
+
+				if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey) {
+					switch (e.key) {
+						case '1':
+							e.preventDefault()
+							setViewMode('edit')
+							break
+						case '2':
+							e.preventDefault()
+							setViewMode('preview')
+							break
+						case '3':
+							e.preventDefault()
+							setViewMode('split')
+							break
+						case 'p': // Cmd+P for Command Palette
+							e.preventDefault()
+							openCommandPalette()
+							break
+					}
+				}
+			})
+
 			isSidebarOpen.value = true // Force sidebar open on startup
 
 			// OAuth callback check
@@ -2183,28 +2245,7 @@ createApp({
 			document.addEventListener('touchstart', handleTouchStart, { passive: true })
 			document.addEventListener('touchend', handleTouchEnd, { passive: true })
 
-			// PC View Mode Shortcuts (Cmd+1, 2, 3)
-			window.addEventListener('keydown', (e) => {
-				// Ignore if modal is open (except global shortcuts if needed)
-				if (modalState.value.isOpen) return
 
-				if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey) {
-					switch (e.key) {
-						case '1':
-							e.preventDefault()
-							setViewMode('edit')
-							break
-						case '2':
-							e.preventDefault()
-							setViewMode('preview')
-							break
-						case '3':
-							e.preventDefault()
-							setViewMode('split')
-							break
-					}
-				}
-			})
 		})
 
 		// Expose this globally for Google Callback
@@ -3684,7 +3725,6 @@ createApp({
 					// For now, let marked render the raw --- block if we don't strip it?
 					// Or better: strip it but show error? Let's just fall back to standard rendering if regex matches but yaml fails
 					// Actually, if regex matches, we stripped it. So if load fails, we should probably output the error or raw text.
-					// Let's keep specific behavior simple: if fail, don't render table, text technically removed. 
 					// Let's just not set frontmatterHtml.
 				}
 			}
@@ -3742,6 +3782,9 @@ createApp({
 			return sortItems(folderNotes)
 		}
 
+		const sortedNotes = computed(() => {
+			return sortItems(notes.value)
+		})
 
 
 		// Watch authentication state to re-render button if logout
@@ -3816,7 +3859,7 @@ createApp({
 				if (confirm('Delete this note?')) {
 					// find note by id and delete
 					const note = notes.value.find(n => n.id === noteId)
-					if (note) deleteNote(note)
+					if (note) deleteNote(note.id) // Pass ID to deleteNote
 				}
 			} else if (offset > SWIPE_THRESHOLD) {
 				// Swipe Right -> Pin
@@ -4115,10 +4158,229 @@ createApp({
 		// 		}
 		// 	})
 		// }
+
+		// --- Command Palette Logic ---
+
+		const commands = computed(() => {
+			const list = [
+				{ id: 'nav.note', title: 'Go to Note...', icon: 'search', desc: '파일 검색 및 이동', handler: () => setPaletteMode('notes'), shortcut: 'Cmd+P' },
+				{ id: 'nav.folder', title: 'Go to Folder...', icon: 'folder_open', desc: '폴더 이동', handler: () => setPaletteMode('folders') },
+				{ id: 'note.new', title: 'Create New Note', icon: 'add_circle', desc: '새 노트 생성', handler: () => { createNote(); closeCommandPalette() }, shortcut: 'Cmd+Shift+N' },
+				{ id: 'view.zen', title: 'Toggle Sidebar', icon: 'menu_open', desc: '사이드바 토글 On/Off', handler: () => { toggleSidebar(); closeCommandPalette() } },
+				{ id: 'view.mode', title: 'Switch View Mode', icon: 'view_agenda', desc: '보기 모드 전환 (Split / Edit / Preview)', handler: () => { cycleViewMode(); closeCommandPalette() } },
+				{ id: 'view.dark', title: 'Toggle Dark Mode', icon: 'dark_mode', desc: '다크 모드 전환', handler: () => { toggleDarkMode(); closeCommandPalette() } },
+				{ id: 'view.zoom_in', title: 'Zoom In', icon: 'zoom_in', desc: '글자 크기 확대', handler: () => { adjustZoom(1); closeCommandPalette() } },
+				{ id: 'view.zoom_out', title: 'Zoom Out', icon: 'zoom_out', desc: '글자 크기 축소', handler: () => { adjustZoom(-1); closeCommandPalette() } },
+				{ id: 'sys.sync', title: 'Sync Now', icon: 'sync', desc: '강제 동기화 수행 (Pull Only)', handler: () => { fetchNotes(true); closeCommandPalette() } },
+				{ id: 'sys.clearCache', title: 'Clear Local Cache', icon: 'delete_sweep', desc: '캐시 및 데이터 초기화', handler: () => { clearLocalCache(); closeCommandPalette() } },
+				{ id: 'sys.reload', title: 'Reload App', icon: 'refresh', desc: '앱 새로고침', handler: () => window.location.reload() }
+			]
+
+			// Contextual Commands (Editor Mode Only)
+			if (rightPanelMode.value === 'edit' && selectedNote.value) {
+				list.splice(3, 0,
+					{
+						id: 'note.rename', title: 'Rename Note', icon: 'edit', desc: '제목 수정', handler: () => {
+							closeCommandPalette()
+							nextTick(() => {
+								if (titleInputRef.value) {
+									titleInputRef.value.focus()
+									titleInputRef.value.select()
+								}
+							})
+						}, shortcut: 'F2'
+					},
+					{ id: 'note.move', title: 'Move Note', icon: 'drive_file_move', desc: '폴더 이동', handler: () => setPaletteMode('move-dest') },
+					{ id: 'note.delete', title: 'Delete Note', icon: 'delete', desc: '파일 삭제', handler: () => { requestDelete(selectedNote.value.id, 'note'); closeCommandPalette() }, shortcut: 'Cmd+Backspace' },
+					{ id: 'sys.info', title: 'Show File Info', icon: 'info', desc: '글자수, 수정일 등 상세 정보', handler: () => { showFileInfo(); closeCommandPalette() } }
+				)
+			}
+
+			return list
+		})
+
+		const palettePlaceholder = computed(() => {
+			if (paletteMode.value === 'notes') return 'Search files...'
+			if (paletteMode.value === 'folders') return 'Go to folder...'
+			if (paletteMode.value === 'move-dest') return 'Move to folder...'
+			return 'Type a command...' // commands
+		})
+
+		const filteredPaletteItems = computed(() => {
+			const query = paletteQuery.value.toLowerCase()
+
+			if (paletteMode.value === 'commands') {
+				return commands.value.filter(c =>
+					c.title.toLowerCase().includes(query) ||
+					(c.desc && c.desc.toLowerCase().includes(query))
+				)
+			}
+
+			if (paletteMode.value === 'notes') {
+				return sortedNotes.value.filter(n => n.title.toLowerCase().includes(query)).map(n => ({
+					id: n.id, title: n.title, icon: 'description', desc: n.folder_id ? folders.value.find(f => f.id === n.folder_id)?.name : 'Inbox',
+					handler: () => { selectNote(n); closeCommandPalette() }
+				}))
+			}
+
+			if (paletteMode.value === 'folders' || paletteMode.value === 'move-dest') {
+				const list = [{ id: null, name: 'Inbox', icon: 'inbox' }, ...sortedFolders.value]
+				return list.filter(f => f.name.toLowerCase().includes(query)).map(f => ({
+					id: f.id, title: f.name, icon: f.icon || (f.id ? 'folder' : 'inbox'), desc: '',
+					handler: () => {
+						if (paletteMode.value === 'move-dest') {
+							if (selectedNote.value) moveSelectedNote(f.id)
+						} else {
+							selectFolder(f.id)
+						}
+						closeCommandPalette()
+					}
+				}))
+			}
+			return []
+		})
+
+		const openCommandPalette = () => {
+			showCommandPalette.value = true
+			paletteMode.value = 'commands'
+			paletteQuery.value = ''
+			paletteIndex.value = 0
+			nextTick(() => paletteInput.value?.focus())
+		}
+
+		const closeCommandPalette = () => {
+			showCommandPalette.value = false
+			paletteMode.value = 'commands'
+			// optional: focus editor
+			const view = editorView.value
+			if (view) view.focus()
+		}
+
+		const setPaletteMode = (mode) => {
+			paletteMode.value = mode
+			paletteQuery.value = ''
+			paletteIndex.value = 0
+			nextTick(() => paletteInput.value?.focus())
+		}
+
+		const handlePaletteKeydown = (e) => {
+			if (e.key === 'ArrowDown') {
+				e.preventDefault()
+				paletteIndex.value = (paletteIndex.value + 1) % filteredPaletteItems.value.length
+				// Scroll into view logic if needed
+				if (paletteList.value && paletteIndex.value >= 0) {
+					const itemEl = paletteList.value.children[paletteIndex.value]
+					itemEl?.scrollIntoView({ block: 'nearest' })
+				}
+			} else if (e.key === 'ArrowUp') {
+				e.preventDefault()
+				paletteIndex.value = (paletteIndex.value - 1 + filteredPaletteItems.value.length) % filteredPaletteItems.value.length
+				if (paletteList.value && paletteIndex.value >= 0) {
+					const itemEl = paletteList.value.children[paletteIndex.value]
+					itemEl?.scrollIntoView({ block: 'nearest' })
+				}
+			} else if (e.key === 'Enter') {
+				e.preventDefault()
+				const item = filteredPaletteItems.value[paletteIndex.value]
+				if (item) executePaletteItem(item)
+			} else if (e.key === 'Escape') {
+				if (paletteMode.value !== 'commands' && !paletteQuery.value) {
+					setPaletteMode('commands')
+				} else {
+					closeCommandPalette()
+				}
+			}
+		}
+
+		const executePaletteItem = (item) => {
+			if (item.handler) item.handler()
+		}
+
+		// --- Helper Actions ---
+		const insertDate = () => {
+			const now = new Date()
+			const str = now.getFullYear() + '-' +
+				String(now.getMonth() + 1).padStart(2, '0') + '-' +
+				String(now.getDate()).padStart(2, '0') + ' ' +
+				String(now.getHours()).padStart(2, '0') + ':' +
+				String(now.getMinutes()).padStart(2, '0');
+
+			const view = editorView.value
+			if (view) {
+				const range = view.state.selection.main
+				view.dispatch({
+					changes: { from: range.from, to: range.to, insert: str },
+					selection: { anchor: range.from + str.length }
+				})
+			}
+		}
+
+		const toggleZenMode = () => {
+			// Need to implement zen mode state or class toggle
+			document.body.classList.toggle('zen-mode')
+			// Also force sidebar close
+			if (document.body.classList.contains('zen-mode')) {
+				isSidebarOpen.value = false
+			}
+		}
+
+		const adjustZoom = (delta) => {
+			const currentSize = parseFloat(getComputedStyle(document.documentElement).fontSize)
+			const newSize = Math.max(12, Math.min(24, currentSize + delta))
+			document.documentElement.style.fontSize = newSize + 'px'
+			saveUserSetting(STORAGE_KEYS.FONT_SIZE, newSize) // Save new font size
+		}
+
+
+
+
+		const formatDate = (dateStr) => {
+			const date = parseSafeDate(dateStr)
+			if (!date) return dateStr || ''
+
+			const yyyy = date.getFullYear()
+			const mm = String(date.getMonth() + 1).padStart(2, '0')
+			const dd = String(date.getDate()).padStart(2, '0')
+			const hh = String(date.getHours()).padStart(2, '0')
+			const min = String(date.getMinutes()).padStart(2, '0')
+			const ss = String(date.getSeconds()).padStart(2, '0')
+			return `${yyyy}.${mm}.${dd} ${hh}:${min}:${ss}`
+		}
+
+		const formatDateParts = (dateStr) => {
+			const date = parseSafeDate(dateStr)
+			if (!date) return { date: dateStr || '', time: '' }
+
+			const yyyy = date.getFullYear()
+			const mm = String(date.getMonth() + 1).padStart(2, '0')
+			const dd = String(date.getDate()).padStart(2, '0')
+			const hh = String(date.getHours()).padStart(2, '0')
+			const min = String(date.getMinutes()).padStart(2, '0')
+			const ss = String(date.getSeconds()).padStart(2, '0')
+			return {
+				date: `${yyyy}.${mm}.${dd}`,
+				time: `${hh}:${min}:${ss}`
+			}
+		}
+
 		return {
 			notes,
 			folders,
 			selectedNote,
+			// Palette State & Methods
+			showCommandPalette,
+			paletteMode,
+			paletteQuery,
+			paletteIndex,
+			paletteInput,
+			paletteList,
+			palettePlaceholder,
+			filteredPaletteItems,
+			openCommandPalette,
+			closeCommandPalette,
+			handlePaletteKeydown,
+			executePaletteItem,
+			setPaletteMode,
 			isSelectionMode,
 			selectedNoteIds,
 			toggleSelectionMode,
@@ -4139,6 +4401,7 @@ createApp({
 			debouncedUpdate,
 			previewContent,
 			isSidebarOpen,
+			isMobile,
 			toggleSidebar,
 			editorRef,
 			previewRef,
@@ -4196,33 +4459,8 @@ createApp({
 					}
 				}
 			},
-			formatDate: (dateStr) => {
-				const date = parseSafeDate(dateStr)
-				if (!date) return dateStr || ''
-
-				const yyyy = date.getFullYear()
-				const mm = String(date.getMonth() + 1).padStart(2, '0')
-				const dd = String(date.getDate()).padStart(2, '0')
-				const hh = String(date.getHours()).padStart(2, '0')
-				const min = String(date.getMinutes()).padStart(2, '0')
-				const ss = String(date.getSeconds()).padStart(2, '0')
-				return `${yyyy}.${mm}.${dd} ${hh}:${min}:${ss}`
-			},
-			formatDateParts: (dateStr) => {
-				const date = parseSafeDate(dateStr)
-				if (!date) return { date: dateStr || '', time: '' }
-
-				const yyyy = date.getFullYear()
-				const mm = String(date.getMonth() + 1).padStart(2, '0')
-				const dd = String(date.getDate()).padStart(2, '0')
-				const hh = String(date.getHours()).padStart(2, '0')
-				const min = String(date.getMinutes()).padStart(2, '0')
-				const ss = String(date.getSeconds()).padStart(2, '0')
-				return {
-					date: `${yyyy}.${mm}.${dd}`,
-					time: `${hh}:${min}:${ss}`
-				}
-			},
+			formatDate,
+			formatDateParts,
 			modalState,
 			closeModal,
 			confirmAction,
