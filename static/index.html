@@ -1595,6 +1595,8 @@
                                             <div class="relative group">
                                                 <div @click.stop="toggleFolderSelectMenu"
                                                     class="cursor-pointer px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[11px] flex items-center gap-1 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                                                    <span
+                                                        class="material-symbols-rounded text-[14px] text-slate-500 dark:text-slate-400">drive_file_move</span>
                                                     {{ selectedNote.folder_id ? (folders.find(f => f.id ===
                                                     selectedNote.folder_id)?.name ||
                                                     'Unknown') : 'Inbox' }}
@@ -1614,7 +1616,7 @@
                                                             @click.stop="moveSelectedNote(null); closeFolderSelectMenu()"
                                                             class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-blue-900/30 flex items-center gap-2 transition-colors">
                                                             <span
-                                                                class="material-symbols-rounded text-[16px] text-blue-500">inbox</span>
+                                                                class="material-symbols-rounded text-[16px] text-blue-500">move_to_inbox</span>
                                                             Inbox
                                                         </button>
                                                         <div class="h-[1px] bg-slate-100 dark:bg-[#434C5E] my-1"
@@ -1623,7 +1625,7 @@
                                                             @click.stop="moveSelectedNote(folder.id); closeFolderSelectMenu()"
                                                             class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-amber-900/30 flex items-center gap-2 transition-colors">
                                                             <span
-                                                                class="material-symbols-rounded text-[16px] text-amber-500">folder</span>
+                                                                class="material-symbols-rounded text-[16px] text-amber-500">drive_file_move</span>
                                                             <span class="truncate">{{ folder.name }}</span>
                                                         </button>
                                                     </div>
@@ -1764,7 +1766,7 @@
                                                             @click.stop="moveSelectedNote(null); closeFolderSelectMenu()"
                                                             class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-blue-900/30 flex items-center gap-2 transition-colors">
                                                             <span
-                                                                class="material-symbols-rounded text-[16px] text-blue-500">inbox</span>
+                                                                class="material-symbols-rounded text-[16px] text-blue-500">move_to_inbox</span>
                                                             Inbox
                                                         </button>
                                                         <div class="h-[1px] bg-slate-100 dark:bg-[#434C5E] my-1"
@@ -1773,7 +1775,7 @@
                                                             @click.stop="moveSelectedNote(folder.id); closeFolderSelectMenu()"
                                                             class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-amber-900/30 flex items-center gap-2 transition-colors">
                                                             <span
-                                                                class="material-symbols-rounded text-[16px] text-amber-500">folder</span>
+                                                                class="material-symbols-rounded text-[16px] text-amber-500">drive_file_move</span>
                                                             <span class="truncate">{{ folder.name }}</span>
                                                         </button>
                                                     </div>
