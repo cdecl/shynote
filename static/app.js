@@ -1941,6 +1941,11 @@ createApp({
 					const input = document.getElementById('modal-input')
 					if (input) input.focus()
 				})
+			} else {
+				nextTick(() => {
+					const btn = document.getElementById('modal-confirm-btn')
+					if (btn) btn.focus()
+				})
 			}
 		}
 
@@ -2236,8 +2241,23 @@ createApp({
 
 			// Global Esc Key Listener for Modals
 			window.addEventListener('keydown', (e) => {
-				if (e.key === 'Escape' && modalState.value.isOpen) {
-					closeModal()
+				if (modalState.value.isOpen) {
+					if (e.key === 'Escape') {
+						closeModal()
+					} else if (e.key === 'Enter') {
+						const hasInput = ['create-folder', 'factory-reset'].includes(modalState.value.type)
+						// Check if Cancel button is focused
+						const activeId = document.activeElement ? document.activeElement.id : ''
+						const isCancelFocused = activeId === 'modal-cancel-btn'
+
+						if (!hasInput && !isCancelFocused) {
+							// For confirm dialogs (no input), ALWAYS trigger confirm on Enter,
+							// UNLESS user is specifically on Cancel.
+							// Prevents requiring exact focus on Confirm button.
+							e.preventDefault()
+							confirmAction()
+						}
+					}
 				}
 			})
 

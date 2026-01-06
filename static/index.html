@@ -453,7 +453,7 @@
                     :placeholder="modalState.inputPlaceholder || 'Folder Name'">
 
                 <div class="flex justify-end gap-2">
-                    <button @click="closeModal" v-if="modalState.cancelText"
+                    <button @click="closeModal" v-if="modalState.cancelText" id="modal-cancel-btn"
                         class="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
                         {{ modalState.cancelText }}
                     </button>
@@ -468,7 +468,7 @@
                             <span class="material-symbols-rounded text-[16px]">content_copy</span> Copy
                         </button>
                     </template>
-                    <button v-else @click="confirmAction"
+                    <button v-else @click="confirmAction" id="modal-confirm-btn"
                         :class="(modalState.type && (modalState.type.includes('delete') || modalState.type.includes('reset'))) ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-600 hover:bg-blue-700'"
                         class="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors shadow-sm">
                         {{ modalState.confirmText }}
@@ -619,7 +619,7 @@
                     :class="isSidebarOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'">
 
                     <!-- Header -->
-                    <div class="p-4 border-b border-[#E6E4DD] dark:border-[#3B4252] flex items-center bg-[#F2F0EA] dark:bg-[#242933] flex-shrink-0 transition-all"
+                    <div class="h-6 px-2 border-b border-[#E6E4DD] dark:border-[#3B4252] flex items-center bg-[#F2F0EA] dark:bg-[#242933] flex-shrink-0 transition-all font-sans"
                         :class="isSidebarOpen ? 'justify-between' : 'justify-center'">
                         <a :href="homeUrl" class="flex items-center gap-2 cursor-pointer group/logo no-underline flex-1"
                             title="Go to Home">
@@ -628,7 +628,7 @@
                                 alt="SHYNOTE Logo">
                             <div class="relative" v-show="isSidebarOpen">
                                 <h1
-                                    class="text-xl font-bold text-[#44403C] dark:text-[#ECEFF4] tracking-wider inline-block">
+                                    class="text-xs font-bold text-[#44403C] dark:text-[#ECEFF4] tracking-wider inline-block">
                                     SHYNOTE
                                 </h1>
                                 <span v-if="appVersion"
@@ -638,10 +638,10 @@
                         </a>
                         <div class="flex items-center gap-1">
                             <button @click="toggleDarkMode" v-show="isSidebarOpen"
-                                class="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-200 dark:hover:text-[#ECEFF4] dark:hover:bg-[#4C566A] rounded-full transition-colors"
+                                class="p-0.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 dark:hover:text-[#ECEFF4] dark:hover:bg-[#4C566A] rounded-full transition-colors"
                                 :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
                                 <span
-                                    class="material-symbols-rounded text-[20px] block transition-transform duration-300"
+                                    class="material-symbols-rounded text-[14px] block transition-transform duration-300"
                                     :class="isDarkMode ? 'rotate-180' : 'rotate-0'">
                                     {{ isDarkMode ? 'light_mode' : 'dark_mode' }}
                                 </span>
@@ -944,7 +944,7 @@
             <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeCommandPalette"></div>
 
             <!-- Palette Container Wrapper (Positioning) -->
-            <div class="absolute top-[60px] left-1/2 -translate-x-1/2 w-[90%] sm:w-full max-w-2xl z-[1001]" @click.stop>
+            <div class="absolute top-[32px] left-1/2 -translate-x-1/2 w-[90%] sm:w-full max-w-2xl z-[1001]" @click.stop>
                 <!-- Animated Content Box -->
                 <div
                     class="w-full bg-white dark:bg-[#2E3440] rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[40vh] border border-gray-200 dark:border-[#3B4252] animate-fade-in-up">
@@ -1030,39 +1030,39 @@
             <div class="flex flex-col h-full">
                 <!-- Toolbar -->
                 <div v-if="rightPanelMode !== 'list' && selectedNote"
-                    class="h-12 border-b border-slate-100 dark:border-[#434C5E] bg-white/80 dark:bg-[#24292F]/80 backdrop-blur-sm flex justify-between items-center pl-1 pr-4 flex-shrink-0 transition-colors duration-300 relative z-10 md:z-40">
+                    class="h-6 border-b border-slate-100 dark:border-[#434C5E] bg-white/80 dark:bg-[#24292F]/80 backdrop-blur-sm flex justify-between items-center pl-1 pr-2 flex-shrink-0 transition-colors duration-300 relative z-10 md:z-40">
                     <div class="flex items-center gap-4">
                         <button @click.stop="toggleSidebar" v-if="!isSidebarOpen"
-                            class="p-2 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded-lg transition-all flex-shrink-0"
+                            class="p-0.5 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded transition-all flex-shrink-0"
                             title="Open Sidebar">
-                            <span class="material-symbols-rounded text-[22px]">{{ isMobile ? 'chevron_left' :
+                            <span class="material-symbols-rounded text-[16px]">{{ isMobile ? 'chevron_left' :
                                 'view_sidebar' }}</span>
                         </button>
                         <button @click="toggleRightPanelMode()"
-                            class="p-2 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded-lg transition-all flex-shrink-0"
+                            class="p-0.5 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded transition-all flex-shrink-0"
                             title="Return to Folder View">
-                            <span class="material-symbols-rounded text-[22px]">drive_folder_upload</span>
+                            <span class="material-symbols-rounded text-[16px]">drive_folder_upload</span>
                         </button>
 
                         <!-- View Mode Tabs (Moved to Header) -->
                         <div class="flex bg-slate-100 dark:bg-[#3B4252] rounded-lg p-0.5 gap-0.5">
                             <button @click="setViewMode('edit')"
                                 :class="viewMode === 'edit' ? 'bg-white dark:bg-[#4C566A] shadow-sm text-blue-600 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'"
-                                class="px-3 py-1.5 text-[11px] font-bold rounded-md transition-all flex items-center gap-1"
+                                class="px-2 py-0.5 text-[10px] font-bold rounded-md transition-all flex items-center gap-1"
                                 title="Editor">
                                 <span class="material-symbols-rounded text-[14px]">edit</span>
                                 <span v-if="viewMode === 'edit'">Editor</span>
                             </button>
                             <button @click="setViewMode('preview')"
                                 :class="viewMode === 'preview' ? 'bg-white dark:bg-[#4C566A] shadow-sm text-blue-600 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'"
-                                class="px-3 py-1.5 text-[11px] font-bold rounded-md transition-all flex items-center gap-1"
+                                class="px-2 py-0.5 text-[10px] font-bold rounded-md transition-all flex items-center gap-1"
                                 title="Preview">
                                 <span class="material-symbols-rounded text-[14px]">visibility</span>
                                 <span v-if="viewMode === 'preview'">Preview</span>
                             </button>
                             <button @click="setViewMode('split')"
                                 :class="viewMode === 'split' ? 'bg-white dark:bg-[#4C566A] shadow-sm text-blue-600 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'"
-                                class="px-3 py-1.5 text-[11px] font-bold rounded-md transition-all flex items-center gap-1"
+                                class="px-2 py-0.5 text-[10px] font-bold rounded-md transition-all flex items-center gap-1"
                                 title="Split">
                                 <span class="material-symbols-rounded text-[14px]">view_column</span>
                                 <span v-if="viewMode === 'split'">Split</span>
@@ -1075,9 +1075,9 @@
                         <!-- Delete Note Button & Confirmation -->
                         <div class="relative">
                             <button @click.stop="requestDelete(selectedNote.id, 'note')"
-                                class="p-2 text-slate-400 dark:text-[#D8DEE9] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all flex-shrink-0"
+                                class="p-0.5 text-slate-400 dark:text-[#D8DEE9] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-all flex-shrink-0"
                                 title="Delete Note">
-                                <span class="material-symbols-rounded text-[20px]">delete</span>
+                                <span class="material-symbols-rounded text-[16px]">delete</span>
                             </button>
 
                             <!-- Toolbar Confirmation Popup (Teleported to Body to avoid clipping) -->
@@ -1160,19 +1160,19 @@
                             style="touch-action: none;"></div>
                         <!-- List Header -->
                         <div
-                            class="h-12 border-b border-slate-200 dark:border-[#3B4252] flex items-center justify-between px-4 bg-white dark:bg-[#2E3440] z-10 shrink-0">
+                            class="h-6 border-b border-slate-200 dark:border-[#3B4252] flex items-center justify-between px-2 bg-white dark:bg-[#2E3440] z-10 shrink-0">
                             <div class="flex items-center gap-2">
                                 <button @click.stop="toggleSidebar" v-if="!isSidebarOpen"
-                                    class="p-1.5 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded-lg transition-all"
+                                    class="p-0.5 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded transition-all"
                                     title="Open Sidebar">
-                                    <span class="material-symbols-rounded text-[22px]">{{ isMobile ? 'chevron_left'
+                                    <span class="material-symbols-rounded text-[16px]">{{ isMobile ? 'chevron_left'
                                         :
                                         'view_sidebar' }}</span>
                                 </button>
                                 <button v-if="selectedNote" @click="toggleRightPanelMode()"
-                                    class="p-1.5 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded-lg transition-all"
+                                    class="p-0.5 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded transition-all"
                                     title="Return to Editor">
-                                    <span class="material-symbols-rounded text-[22px]">edit_note</span>
+                                    <span class="material-symbols-rounded text-[16px]">edit_note</span>
                                 </button>
                                 <!-- Folder Info Removed -->
                                 <!-- Controls: Pin, Settings, About -->

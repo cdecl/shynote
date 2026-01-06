@@ -1,3 +1,16 @@
+# v0.5.1 Release Notes
+
+## Summary
+- **Ultra-Compact Headers**: 사이드바, 에디터, 리스트 뷰의 헤더 높이를 기존 대비 50% 축소(24px)하여 컨텐츠 영역을 극대화하고 세련된 타이틀바 룩을 완성했습니다.
+
+## Changes
+- **Header UI Redesign**:
+    - **Ultra-Slim**: 모든 헤더 높이 40px -> 24px (h-6) 로 축소.
+    - **Scaled Elements**: 아이콘, 텍스트, 버튼 크기를 새로운 높이에 맞춰 최적화 (Icons 16px, Text xs).
+    - **Command Palette**: 헤더 높이에 맞게 팝업 위치 재조정 (top: 32px).
+
+---
+
 # v0.5.0 Release Notes
 
 ## Summary
