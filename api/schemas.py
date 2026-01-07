@@ -50,12 +50,14 @@ class NoteUpdate(BaseModel):
     content: Optional[str] = None
     folder_id: Optional[str] = None
     is_pinned: Optional[bool] = None
+    version: Optional[int] = None # For Optimistic Locking
 
 class Note(NoteBase):
     id: str
     user_id: str
     created_at: datetime
     updated_at: datetime
+    version: int
     share_id: Optional[str] = None
     is_shared: bool = False
     is_pinned: bool = False

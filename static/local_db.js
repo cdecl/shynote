@@ -130,6 +130,23 @@ export const LocalDB = {
 		await tx.done;
 	},
 
+	async updateNoteVersion(id, newVersion) {
+		const db = await initDB();
+		const tx = db.transaction('notes', 'readwrite');
+		const store = tx.objectStore('notes');
+		const note = await store.get(id);
+
+		if (note) {
+			note.version = newVersion;
+			// We do NOT change sync_status. 
+			// If it was dirty, it remains dirty (re-based on new version)
+			// If it was synced, it remains synced (just version bump)
+			await store.put(note);
+		}
+
+		await tx.done;
+	},
+
 	async saveNotesBulk(notes) {
 		const db = await initDB();
 		const tx = db.transaction('notes', 'readwrite');

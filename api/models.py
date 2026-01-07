@@ -37,6 +37,7 @@ class Note(Base):
     user_id = Column(String, ForeignKey("users.id"), index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())
+    version = Column(Integer, default=1, server_default="1")
     
     user = relationship("User", back_populates="notes")
     folder = relationship("Folder", back_populates="notes")

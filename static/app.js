@@ -114,6 +114,10 @@ createApp({
 		const selectedNote = ref(null)
 		const loading = ref(false)
 		const isSyncing = ref(false)
+		const lastSyncTime = ref(null)
+		const syncQueueCount = ref(0)
+		const conflictState = ref({ isConflict: false, localNote: null, serverNote: null })
+		const conflictMap = ref({}) // { noteId: { local: Note, server: Note } }
 		const statusMessage = ref('Ready')
 		const loadingState = ref({ source: 'NONE', message: 'Idle' }) // NEW: Data Source Tracking
 		const isSidebarOpen = ref(true)
@@ -567,8 +571,7 @@ createApp({
 			}
 		}
 
-		const lastSyncTime = ref(null)
-		const syncQueueCount = ref(0) // New State
+
 		let isSyncingProcess = false
 		// --- Sync Helpers ---
 		const buildRequest = (log) => {
@@ -670,8 +673,19 @@ createApp({
 			let didWork = false
 
 			try {
-				const logs = await LocalDB.getPendingLogs()
-				syncQueueCount.value = logs ? logs.length : 0
+				const allLogs = await LocalDB.getPendingLogs()
+
+				// Filter out known conflicts
+				const logs = allLogs ? allLogs.filter(log =>
+					!conflictMap.value[log.entity_id] &&
+					!(conflictState.value.isConflict && conflictState.value.localNote?.id === log.entity_id)
+				) : []
+
+				// Update Queue Count (Show total or actionable? Let's show all pending for now so user knows something is unsynced)
+				// Actually, if we want to stop "Pushing...", we should probably show actionable count or handling this UI wise.
+				// Let's use actionable logs for sync, but maybe keep total count visible if we want?
+				// For now, let's just drive logic with filtered logs.
+				syncQueueCount.value = logs.length
 
 				if (logs && logs.length > 0) {
 					// ✅ Mark that we attempted work
@@ -750,11 +764,29 @@ createApp({
 
 							// --- Phase 2: Notes (Parallel Batches) ---
 							const BATCH_SIZE = 10
+							let needsPull = false;
+
 							for (let i = 0; i < noteUpdates.length; i += BATCH_SIZE) {
 								const batch = noteUpdates.slice(i, i + BATCH_SIZE)
 
 								await Promise.all(batch.map(async (log) => {
+									// Skip if known conflict
+									if (conflictMap.value[log.entity_id] || conflictState.value.isConflict && conflictState.value.localNote?.id === log.entity_id) {
+										return
+									}
+
 									const { url, method, body, isDelete } = buildRequest(log)
+
+									// Optimistic Locking: Always inject current Memory Version for Updates
+									if (!isDelete && method === 'PUT') {
+										const currentNote = notes.value.find(n => n.id === log.entity_id);
+										if (currentNote && currentNote.version) {
+											body.version = currentNote.version;
+										} else {
+											// Fallback: If not in memory (rare), try to fetch from IDB? 
+											// Or just let it fail if missing. Usually partial updates need version.
+										}
+									}
 
 									try {
 										let response = await syncWithRetry(url, {
@@ -774,8 +806,37 @@ createApp({
 											})
 										}
 
+										// Optimistic Locking: Handle Conflict (409)
+										if (response.status === 409) {
+											console.warn(`[Sync] Conflict 409 for Note ${log.entity_id}. Server version mismatch.`);
+											needsPull = true;
+											return; // Stop processing this note
+										}
+
 										if (response.ok || (isDelete && response.status === 404)) {
 											// Success: Delete processed logs from snapshot
+
+											if (response.ok && method !== 'DELETE') {
+												const data = await response.json();
+												if (data && data.version) {
+													// 1. Update IDB
+													await LocalDB.updateNoteVersion(log.entity_id, data.version);
+
+													// 2. Update Memory (Reactive State)
+													const updateInMemory = (nid, ver) => {
+														// Update List
+														const n = notes.value.find(n => n.id === nid);
+														if (n) n.version = ver;
+
+														// Update Selected Note
+														if (selectedNote.value && selectedNote.value.id === nid) {
+															selectedNote.value.version = ver;
+														}
+													}
+													updateInMemory(log.entity_id, data.version);
+												}
+											}
+
 											const processedLogIds = logs
 												.filter(l => l.entity === log.entity && l.entity_id === log.entity_id)
 												.map(l => l.id)
@@ -793,6 +854,11 @@ createApp({
 										console.error(`Sync Error note ${log.entity_id}:`, e)
 									}
 								}))
+							}
+
+							if (needsPull) {
+								console.log('[Sync] Conflicts detected. Triggering Pull...');
+								fetchNotes(true);
 							}
 
 							if (successCount > 0) {
@@ -1472,12 +1538,6 @@ createApp({
 		})
 
 		// Conflict Logic
-		const conflictState = ref({
-			isConflict: false,
-			localNote: null,
-			serverNote: null
-		})
-
 		const enterConflictMode = (local, server) => {
 			conflictState.value = {
 				isConflict: true,
@@ -1495,32 +1555,53 @@ createApp({
 			if (!localNote || !serverNote) return
 
 			if (action === 'use_local') {
-				// We keep local. Just need to update LocalDB to say... actually status is still dirty.
-				// But we might want to update the 'base' hash to current execution?
-				// Simply doing nothing keeps it dirty and it will overwrite server on next push.
-				// But we should act like we 'resolved' it. 
-				// Maybe force push now?
-				await updateNote() // Will push to server
+				// Rebase: We are keeping local content, BUT we must adopt the server's version number
+				// so that our next Push attempts to increment FROM that version (e.g. v8 -> v9), not v1 -> v2.
+				localNote.version = serverNote.version;
+
+				// Force a save to update LocalDB and trigger a dirty push
+				if (hasIDB) {
+					// We use saveNote to trigger the log and dirty status
+					await LocalDB.saveNote(localNote);
+				}
+				// updateNote() is called by saveNote debounce, but we can call manualSave or just let triggers handle it.
 			} else if (action === 'use_server') {
-				// Overwrite local with server content
+				// Overwrite local with server content AND version
 				localNote.title = serverNote.title
 				localNote.content = serverNote.content
 				localNote.folder_id = serverNote.folder_id
 				localNote.content_hash = serverNote.content_hash
-				// Save as synced
+				localNote.version = serverNote.version
+				localNote.updated_at = serverNote.updated_at
+
+				// Save as synced (Clean)
 				if (hasIDB) {
-					await LocalDB.saveNote({ ...localNote, sync_status: 'synced' }) // This method defaults dirty?
-					// Wait, saveNote defaults dirty. We need direct put or allow override.
-					// Let's manually put for now or use saveNotesBulk one item
-					await LocalDB.saveNotesBulk([localNote])
+					// Mark as synced immediately
+					const cleanNote = { ...localNote, sync_status: 'synced', local_updated_at: new Date().toISOString() };
+					const db = await LocalDB.initDB(); // Accessing internal initDB? No, exposed as LocalDB properties? 
+					// Actually LocalDB.saveNotesBulk handles saving as-is.
+					await LocalDB.saveNotesBulk([cleanNote]);
+
+					// Also remove any pending logs for this note, as we accepted server state
+					const logs = await LocalDB.getPendingLogs();
+					const noteLogs = logs.filter(l => l.entity_id === localNote.id).map(l => l.id);
+					if (noteLogs.length > 0) await LocalDB.removeLogsBulk(noteLogs);
 				}
-				// Update UI
+				// Update Memory
 				if (selectedNote.value && selectedNote.value.id === localNote.id) {
-					selectedNote.value = localNote
+					// Deep copy to reactive ref
+					Object.assign(selectedNote.value, localNote);
 				}
+				// Update List in Memory
+				const idx = notes.value.findIndex(n => n.id === localNote.id);
+				if (idx !== -1) notes.value[idx] = { ...localNote };
 			}
 
 			conflictState.value.isConflict = false
+			// Clear from Map
+			if (localNote && conflictMap.value[localNote.id]) {
+				delete conflictMap.value[localNote.id]
+			}
 			initEditor()
 		}
 
@@ -2749,26 +2830,26 @@ createApp({
 
 							await LocalDB.saveNotesBulk(notesToSave)
 
-							// 3. Check for Conflicts (Dirty vs Server Hash Mismatch)
-							const conflictCandidates = []
+							// 3. Check for Conflicts (Dirty vs Server Version Mismatch)
 							const currentLocalNotes = await LocalDB.getAllNotes(currentUid)
 							for (const ln of currentLocalNotes) {
 								if (ln.sync_status === 'dirty') {
 									const serverNote = notesToSave.find(sn => sn.id === ln.id)
 									if (serverNote) {
-										if (serverNote.content_hash !== ln.content_hash) {
-											console.log(`[Sync Info] conflict candidate: ${ln.title}`)
-											conflictCandidates.push({ local: ln, server: serverNote })
-										}
-									}
-								}
-							}
+										// Use Version Check for Optimistic Locking
+										if (serverNote.version !== ln.version) {
+											console.log(`[Sync Info] Conflict Detected: ${ln.title} (Local v${ln.version} != Server v${serverNote.version})`)
 
-							if (conflictCandidates.length > 0) {
-								const conflict = conflictCandidates[0]
-								if (selectedNote.value && selectedNote.value.id === conflict.local.id) {
-									if (!conflictState.value.isConflict) {
-										enterConflictMode(conflict.local, conflict.server)
+											// Add to Conflict Map
+											conflictMap.value[ln.id] = { local: ln, server: serverNote }
+
+											// If currently selected, trigger UI immediately
+											if (selectedNote.value && selectedNote.value.id === ln.id) {
+												if (!conflictState.value.isConflict) {
+													enterConflictMode(ln, serverNote)
+												}
+											}
+										}
 									}
 								}
 							}
@@ -2868,7 +2949,7 @@ createApp({
 
 				// 3. Update UI
 				notes.value.unshift(newNote)
-				selectedNote.value = newNote
+				selectNote(newNote) // Use the unified selectNote function
 
 				// Switch to Edit Mode (New Layout)
 				rightPanelMode.value = 'edit'
@@ -3001,6 +3082,21 @@ createApp({
 
 
 		const selectNote = async (note) => {
+			if (!note) return
+
+			// Conflict Check
+			if (conflictMap.value[note.id]) {
+				const { local, server } = conflictMap.value[note.id]
+				selectedNote.value = note;
+				enterConflictMode(local, server)
+				// Mobile Logic (sidebar close) handled below or by sidebar logic?
+				if (window.innerWidth < 768) {
+					isSidebarOpen.value = false
+				}
+				// Don't continue to load from IDB/Server if conflict
+				return;
+			}
+
 			// Switch to Edit Mode
 			rightPanelMode.value = 'edit'
 
@@ -4606,7 +4702,9 @@ createApp({
 			handleNoteTouchMove,
 			handleNoteTouchEnd,
 			isMobile,
-			isEditModeActive
+			isEditModeActive,
+			conflictMap, // Export for Template
+			conflictState
 		}
 	}
 }).mount('#app')

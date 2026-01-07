@@ -445,6 +445,15 @@ def update_note(
         # but for simple sync recovery this should work. Validating ID collision handled by transaction.
     else:
         # Update existing
+        
+        # Optimistic Locking Check
+        # If client sends a version, check if it matches current DB version
+        # If mismatch, it means client is updating a stale copy -> Conflict (409)
+        if note.version is not None:
+            if db_note.version != note.version:
+                print(f"Conflict: Note {note_id} version mismatch. DB={db_note.version}, Client={note.version}")
+                raise HTTPException(status_code=409, detail="Conflict: Stale version")
+        
         if "title" in update_data:
             db_note.title = update_data["title"]
         
@@ -456,6 +465,9 @@ def update_note(
 
         if "is_pinned" in update_data:
             db_note.is_pinned = update_data["is_pinned"]
+            
+        # Increment Version on successful update
+        db_note.version += 1
         
     db.commit()
     db.refresh(db_note)

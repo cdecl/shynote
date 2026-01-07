@@ -1418,13 +1418,21 @@
                                             </div>
 
                                             <!-- Date & Actions -->
+                                            <!-- Date & Actions -->
                                             <div class="flex items-center gap-4 shrink-0">
-                                                <span
-                                                    class="text-[10px] text-slate-400 font-medium tabular-nums hidden sm:block">
-                                                    {{ formatDateParts(note.updated_at).date.replace(/\./g, '-') }}
-                                                    {{
-                                                    formatDateParts(note.updated_at).time.substring(0, 5) }}
-                                                </span>
+                                                <div class="flex items-center gap-2">
+                                                    <!-- Conflict Icon -->
+                                                    <span v-if="conflictMap[note.id]"
+                                                        class="material-symbols-rounded text-red-500 text-[18px]"
+                                                        title="Conflict Detected">warning</span>
+
+                                                    <span
+                                                        class="text-[10px] text-slate-400 font-medium tabular-nums hidden sm:block">
+                                                        {{ formatDateParts(note.updated_at).date.replace(/\./g, '-') }}
+                                                        {{
+                                                        formatDateParts(note.updated_at).time.substring(0, 5) }}
+                                                    </span>
+                                                </div>
 
                                                 <!-- Actions -->
                                                 <div
