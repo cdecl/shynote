@@ -8,6 +8,7 @@
 - **Mobile Sidebar Swipe Fix**: 편집(Edit) 모드 및 제목(Title) 입력 시 사이드바 스와이프 제스처가 오작동하는 문제를 해결했습니다.
 - **Improved Mobile Typing Experience**: `interactive-widget` 및 `visualViewport` API를 활용하여 모바일 키보드 활성화 시 에디터 툴바가 키보드에 가려지지 않도록 개선했습니다.
 - **Editor Toolbar**: 하단 포맷팅 툴바에 클립보드 내용을 붙여넣는 **Paste** 버튼(`content_paste`)을 추가했습니다.
+- **Header Height Adjustment**: 사이드바, 에디터, 리스트 뷰의 헤더 높이를 기존 `h-6`(24px)에서 `h-7`(28px)로 미세 조정하여 터치 영역과 가독성을 개선했습니다.
 
 ---
 
