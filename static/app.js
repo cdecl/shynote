@@ -1525,6 +1525,22 @@ createApp({
 		}
 
 
+
+		const pasteContent = async () => {
+			const view = editorView.value
+			if (!view) return
+			view.focus()
+			try {
+				const text = await navigator.clipboard.readText()
+				if (text) {
+					view.dispatch(view.state.replaceSelection(text))
+				}
+			} catch (err) {
+				console.error('Failed to read clipboard:', err)
+				// alert('Failed to read clipboard. Please check permissions.')
+			}
+		}
+
 		const formatText = (type) => {
 			const view = editorView.value
 			if (!view) return
@@ -4459,6 +4475,7 @@ createApp({
 			}),
 
 			titleInputRef,
+			pasteContent,
 
 			formatText,
 			toggleCode,

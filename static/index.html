@@ -1688,6 +1688,7 @@
                                     <!-- Title Input (Sticky Header Style H1) -->
                                     <div class="flex-none p-4 pb-2 bg-white dark:bg-[#24292F] z-10">
                                         <input ref="titleInputRef" v-model="selectedNote.title" @input="debouncedUpdate"
+                                            @focus="isEditModeActive = true" @blur="isEditModeActive = false"
                                             @keydown.tab.prevent="focusEditor" @keydown.enter.prevent="focusEditor"
                                             class="w-full text-3xl font-extrabold text-[#2E3440] dark:text-[#ECEFF4] outline-none bg-transparent placeholder-slate-300 dark:placeholder-slate-600 leading-tight"
                                             placeholder="Untitled Note">
@@ -1764,6 +1765,12 @@
                                             <!-- Right: Formatting Tools (Scrollable) -->
                                             <div
                                                 class="flex items-center gap-1 overflow-x-auto thin-scrollbar mask-gradient-right">
+                                                <button @mousedown.prevent="pasteContent()"
+                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                                    title="Paste">
+                                                    <span
+                                                        class="material-symbols-rounded text-[18px]">content_paste</span>
+                                                </button>
                                                 <button @mousedown.prevent="formatText('bold')"
                                                     class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
                                                     title="Bold (Cmd+B)">

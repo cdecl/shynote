@@ -43,7 +43,8 @@
 # v0.4.8 Release Notes
 
 ## Summary
-- **Mobile Sidebar Swipe Fix**: 편집(Edit) 모드에서 타이핑 중 사이드바 스와이프 제스처가 오작동하는 문제를 해결했습니다. 이제 에디터 포커스 시 스와이프 제스처가 비활성화됩니다.
+- **Mobile Sidebar Swipe Fix**: 편집(Edit) 모드 및 제목(Title) 입력 시 사이드바 스와이프 제스처가 오작동하는 문제를 해결했습니다. 이제 에디터 및 제목 포커스 시 스와이프 제스처가 명확하게 비활성화됩니다.
+- **Editor Toolbar**: 하단 포맷팅 툴바에 클립보드 내용을 붙여넣는 **Paste** 버튼(`content_paste`)을 추가했습니다. (Bold 버튼 좌측)
 
 ---
 
