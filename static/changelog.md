@@ -1,3 +1,16 @@
+# v0.5.2 Release Notes
+
+## Summary
+- **Mobile Experience Improvements**: 편집 모드에서 스와이프 제스처 이슈를 수정하고, 키보드 활성화 시 툴바가 가려지는 문제를 해결하여 모바일 타이핑 경험을 개선했습니다.
+- **Editor Features**: 에디터 툴바에 붙여넣기(Paste) 버튼을 추가했습니다.
+
+## Bug Fixes & Improvements
+- **Mobile Sidebar Swipe Fix**: 편집(Edit) 모드 및 제목(Title) 입력 시 사이드바 스와이프 제스처가 오작동하는 문제를 해결했습니다.
+- **Improved Mobile Typing Experience**: `interactive-widget` 및 `visualViewport` API를 활용하여 모바일 키보드 활성화 시 에디터 툴바가 키보드에 가려지지 않도록 개선했습니다.
+- **Editor Toolbar**: 하단 포맷팅 툴바에 클립보드 내용을 붙여넣는 **Paste** 버튼(`content_paste`)을 추가했습니다.
+
+---
+
 # v0.5.1 Release Notes
 
 ## Summary
@@ -44,6 +57,7 @@
 
 ## Summary
 - **Mobile Sidebar Swipe Fix**: 편집(Edit) 모드 및 제목(Title) 입력 시 사이드바 스와이프 제스처가 오작동하는 문제를 해결했습니다. 이제 에디터 및 제목 포커스 시 스와이프 제스처가 명확하게 비활성화됩니다.
+- **improved Mobile Typing Experience**: `interactive-widget` 및 `visualViewport` API를 활용하여 모바일 키보드 활성화 시 전체 앱 높이를 동적으로 조절, 에디터 툴바가 키보드에 가려지지 않도록 개선했습니다.
 - **Editor Toolbar**: 하단 포맷팅 툴바에 클립보드 내용을 붙여넣는 **Paste** 버튼(`content_paste`)을 추가했습니다. (Bold 버튼 좌측)
 
 ---
