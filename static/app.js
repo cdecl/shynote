@@ -1578,7 +1578,7 @@ createApp({
 				if (hasIDB) {
 					// Mark as synced immediately
 					const cleanNote = { ...localNote, sync_status: 'synced', local_updated_at: new Date().toISOString() };
-					const db = await LocalDB.initDB(); // Accessing internal initDB? No, exposed as LocalDB properties? 
+
 					// Actually LocalDB.saveNotesBulk handles saving as-is.
 					await LocalDB.saveNotesBulk([cleanNote]);
 
