@@ -7,7 +7,9 @@
     <title>SHYNOTE - 프로젝트 문서</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Spoqa+Han+Sans+Neo:wght@400;500;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Spoqa+Han+Sans+Neo:wght@400;500;700&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --nord0: #2E3440;
@@ -138,7 +140,7 @@
             align-items: center;
             font-weight: 600;
         }
-        
+
         .feature-card p {
             color: var(--nord4);
             font-size: 0.95rem;
@@ -204,28 +206,34 @@
             <h2>주요 기능</h2>
             <div class="features-grid">
                 <div class="feature-card">
-                    <h3>🚀 고성능 에디터 코어</h3>
-                    <p>CodeMirror 6 엔진을 통합하여 VS Code 키맵, 정규식 검색, 다중 커서 등 고급 편집 기능을 웹 환경에서 제공하며, 대용량 파일 처리의 성능 최적화를 달성했습니다.</p>
+                    <h3>🚀 고성능 에디터 코어 & 슬래시 커맨드</h3>
+                    <p>CodeMirror 6 엔진을 기반으로 `/` 키를 이용한 슬래시 커맨드, 자동 완성, VS Code 키맵, 다중 커서 등 강력한 편집 환경을 제공합니다. 대용량 문서도
+                        부드럽게 처리하는 최적화된 성능을 경험하세요.</p>
                 </div>
                 <div class="feature-card">
-                    <h3>💾 로컬 우선 & 백그라운드 동기화</h3>
-                    <p>IndexedDB를 통한 Local-First 아키텍처를 구현, 1초 자동 저장 및 오프라인 작업을 지원합니다. 네트워크 연결 시 `navigator.locks` 기반의 충돌 방지 로직과 함께 지능형 백그라운드 동기화가 이루어집니다.</p>
+                    <h3>💾 로컬 우선(Local-First) & 동기화</h3>
+                    <p>작성하는 모든 순간 1초마다 IndexedDB에 자동 저장되며, 네트워크 연결 시 백그라운드에서 지능형 동기화가 수행됩니다. `navigator.locks`를 통한 탭 간
+                        충돌 방지 기술이 적용되어 있습니다.</p>
                 </div>
                 <div class="feature-card">
-                    <h3>🗂️ 계층적 데이터 모델 & 관리 API</h3>
-                    <p>무한 계층 폴더 구조를 지원하며, 드래그앤드롭, 다중 선택/일괄 처리, 노트 고정, 그리고 데이터 무결성을 보장하는 휴지통 관리 API를 통해 효율적인 노트 구성을 가능하게 합니다.</p>
+                    <h3>🗂️ 다중 선택 & 휴지통(Trash) 시스템</h3>
+                    <p>무한 계층 폴더 구조를 지원하며, `Cmd/Ctrl` 키를 이용한 다중 선택(Multi-select)으로 노트를 일괄 이동/삭제할 수 있습니다. 실수로 삭제된 데이터는
+                        휴지통에서 안전하게 복구 가능합니다.</p>
                 </div>
                 <div class="feature-card">
-                    <h3>🎨 GitHub Flavored Markdown (GFM) & Mermaid 렌더링</h3>
-                    <p>GitHub 스타일 마크다운 렌더링과 YAML Frontmatter 파싱을 제공합니다. Mermaid.js와의 통합을 통해 다이어그램 및 차트 시각화 기능을 에디터 내에서 지원하여 문서의 표현력을 확장합니다.</p>
+                    <h3>🎨 GFM 렌더링 & Mermaid 차트</h3>
+                    <p>GitHub Flavored Markdown 스타일의 깔끔한 미리보기를 제공하며, `mermaid` 코드 블록을 통해 흐름도, 시퀀스 다이어그램 등 복잡한 차트를 에디터
+                        내에서 즉시 시각화할 수 있습니다.</p>
                 </div>
                 <div class="feature-card">
-                    <h3>📱 크로스플랫폼 반응형 UI/UX</h3>
-                    <p>데스크톱과 모바일 환경 모두에서 최적화된 반응형 UI와 직관적인 스와이프 제스처를 제공하여, 단일 코드베이스로 일관된 사용자 경험을 보장합니다.</p>
+                    <h3>🌟 Ultra-Compact UI & 커맨드 팔레트</h3>
+                    <p>헤더 높이를 24px로 최소화하여 콘텐츠 집중도를 극대화했습니다. `Cmd+P` 커맨드 팔레트를 통해 마우스 없이 모든 기능을 제어하고, 모바일에서는 직관적인 스와이프
+                        제스처를 지원합니다.</p>
                 </div>
                 <div class="feature-card">
-                    <h3>🔐 OAuth 2.0 & 게스트 세션 관리</h3>
-                    <p>Google OAuth 2.0 리다이렉트 플로우를 통해 안전하고 효율적인 사용자 인증을 제공합니다. 영구 저장되지 않으며 로컬 브라우저 DB에만 저장되는 게스트 모드를 통해 즉각적인 기능 탐색을 지원합니다.</p>
+                    <h3>🔐 OAuth 2.0 & 즉시 체험하기</h3>
+                    <p>Google OAuth 2.0 리다이렉트 인증으로 안전하고 끊김 없는 로그인을 제공합니다. 로그인 부담 없는 '게스트 모드'를 통해 인메모리 가상 백엔드 위에서 즉시 앱을
+                        경험해볼 수 있습니다.</p>
                 </div>
             </div>
         </section>
@@ -235,15 +243,18 @@
             <div class="features-grid">
                 <div class="feature-card">
                     <h3>🌐 Local-First Architecture</h3>
-                    <p>네트워크 연결에 구애받지 않는 안정적인 경험을 제공합니다. 모든 데이터는 먼저 브라우저(IndexedDB)에 저장된 후, 백그라운드에서 서버와 동기화되어 데이터의 소유권을 사용자에게 돌려줍니다.</p>
+                    <p>네트워크 연결에 구애받지 않는 안정적인 경험을 제공합니다. 모든 데이터는 먼저 브라우저(IndexedDB)에 저장된 후, 백그라운드에서 서버와 동기화되어 데이터의 소유권을
+                        사용자에게 돌려줍니다.</p>
                 </div>
                 <div class="feature-card">
                     <h3>⚡️ No-Build Vanilla Stack</h3>
-                    <p>복잡한 번들링 도구 없이 브라우저 네이티브 ES Modules를 적극 활용합니다. Vanilla JS와 CDN 기반 Vue.js를 통해 빠르고 가벼우며 유지보수가 용이한 프론트엔드를 지향합니다.</p>
+                    <p>복잡한 번들링 도구 없이 브라우저 네이티브 ES Modules를 적극 활용합니다. Vanilla JS와 CDN 기반 Vue.js를 통해 빠르고 가벼우며 유지보수가 용이한
+                        프론트엔드를 지향합니다.</p>
                 </div>
                 <div class="feature-card">
                     <h3>✍️ Best-in-class Editor</h3>
-                    <p>단순한 `textarea`의 한계를 넘어, CodeMirror 6를 도입하여 데스크톱 수준의 강력한 편집 경험(VSCode 키맵, 다중 커서 등)을 웹에서 구현하는 것을 목표로 합니다.</p>
+                    <p>단순한 `textarea`의 한계를 넘어, CodeMirror 6를 도입하여 데스크톱 수준의 강력한 편집 경험(VSCode 키맵, 다중 커서 등)을 웹에서 구현하는 것을
+                        목표로 합니다.</p>
                 </div>
             </div>
         </section>
