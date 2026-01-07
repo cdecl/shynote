@@ -1,4 +1,4 @@
-const CACHE_NAME = 'shynote-v120'; // Bumped Version
+const CACHE_NAME = 'shynote-v121'; // Bumped Version
 const CRITICAL_ASSETS = [
 	'/',
 	'/static/index.html',

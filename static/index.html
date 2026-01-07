@@ -1952,8 +1952,9 @@
                     <!-- Status Bar -->
                     <footer
                         class="h-6 bg-slate-100 dark:bg-[#2E3440] border-t border-slate-200 dark:border-[#3B4252] flex items-center justify-between px-3 select-none shrink-0 z-50 transition-colors duration-300">
-                        <!-- Left: Online Status -->
-                        <div class="flex items-center gap-2">
+                        <!-- Left: Online Status (Pull Trigger) -->
+                        <div class="flex items-center gap-2 cursor-pointer hover:opacity-80" @click="fetchNotes(true)"
+                            title="Click to Sync Now (Force Pull)">
                             <span class="text-[10px] font-medium flex items-center gap-1.5 uppercase tracking-wide"
                                 :class="isOnline ? 'text-green-600 dark:text-green-400' : 'text-red-500'">
                                 <span class="w-1.5 h-1.5 rounded-full"

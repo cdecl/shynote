@@ -698,12 +698,12 @@ createApp({
 					if (navigator.locks) {
 						await navigator.locks.request('shynote_sync_lock', { ifAvailable: true }, async (lock) => {
 							if (!lock) {
-								console.log('[Sync] Skipped (Another instance is leader)')
+								// console.log('[Sync] Skipped (Another instance is leader)')
 								return
 							}
 
 							// --- We are the Leader ---
-							console.log('[Sync] Acquired lock, starting sync...')
+							// console.log('[Sync] Acquired lock, starting sync...')
 
 							// 1. Dedup: Collapse multiple updates
 							const latestUpdates = {}
@@ -868,7 +868,7 @@ createApp({
 							// Re-check
 							const remaining = await LocalDB.getPendingLogs()
 							syncQueueCount.value = remaining ? remaining.length : 0
-							console.log('[Sync] Lock releasing...')
+							// console.log('[Sync] Lock releasing...')
 						})
 					} else {
 						// ✅ Fallback for browsers without Web Lock API
@@ -1017,7 +1017,7 @@ createApp({
 			if (syncInterval) clearInterval(syncInterval)
 			// Check isOnline again just in case
 			if (isOnline.value && hasIDB) {
-				console.log('[Smart Sync] Online detected. Starting sync loop.')
+				// console.log('[Smart Sync] Online detected. Starting sync loop.')
 				syncWorker() // Run immediately
 				syncInterval = setInterval(syncWorker, 5000)
 			}
@@ -1025,7 +1025,7 @@ createApp({
 
 		const stopSync = () => {
 			if (syncInterval) {
-				console.log('[Smart Sync] Offline detected. Pausing sync loop.')
+				// console.log('[Smart Sync] Offline detected. Pausing sync loop.')
 				clearInterval(syncInterval)
 				syncInterval = null
 			}
@@ -1153,12 +1153,12 @@ createApp({
 			if (!editorRef.value) return
 			if (editorView.value) editorView.value.destroy()
 
-			console.log(`[InitEditor] Called. ConflictMode=${conflictState.value.isConflict}`)
+			// console.log(`[InitEditor] Called. ConflictMode=${conflictState.value.isConflict}`)
 
 			// Merge View Mode
 			if (conflictState.value.isConflict) {
 				const { localNote, serverNote } = conflictState.value
-				console.log("[InitEditor] Initializing MergeView", localNote, serverNote)
+				// console.log("[InitEditor] Initializing MergeView", localNote, serverNote)
 
 				editorView.value = new MergeView({
 					a: {
@@ -1776,7 +1776,7 @@ createApp({
 		}
 
 
-		console.log('Setup functions defined')
+		// console.log('Setup functions defined')
 
 		const focusEditor = () => {
 			if (editorView.value) {
@@ -2062,6 +2062,7 @@ createApp({
 				folder: folderName,
 				created: formatDate(n.created_at),
 				updated: formatDate(n.updated_at),
+				version: `v${n.version || 1}`,
 				size: `${content.length} chars`,
 				lines: `${content.split('\n').length} lines`,
 				words: `${content.trim().split(/\s+/).length} words`
@@ -2101,14 +2102,14 @@ createApp({
 					if ('caches' in window) {
 						const cacheNames = await caches.keys();
 						await Promise.all(cacheNames.map(cacheName => caches.delete(cacheName)));
-						console.log('Service Worker caches cleared:', cacheNames);
+						// console.log('Service Worker caches cleared:', cacheNames);
 					}
 
 					// Unregister service worker (optional - will re-register on reload)
 					if ('serviceWorker' in navigator) {
 						const registrations = await navigator.serviceWorker.getRegistrations();
 						await Promise.all(registrations.map(reg => reg.unregister()));
-						console.log('Service Workers unregistered');
+						// console.log('Service Workers unregistered');
 					}
 
 					window.location.reload();
@@ -2181,7 +2182,7 @@ createApp({
 				// If user ID changed (or was null), refetch correct data
 				// If user ID changed (or was null), refetch correct data
 				if (currentUserId.value !== oldId) {
-					console.log('User ID changed, refetching data...')
+					// console.log('User ID changed, refetching data...')
 					loadUserSettings() // Ensure settings are loaded for new ID
 					await Promise.all([fetchFolders(false), fetchNotes(false)])
 					restoreState()
@@ -2235,7 +2236,7 @@ createApp({
 						rightPanelMode.value = 'list'
 					}
 				}
-				console.log('[RestoreState] Completed.')
+				// console.log('[RestoreState] Completed.')
 			} catch (e) {
 				console.error('[RestoreState] Failed', e)
 			}
@@ -2631,7 +2632,7 @@ createApp({
 
 
 		const fetchFolders = async (waitForRemote = true) => {
-			console.log('[fetchFolders] Started')
+			// console.log('[fetchFolders] Started')
 			// if (!isAuthenticated.value) return // Removed to allow LocalDB load for Guest
 
 			const uid = currentUserId.value || 'guest';
@@ -2647,7 +2648,7 @@ createApp({
 					// Ensure Trash Folder Exists (Idempotent)
 					const trashExists = localFolders && localFolders.some(f => f.id === TRASH_FOLDER_ID.value)
 					if (!trashExists) {
-						console.log("Initializing Trash Folder...")
+						// console.log("Initializing Trash Folder...")
 						const trashFolder = {
 							id: TRASH_FOLDER_ID.value,
 							name: 'Trash',
@@ -2740,7 +2741,7 @@ createApp({
 			} catch (e) {
 				console.error("Error loading folders", e)
 			} finally {
-				console.log('[fetchFolders] Completed')
+				// console.log('[fetchFolders] Completed')
 			}
 		}
 
@@ -2774,7 +2775,7 @@ createApp({
 		}
 
 		const fetchNotes = async (waitForRemote = true) => {
-			console.log('[fetchNotes] Started')
+			// console.log('[fetchNotes] Started')
 			loading.value = true
 			const uid = currentUserId.value || 'guest';
 
@@ -2855,8 +2856,56 @@ createApp({
 							}
 
 							// Reload merged state
+							// Reload merged state
 							notes.value = currentLocalNotes
 							pinnedNotes.value = currentLocalNotes.filter(n => n.is_pinned)
+
+							// FIX: Update active editor to point to the new Reactive Object in notes.value
+							if (selectedNote.value) {
+								const freshReactiveNote = notes.value.find(n => n.id === selectedNote.value.id);
+								if (freshReactiveNote && !conflictMap.value[freshReactiveNote.id]) {
+									// Only update if not dirty.
+									// If dirty, we keep our separate dirty copy (orphaned from list? No, list should also be dirty from IDB)
+									// Actually if IDB had dirty note, currentLocalNotes has it. 
+									// So freshReactiveNote IS the dirty note.
+									// But if it IS clean, we want to align references.
+									// If it IS dirty, we also want to align references!
+
+									// Wait, if I am typing, selectedNote has un-persisted changes in memory?
+									// saveNoteDebounced flushes to IDB.
+									// If fetchNotes runs, it loads from IDB.
+									// If I typed a character 1ms ago and it's not in IDB yet? 
+									// Then currentLocalNotes has OLD content.
+									// notes.value gets OLD content.
+									// If I swap selectedNote.value to freshReactiveNote (OLD), I LOSE my 1ms typing!
+
+									// This is a race condition.
+									// "Sync Now" usually implies strict sync.
+									// But to be safe, we should only swap if sync_status is NOT dirty.
+									// If sync_status IS dirty, implied that we have local work.
+									// But fetching from IDB *should* have our work unless debounce period.
+
+									// Safe bet: Only swap if clean.
+									if (freshReactiveNote.sync_status !== 'dirty') {
+										selectedNote.value = freshReactiveNote;
+
+										// Force Editor Refresh if content changed (Vue watcher optimization might skip same-ID updates)
+										nextTick(() => {
+											if (editorView.value) {
+												const currentDoc = editorView.value.state.doc.toString();
+												if (currentDoc !== freshReactiveNote.content) {
+													console.log('[Sync] Active content changed. Refreshing Editor.');
+													initEditor();
+												}
+											}
+										});
+									} else {
+										// If dirty, we KEEP the current selectedNote.value (which might have in-flight chars)
+										// We do NOT swap to notes.value[i] because notes.value[i] comes from IDB and might lag behind memory by 1000ms.
+										// So we have Desync: List shows IDB state, Editor shows Memory state. This is acceptable for Dirty notes.
+									}
+								}
+							}
 						} else {
 							notes.value = serverNotes
 							pinnedNotes.value = serverNotes.filter(n => n.is_pinned)
@@ -2871,7 +2920,7 @@ createApp({
 
 			if (waitForRemote) await remotePromise
 			loadingState.value = { source: 'CLOUD', message: 'Pull Complete' } // Renamed from Synced with Server
-			console.log('[fetchNotes] Completed')
+			// console.log('[fetchNotes] Completed')
 		}
 
 		const deleteConfirmation = ref({ id: null, type: null })
@@ -3015,7 +3064,7 @@ createApp({
 		}, { immediate: true })
 
 		const deselectNote = () => {
-			console.log("Navigating to About Shynote page...");
+			// console.log("Navigating to About Shynote page...");
 			selectedNote.value = null
 			// cmEditor.value = null // Clear editor reference to force re-init on fresh DOM
 			if (isSidebarOpen.value) {
@@ -3062,10 +3111,10 @@ createApp({
 		}
 
 		const selectFolder = (folderId) => {
-			console.log('selectFolder', folderId)
+			// console.log('selectFolder', folderId)
 			currentFolderId.value = folderId
 			rightPanelMode.value = 'list'
-			console.log('rightPanelMode set to', rightPanelMode.value)
+			// console.log('rightPanelMode set to', rightPanelMode.value)
 
 			saveUserSetting(STORAGE_KEYS.LAST_FOLDER_ID, folderId === null ? 'null' : folderId)
 			saveUserSetting(STORAGE_KEYS.LAST_PANEL_MODE, 'list')
@@ -3206,7 +3255,7 @@ createApp({
 			// any click that reaches document is by definition "outside" or "unhandled".
 			// However, to be safe, we can just cancel.
 			// But we must ensure this listener doesn't fire for the *triggering* click.
-			console.log('Outside click detected, canceling delete')
+			// console.log('Outside click detected, canceling delete')
 			cancelDelete()
 		}
 
@@ -4324,7 +4373,7 @@ createApp({
 					},
 					{ id: 'note.move', title: 'Move Note', icon: 'drive_file_move', desc: '폴더 이동', handler: () => setPaletteMode('move-dest') },
 					{ id: 'note.delete', title: 'Delete Note', icon: 'delete', desc: '파일 삭제', handler: () => { requestDelete(selectedNote.value.id, 'note'); closeCommandPalette() }, shortcut: 'Cmd+Backspace' },
-					{ id: 'sys.info', title: 'Show File Info', icon: 'info', desc: '글자수, 수정일 등 상세 정보', handler: () => { showFileInfo(); closeCommandPalette() } }
+					{ id: 'sys.info', title: 'Show File Info', icon: 'info', desc: '글자수, 수정일 등 상세 정보', handler: () => { closeCommandPalette(); setTimeout(() => showFileInfo(), 100) } },
 				)
 			}
 
@@ -4647,7 +4696,10 @@ createApp({
 			// Layout State
 			lastSyncTime,
 			syncQueueCount,
+			lastSyncTime,
+			syncQueueCount,
 			manualSync: syncWorker,
+			fetchNotes, // Expose for manual pull
 
 			rightPanelMode,
 			listViewMode,
