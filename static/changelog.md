@@ -1,3 +1,20 @@
+# v0.5.3 Release Notes
+
+## Summary
+- **Sync Stability**: 무한 동기화 루프 및 빠른 입력 시 발생하는 '거짓 충돌(False Conflict)' 문제를 근본적으로 해결했습니다.
+- **Conflict Resolution**: 충돌 해결 시 버전이 꼬이는 문제를 수정하고 로직을 강화했습니다.
+
+## Bug Fixes
+- **Infinite Sync Loop**: 충돌된 노트가 대기열에서 제거되지 않아 무한 재시도하는 문제를 수정했습니다. (충돌 노트 필터링 적용)
+- **Rapid Edit Conflicts**: 빠르게 입력할 때 구버전으로 전송되어 충돌이 발생하는 문제를 수정했습니다. (전송 시점 실시간 버전 주입)
+- **Conflict Resolution Logic**: '내 버전 유지' 또는 '서버 버전 사용' 선택 시 버전을 제대로 Rebase하지 않아 다시 충돌하는 문제를 해결했습니다.
+- **Script Error**: 충돌 해결 중 발생하던 `LocalDB.initDB` 함수 호출 오류를 수정했습니다.
+
+## Documentation
+- **Sync Analysis**: `docs/sync_analysis.md` 문서를 최신 동기화 아키텍처에 맞게 업데이트했습니다.
+
+---
+
 # v0.5.2 Release Notes
 
 ## Summary
