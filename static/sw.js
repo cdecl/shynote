@@ -1,4 +1,4 @@
-const CACHE_NAME = 'shynote-v122'; // Bumped Version
+const CACHE_NAME = 'shynote-v125'; // Bumped Version
 const CRITICAL_ASSETS = [
 	'/',
 	'/static/index.html',
@@ -29,7 +29,28 @@ const EXTERNAL_ASSETS = [
 
 	'https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/default.css',
 	'https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/index.min.js',
-	'https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/scroll-behaviour.min.js'
+	'https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/scroll-behaviour.min.js',
+	'https://esm.sh/crypto-js@4.2.0/sha256',
+
+	// Missing CodeMirror Core & Deps
+	'https://esm.sh/@codemirror/view@6.23.0?deps=@codemirror/state@6.4.0',
+	'https://esm.sh/@codemirror/state@6.4.0',
+	'https://esm.sh/@codemirror/lang-markdown@6.2.3?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0',
+	'https://esm.sh/@codemirror/language-data@6.4.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0',
+	'https://esm.sh/@codemirror/commands@6.6.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0',
+	'https://esm.sh/@replit/codemirror-vscode-keymap@6.0.2?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0,@codemirror/commands@6.3.3',
+	'https://esm.sh/@codemirror/search@6.5.5?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0',
+	'https://esm.sh/@codemirror/autocomplete@6.12.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0',
+	'https://esm.sh/@codemirror/merge@6.4.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0',
+
+	// Missing Utils
+	'https://cdn.tailwindcss.com',
+	'https://esm.sh/js-yaml@4.1.0',
+
+	// Missing Styles (Dark Mode & Syntax)
+	'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.8.1/github-markdown-dark.min.css',
+	'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css',
+	'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css'
 ];
 
 self.addEventListener('install', (event) => {

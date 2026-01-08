@@ -12,6 +12,7 @@ import { closeBrackets, closeBracketsKeymap, autocompletion, snippet } from "htt
 import { MergeView } from "https://esm.sh/@codemirror/merge@6.4.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
 import jsyaml from "https://esm.sh/js-yaml@4.1.0"
 import { LocalDB } from "./local_db.js"
+import sha256 from "https://esm.sh/crypto-js@4.2.0/sha256"
 
 const { createApp, ref, computed, watch, nextTick, onMounted, onUnmounted, onBeforeUnmount } = Vue;
 
@@ -72,11 +73,16 @@ createApp({
 
 		// Hash Helper for Sync
 		const shynote_hash = async (text) => {
-			const encoder = new TextEncoder();
-			const data = encoder.encode(text);
-			const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-			const hashArray = Array.from(new Uint8Array(hashBuffer));
-			return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+			if (crypto && crypto.subtle) {
+				const encoder = new TextEncoder();
+				const data = encoder.encode(text);
+				const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+				const hashArray = Array.from(new Uint8Array(hashBuffer));
+				return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+			} else {
+				// Fallback for secure context requirement (HTTP/Mobile LAN)
+				return sha256(text).toString();
+			}
 		}
 
 		// User Settings Helper
