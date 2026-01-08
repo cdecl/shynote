@@ -1814,7 +1814,7 @@ createApp({
 		}
 
 		// App Version & Config
-		const appVersion = ref('0.4.8')
+		const appVersion = ref('')
 		const fetchAppConfig = async () => {
 			try {
 				const res = await fetch('/static/version.json?v=' + Date.now())
