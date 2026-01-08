@@ -1,3 +1,23 @@
+# v0.5.4 Release Notes
+
+## Summary
+- **Vite Vendor Bundle**: 모든 외부 자바스크립트 라이브러리를 로컬 Vite 번들로 이관하여 오프라인 안정성과 초기 로딩 속도를 최적화했습니다.
+- **Improved Security**: `crypto-js` 도입으로 모바일 환경에서의 해시 생성 호환성 및 보안을 강화했습니다.
+
+## New Features
+- **Local Vendor Bundle**:
+    - **Offline First**: CDN 의존성을 제거하고 `idb`, `CodeMirror`, `Vue` 등을 로컬 번들(`vendor.js`)로 통합.
+    - **Optimization**: 필요한 모듈만 지연 로딩(Lazy Loading)하여 성능 개선.
+- **Infrastructure**:
+    - **Build System**: Vite 기반의 안정한 라이브러리 빌드 파이프라인 구축.
+    - **Migration Guide**: 개발자를 위한 `docs/vite_vendor_migration.md` 문서 제공.
+
+## Bug Fixes
+- **Mobile SHA-256**: iOS/Android 등 모바일 환경에서 `crypto.subtle` API 제약으로 인해 노트 생성이 실패하던 문제를 `crypto-js` 폴백으로 해결.
+- **Blank Screen**: Vue 런타임 컴파일러 설정(`resolve.alias`) 누락으로 인한 초기 로딩 실패(빈 화면) 문제 수정.
+
+---
+
 # v0.5.3 Release Notes
 
 ## Summary
