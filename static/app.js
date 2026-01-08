@@ -4427,6 +4427,11 @@ createApp({
 			return []
 		})
 
+		// Reset selection when results change
+		watch(filteredPaletteItems, () => {
+			paletteIndex.value = 0
+		})
+
 		const openCommandPalette = () => {
 			showCommandPalette.value = true
 			paletteMode.value = 'commands'
