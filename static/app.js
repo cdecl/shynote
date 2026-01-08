@@ -1,20 +1,21 @@
-import { EditorView, keymap, highlightSpecialChars, drawSelection, dropCursor, crosshairCursor, lineNumbers, highlightActiveLineGutter, placeholder, rectangularSelection } from "https://esm.sh/@codemirror/view@6.23.0?deps=@codemirror/state@6.4.0"
-import { EditorState, Compartment, EditorSelection } from "https://esm.sh/@codemirror/state@6.4.0"
-import { markdown, markdownLanguage } from "https://esm.sh/@codemirror/lang-markdown@6.2.3?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
-import { languages } from "https://esm.sh/@codemirror/language-data@6.4.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
-import { defaultKeymap, history, historyKeymap } from "https://esm.sh/@codemirror/commands@6.6.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
-import { vscodeKeymap } from "https://esm.sh/@replit/codemirror-vscode-keymap@6.0.2?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0,@codemirror/commands@6.3.3"
-import { search, searchKeymap, highlightSelectionMatches, setSearchQuery, SearchQuery, findNext, findPrevious, openSearchPanel, closeSearchPanel } from "https://esm.sh/@codemirror/search@6.5.5?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
-import { githubLight } from "https://esm.sh/@uiw/codemirror-theme-github@4.23.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
-import { nord } from "https://esm.sh/@uiw/codemirror-theme-nord@4.23.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
-import { syntaxHighlighting, defaultHighlightStyle, bracketMatching } from "https://esm.sh/@codemirror/language@6.10.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
-import { closeBrackets, closeBracketsKeymap, autocompletion, snippet } from "https://esm.sh/@codemirror/autocomplete@6.12.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
-import { MergeView } from "https://esm.sh/@codemirror/merge@6.4.0?deps=@codemirror/state@6.4.0,@codemirror/view@6.23.0"
-import jsyaml from "https://esm.sh/js-yaml@4.1.0"
-import { LocalDB } from "./local_db.js"
-import sha256 from "https://esm.sh/crypto-js@4.2.0/sha256"
+import { Vue, CodeMirror, openDB, marked, hljs, mermaid, polyfill, scrollBehaviourDragImageTranslateOverride, jsyaml, sha256 } from './dist/vendor.js';
+import { LocalDB } from "./local_db.js";
 
 const { createApp, ref, computed, watch, nextTick, onMounted, onUnmounted, onBeforeUnmount } = Vue;
+
+const { EditorView, keymap, highlightSpecialChars, drawSelection, dropCursor, crosshairCursor, lineNumbers, highlightActiveLineGutter, placeholder, rectangularSelection } = CodeMirror;
+const { EditorState, Compartment, EditorSelection } = CodeMirror;
+const { markdown, markdownLanguage } = CodeMirror;
+const { languages } = CodeMirror;
+const { defaultKeymap, history, historyKeymap } = CodeMirror;
+const { vscodeKeymap } = CodeMirror;
+const { search, searchKeymap, highlightSelectionMatches, setSearchQuery, SearchQuery, findNext, findPrevious, openSearchPanel, closeSearchPanel } = CodeMirror;
+const { githubLight } = CodeMirror;
+const { nord } = CodeMirror;
+const { syntaxHighlighting, defaultHighlightStyle, bracketMatching } = CodeMirror;
+const { closeBrackets, closeBracketsKeymap, autocompletion, snippet } = CodeMirror;
+const { MergeView } = CodeMirror;
+
 
 // UUID v7 Generator (Time-ordered)
 const uuidv7 = () => {
@@ -146,6 +147,8 @@ createApp({
 		const isDarkMode = ref(localStorage.getItem(STORAGE_KEYS.DARK_MODE) === null ? true : localStorage.getItem(STORAGE_KEYS.DARK_MODE) === 'true')
 
 		const isAuthenticated = ref(false)
+
+
 		const serverDbType = ref(null) // Added for DB Type Logic
 		const fontSize = ref('14')
 		const isMobile = ref(window.innerWidth < 768)
@@ -161,12 +164,54 @@ createApp({
 			isMobile.value = window.innerWidth < 768
 		}
 
+
+		const initMobileDragDrop = () => {
+			if (!polyfill) return
+
+			var mobileDragDropOptions = {
+				dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
+				holdToDrag: 500,
+				startThreshold: 15,
+				ignoreSelector: 'input, textarea, .cm-content, .cm-scroller, .cm-editor',
+				dragStartClass: 'drag-starting',
+				elementDragClass: 'element-dragging'
+			};
+
+			// Enhanced text selection detection
+			window.addEventListener('touchstart', function (e) {
+				if (!e.touches.length) return;
+				const touch = e.touches[0];
+				const target = document.elementFromPoint(touch.clientX, touch.clientY);
+
+				if (target && target.closest('.cm-editor')) {
+					const draggables = document.querySelectorAll('.draggable-touch');
+					draggables.forEach(el => {
+						if (el.contains(target)) return;
+						el.setAttribute('data-selection-mode', 'true');
+					});
+				}
+			}, { passive: true, capture: true });
+
+			window.addEventListener('touchend', function () {
+				setTimeout(() => {
+					document.querySelectorAll('[data-selection-mode="true"]').forEach(el => {
+						el.removeAttribute('data-selection-mode');
+					});
+				}, 200);
+			}, { passive: true });
+
+			polyfill(mobileDragDropOptions);
+		}
+
 		onMounted(() => {
 			window.addEventListener('resize', handleWindowResize)
+			initMobileDragDrop()
 		})
+
 		onUnmounted(() => {
 			window.removeEventListener('resize', handleWindowResize)
 		})
+
 		const setFontSize = (size) => {
 			fontSize.value = size
 			saveUserSetting(STORAGE_KEYS.FONT_SIZE, size)

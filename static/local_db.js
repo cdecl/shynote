@@ -1,4 +1,4 @@
-import { openDB } from "https://esm.sh/idb@7.1.1";
+import { openDB } from './dist/vendor.js';
 
 const DB_NAME = 'SHYNOTE_VAULT';
 const DB_VERSION = 8;

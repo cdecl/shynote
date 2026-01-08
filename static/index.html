@@ -218,10 +218,7 @@
             });
         }
     </script>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+
 
     <link id="github-theme" rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.8.1/github-markdown-light.min.css">
@@ -242,63 +239,8 @@
 
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/default.css">
-    <script src="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/index.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/scroll-behaviour.min.js"></script>
-    <script>
-        var mobileDragDropOptions = {
-            // enable these if you want to prevent scrolling while dragging
-            dragImageTranslateOverride: MobileDragDrop.scrollBehaviourDragImageTranslateOverride,
-            // holdToDrag: delay in ms to start the drag (prevents conflict with click/scroll)
-            holdToDrag: 500,
-            // Higher threshold to prevent conflicts with text selection
-            startThreshold: 15,
-            // Allow text selection in input areas
-            ignoreSelector: 'input, textarea, .cm-content, .cm-scroller, .cm-editor',
-            // Additional configuration for better text selection handling
-            dragStartClass: 'drag-starting',
-            elementDragClass: 'element-dragging'
-        };
 
-        // Enhanced mobile drag-drop polyfill with text selection detection
-        const originalPolyfill = MobileDragDrop.polyfill;
-        MobileDragDrop.polyfill = function (options) {
-            const result = originalPolyfill.call(this, options);
 
-            // Override drag start detection
-            document.addEventListener('touchstart', function (e) {
-                const touch = e.touches[0];
-                const target = document.elementFromPoint(touch.clientX, touch.clientY);
-
-                // Check if touch is in editor area
-                if (target && target.closest('.cm-editor')) {
-                    // Temporarily disable drag detection
-                    const draggables = document.querySelectorAll('.draggable-touch');
-                    draggables.forEach(el => {
-                        if (el.contains(target)) return;
-                        el.setAttribute('data-selection-mode', 'true');
-                    });
-                }
-            }, { passive: true, capture: true });
-
-            document.addEventListener('touchend', function () {
-                // Re-enable drag detection after touch ends
-                setTimeout(() => {
-                    document.querySelectorAll('[data-selection-mode="true"]').forEach(el => {
-                        el.removeAttribute('data-selection-mode');
-                    });
-                }, 200);
-            }, { passive: true });
-
-            return result;
-        };
-        // wait for the resources to be loaded
-        document.addEventListener('DOMContentLoaded', function () {
-            MobileDragDrop.polyfill(mobileDragDropOptions);
-        });
-
-        // Removed global touchmove listener as it interferes with normal scrolling/interaction
-
-    </script>
     <style>
         .draggable-touch {
             /* Critical for iOS Drag & Drop Polyfill */
