@@ -3023,7 +3023,7 @@ createApp({
 				const now = nowObj.toISOString()
 
 				const pad = (n) => String(n).padStart(2, '0')
-				const initialTitle = `${nowObj.getFullYear()}-${pad(nowObj.getMonth() + 1)}-${pad(nowObj.getDate())} ${pad(nowObj.getHours())}:${pad(nowObj.getMinutes())}`
+				const initialTitle = `Draft ${nowObj.getFullYear()}-${pad(nowObj.getMonth() + 1)}-${pad(nowObj.getDate())} ${pad(nowObj.getHours())}:${pad(nowObj.getMinutes())}`
 				const initialContent = ''
 
 				// Calculate Hash
