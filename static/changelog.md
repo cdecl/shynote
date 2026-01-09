@@ -1,3 +1,17 @@
+# v0.5.5 Release Notes
+
+## Summary
+- **Enhanced Clipboard Interaction**: 붙여넣기 기능의 안정성을 강화하고, 이미지 업로드 프로세스를 최적화하여 404 에러와 상태 충돌 문제를 해결했습니다.
+
+## New Features
+- **Direct Image Paste**: `Cmd+V`와 하단 툴바의 **Paste** 버튼 모두에서 이미지를 즉시 업로드하고 마크다운 태그로 삽입하는 기능을 통합했습니다.
+
+## Bug Fixes
+- **404 Error Prevention**: 이미지 업로드 중 발생하는 일시적인 UUID 기반 URL 요청을 방지하기 위해 투명 데이터 URI(1x1)를 플레이스홀더로 도입했습니다.
+- **RangeError Resolution**: 클립보드 데이터 로딩 중 에디터 상태가 변경되어 발생하던 `RangeError`를 트랜잭션 최적화를 통해 해결했습니다.
+
+---
+
 # v0.5.4 Release Notes
 
 ## Summary

@@ -1131,14 +1131,20 @@ createApp({
 		}
 
 		const processImageUpload = async (view, file) => {
+			if (!view) return;
 			// 1. Insert Placeholder
-			const id = uuidv7(); // Use our UUID generator
-			const placeholder = `![Uploading ${file.name}...](${id})`;
+			const id = uuidv7();
+			// Use a transparent 1x1 pixel data URI as the placeholder URL to avoid 404s in preview
+			const safePlaceholderUrl = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+			const placeholder = `![Uploading ${file.name}...](${safePlaceholderUrl}#${id})`;
 
-			const transaction = view.state.update({
-				changes: { from: view.state.selection.main.from, insert: placeholder }
-			});
-			view.dispatch(transaction);
+			// Use replaceSelection directly in dispatch for freshness
+			try {
+				view.dispatch(view.state.replaceSelection(placeholder));
+			} catch (e) {
+				console.error("Initial placeholder dispatch failed", e);
+				return;
+			}
 
 			try {
 				const url = await uploadImage(file);
@@ -1172,17 +1178,51 @@ createApp({
 			}
 		}
 
+		// --- Direct Paste Logic (No Preview) ---
+
 		const handlePaste = (event, view) => {
 			const items = event.clipboardData?.items;
-			if (items) {
-				for (const item of items) {
-					if (item.type.indexOf('image') !== -1) {
-						event.preventDefault();
-						const file = item.getAsFile();
-						processImageUpload(view, file);
-						return;
+			if (!items) return;
+
+			// Check for Images
+			for (const item of items) {
+				if (item.type.indexOf('image') !== -1) {
+					event.preventDefault(); // Stop default paste
+					const file = item.getAsFile();
+					if (file) processImageUpload(view, file);
+					return;
+				}
+			}
+			// If no image, let default behavior handle text paste
+		}
+
+		const pasteContent = async () => {
+			const view = editorView.value
+			if (!view) return
+			view.focus()
+
+			try {
+				// 1. Try reading clipboard items (for Images)
+				if (navigator.clipboard.read) {
+					const items = await navigator.clipboard.read()
+					for (const item of items) {
+						if (item.types && item.types.some(t => t.startsWith('image/'))) {
+							const blob = await item.getType(item.types.find(t => t.startsWith('image/')))
+							// Re-use logic: Blob is File-like
+							processImageUpload(view, blob)
+							return
+						}
 					}
 				}
+
+				// 2. Fallback / Standard Text Paste
+				const text = await navigator.clipboard.readText()
+				if (text) {
+					view.dispatch(view.state.replaceSelection(text))
+				}
+			} catch (err) {
+				console.error('Paste failed:', err)
+				alert('Paste failed. Please check clipboard permissions.')
 			}
 		}
 
@@ -1658,20 +1698,7 @@ createApp({
 
 
 
-		const pasteContent = async () => {
-			const view = editorView.value
-			if (!view) return
-			view.focus()
-			try {
-				const text = await navigator.clipboard.readText()
-				if (text) {
-					view.dispatch(view.state.replaceSelection(text))
-				}
-			} catch (err) {
-				console.error('Failed to read clipboard:', err)
-				// alert('Failed to read clipboard. Please check permissions.')
-			}
-		}
+
 
 		const formatText = (type) => {
 			const view = editorView.value
