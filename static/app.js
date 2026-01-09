@@ -1427,11 +1427,7 @@ createApp({
 							label: "/table-new",
 							detail: "Create New Table",
 							apply: (view, completion, from, to) => {
-								const emptyTable = [
-									['Header 1', 'Header 2'],
-									['Value 1', 'Value 2']
-								];
-								openTableEditor(emptyTable, from, to);
+								triggerTableEditor();
 							}
 						}
 					]
@@ -2385,6 +2381,29 @@ createApp({
 		const deleteActiveCol = () => {
 			deleteTableCol(tableEditorState.value.activeCol)
 		}
+
+		const triggerTableEditor = () => {
+			const view = editorView.value;
+			if (!view) return;
+
+			const pos = view.state.selection.main.head;
+			const { from, to, text } = findTableBounds(view.state.doc, pos);
+
+			if (from !== to) {
+				const parsedTable = parseMarkdownTable(text);
+				if (parsedTable) {
+					openTableEditor(parsedTable, from, to);
+					return;
+				}
+			}
+
+			// Fallback to New Table
+			const emptyTable = [
+				['Header 1', 'Header 2'],
+				['Value 1', 'Value 2']
+			];
+			openTableEditor(emptyTable, pos, pos);
+		};
 
 		const handleEditorDoubleClick = (view, event) => {
 			const position = view.posAtDOM(event.target)
@@ -4621,16 +4640,8 @@ createApp({
 				{ id: 'nav.folder', title: 'Go to Folder...', icon: 'folder_open', desc: '폴더 이동', handler: () => setPaletteMode('folders') },
 				{ id: 'note.new', title: 'Create New Note', icon: 'add_circle', desc: '새 노트 생성', handler: () => { createNote(); closeCommandPalette() }, shortcut: 'Cmd+Shift+N' },
 				{
-					id: 'note.editTable', title: 'Edit Table', icon: 'table_chart', desc: '현재 표 편집 (모바일 최적화)', handler: () => {
-						const view = editorView.value;
-						if (view) {
-							const pos = view.state.selection.main.head;
-							const { from, to, text } = findTableBounds(view.state.doc, pos);
-							if (from !== to) {
-								const parsedTable = parseMarkdownTable(text);
-								if (parsedTable) openTableEditor(parsedTable, from, to);
-							}
-						}
+					id: 'note.editTable', title: 'Edit Table', icon: 'table_chart', desc: '현재 표 편집 또는 신규 생성', handler: () => {
+						triggerTableEditor();
 						closeCommandPalette();
 					}
 				},
@@ -5057,7 +5068,8 @@ createApp({
 			isMobile,
 			isEditModeActive,
 			conflictMap, // Export for Template
-			conflictState
+			conflictState,
+			triggerTableEditor
 		}
 	}
 }).mount('#app')
