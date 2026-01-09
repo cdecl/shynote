@@ -1,4 +1,4 @@
-import { Vue, CodeMirror, openDB, marked, hljs, mermaid, polyfill, scrollBehaviourDragImageTranslateOverride, jsyaml, sha256 } from './dist/vendor.js';
+import { Vue, CodeMirror, openDB, marked, hljs, mermaid, polyfill, scrollBehaviourDragImageTranslateOverride, jsyaml, sha256, markdownTable } from './dist/vendor.js';
 import { LocalDB } from "./local_db.js";
 
 const { createApp, ref, computed, watch, nextTick, onMounted, onUnmounted, onBeforeUnmount } = Vue;
@@ -39,6 +39,112 @@ const uuidv7 = () => {
 
 	return [...bytes].map(b => b.toString(16).padStart(2, '0')).join('')
 		.replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/, '$1-$2-$3-$4-$5');
+};
+
+// Table Editor Utilities
+const parseMarkdownTable = (markdownText) => {
+	const lines = markdownText.trim().split('\n').filter(line => line.includes('|'));
+	if (lines.length < 2) return null;
+
+	const rows = lines.map(line => {
+		return line.split('|').slice(1, -1).map(cell => cell.trim());
+	});
+
+	// Filter out separator row (e.g., | --- | --- |)
+	const filteredRows = rows.filter(row => {
+		const isSeparator = row.every(cell => /^[:\-\s]+$/.test(cell));
+		return !isSeparator;
+	});
+
+	return filteredRows.length > 0 ? filteredRows : null;
+};
+
+const generateMarkdownTable = (rows, alignments = null) => {
+	if (!rows || rows.length === 0) return '';
+	if (!alignments) alignments = rows[0].map(() => 'l');
+	return markdownTable(rows, { align: alignments });
+};
+
+// Format markdown table with aligned columns
+const formatMarkdownTable = (markdownText) => {
+	const lines = markdownText.trim().split('\n');
+	if (lines.length < 2) return markdownText;
+
+	// Parse table rows
+	const rows = lines.map(line => {
+		const cells = line.split('|').slice(1, -1).map(cell => cell.trim());
+		return cells;
+	});
+
+	if (rows.length < 2) return markdownText;
+
+	// Calculate max width for each column
+	const colWidths = [];
+	for (let c = 0; c < rows[0].length; c++) {
+		let maxLen = 0;
+		for (let r = 0; r < rows.length; r++) {
+			if (rows[r][c] && rows[r][c].length > maxLen) {
+				maxLen = rows[r][c].length;
+			}
+		}
+		colWidths[c] = Math.max(maxLen, 3); // Minimum 3 chars for separator
+	}
+
+	// Format each row
+	const formattedLines = rows.map((row, rIndex) => {
+		const formattedCells = row.map((cell, cIndex) => {
+			return cell.padEnd(colWidths[cIndex], ' ');
+		});
+		return '| ' + formattedCells.join(' | ') + ' |';
+	});
+
+	// Format separator row
+	const separatorCells = colWidths.map(w => '-'.repeat(w));
+	const separatorLine = '| ' + separatorCells.join(' | ') + ' |';
+
+	// Replace separator if exists
+	if (formattedLines.length >= 2) {
+		formattedLines[1] = separatorLine;
+	}
+
+	return formattedLines.join('\n');
+};
+
+const findTableBounds = (doc, position) => {
+	const text = doc.toString();
+	const lines = text.split('\n');
+	const lineNumber = doc.lineAt(position).number;
+
+	// Find table start (header row with | not just separator)
+	let startLine = -1;
+	for (let i = lineNumber; i >= 1; i--) {
+		const line = lines[i - 1];
+		// Check if line contains | and is not a separator row
+		if (line.includes('|') && !/^[\s|: -]+$/.test(line.trim())) {
+			startLine = i;
+			break;
+		}
+		// Stop if we hit a non-table line
+		if (i < lineNumber && !lines[i - 1].includes('|')) break;
+	}
+
+	if (startLine === -1) return { from: position, to: position, text: '' };
+
+	// Find table end (last row with |)
+	let endLine = startLine;
+	for (let i = startLine; i <= lines.length; i++) {
+		const line = lines[i - 1];
+		if (!line.includes('|')) {
+			endLine = i - 1;
+			break;
+		}
+		if (i === lines.length) endLine = i;
+	}
+
+	const from = doc.line(startLine).from;
+	const to = doc.line(endLine).to;
+
+	return { from, to, text: text.substring(from, to) };
 };
 
 createApp({
@@ -1318,29 +1424,15 @@ createApp({
 							apply: snippet("```${1:lang}\n${2:code}\n```")
 						},
 						{
-							label: "/table1",
-							detail: "Table (1 col)",
-							apply: snippet("| ${1:Header} |\n| --- |\n| ${2:Content} |")
-						},
-						{
-							label: "/table2",
-							detail: "Table (2 cols)",
-							apply: snippet("| ${1:Header 1} | ${2:Header 2} |\n| --- | --- |\n| ${3:Content 1} | ${4:Content 2} |")
-						},
-						{
-							label: "/table3",
-							detail: "Table (3 cols)",
-							apply: snippet("| ${1:H1} | ${2:H2} | ${3:H3} |\n| --- | --- | --- |\n| ${4:C1} | ${5:C2} | ${6:C3} |")
-						},
-						{
-							label: "/table4",
-							detail: "Table (4 cols)",
-							apply: snippet("| ${1:H1} | ${2:H2} | ${3:H3} | ${4:H4} |\n| --- | --- | --- | --- |\n| ${5:C1} | ${6:C2} | ${7:C3} | ${8:C4} |")
-						},
-						{
-							label: "/table5",
-							detail: "Table (5 cols)",
-							apply: snippet("| ${1:H1} | ${2:H2} | ${3:H3} | ${4:H4} | ${5:H5} |\n| --- | --- | --- | --- | --- |\n| ${6:C1} | ${7:C2} | ${8:C3} | ${9:C4} | ${10:C5} |")
+							label: "/table-new",
+							detail: "Create New Table",
+							apply: (view, completion, from, to) => {
+								const emptyTable = [
+									['Header 1', 'Header 2'],
+									['Value 1', 'Value 2']
+								];
+								openTableEditor(emptyTable, from, to);
+							}
 						}
 					]
 				}
@@ -1389,9 +1481,15 @@ createApp({
 						scroll: handleScroll,
 						paste: (event, view) => handlePaste(event, view),
 						drop: (event, view) => handleEditorDrop(event, view),
-						// Blur/Focus for Swipe Logic
 						focus: () => { isEditModeActive.value = true },
-						blur: () => { isEditModeActive.value = false }
+						blur: () => { isEditModeActive.value = false },
+						dblclick: (event, view) => handleEditorDoubleClick(view, event),
+						// Tap handler for mobile - treat as double-click after delay
+						tap: (event, view) => {
+							// Let single tap pass through for text selection
+							// Table editing via tap is handled by long-press logic
+							return false
+						}
 					}),
 					// Keymaps
 					keymap.of([
@@ -1413,6 +1511,7 @@ createApp({
 				state: startState,
 				parent: editorRef.value
 			})
+			window.tableEditorView = editorView.value
 		}
 
 		// --- Theme Logic ---
@@ -1878,6 +1977,7 @@ createApp({
 			const scrollDOM = view ? view.scrollDOM : null
 
 			const source = e.target
+			if (!source) return
 
 			if (previewRef.value && viewMode.value !== 'edit') {
 				if (source === scrollDOM || (source.classList && source.classList.contains('cm-scroller'))) {
@@ -2075,6 +2175,18 @@ createApp({
 			data: null
 		})
 
+		// Table Editor State
+		const tableEditorState = ref({
+			isOpen: false,
+			tableData: [],
+			tableFrom: 0,
+			tableTo: 0,
+			rowCount: 0,
+			colCount: 0,
+			activeRow: 2,
+			activeCol: 0
+		})
+
 		const openModal = (type, targetId = null, data = null) => {
 			modalState.value.type = type
 			modalState.value.targetId = targetId
@@ -2216,6 +2328,78 @@ createApp({
 			closeModal()
 		}
 
+		// Table Editor Methods
+		const openTableEditor = (tableData, from, to) => {
+			tableEditorState.value = {
+				isOpen: true,
+				tableData: tableData,
+				tableFrom: from,
+				tableTo: to,
+				rowCount: tableData.length,
+				colCount: tableData[0] ? tableData[0].length : 0
+			}
+		}
+
+		const closeTableEditor = () => {
+			tableEditorState.value.isOpen = false
+		}
+
+		const saveTableEditor = (editedData) => {
+			if (typeof window.tableEditorView !== 'undefined' && window.tableEditorView) {
+				const markdown = formatMarkdownTable(generateMarkdownTable(editedData))
+				window.tableEditorView.dispatch({
+					changes: {
+						from: tableEditorState.value.tableFrom,
+						to: tableEditorState.value.tableTo,
+						insert: markdown
+					}
+				})
+			}
+			closeTableEditor()
+		}
+
+		const deleteTableRow = (rowIndex) => {
+			if (tableEditorState.value.tableData.length <= 2) {
+				alert('Cannot delete: table must have at least one data row')
+				return
+			}
+			tableEditorState.value.tableData.splice(rowIndex, 1)
+			tableEditorState.value.rowCount--
+			tableEditorState.value.activeRow = Math.min(tableEditorState.value.activeRow, tableEditorState.value.tableData.length - 1)
+		}
+
+		const deleteTableCol = (colIndex) => {
+			if (tableEditorState.value.colCount <= 1) {
+				alert('Cannot delete: table must have at least one column')
+				return
+			}
+			tableEditorState.value.tableData.forEach(row => row.splice(colIndex, 1))
+			tableEditorState.value.colCount--
+			tableEditorState.value.activeCol = Math.min(tableEditorState.value.activeCol, tableEditorState.value.colCount - 1)
+		}
+
+		const deleteActiveRow = () => {
+			deleteTableRow(tableEditorState.value.activeRow)
+		}
+
+		const deleteActiveCol = () => {
+			deleteTableCol(tableEditorState.value.activeCol)
+		}
+
+		const handleEditorDoubleClick = (view, event) => {
+			const position = view.posAtDOM(event.target)
+			if (position === null) return
+
+			const { from, to, text } = findTableBounds(view.state.doc, position)
+			if (from === to) return
+
+			const parsedTable = parseMarkdownTable(text)
+			if (parsedTable) {
+				openTableEditor(parsedTable, from, to)
+				return true
+			}
+			return false
+		}
 
 
 		const checkAuth = async () => {
@@ -3988,9 +4172,17 @@ createApp({
 				}
 			}
 
-			// GFM Table Fix: Ensure tables are surrounded by newlines if missing
+			// GFM Table Fix: 
+			// 1. Ensure tables are surrounded by newlines if missing
 			// Finds: Non-newline -> Newline -> Header Row (containing |) -> Newline -> Delimiter Row (containing | and -)
 			content = content.replace(/([^\n])\n(\s*\|.*?\|.*?)\n(\s*\|[:\s-]+\|)/g, '$1\n\n$2\n$3')
+
+			// 2. Fix empty first columns (especially rows like |     | 합계 | ...)
+			// `marked` sometimes skips rows that look like indented code if there are spaces at the start.
+			// However, if it's a table row (| is present), we should ensure it's treated as a table row.
+			// This regex finds lines that start with optional spaces, then |, then optional spaces, then | (or end of line).
+			// We'll replace the leading spaces of such rows with nothing to prevent "indented block" misinterpretation.
+			content = content.replace(/^\s+(\|.*\|)\s*$/gm, '$1')
 
 			const parsedMarkdown = marked.parse(content, {
 				renderer: renderer,
@@ -4009,12 +4201,15 @@ createApp({
 					try {
 						await mermaid.run({
 							nodes: nodes,
-							suppressErrors: true // Avoid throwing globally on parse error
+							suppressErrors: true
 						})
 					} catch (err) {
 						console.warn('Mermaid rendering failed:', err)
 					}
 				}
+
+				// Remove any existing table edit buttons (cleanup)
+				document.querySelectorAll('.table-edit-btn').forEach(btn => btn.remove())
 			})
 		})
 
@@ -4425,6 +4620,20 @@ createApp({
 				{ id: 'nav.note', title: 'Go to Note...', icon: 'search', desc: '파일 검색 및 이동', handler: () => setPaletteMode('notes'), shortcut: 'Cmd+P' },
 				{ id: 'nav.folder', title: 'Go to Folder...', icon: 'folder_open', desc: '폴더 이동', handler: () => setPaletteMode('folders') },
 				{ id: 'note.new', title: 'Create New Note', icon: 'add_circle', desc: '새 노트 생성', handler: () => { createNote(); closeCommandPalette() }, shortcut: 'Cmd+Shift+N' },
+				{
+					id: 'note.editTable', title: 'Edit Table', icon: 'table_chart', desc: '현재 표 편집 (모바일 최적화)', handler: () => {
+						const view = editorView.value;
+						if (view) {
+							const pos = view.state.selection.main.head;
+							const { from, to, text } = findTableBounds(view.state.doc, pos);
+							if (from !== to) {
+								const parsedTable = parseMarkdownTable(text);
+								if (parsedTable) openTableEditor(parsedTable, from, to);
+							}
+						}
+						closeCommandPalette();
+					}
+				},
 				{ id: 'view.zen', title: 'Toggle Sidebar', icon: 'menu_open', desc: '사이드바 토글 On/Off', handler: () => { toggleSidebar(); closeCommandPalette() } },
 				{ id: 'view.mode', title: 'Switch View Mode', icon: 'view_agenda', desc: '보기 모드 전환 (Split / Edit / Preview)', handler: () => { cycleViewMode(); closeCommandPalette() } },
 				{ id: 'view.dark', title: 'Toggle Dark Mode', icon: 'dark_mode', desc: '다크 모드 전환', handler: () => { toggleDarkMode(); closeCommandPalette() } },
@@ -4729,6 +4938,15 @@ createApp({
 			modalState,
 			closeModal,
 			confirmAction,
+			tableEditorState,
+			openTableEditor,
+			closeTableEditor,
+			saveTableEditor,
+			deleteTableRow,
+			deleteTableCol,
+			deleteActiveRow,
+			deleteActiveCol,
+			handleEditorDoubleClick,
 			// Sort exports
 			sortOption,
 			setSortOption,

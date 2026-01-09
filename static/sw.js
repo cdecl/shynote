@@ -1,4 +1,4 @@
-const CACHE_NAME = 'shynote-v129'; // Bumped Version
+const CACHE_NAME = 'shynote-v134'; // Bumped Version
 const CRITICAL_ASSETS = [
 	'/',
 	'/static/index.html',
@@ -31,7 +31,7 @@ const EXTERNAL_ASSETS = [
 
 	// Local Vendor Bundle
 	'/static/dist/vendor.js',
-	'/static/dist/vendor-DsVEk2JX.js'
+	'/static/dist/vendor-BCH5z7Ar.js'
 ];
 
 self.addEventListener('install', (event) => {

@@ -37,7 +37,6 @@ textarea {
     -webkit-user-select: text !important;
     user-select: text !important;
     -webkit-user-drag: auto !important;
-    user-drag: auto !important;
 }
 
 .cm-content {
@@ -47,7 +46,6 @@ textarea {
     -webkit-user-select: text !important;
     user-select: text !important;
     -webkit-user-drag: auto !important;
-    user-drag: auto !important;
     -webkit-tap-highlight-color: transparent !important;
 }
 
@@ -492,22 +490,16 @@ body {
 }
 
 /* Zen Mode Styles */
-body.zen-mode #app-sidebar,
-body.zen-mode .bg-white.border-b,
-/* Editor Header (roughly) */
-body.zen-mode .border-b
-
-/* Generic borders might be risky, let's target specific IDs if possible or use generic safe approach */
-    {
-    /* We need to be specific. Let's inspect index.html classes first? 
-      Actually, the editor header usually has 'flex justify-between items-center px-4 py-2 border-b'. 
-      Let's rely on the body class to hide the sidebar and maybe just maximize the editor container.
-   */
-}
-
 body.zen-mode #app-sidebar {
     display: none !important;
     width: 0 !important;
+}
+
+/* Table Stability */
+.markdown-body table td,
+.markdown-body table th {
+    min-width: 1.5em;
+    /* Ensure empty cells don't collapse */
 }
 
 /* Hide header bars in Zen Mode */
@@ -524,3 +516,5 @@ body.zen-mode .h-12.border-b
 body.zen-mode .cm-editor {
     height: 100vh !important;
 }
+
+/* Table Editor */

@@ -546,6 +546,84 @@
             </div>
         </div>
 
+        <!-- Table Editor Modal -->
+        <div v-if="tableEditorState.isOpen"
+            class="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center backdrop-blur-sm"
+            @click.self="closeTableEditor">
+            <div
+                class="bg-white dark:bg-[#2E3440] rounded-xl shadow-2xl w-[90vw] max-w-xl max-h-[80vh] flex flex-col border border-slate-200 dark:border-[#3B4252]">
+                <!-- Header -->
+                <div
+                    class="flex items-center justify-between px-4 py-1.5 border-b border-slate-200 dark:border-[#3B4252]">
+                    <h3 class="text-base font-bold text-slate-800 dark:text-white">Edit Table</h3>
+                    <button @click="closeTableEditor"
+                        class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-[#4C566A] transition-colors">
+                        <span class="material-symbols-rounded text-slate-400">close</span>
+                    </button>
+                </div>
+                <!-- Spreadsheet Grid -->
+                <div class="flex-1 overflow-auto p-1.5">
+                    <table class="w-full border-collapse">
+                        <thead>
+                            <tr>
+                                <th v-for="(col, cIdx) in tableEditorState.colCount" :key="'header-'+cIdx"
+                                    class="border border-slate-300 dark:border-[#4C566A] bg-slate-100 dark:bg-[#3B4252] p-0 min-w-[100px]">
+                                    <input v-model="tableEditorState.tableData[0][cIdx]"
+                                        @focus="tableEditorState.activeCol = cIdx; tableEditorState.activeRow = 0"
+                                        class="w-full bg-transparent text-center text-sm font-medium text-slate-700 dark:text-[#ECEFF4] outline-none px-2 py-1">
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(row, rIdx) in tableEditorState.tableData.slice(1)" :key="'row-'+rIdx">
+                                <td v-for="(cell, cIdx) in row" :key="'cell-'+rIdx+'-'+cIdx"
+                                    class="border border-slate-300 dark:border-[#4C566A] p-0">
+                                    <input v-model="tableEditorState.tableData[rIdx + 1][cIdx]"
+                                        @focus="tableEditorState.activeCol = cIdx; tableEditorState.activeRow = rIdx + 1"
+                                        class="w-full bg-transparent text-sm text-slate-700 dark:text-[#ECEFF4] outline-none px-2 py-1"
+                                        @change="tableEditorState.tableData[rIdx + 1][cIdx] = $event.target.value">
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Footer -->
+                <div
+                    class="flex items-center justify-between px-4 py-1.5 border-t border-slate-200 dark:border-[#3B4252] bg-slate-50 dark:bg-[#3B4252]">
+                    <div class="flex gap-1.5">
+                        <button
+                            @click="tableEditorState.tableData.push(new Array(tableEditorState.colCount).fill('')); tableEditorState.rowCount++"
+                            class="px-2 py-1 text-xs font-medium text-slate-600 dark:text-[#D8DEE9] bg-white dark:bg-[#2E3440] border border-slate-300 dark:border-[#4C566A] rounded-lg hover:bg-slate-50 dark:hover:bg-[#4C566A] transition-colors">
+                            + Row
+                        </button>
+                        <button
+                            @click="() => { tableEditorState.colCount++; tableEditorState.tableData.forEach(row => row.push('')); }"
+                            class="px-2 py-1 text-xs font-medium text-slate-600 dark:text-[#D8DEE9] bg-white dark:bg-[#2E3440] border border-slate-300 dark:border-[#4C566A] rounded-lg hover:bg-slate-50 dark:hover:bg-[#4C566A] transition-colors">
+                            + Col
+                        </button>
+                        <button @click="deleteActiveRow"
+                            class="px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 bg-white dark:bg-[#2E3440] border border-slate-300 dark:border-[#4C566A] rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                            - Row
+                        </button>
+                        <button @click="deleteActiveCol"
+                            class="px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 bg-white dark:bg-[#2E3440] border border-slate-300 dark:border-[#4C566A] rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                            - Col
+                        </button>
+                    </div>
+                    <div class="flex gap-2">
+                        <button @click="closeTableEditor"
+                            class="px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
+                            Cancel
+                        </button>
+                        <button @click="saveTableEditor(tableEditorState.tableData)"
+                            class="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm">
+                            Save
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Sidebar -->
         <!-- Sidebar -->
 
@@ -1715,11 +1793,16 @@
                                         <div
                                             class="absolute bottom-6 left-4 right-4 md:static md:bottom-auto md:left-auto md:right-auto h-12 md:h-10 rounded-2xl md:rounded-none shadow-xl md:shadow-none border border-slate-200 dark:border-[#434C5E] md:border-t md:border-x-0 md:border-b-0 bg-white/95 dark:bg-[#24292F]/95 md:bg-white md:dark:bg-[#24292F] backdrop-blur-md md:backdrop-blur-none px-4 flex items-center justify-between md:justify-start md:gap-4 flex-none z-20 transition-all duration-300">
                                             <!-- Left: Search -->
-                                            <div class="flex items-center">
+                                            <div class="flex items-center gap-1">
                                                 <button @mousedown.prevent="triggerSearch()"
                                                     class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors text-slate-500 dark:text-slate-400"
                                                     title="Find (Cmd+F)">
                                                     <span class="material-symbols-rounded text-[20px]">search</span>
+                                                </button>
+                                                <button @mousedown.prevent="openCommandPalette()"
+                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors text-slate-500 dark:text-slate-400"
+                                                    title="Command Palette (Cmd+Shift+P)">
+                                                    <span class="material-symbols-rounded text-[20px]">apps</span>
                                                 </button>
                                             </div>
 
