@@ -46,27 +46,49 @@ const parseMarkdownTable = (markdownText) => {
 	const lines = markdownText.trim().split('\n').filter(line => line.includes('|'));
 	if (lines.length < 2) return null;
 
-	const rows = lines.map(line => {
+	const allRows = lines.map(line => {
 		return line.split('|').slice(1, -1).map(cell => cell.trim());
 	});
 
-	// Filter out separator row (e.g., | --- | --- |)
-	const filteredRows = rows.filter(row => {
-		const isSeparator = row.every(cell => /^[:\-\s]+$/.test(cell));
-		return !isSeparator;
-	});
+	// Extract alignment from separator row
+	let alignments = [];
+	const separatorRowIndex = allRows.findIndex(row => row.every(cell => /^[:\-\s]+$/.test(cell)));
 
-	return filteredRows.length > 0 ? filteredRows : null;
+	if (separatorRowIndex !== -1) {
+		alignments = allRows[separatorRowIndex].map(cell => {
+			const hasLeft = cell.startsWith(':');
+			const hasRight = cell.endsWith(':');
+			if (hasLeft && hasRight) return 'c';
+			if (hasRight) return 'r';
+			if (hasLeft) return 'l';
+			return 'c'; // Default changed to center as per user request
+		});
+	}
+
+	// Filter out separator row
+	const dataRows = allRows.filter((row, idx) => idx !== separatorRowIndex);
+
+	if (dataRows.length === 0) return null;
+	if (alignments.length === 0) alignments = dataRows[0].map(() => 'c');
+
+	return { rows: dataRows, alignments };
 };
 
 const generateMarkdownTable = (rows, alignments = null) => {
 	if (!rows || rows.length === 0) return '';
-	if (!alignments) alignments = rows[0].map(() => 'l');
+	const options = {};
+	if (alignments) {
+		options.align = alignments.map(a => {
+			if (a === 'c') return 'center';
+			if (a === 'r') return 'right';
+			return 'left';
+		});
+	}
 	return markdownTable(rows, { align: alignments });
 };
 
 // Format markdown table with aligned columns
-const formatMarkdownTable = (markdownText) => {
+const formatMarkdownTable = (markdownText, forcedAlignments = null) => {
 	const lines = markdownText.trim().split('\n');
 	if (lines.length < 2) return markdownText;
 
@@ -78,36 +100,66 @@ const formatMarkdownTable = (markdownText) => {
 
 	if (rows.length < 2) return markdownText;
 
-	// Calculate max width for each column
-	const colWidths = [];
-	for (let c = 0; c < rows[0].length; c++) {
-		let maxLen = 0;
-		for (let r = 0; r < rows.length; r++) {
-			if (rows[r][c] && rows[r][c].length > maxLen) {
-				maxLen = rows[r][c].length;
-			}
-		}
-		colWidths[c] = Math.max(maxLen, 3); // Minimum 3 chars for separator
+	// Extract alignment from original or use forced
+	let alignments = forcedAlignments;
+	const separatorRowIndex = rows.findIndex(row => row.every(cell => /^[:\-\s]+$/.test(cell)));
+
+	if (!alignments && separatorRowIndex !== -1) {
+		alignments = rows[separatorRowIndex].map(cell => {
+			const hasLeft = cell.startsWith(':');
+			const hasRight = cell.endsWith(':');
+			if (hasLeft && hasRight) return 'c';
+			if (hasRight) return 'r';
+			return 'l';
+		});
 	}
 
-	// Format each row
-	const formattedLines = rows.map((row, rIndex) => {
+	// Filter out separator row for width calculation
+	const dataRows = rows.filter((row, idx) => idx !== separatorRowIndex);
+	if (dataRows.length === 0) return markdownText;
+
+	if (!alignments) alignments = dataRows[0].map(() => 'l');
+
+	// Calculate max width for each column
+	const colWidths = [];
+	for (let c = 0; c < dataRows[0].length; c++) {
+		let maxLen = 0;
+		for (let r = 0; r < dataRows.length; r++) {
+			if (dataRows[r][c] && dataRows[r][c].length > maxLen) {
+				maxLen = dataRows[r][c].length;
+			}
+		}
+		colWidths[c] = Math.max(maxLen, 3);
+	}
+
+	// Format each data row
+	const formattedDataLines = dataRows.map((row) => {
 		const formattedCells = row.map((cell, cIndex) => {
+			const align = alignments[cIndex];
+			if (align === 'c') {
+				const totalPad = colWidths[cIndex] - cell.length;
+				const leftPad = Math.floor(totalPad / 2);
+				return ' '.repeat(leftPad) + cell + ' '.repeat(totalPad - leftPad);
+			} else if (align === 'r') {
+				return cell.padStart(colWidths[cIndex], ' ');
+			}
 			return cell.padEnd(colWidths[cIndex], ' ');
 		});
 		return '| ' + formattedCells.join(' | ') + ' |';
 	});
 
-	// Format separator row
-	const separatorCells = colWidths.map(w => '-'.repeat(w));
+	// Format separator row with alignment markers
+	const separatorCells = colWidths.map((w, cIndex) => {
+		const align = alignments[cIndex];
+		if (align === 'c') return ':' + '-'.repeat(w - 2) + ':';
+		if (align === 'r') return '-'.repeat(w - 1) + ':';
+		return ':' + '-'.repeat(w - 1);
+	});
 	const separatorLine = '| ' + separatorCells.join(' | ') + ' |';
 
-	// Replace separator if exists
-	if (formattedLines.length >= 2) {
-		formattedLines[1] = separatorLine;
-	}
-
-	return formattedLines.join('\n');
+	// Construct final table
+	const result = [formattedDataLines[0], separatorLine, ...formattedDataLines.slice(1)];
+	return result.join('\n');
 };
 
 const findTableBounds = (doc, position) => {
@@ -115,30 +167,29 @@ const findTableBounds = (doc, position) => {
 	const lines = text.split('\n');
 	const lineNumber = doc.lineAt(position).number;
 
-	// Find table start (header row with | not just separator)
-	let startLine = -1;
-	for (let i = lineNumber; i >= 1; i--) {
-		const line = lines[i - 1];
-		// Check if line contains | and is not a separator row
-		if (line.includes('|') && !/^[\s|: -]+$/.test(line.trim())) {
-			startLine = i;
-			break;
-		}
-		// Stop if we hit a non-table line
-		if (i < lineNumber && !lines[i - 1].includes('|')) break;
+	// Check if current line even has a pipe
+	if (!lines[lineNumber - 1].includes('|')) {
+		return { from: position, to: position, text: '' };
 	}
 
-	if (startLine === -1) return { from: position, to: position, text: '' };
-
-	// Find table end (last row with |)
-	let endLine = startLine;
-	for (let i = startLine; i <= lines.length; i++) {
-		const line = lines[i - 1];
-		if (!line.includes('|')) {
-			endLine = i - 1;
+	// Find the start of the table block (consecutive lines with |)
+	let startLine = lineNumber;
+	for (let i = lineNumber - 1; i >= 1; i--) {
+		if (lines[i - 1].includes('|')) {
+			startLine = i;
+		} else {
 			break;
 		}
-		if (i === lines.length) endLine = i;
+	}
+
+	// Find the end of the table block (consecutive lines with |)
+	let endLine = lineNumber;
+	for (let i = lineNumber + 1; i <= lines.length; i++) {
+		if (lines[i - 1].includes('|')) {
+			endLine = i;
+		} else {
+			break;
+		}
 	}
 
 	const from = doc.line(startLine).from;
@@ -2175,11 +2226,12 @@ createApp({
 		const tableEditorState = ref({
 			isOpen: false,
 			tableData: [],
+			alignments: [],
 			tableFrom: 0,
 			tableTo: 0,
 			rowCount: 0,
 			colCount: 0,
-			activeRow: 2,
+			activeRow: 0,
 			activeCol: 0
 		})
 
@@ -2325,14 +2377,17 @@ createApp({
 		}
 
 		// Table Editor Methods
-		const openTableEditor = (tableData, from, to) => {
+		const openTableEditor = (tableData, alignments, from, to) => {
 			tableEditorState.value = {
 				isOpen: true,
 				tableData: tableData,
+				alignments: alignments,
 				tableFrom: from,
 				tableTo: to,
 				rowCount: tableData.length,
-				colCount: tableData[0] ? tableData[0].length : 0
+				colCount: tableData[0] ? tableData[0].length : 0,
+				activeRow: 0,
+				activeCol: 0
 			}
 		}
 
@@ -2342,7 +2397,8 @@ createApp({
 
 		const saveTableEditor = (editedData) => {
 			if (typeof window.tableEditorView !== 'undefined' && window.tableEditorView) {
-				const markdown = formatMarkdownTable(generateMarkdownTable(editedData))
+				// Pass alignments to formatMarkdownTable to ensure markers are generated
+				const markdown = formatMarkdownTable(generateMarkdownTable(editedData, tableEditorState.value.alignments), tableEditorState.value.alignments)
 				window.tableEditorView.dispatch({
 					changes: {
 						from: tableEditorState.value.tableFrom,
@@ -2370,12 +2426,30 @@ createApp({
 				return
 			}
 			tableEditorState.value.tableData.forEach(row => row.splice(colIndex, 1))
+			tableEditorState.value.alignments.splice(colIndex, 1)
 			tableEditorState.value.colCount--
 			tableEditorState.value.activeCol = Math.min(tableEditorState.value.activeCol, tableEditorState.value.colCount - 1)
 		}
 
+		const setColumnAlignment = (colIndex, align) => {
+			if (tableEditorState.value.alignments) {
+				tableEditorState.value.alignments[colIndex] = align
+			}
+		}
+
 		const deleteActiveRow = () => {
 			deleteTableRow(tableEditorState.value.activeRow)
+		}
+
+		const addTableRow = () => {
+			tableEditorState.value.tableData.push(new Array(tableEditorState.value.colCount).fill(''))
+			tableEditorState.value.rowCount++
+		}
+
+		const addTableCol = () => {
+			tableEditorState.value.colCount++
+			tableEditorState.value.tableData.forEach(row => row.push(''))
+			tableEditorState.value.alignments.push('l')
 		}
 
 		const deleteActiveCol = () => {
@@ -2390,9 +2464,9 @@ createApp({
 			const { from, to, text } = findTableBounds(view.state.doc, pos);
 
 			if (from !== to) {
-				const parsedTable = parseMarkdownTable(text);
-				if (parsedTable) {
-					openTableEditor(parsedTable, from, to);
+				const parsed = parseMarkdownTable(text);
+				if (parsed) {
+					openTableEditor(parsed.rows, parsed.alignments, from, to);
 					return;
 				}
 			}
@@ -2402,7 +2476,7 @@ createApp({
 				['Header 1', 'Header 2'],
 				['Value 1', 'Value 2']
 			];
-			openTableEditor(emptyTable, pos, pos);
+			openTableEditor(emptyTable, ['c', 'c'], pos, pos);
 		};
 
 		const handleEditorDoubleClick = (view, event) => {
@@ -2414,7 +2488,7 @@ createApp({
 
 			const parsedTable = parseMarkdownTable(text)
 			if (parsedTable) {
-				openTableEditor(parsedTable, from, to)
+				openTableEditor(parsedTable.rows, parsedTable.alignments, from, to)
 				return true
 			}
 			return false
@@ -4957,6 +5031,9 @@ createApp({
 			deleteTableCol,
 			deleteActiveRow,
 			deleteActiveCol,
+			addTableRow,
+			addTableCol,
+			setColumnAlignment,
 			handleEditorDoubleClick,
 			// Sort exports
 			sortOption,
