@@ -14,6 +14,7 @@
         :root {
             --nord0: #2E3440;
             --nord1: #3B4252;
+            --nord2: #434C5E;
             --nord3: #4C566A;
             --nord4: #D8DEE9;
             --nord6: #ECEFF4;
@@ -28,52 +29,61 @@
             margin: 0;
             background-color: var(--nord1);
             color: var(--nord4);
-            line-height: 1.7;
+            line-height: 1.6;
             -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
         }
 
         .container {
-            max-width: 900px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 0 20px;
         }
 
         header {
             text-align: center;
-            padding: 60px 20px 50px;
+            padding: 60px 20px 40px;
         }
 
         header h1 {
-            font-size: 3rem;
+            font-size: 3.5rem;
             margin: 0;
             color: var(--nord6);
-            font-weight: 700;
-            letter-spacing: -1.5px;
+            font-weight: 800;
+            letter-spacing: -2px;
         }
 
-        header p {
-            font-size: 1.15rem;
+        header .slogan {
+            font-size: 1.25rem;
             color: var(--nord8);
-            margin: 10px 0 30px;
+            margin: 15px 0 10px;
+            font-weight: 600;
+        }
+
+        header .intro {
+            max-width: 600px;
+            margin: 0 auto 30px;
+            font-size: 1rem;
+            color: var(--nord4);
+            opacity: 0.8;
+            line-height: 1.5;
         }
 
         .cta-buttons {
             display: flex;
             justify-content: center;
-            gap: 15px;
+            gap: 12px;
             flex-wrap: wrap;
         }
 
         .cta-button {
             display: inline-block;
-            padding: 12px 30px;
+            padding: 10px 24px;
             text-decoration: none;
-            border-radius: 8px;
+            border-radius: 6px;
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             transition: all 0.2s ease-in-out;
-            border: 2px solid transparent;
+            border: 1.5px solid transparent;
         }
 
         .primary {
@@ -83,7 +93,7 @@
 
         .primary:hover {
             background-color: var(--nord8);
-            transform: translateY(-2px);
+            transform: translateY(-1.5px);
         }
 
         .secondary {
@@ -94,12 +104,12 @@
         .secondary:hover {
             background-color: var(--nord3);
             color: var(--nord6);
-            transform: translateY(-2px);
+            transform: translateY(-1.5px);
         }
 
         section {
             padding: 50px 0;
-            border-top: 1px solid var(--nord3);
+            border-top: 1px solid rgba(76, 86, 106, 0.4);
         }
 
         h2 {
@@ -108,77 +118,148 @@
             color: var(--nord6);
             margin-bottom: 40px;
             font-weight: 700;
-            letter-spacing: -0.5px;
+            letter-spacing: -0.8px;
         }
 
+        /* Features Section */
         .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
             gap: 25px;
+        }
+
+        @media (max-width: 600px) {
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         .feature-card {
             background-color: var(--nord0);
-            padding: 25px;
-            border-radius: 10px;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            padding: 28px;
+            border-radius: 12px;
+            border: 1px solid rgba(216, 222, 233, 0.05);
             display: flex;
             flex-direction: column;
         }
 
-        .feature-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        .feature-card h3 {
+            font-size: 1.3rem;
+            color: var(--nord7);
+            margin: 0 0 15px 0;
+            font-weight: 700;
         }
 
-        .feature-card h3 {
-            font-size: 1.25rem;
-            color: var(--nord7);
-            margin-top: 0;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
+        .feature-card ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .feature-card li {
+            font-size: 0.92rem;
+            color: var(--nord4);
+            margin-bottom: 8px;
+            padding-left: 18px;
+            position: relative;
+            opacity: 0.9;
+        }
+
+        .feature-card li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--nord9);
+        }
+
+        .feature-card strong {
+            color: var(--nord8);
             font-weight: 600;
         }
 
-        .feature-card p {
-            color: var(--nord4);
-            font-size: 0.95rem;
-            margin-bottom: 0;
-            flex-grow: 1;
-        }
-
-        .tech-list {
-            list-style: none;
-            padding: 0;
+        /* Tech Stack & Vision */
+        .split-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            text-align: center;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
         }
 
-        .tech-list li {
-            background-color: var(--nord3);
+        @media (max-width: 768px) {
+            .split-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .info-box {
+            background: rgba(46, 52, 64, 0.4);
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid rgba(76, 86, 106, 0.3);
+        }
+
+        .info-box h3 {
+            color: var(--nord9);
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+        }
+
+        .tech-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .tech-tag {
+            background: var(--nord2);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: var(--nord6);
+            font-weight: 600;
+        }
+
+        .vision-text {
+            font-size: 0.95rem;
+            line-height: 1.7;
             color: var(--nord4);
-            padding: 12px 18px;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            font-weight: 500;
+            opacity: 0.85;
+        }
+
+        /* Metaphor Section */
+        .metaphor-section {
+            text-align: center;
+            padding: 60px 40px;
+            background: rgba(136, 192, 208, 0.05);
+            border-radius: 16px;
+            margin: 40px 0;
+        }
+
+        .metaphor-quote {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--nord8);
+            font-style: italic;
+            margin-bottom: 15px;
+        }
+
+        .metaphor-sub {
+            font-size: 1.1rem;
+            color: var(--nord4);
+            opacity: 0.8;
         }
 
         footer {
             text-align: center;
-            padding: 30px 20px;
-            margin-top: 40px;
-            border-top: 1px solid var(--nord3);
-            color: var(--nord4);
+            padding: 40px 20px;
+            border-top: 1px solid rgba(76, 86, 106, 0.3);
+            color: var(--nord3);
             font-size: 0.9rem;
         }
 
         footer a {
             color: var(--nord9);
             text-decoration: none;
-            font-weight: 500;
         }
 
         footer a:hover {
@@ -192,95 +273,103 @@
     <header>
         <div class="container">
             <h1>SHYNOTE</h1>
-            <p>당신의 생각을 담는 조용하고 미니멀한 마크다운 노트</p>
+            <p class="slogan">✍️ 오직 글쓰기에만 집중하는 공간, SHYNOTE</p>
+            <p class="intro">SHYNOTE는 복잡한 설정 없이 사용자가 온전히 글쓰기에만 몰입할 수 있도록 설계된 경량 웹 기반 마크다운 노트 어플리케이션입니다.</p>
             <div class="cta-buttons">
-                <a href="https://shynote.vercel.app/" class="cta-button primary">앱 실행하기</a>
+                <a href="https://shynote.vercel.app/" class="cta-button primary">앱 실행</a>
                 <a href="https://shynote.vercel.app/?mode=guest" class="cta-button secondary">게스트 모드</a>
-                <a href="https://github.com/cdecl/shynote" class="cta-button secondary">GitHub 소스코드</a>
+                <a href="https://github.com/cdecl/shynote" class="cta-button secondary">GitHub Source</a>
             </div>
         </div>
     </header>
 
     <main class="container">
-        <section id="features">
-            <h2>주요 기능</h2>
+        <section id="key-features">
+            <h2>🔑 주요 기능 (Key Features)</h2>
             <div class="features-grid">
                 <div class="feature-card">
-                    <h3>🚀 고성능 에디터 코어 & 슬래시 커맨드</h3>
-                    <p>CodeMirror 6 엔진을 기반으로 `/` 키를 이용한 슬래시 커맨드, 자동 완성, VS Code 키맵, 다중 커서 등 강력한 편집 환경을 제공합니다. 대용량 문서도
-                        부드럽게 처리하는 최적화된 성능을 경험하세요.</p>
+                    <h3>1. 강력한 편집 경험 (Powerful Editor)</h3>
+                    <ul>
+                        <li><strong>CodeMirror 6 엔진</strong>: 최신 엔진을 탑재하여 대용량 문서에서도 끊김 없는 성능과 확장성을 제공합니다.</li>
+                        <li><strong>개발 환경 수준의 편집</strong>: 다중 커서, 줄 이동(Alt+↑/↓), 정규식 기반 검색/바꾸기, 자동 줄바꿈, 구문 강조 기능을 지원합니다.
+                        </li>
+                        <li><strong>슬래시 커맨드 (/)</strong>: `/` 키 하나로 날짜, 시간, 테이블, 코드 블록을 즉시 삽입할 수 있습니다.</li>
+                        <li><strong>테이블 에디터</strong>: 복잡한 마크다운 테이블을 엑셀처럼 직관적인 모달 창에서 편집하고, 열 너비 자동 포맷팅 기능을 통해 가독성을 높입니다.
+                        </li>
+                        <li><strong>스마트 툴바</strong>: 텍스트 선택 시 나타나는 플로팅 툴바와 모바일 최적화 스티키 툴바로 서식을 빠르게 적용합니다.</li>
+                    </ul>
                 </div>
                 <div class="feature-card">
-                    <h3>💾 로컬 우선(Local-First) & 동기화</h3>
-                    <p>작성하는 모든 순간 1초마다 IndexedDB에 자동 저장되며, 네트워크 연결 시 백그라운드에서 지능형 동기화가 수행됩니다. `navigator.locks`를 통한 탭 간
-                        충돌 방지 기술이 적용되어 있습니다.</p>
+                    <h3>2. 데이터 안정성 및 동기화 (Local-first & Sync)</h3>
+                    <ul>
+                        <li><strong>1초 자동 저장</strong>: 모든 작업 리스트와 노트 내용은 IndexedDB를 통해 1초마다 로컬에 안전하게 저장됩니다.</li>
+                        <li><strong>지능형 백그라운드 동기화</strong>: 네트워크가 복구되면 보류된 변경 사항(Pending Logs)을 순차적으로 서버와 동기화합니다.</li>
+                        <li><strong>오프라인 작업 및 PWA</strong>: 네트워크 없이도 모든 기능을 사용할 수 있으며, PWA 앱으로 설치하여 독립된 환경에서 실행 가능합니다.
+                        </li>
+                    </ul>
                 </div>
                 <div class="feature-card">
-                    <h3>🗂️ 다중 선택 & 휴지통(Trash) 시스템</h3>
-                    <p>무한 계층 폴더 구조를 지원하며, `Cmd/Ctrl` 키를 이용한 다중 선택(Multi-select)으로 노트를 일괄 이동/삭제할 수 있습니다. 실수로 삭제된 데이터는
-                        휴지통에서 안전하게 복구 가능합니다.</p>
+                    <h3>3. 직관적인 파일 및 검색 관리 (Intelligent Management)</h3>
+                    <ul>
+                        <li><strong>카테고리 폴더 시스템</strong>: 노트를 성격에 따라 폴더별로 명확하게 분류하고 관리할 수 있습니다.</li>
+                        <li><strong>고급 검색 팔레트</strong>: `Cmd+P` 단축키로 검색 팔레트를 열어 노트 제목과 본문을 정규식으로 빠르게 탐색합니다.</li>
+                        <li><strong>드래그 앤 드롭 & 다중 선택</strong>: 마우스나 터치로 노트를 이동하고, 여러 노트를 한 번에 일괄 작업(이동/삭제)할 수 있습니다.</li>
+                        <li><strong>노트 고정 (Pinning)</strong>: 중요한 문서는 목록 최상단에 고정하여 즉시 접근할 수 있습니다.</li>
+                    </ul>
                 </div>
                 <div class="feature-card">
-                    <h3>🎨 GFM 렌더링 & Mermaid 차트</h3>
-                    <p>GitHub Flavored Markdown 스타일의 깔끔한 미리보기를 제공하며, `mermaid` 코드 블록을 통해 흐름도, 시퀀스 다이어그램 등 복잡한 차트를 에디터
-                        내에서 즉시 시각화할 수 있습니다.</p>
+                    <h3>4. 보안 및 간편한 공유 (Security & Sharing)</h3>
+                    <ul>
+                        <li><strong>Google OAuth 2.0</strong>: 가입 절차 없이 안전한 구글 로그인으로 시작하세요.</li>
+                        <li><strong>게스트 모드</strong>: 로그인 없이 앱의 모든 기능을 인메모리 환경에서 미리 체험해볼 수 있습니다.</li>
+                        <li><strong>고유 링크 공유</strong>: 특정 노트를 읽기 전용 링크로 생성하여 외부에 간편하게 공유할 수 있습니다.</li>
+                    </ul>
                 </div>
                 <div class="feature-card">
-                    <h3>🌟 Ultra-Compact UI & 커맨드 팔레트</h3>
-                    <p>헤더 높이를 24px로 최소화하여 콘텐츠 집중도를 극대화했습니다. `Cmd+P` 커맨드 팔레트를 통해 마우스 없이 모든 기능을 제어하고, 모바일에서는 직관적인 스와이프
-                        제스처를 지원합니다.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>🔐 OAuth 2.0 & 즉시 체험하기</h3>
-                    <p>Google OAuth 2.0 리다이렉트 인증으로 안전하고 끊김 없는 로그인을 제공합니다. 로그인 부담 없는 '게스트 모드'를 통해 인메모리 가상 백엔드 위에서 즉시 앱을
-                        경험해볼 수 있습니다.</p>
+                    <h3>5. 극한의 미니멀리즘 디자인 (Minimalist UX)</h3>
+                    <ul>
+                        <li><strong>Nord 테마 & 다크 모드</strong>: 눈의 피로를 최소화하는 Nord 테마 기반의 아름다운 UI를 제공합니다.</li>
+                        <li><strong>Ultra-Compact UI</strong>: 헤더와 툴바의 높이를 24px로 최소화하여 오직 콘텐츠에만 집중할 수 있는 공간을 확보했습니다.
+                        </li>
+                    </ul>
                 </div>
             </div>
         </section>
 
-        <section id="philosophy">
-            <h2>개발 철학</h2>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <h3>🌐 Local-First Architecture</h3>
-                    <p>네트워크 연결에 구애받지 않는 안정적인 경험을 제공합니다. 모든 데이터는 먼저 브라우저(IndexedDB)에 저장된 후, 백그라운드에서 서버와 동기화되어 데이터의 소유권을
-                        사용자에게 돌려줍니다.</p>
+        <section id="tech-and-vision">
+            <div class="split-grid">
+                <div class="info-box">
+                    <h3>🛠 기술적 기반 (Tech Stack)</h3>
+                    <div class="tech-tags">
+                        <span class="tech-tag">Vue.js 3</span>
+                        <span class="tech-tag">TailwindCSS</span>
+                        <span class="tech-tag">CodeMirror 6</span>
+                        <span class="tech-tag">FastAPI</span>
+                        <span class="tech-tag">PostgreSQL</span>
+                        <span class="tech-tag">IndexedDB</span>
+                        <span class="tech-tag">PWA</span>
+                    </div>
                 </div>
-                <div class="feature-card">
-                    <h3>⚡️ No-Build Vanilla Stack</h3>
-                    <p>복잡한 번들링 도구 없이 브라우저 네이티브 ES Modules를 적극 활용합니다. Vanilla JS와 CDN 기반 Vue.js를 통해 빠르고 가벼우며 유지보수가 용이한
-                        프론트엔드를 지향합니다.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>✍️ Best-in-class Editor</h3>
-                    <p>단순한 `textarea`의 한계를 넘어, CodeMirror 6를 도입하여 데스크톱 수준의 강력한 편집 경험(VSCode 키맵, 다중 커서 등)을 웹에서 구현하는 것을
-                        목표로 합니다.</p>
+                <div class="info-box">
+                    <h3>🌟 앞으로의 진화 (Future Vision)</h3>
+                    <p class="vision-text">소스 코드의 강력한 로컬 저장 기술을 바탕으로, 향후 전역 검색 강화, 다양한 형식(PDF, HTML) 내보내기, 버전 히스토리(스냅샷)
+                        복구 등을 통해 더욱 완성도 높은 경험을 제공할 예정입니다.</p>
                 </div>
             </div>
         </section>
 
-        <section id="tech-stack">
-            <h2>기술 스택</h2>
-            <ul class="tech-list">
-                <li>Vanilla JS (ESM)</li>
-                <li>Vue.js 3 (CDN)</li>
-                <li>FastAPI</li>
-                <li>TailwindCSS</li>
-                <li>CodeMirror 6</li>
-                <li>IndexedDB</li>
-                <li>PostgreSQL</li>
-                <li>SQLAlchemy</li>
-                <li>uv</li>
-                <li>git</li>
-                <li>Vercel</li>
-            </ul>
+        <section id="metaphor">
+            <div class="metaphor-section">
+                <p class="metaphor-quote">"작성하는 순간 모든 것을 기록하고 정리하는 스마트한 디지털 비서"</p>
+                <p class="metaphor-sub">사용자는 그저 글을 쓰기만 하면 됩니다. 나머지는 SHYNOTE가 뒤에서 묵묵히, 그리고 완벽하게 처리할 것입니다.</p>
+            </div>
         </section>
     </main>
 
     <footer>
         <div class="container">
-            <p>&copy; 2026 SHYNOTE. Made by <a href="https://github.com/cdecl" target="_blank">cdecl</a>. | <a
-                    href="./walkthrough.md">기능 둘러보기</a></p>
+            <p>&copy; 2026 SHYNOTE Project. Made by <a href="https://github.com/cdecl" target="_blank">cdecl</a>. | <a
+                    href="./walkthrough.md">Docs</a></p>
         </div>
     </footer>
 
