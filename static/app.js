@@ -3457,7 +3457,28 @@ createApp({
 				}
 			}
 
-			// Fallback: first note at the top
+			// Fallback: Select note with best usage score (frequency + recency)
+			let bestNote = null
+			let bestScore = -1
+
+			for (const note of notes.value) {
+				const usage = getNoteUsage(note.id)
+				// Score = frequency * 100 + recency bonus (max 1000 points for recent usage)
+				const recencyBonus = usage.lastUsed > 0 ? Math.max(0, 1000 - (Date.now() - usage.lastUsed) / 86400000) : 0
+				const score = usage.count * 100 + recencyBonus
+
+				if (score > bestScore) {
+					bestScore = score
+					bestNote = note
+				}
+			}
+
+			if (bestNote) {
+				selectNote(bestNote)
+				return
+			}
+
+			// Final fallback: first note in sorted order
 			// First check folders in sorted order
 			const allSortedFolders = sortItems(folders.value)
 			for (const folder of allSortedFolders) {
@@ -4775,20 +4796,12 @@ createApp({
 
 		const commands = computed(() => {
 			const list = [
+				// Basic Commands (All Modes)
 				{ id: 'nav.note', title: 'Go to Note...', icon: 'search', desc: '파일 검색 및 이동', handler: () => setPaletteMode('notes'), shortcut: 'Cmd+P' },
 				{ id: 'nav.folder', title: 'Go to Folder...', icon: 'folder_open', desc: '폴더 이동', handler: () => setPaletteMode('folders') },
 				{ id: 'note.new', title: 'Create New Note', icon: 'add_circle', desc: '새 노트 생성', handler: () => { createNote(); closeCommandPalette() }, shortcut: 'Cmd+Shift+N' },
-				{
-					id: 'note.editTable', title: 'Edit Table', icon: 'table_chart', desc: '현재 표 편집 또는 신규 생성', handler: () => {
-						triggerTableEditor();
-						closeCommandPalette();
-					}
-				},
 				{ id: 'view.zen', title: 'Toggle Sidebar', icon: 'menu_open', desc: '사이드바 토글 On/Off', handler: () => { toggleSidebar(); closeCommandPalette() } },
-				{ id: 'view.mode', title: 'Switch View Mode', icon: 'view_agenda', desc: '보기 모드 전환 (Split / Edit / Preview)', handler: () => { cycleViewMode(); closeCommandPalette() } },
 				{ id: 'view.dark', title: 'Toggle Dark Mode', icon: 'dark_mode', desc: '다크 모드 전환', handler: () => { toggleDarkMode(); closeCommandPalette() } },
-				{ id: 'view.zoom_in', title: 'Zoom In', icon: 'zoom_in', desc: '글자 크기 확대', handler: () => { adjustZoom(1); closeCommandPalette() } },
-				{ id: 'view.zoom_out', title: 'Zoom Out', icon: 'zoom_out', desc: '글자 크기 축소', handler: () => { adjustZoom(-1); closeCommandPalette() } },
 				{ id: 'sys.sync', title: 'Sync Now', icon: 'sync', desc: '강제 동기화 수행 (Pull Only)', handler: () => { fetchNotes(true); closeCommandPalette() } },
 				{ id: 'sys.clearCache', title: 'Clear Local Cache', icon: 'delete_sweep', desc: '캐시 및 데이터 초기화', handler: () => { clearLocalCache(); closeCommandPalette() } },
 				{ id: 'sys.reload', title: 'Reload App', icon: 'refresh', desc: '앱 새로고침', handler: () => window.location.reload() }
@@ -4796,7 +4809,7 @@ createApp({
 
 			// Contextual Commands (Editor Mode Only)
 			if (rightPanelMode.value === 'edit' && selectedNote.value) {
-				list.splice(3, 0,
+				list.push(
 					{
 						id: 'note.rename', title: 'Rename Note', icon: 'edit', desc: '제목 수정', handler: () => {
 							closeCommandPalette()
@@ -4810,7 +4823,14 @@ createApp({
 					},
 					{ id: 'note.move', title: 'Move Note', icon: 'drive_file_move', desc: '폴더 이동', handler: () => setPaletteMode('move-dest') },
 					{ id: 'note.delete', title: 'Delete Note', icon: 'delete', desc: '파일 삭제', handler: () => { requestDelete(selectedNote.value.id, 'note'); closeCommandPalette() }, shortcut: 'Cmd+Backspace' },
-					{ id: 'sys.info', title: 'Show File Info', icon: 'info', desc: '글자수, 수정일 등 상세 정보', handler: () => { closeCommandPalette(); setTimeout(() => showFileInfo(), 100) } },
+					{ id: 'view.mode', title: 'Switch View Mode', icon: 'view_agenda', desc: '보기 모드 전환 (Split / Edit / Preview)', handler: () => { cycleViewMode(); closeCommandPalette() } },
+					{
+						id: 'note.editTable', title: 'Edit Table', icon: 'table_chart', desc: '현재 표 편집 또는 신규 생성', handler: () => {
+							triggerTableEditor();
+							closeCommandPalette();
+						}
+					},
+					{ id: 'sys.info', title: 'Show File Info', icon: 'info', desc: '글자수, 수정일 등 상세 정보', handler: () => { closeCommandPalette(); setTimeout(() => showFileInfo(), 100) } }
 				)
 			}
 

@@ -99,25 +99,96 @@ The main panel switches between **List Mode** and **Editor Mode**.
 
 ---
 
-## 3. Command Palette (Global Overlay)
+## 3. Command Palette (전역 오버레이)
 
-### Overview
-*Modal dialog activated by `Cmd+P` / `Ctrl+P`.*
+### 개요
+*`Cmd+P` / `Ctrl+P` 또는 헤더의 `menu_open` 버튼으로 활성화되는 모달 다이얼로그*
 
-### Structure
-- **Backdrop**: Fixed overlay (`fixed inset-0 z-[1000]`)
-- **Container**: Centered modal (`flex items-center justify-center`)
-- **Max Size**: `max-w-2xl` width, `max-h-[60vh]` height
+### 구조
+- **배경**: 고정 오버레이 (`fixed inset-0 z-[1000]`)
+- **컨테이너**: 중앙 정렬 모달 (`flex items-center justify-center`)
+- **최대 크기**: `max-w-2xl` 너비, `max-h-[60vh]` 높이
 
-### Components
-- **Search Input**: Text input with placeholder
-- **Results List**: Scrollable list of filtered items
-- **Keyboard Navigation**: Arrow keys, Enter, Escape
+### 구성 요소
+- **검색 입력**: 플레이스홀더가 있는 텍스트 입력
+- **결과 목록**: 필터링된 항목의 스크롤 가능한 목록
+- **키보드 탐색**: 화살표 키, Enter, Escape
 
-### Modes
-| Mode | Purpose |
-|------|---------|
-| commands | Command search/execution |
-| notes | Note search/selection |
-| folders | Folder navigation |
-| move-dest | Note relocation |
+### 모드
+| 모드 | 용도 |
+|------|------|
+| commands | 명령 검색/실행 |
+| notes | 노트 검색/선택 |
+| folders | 폴더 탐색 |
+| move-dest | 노트 이동 |
+
+### 메뉴 구조 (Commands 모드)
+
+#### 기본 메뉴 (모든 화면 모드, 8개)
+*리스트 뷰와 에디터 모드 모두에서 표시*
+
+1. **Go to Note...** (`Cmd+P`)
+   - 아이콘: `search`
+   - 설명: 파일 검색 및 이동
+
+2. **Go to Folder...**
+   - 아이콘: `folder_open`
+   - 설명: 폴더 이동
+
+3. **Create New Note** (`Cmd+Shift+N`)
+   - 아이콘: `add_circle`
+   - 설명: 새 노트 생성
+
+4. **Toggle Sidebar**
+   - 아이콘: `menu_open`
+   - 설명: 사이드바 토글 On/Off
+
+5. **Toggle Dark Mode**
+   - 아이콘: `dark_mode`
+   - 설명: 다크 모드 전환
+
+6. **Sync Now**
+   - 아이콘: `sync`
+   - 설명: 강제 동기화 수행 (Pull Only)
+
+7. **Clear Local Cache**
+   - 아이콘: `delete_sweep`
+   - 설명: 캐시 및 데이터 초기화
+
+8. **Reload App**
+   - 아이콘: `refresh`
+   - 설명: 앱 새로고침
+
+#### 에디터 모드 전용 메뉴 (6개 추가)
+*`rightPanelMode === 'edit' && selectedNote` 조건에서만 표시*
+
+1. **Rename Note** (`F2`)
+   - 아이콘: `edit`
+   - 설명: 제목 수정
+
+2. **Move Note**
+   - 아이콘: `drive_file_move`
+   - 설명: 폴더 이동
+
+3. **Delete Note** (`Cmd+Backspace`)
+   - 아이콘: `delete`
+   - 설명: 파일 삭제
+
+4. **Switch View Mode**
+   - 아이콘: `view_agenda`
+   - 설명: 보기 모드 전환 (Split / Edit / Preview)
+
+5. **Edit Table**
+   - 아이콘: `table_chart`
+   - 설명: 현재 표 편집 또는 신규 생성
+
+6. **Show File Info**
+   - 아이콘: `info`
+   - 설명: 글자수, 수정일 등 상세 정보
+
+> **참고**: 글자 크기 조절(Zoom In/Out)은 에디터 헤더의 Font Size 선택기(`text_fields` 아이콘 + `expand_more` 드롭다운)를 통해 제어됩니다.
+
+### 메뉴 표시 규칙
+- **리스트 뷰**: 기본 메뉴 8개만 표시
+- **에디터 모드 (노트 선택됨)**: 총 14개 메뉴 표시 (기본 8개 + 에디터 전용 6개)
+- **에디터 모드 (노트 미선택)**: 기본 메뉴 8개만 표시

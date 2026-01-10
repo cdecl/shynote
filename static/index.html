@@ -1085,17 +1085,22 @@
                 <!-- Toolbar -->
                 <div v-if="rightPanelMode !== 'list' && selectedNote"
                     class="h-7 border-b border-slate-100 dark:border-[#434C5E] bg-white/80 dark:bg-[#24292F]/80 backdrop-blur-sm flex justify-between items-center pl-1 pr-2 flex-shrink-0 transition-colors duration-300 relative z-10 md:z-40">
-                    <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2">
                         <button @click.stop="toggleSidebar" v-if="!isSidebarOpen"
                             class="p-0.5 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded transition-all flex-shrink-0"
                             title="Open Sidebar">
-                            <span class="material-symbols-rounded text-[16px]">{{ isMobile ? 'chevron_left' :
+                            <span class="material-symbols-rounded text-[18px]">{{ isMobile ? 'chevron_left' :
                                 'view_sidebar' }}</span>
                         </button>
                         <button @click="toggleRightPanelMode()"
                             class="p-0.5 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded transition-all flex-shrink-0"
                             title="Return to Folder View">
-                            <span class="material-symbols-rounded text-[16px]">drive_folder_upload</span>
+                            <span class="material-symbols-rounded text-[18px]">drive_folder_upload</span>
+                        </button>
+                        <button @click="openCommandPalette()"
+                            class="p-0.5 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded transition-all flex-shrink-0"
+                            title="Command Palette (Cmd+Shift+P)">
+                            <span class="material-symbols-rounded text-[22px]">menu_open</span>
                         </button>
 
                         <!-- View Mode Tabs (Moved to Header) -->
@@ -1131,7 +1136,7 @@
                             <button @click.stop="requestDelete(selectedNote.id, 'note')"
                                 class="p-0.5 text-slate-400 dark:text-[#D8DEE9] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-all flex-shrink-0"
                                 title="Delete Note">
-                                <span class="material-symbols-rounded text-[16px]">delete</span>
+                                <span class="material-symbols-rounded text-[18px]">delete</span>
                             </button>
 
                             <!-- Toolbar Confirmation Popup (Teleported to Body to avoid clipping) -->
@@ -1223,10 +1228,15 @@
                                         :
                                         'view_sidebar' }}</span>
                                 </button>
-                                <button v-if="selectedNote" @click="toggleRightPanelMode()"
-                                    class="p-0.5 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded transition-all"
+                                <button @click="toggleRightPanelMode()" :disabled="!selectedNote"
+                                    class="p-0.5 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-400"
                                     title="Return to Editor">
-                                    <span class="material-symbols-rounded text-[16px]">edit_note</span>
+                                    <span class="material-symbols-rounded text-[18px]">edit_note</span>
+                                </button>
+                                <button @click="openCommandPalette()"
+                                    class="p-0.5 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded transition-all"
+                                    title="Command Palette (Cmd+Shift+P)">
+                                    <span class="material-symbols-rounded text-[22px]">menu_open</span>
                                 </button>
                                 <!-- Folder Info Removed -->
                                 <!-- Controls: Pin, Settings, About -->
@@ -1821,11 +1831,6 @@
                                                     class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors text-slate-500 dark:text-slate-400"
                                                     title="Find (Cmd+F)">
                                                     <span class="material-symbols-rounded text-[20px]">search</span>
-                                                </button>
-                                                <button @mousedown.prevent="openCommandPalette()"
-                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors text-slate-500 dark:text-slate-400"
-                                                    title="Command Palette (Cmd+Shift+P)">
-                                                    <span class="material-symbols-rounded text-[20px]">apps</span>
                                                 </button>
                                             </div>
 
