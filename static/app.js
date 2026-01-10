@@ -198,6 +198,45 @@ const findTableBounds = (doc, position) => {
 	return { from, to, text: text.substring(from, to) };
 };
 
+// Simple Fuzzy Matching with Scoring
+const fuzzyScore = (text, query) => {
+	if (!query) return 1;
+	const t = text.toLowerCase();
+	const q = query.toLowerCase();
+
+	if (t === q) return 1000;
+	if (t.startsWith(q)) return 800;
+	if (t.includes(q)) return 600;
+
+	let score = 0;
+	let queryIdx = 0;
+	let lastMatchIdx = -1;
+
+	for (let i = 0; i < t.length; i++) {
+		if (t[i] === q[queryIdx]) {
+			// Base match
+			score += 10;
+
+			// Consecutive match bonus
+			if (lastMatchIdx === i - 1) score += 20;
+
+			// Start of word bonus
+			if (i === 0 || t[i - 1] === ' ' || t[i - 1] === '_' || t[i - 1] === '-' || t[i - 1] === '/') {
+				score += 30;
+			}
+
+			lastMatchIdx = i;
+			queryIdx++;
+
+			if (queryIdx === q.length) {
+				// Bonus for shorter text (more specific match)
+				return score + (100 / t.length);
+			}
+		}
+	}
+	return 0; // No match
+};
+
 createApp({
 	setup() {
 		const STORAGE_KEYS = {
@@ -211,7 +250,8 @@ createApp({
 
 			SPLIT_RATIO: 'shynote_split_ratio',
 			LAST_FOLDER_ID: 'shynote_last_folder_id',
-			LAST_PANEL_MODE: 'shynote_last_panel_mode'
+			LAST_PANEL_MODE: 'shynote_last_panel_mode',
+			NOTE_USAGE_DATA: 'shynote_note_usage_v1'
 		}
 
 
@@ -252,6 +292,28 @@ createApp({
 		const saveUserSetting = (key, value) => {
 			localStorage.setItem(getUserStorageKey(key), String(value))
 		}
+
+		const trackNoteUsage = (id) => {
+			if (!id) return;
+			try {
+				const key = STORAGE_KEYS.NOTE_USAGE_DATA;
+				const dataStr = localStorage.getItem(getUserStorageKey(key)) || '{}';
+				const data = JSON.parse(dataStr);
+				if (!data[id]) data[id] = { count: 0, lastUsed: 0 };
+				data[id].count += 1;
+				data[id].lastUsed = Date.now();
+				localStorage.setItem(getUserStorageKey(key), JSON.stringify(data));
+			} catch (e) { console.error("Tracking error", e); }
+		};
+
+		const getNoteUsage = (id) => {
+			try {
+				const key = STORAGE_KEYS.NOTE_USAGE_DATA;
+				const dataStr = localStorage.getItem(getUserStorageKey(key)) || '{}';
+				const data = JSON.parse(dataStr);
+				return data[id] || { count: 0, lastUsed: 0 };
+			} catch (e) { return { count: 0, lastUsed: 0 }; }
+		};
 
 		const loadUserSettings = () => {
 			// Settings that depend on user
@@ -3501,6 +3563,9 @@ createApp({
 				return;
 			}
 
+			// Track Usage
+			if (note && note.id) trackNoteUsage(note.id);
+
 			// Switch to Edit Mode
 			rightPanelMode.value = 'edit'
 
@@ -4760,7 +4825,7 @@ createApp({
 		})
 
 		const filteredPaletteItems = computed(() => {
-			const query = paletteQuery.value.toLowerCase()
+			const query = paletteQuery.value.trim().toLowerCase()
 
 			if (paletteMode.value === 'commands') {
 				return commands.value.filter(c =>
@@ -4770,9 +4835,40 @@ createApp({
 			}
 
 			if (paletteMode.value === 'notes') {
-				return sortedNotes.value.filter(n => n.title.toLowerCase().includes(query)).map(n => ({
-					id: n.id, title: n.title, icon: 'description', desc: n.folder_id ? folders.value.find(f => f.id === n.folder_id)?.name : 'Inbox',
-					handler: () => { selectNote(n); closeCommandPalette() }
+				const results = notes.value.map(n => {
+					const usage = getNoteUsage(n.id);
+					const score = query ? fuzzyScore(n.title, query) : 0;
+					return {
+						note: n,
+						score,
+						count: usage.count,
+						lastUsed: usage.lastUsed
+					};
+				});
+
+				// If no query, show recently/frequently used notes
+				// If query, filter by score > 0
+				const filtered = query
+					? results.filter(r => r.score > 0)
+					: results.sort((a, b) => b.lastUsed - a.lastUsed || b.count - a.count).slice(0, 10);
+
+				if (query) {
+					filtered.sort((a, b) => {
+						// 1. Fuzzy Score Priority
+						if (Math.abs(b.score - a.score) > 5) return b.score - a.score;
+						// 2. Usage Frequency
+						if (b.count !== a.count) return b.count - a.count;
+						// 3. Recency
+						return b.lastUsed - a.lastUsed;
+					});
+				}
+
+				return filtered.map(r => ({
+					id: r.note.id,
+					title: r.note.title || 'Untitled',
+					icon: 'description',
+					desc: r.note.folder_id ? folders.value.find(f => f.id === r.note.folder_id)?.name : 'Inbox',
+					handler: () => { selectNote(r.note); closeCommandPalette() }
 				}))
 			}
 
