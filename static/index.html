@@ -548,7 +548,7 @@
 
         <!-- Table Editor Modal -->
         <div v-if="tableEditorState.isOpen"
-            class="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center backdrop-blur-sm"
+            class="fixed inset-0 bg-black/50 z-[1001] flex items-center justify-center backdrop-blur-sm"
             @click.self="closeTableEditor">
             <div
                 class="bg-white dark:bg-[#2E3440] rounded-xl shadow-2xl w-[90vw] max-w-lg max-h-[80vh] flex flex-col border border-slate-300 dark:border-slate-600">
@@ -1872,7 +1872,7 @@
                                                     title="Task List">
                                                     <span class="material-symbols-rounded text-[18px]">check_box</span>
                                                 </button>
-                                                <button @mousedown.prevent="triggerTableEditor()"
+                                                <button @click="triggerTableEditor()"
                                                     class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
                                                     title="Table (Create/Edit)">
                                                     <span
