@@ -1,0 +1,14 @@
+services:
+  shynote:
+    build: .
+    image: shynote:latest
+    container_name: shynote
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./SHYNOTE.db:/app/SHYNOTE.db
+    restart: unless-stopped
+    # docker run -d p 8000:8000 --rm --name shynote --env-file .env shynote:latest 
+
