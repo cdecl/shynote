@@ -10,6 +10,7 @@
 ## 2. 사이드바 구성요소 (Sidebar Components)
 *   **시스템 폴더 (System Folders)**: `Inbox` (Home), `Trash` (휴지통) 등 기본 제공 폴더 영역입니다.
 *   **사용자 폴더 (User Folders)**: 사용자가 생성한 `My Folders` 목록 영역입니다.
+*   **최근 작업 노트 (Recent Notes)**: 최근에 열어본 5개의 노트를 빠르게 접근할 수 있도록 보여주는 영역입니다.
 *   **하단 바 (Sidebar Footer)**: 설정(Settings), 정보(About) 버튼이 위치한 하단 영역입니다.
 
 ## 3. 메인 패널 모드 (Main Panel Modes)
@@ -32,6 +33,7 @@
     *   **Editor**: 편집 전용 모드.
     *   **Preview**: 읽기 전용 모드.
     *   **Split**: 편집 화면과 미리보기를 동시에 표시하는 모드.
+*   **백링크 (Backlinks)**: 현재 노트를 언급(Link)하고 있는 다른 노트들의 목록을 보여주는 영역입니다. 에디터 하단에 위치합니다.
 
 ## 4. Command Palette (파레트 메뉴)
 

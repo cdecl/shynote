@@ -25,6 +25,10 @@ This document lists the UI elements currently present in `index.html`, organized
 - **Inbox**: Item (Icon: `home`, Name: "Inbox", New Note Button)
 - **My Folders**: Section Header + "New Folder" Button
   - **Folder Items**: List (Icon: `folder`, Name: User Defined, Count, Edit/Delete Actions)
+- **Recent Notes**:
+  - **Header**: "Recent Notes"
+  - **List**: Up to 5 most recently accessed notes.
+  - **Item**: Note Icon + Title, Click to open, Highlighted if active.
 - **Trash**: Item (Fixed at bottom section, Icon: `delete`, Name: "Trash", Empty Trash Action)
 
 ### Footer
@@ -80,6 +84,10 @@ The main panel switches between **List Mode** and **Editor Mode**.
 - **Conflict Banner**: *Visible on sync conflict* (Keep Local / Use Server)
 - **Title Input**: Large Text Input (H1 style) + Metadata (Date, Char Count, Folder Selector)
 - **Text Area**: CodeMirror Editor / Preview Pane (Split view support)
+- **Backlinks Section**: *Located at the bottom of the editor*
+  - **Header**: "Backlinks" + Count
+  - **Valid Links**: List of notes linking to this note (Title, Date).
+  - **Broken Links**: List of non-existent note references (marked with ⚠️).
 
 #### Editor Bottom Area
 - **Formatting Toolbar**:
