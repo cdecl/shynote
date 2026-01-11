@@ -3,7 +3,7 @@ import { LocalDB } from "./local_db.js";
 
 const { createApp, ref, computed, watch, nextTick, onMounted, onUnmounted, onBeforeUnmount } = Vue;
 
-const { EditorView, keymap, highlightSpecialChars, drawSelection, dropCursor, crosshairCursor, lineNumbers, highlightActiveLineGutter, placeholder, rectangularSelection } = CodeMirror;
+const { EditorView, keymap, highlightSpecialChars, drawSelection, dropCursor, crosshairCursor, lineNumbers, highlightActiveLineGutter, placeholder, rectangularSelection, Decoration, ViewPlugin, StateField } = CodeMirror;
 const { EditorState, Compartment, EditorSelection } = CodeMirror;
 const { markdown, markdownLanguage } = CodeMirror;
 const { languages } = CodeMirror;
@@ -425,6 +425,28 @@ createApp({
 		onMounted(() => {
 			window.addEventListener('resize', handleWindowResize)
 			initMobileDragDrop()
+
+			// Backlink click handler for preview + Close menus on outside click
+			document.addEventListener('click', (e) => {
+				// Handle preview backlinks
+				const link = e.target.closest('.backlink');
+				if (link) {
+					e.preventDefault();
+					const noteId = link.dataset.noteId;
+					if (noteId) {
+						selectNoteById(noteId);
+					}
+				}
+
+				// Close backlinks menu when clicking outside
+				if (showBacklinksMenu.value) {
+					const inBacklinksMenu = e.target.closest('.z-50') && e.target.closest('.max-h-80');
+					const isIdClick = e.target.classList.contains('font-mono') && e.target.closest('.relative');
+					if (!inBacklinksMenu && !isIdClick) {
+						showBacklinksMenu.value = false;
+					}
+				}
+			});
 		})
 
 		onUnmounted(() => {
@@ -1459,7 +1481,7 @@ createApp({
 		const themeCompartment = new Compartment()
 		const wordWrapCompartment = new Compartment()
 
-		const initEditor = () => {
+		const initEditor = () => { // Gemini was here
 			if (!editorRef.value) return
 			if (editorView.value) editorView.value.destroy()
 
@@ -1486,7 +1508,6 @@ createApp({
 				return
 			}
 
-			// Dynamic Variable Completion
 			const variableCompletion = (context) => {
 				let word = context.matchBefore(/\/(\w*)$/)
 				if (!word) return null
@@ -1547,6 +1568,104 @@ createApp({
 				}
 			}
 
+
+
+			const backlinkCompletion = (context) => {
+				let before = context.matchBefore(/\[\[([^\]]*)$/);
+				if (!before) return null;
+
+				// IME 조합 중에도 [[ 가 감지되면 자동 완성 표시
+				// IME가 끝나면 matchBefore가 올바르게 작동하므로 항상 표시
+				const query = before.text.slice(2);
+				const hasOpeningBrackets = before.text.startsWith('[[');
+
+				let options = notes.value.map(note => {
+					const score = query ? fuzzyScore(note.title || 'Untitled', query) : 1;
+					return {
+						label: note.title || "Untitled",
+						apply: `${note.title || "Untitled"}|id:${note.id}`,
+						type: "link",
+						detail: `id: ${note.id.slice(0, 8)}...`,
+						score: score
+					};
+				})
+					.filter(option => option.score > 0)
+					.sort((a, b) => {
+						if (query) return b.score - a.score;
+						return 0;
+					});
+
+				return {
+					from: before.from + (hasOpeningBrackets ? 2 : 0),
+					options: options,
+					validFor: /^[^\]]*$/
+				};
+			};
+
+			// Backlink Decorator for Editor Highlighting
+			const backlinkPlugin = (() => {
+				const backlinkRegex = /\[\[([^\]]*)\]\]/g;
+
+				return ViewPlugin.fromClass(class {
+					constructor(view) {
+						this.decorations = this.matchBacklinks(view);
+					}
+					matchBacklinks(view) {
+						const decorations = [];
+						const { doc } = view.state;
+						const text = doc.toString();
+						let match;
+
+						backlinkRegex.lastIndex = 0;
+						
+						// Get notes from global shynoteData
+						const allNotes = window.shynoteData?.notes?.value || [];
+
+						while ((match = backlinkRegex.exec(text)) !== null) {
+							const fullMatch = match[0];
+							const content = match[1];
+							const from = match.index;
+							const to = match.index + fullMatch.length;
+
+							let isValid = true;
+							let noteId = null;
+
+							if (content.includes('|id:')) {
+								const parts = content.split('|id:');
+								noteId = parts[1].trim();
+								const note = allNotes.find(n => n.id === noteId);
+								isValid = !!note;
+							} else {
+								const note = allNotes.find(n => n.title === content);
+								isValid = !!note;
+								noteId = note?.id || null;
+							}
+
+							const className = isValid ? 'cm-backlink' : 'cm-backlink-broken';
+							const attrs = isValid
+								? { 'data-note-id': noteId, title: 'Click to navigate' }
+								: { title: 'Broken link - note not found' };
+
+							decorations.push(Decoration.mark({
+								class: className,
+								attributes: attrs
+							}).range(from, to));
+						}
+						return Decoration.set(decorations.sort((a, b) => a.from - b.from));
+					}
+					update(update) {
+						if (update.docChanged || update.viewportChanged) {
+							this.decorations = this.matchBacklinks(update.view);
+						}
+					}
+				}, {
+					decorations: v => v.decorations
+				});
+			})();
+
+
+
+
 			const startState = EditorState.create({
 				doc: selectedNote.value ? (selectedNote.value.content || '') : '',
 				extensions: [
@@ -1561,7 +1680,8 @@ createApp({
 					// syntaxHighlighting(defaultHighlightStyle, { fallback: true }), // Removed to favor Theme's highlighting
 					bracketMatching(),
 					closeBrackets(),
-					autocompletion({ override: [variableCompletion] }),
+					autocompletion({ override: [variableCompletion, backlinkCompletion] }),
+					backlinkPlugin,
 					highlightActiveLineGutter(),
 					highlightSpecialChars(),
 					placeholder('Start typing...'),
@@ -3567,6 +3687,24 @@ createApp({
 			// selectedNote.value = null 
 		}
 
+		// Select note by ID (for backlink navigation)
+		const selectNoteById = async (noteId) => {
+			if (!noteId) return
+			const note = notes.value.find(n => n.id === noteId)
+			if (note) {
+				await selectNote(note)
+			}
+		}
+
+		// Safe backlink click handler for Vue templates
+		const onBacklinkClick = async (noteId) => {
+			const note = notes.value.find(n => n.id === noteId);
+			if (note) {
+				await selectNote(note);
+			}
+			showBacklinksMenu.value = false;
+		};
+
 
 		const selectNote = async (note) => {
 			if (!note) return
@@ -4363,6 +4501,32 @@ createApp({
 			// We'll replace the leading spaces of such rows with nothing to prevent "indented block" misinterpretation.
 			content = content.replace(/^\s+(\|.*\|)\s*$/gm, '$1')
 
+			// Backlink Processing: [[title|id:noteid]] or [[title]] -> [title](#noteid)
+			content = content.replace(/\[\[([^\]]*)\]\]/g, (match, content) => {
+				let title = content;
+				let noteId = null;
+
+				if (content.includes('|id:')) {
+					const parts = content.split('|id:');
+					title = parts[0].trim();
+					noteId = parts[1].trim();
+				} else {
+					title = content.trim();
+					const note = notes.value.find(n => n.title === title);
+					noteId = note?.id || null;
+				}
+
+				if (noteId) {
+					return `<a href="#${noteId}" class="backlink" data-note-id="${noteId}">
+						<span class="material-symbols-rounded text-[14px] align-middle mr-0.5">description</span>
+						${title}
+					</a>`;
+				} else {
+					// Broken link - show as-is with warning style
+					return `<span class="backlink-broken" data-title="${title}" title="Note not found">⚠️ ${title}</span>`;
+				}
+			});
+
 			const parsedMarkdown = marked.parse(content, {
 				renderer: renderer,
 				gfm: true,
@@ -4418,6 +4582,84 @@ createApp({
 		const sortedNotes = computed(() => {
 			return sortItems(notes.value)
 		})
+
+		// Backlinks for current note - notes that reference this note
+		const currentNoteBacklinks = computed(() => {
+			if (!selectedNote.value || !selectedNote.value.id) return [];
+
+			const currentId = selectedNote.value.id;
+			const currentTitle = selectedNote.value.title || '';
+
+			const backlinks = [];
+
+			notes.value.forEach(note => {
+				if (!note.content) return;
+				if (note.id === currentId) return;
+
+				let isValid = false;
+				let isBroken = false;
+
+				// Pattern 1: [[title|id:currentId]]
+				const backlinkPattern = new RegExp(`\\[\\[([^\\]|]*)\\|id:${currentId}\\]\\]`, 'g');
+				if (backlinkPattern.test(note.content)) {
+					isValid = true;
+				}
+
+				// Pattern 2: [[currentTitle]] - match by title
+				if (!isValid && currentTitle) {
+					const escapedTitle = currentTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+					const titlePattern = new RegExp(`\\[\\[${escapedTitle}\\]\\]`, 'g');
+					if (titlePattern.test(note.content)) {
+						isValid = true;
+					}
+				}
+
+				// Pattern 3: Find broken links to this note (using ID only, no title)
+				// [[|id:currentId]] - ID only format
+				const idOnlyPattern = new RegExp(`\\[\\|id:${currentId}\\]\\]`, 'g');
+				if (idOnlyPattern.test(note.content)) {
+					isBroken = true;
+				}
+
+				if (isValid || isBroken) {
+					backlinks.push({
+						...note,
+						_isBroken: isBroken
+					});
+				}
+			});
+
+			return backlinks.sort((a, b) => {
+				// Sort: broken links last, then by updated date (newest first)
+				if (a._isBroken && !b._isBroken) return 1;
+				if (!a._isBroken && b._isBroken) return -1;
+				return new Date(b.updated_at) - new Date(a.updated_at);
+			});
+		});
+
+		const recentNotes = computed(() => {
+			const allUsage = {};
+			const key = STORAGE_KEYS.NOTE_USAGE_DATA;
+			try {
+				const dataStr = localStorage.getItem(getUserStorageKey(key)) || '{}';
+				Object.assign(allUsage, JSON.parse(dataStr));
+			} catch (e) {}
+
+			return notes.value
+				.filter(note => {
+					const usage = allUsage[note.id];
+					return usage && usage.lastUsed > 0;
+				})
+				.map(note => ({
+					...note,
+					lastUsed: allUsage[note.id].lastUsed,
+					count: allUsage[note.id].count
+				}))
+				.sort((a, b) => b.lastUsed - a.lastUsed)
+				.slice(0, 5);
+		});
+
+		const showBacklinksMenu = ref(false);
 
 
 		// Watch authentication state to re-render button if logout
@@ -5069,6 +5311,8 @@ createApp({
 			createNote,
 			createNoteInFolder,
 			selectNote,
+			selectNoteById,
+				onBacklinkClick,
 			deselectNote,
 			deleteNote,
 			deleteFolder,
@@ -5157,6 +5401,9 @@ createApp({
 			sortedRootNotes,
 			sortedFolders,
 			getSortedFolderNotes,
+			currentNoteBacklinks,
+			recentNotes,
+			showBacklinksMenu,
 			showSortMenu,
 			toggleSortMenu,
 			closeSortMenu,
@@ -5234,6 +5481,7 @@ createApp({
 			toggleNewItemMenu,
 			closeNewItemMenu,
 			showAbout,
+			showAbout,
 			isSharing,
 			isSortMenuOpen,
 			// Search
@@ -5242,27 +5490,42 @@ createApp({
 			searchResults,
 			isSearchOpen,
 			selectSearchResult,
-			getHighlightedText,
 
-			TRASH_FOLDER_ID, // Expose Constant
+			TRASH_FOLDER_ID,
 			emptyTrash,
 			handleFileInput,
-			isOnline, // Exposed to template
-
-			// OAuth
+			isOnline,
 			useRedirectFlow,
 			loginWithGoogleRedirect,
-
 			swipeState,
 			handleNoteTouchStart,
-			handleNoteTouchMove,
 			handleNoteTouchMove,
 			handleNoteTouchEnd,
 			isMobile,
 			isEditModeActive,
-			conflictMap, // Export for Template
+			conflictMap,
 			conflictState,
 			triggerTableEditor
 		}
 	}
 }).mount('#app')
+
+window.shynoteData = {
+    notes: null,
+    selectNote: null
+};
+
+const app = document.getElementById('app');
+if (app && app.__vue_app__) {
+    const vm = app.__vue_app__.config.globalProperties;
+    window.shynoteData.notes = vm.notes;
+    window.shynoteData.selectNote = vm.selectNote;
+    
+    window.selectNoteById = async (noteId) => {
+        const notes = vm.notes?.value;
+        const note = notes?.find(n => n.id === noteId);
+        if (note) {
+            await vm.selectNote(note);
+        }
+    };
+}

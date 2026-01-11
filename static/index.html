@@ -962,6 +962,25 @@
                         <p class="text-center py-2 text-[#2663EB] text-[10px] select-none pointer-events-none">
                             Drag notes to folder to move
                         </p>
+
+                        <div v-if="recentNotes.length > 0" class="px-3 pb-2" v-show="isSidebarOpen">
+                            <h3 class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 mt-6 mb-2">
+                                Recent Notes
+                            </h3>
+                            <div class="space-y-1">
+                                <div v-for="note in recentNotes" :key="note.id"
+                                    @click.stop="selectNoteById(note.id)"
+                                    class="flex items-center gap-3 px-3 h-[22px] cursor-pointer rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-all duration-200 group"
+                                    :class="selectedNote?.id === note.id ? 'bg-blue-50 dark:bg-blue-600/20' : ''">
+                                    <span class="material-symbols-rounded text-[18px] text-slate-400 dark:text-slate-500 shrink-0">
+                                        description
+                                    </span>
+                                    <span class="flex-1 text-sm truncate text-slate-700 dark:text-slate-300">
+                                        {{ note.title || 'Untitled' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Sidebar Footer -->
@@ -1774,6 +1793,45 @@
                                             <span>{{ selectedNote.content ? selectedNote.content.length : 0 }}
                                                 chars</span>
                                             <span class="w-[1px] h-3 bg-slate-300 dark:bg-slate-600"></span>
+                                            <!-- Backlinks Dropdown -->
+                                            <div class="relative">
+                                                <span @click.stop="showBacklinksMenu = !showBacklinksMenu"
+                                                    class="cursor-pointer hover:text-blue-500 dark:hover:text-blue-400 transition-colors flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700">
+                                                    <span class="material-symbols-rounded text-[14px]">link</span>
+                                                    <span class="font-medium">Backlinks ({{ currentNoteBacklinks.length }})</span>
+                                                </span>
+                                                <!-- Backlinks Dropdown -->
+                                                <div v-if="showBacklinksMenu"
+                                                    class="absolute top-full right-0 mt-1 w-64 bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-lg shadow-xl py-1 z-50 animate-fade-in origin-top-right max-h-80 overflow-y-auto custom-scrollbar">
+                                                    <!-- Overlay to close -->
+                                                    <div @click.stop="showBacklinksMenu = false"
+                                                        class="fixed inset-0 z-40 bg-transparent cursor-default">
+                                                    </div>
+                                                    <div class="relative z-50">
+                                                        <div class="px-3 py-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-[#434C5E] flex items-center gap-1">
+                                                            <span class="material-symbols-rounded text-[14px]">link</span>
+                                                            Backlinks ({{ currentNoteBacklinks.length }})
+                                                        </div>
+                                                        <div v-if="currentNoteBacklinks.length === 0" class="px-3 py-4 text-center text-[12px] text-slate-400 dark:text-slate-500">
+                                                            No backlinks yet
+                                                        </div>
+                                                        <button v-for="note in currentNoteBacklinks" :key="note.id"
+                                                            @click="onBacklinkClick(note.id)"
+                                                            class="w-full text-left px-3 py-2 text-[12px] hover:bg-blue-50 dark:hover:bg-blue-900/30 flex items-start gap-2 transition-colors border-b border-slate-50 dark:border-[#4C566A]/50 last:border-0">
+                                                            <span class="material-symbols-rounded text-[16px] text-blue-500 dark:text-blue-400 mt-0.5 shrink-0">description</span>
+                                                            <div class="min-w-0 flex-1">
+                                                                <div class="font-medium text-slate-700 dark:text-slate-200 truncate">{{ note.title || 'Untitled' }}</div>
+                                                                <div class="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1 mt-0.5">
+                                                                    <span>{{ formatDateParts(note.updated_at).date.replace(/\./g, '-') }}</span>
+                                                                    <span class="w-[1px] h-2 bg-slate-300 dark:bg-slate-600"></span>
+                                                                    <span class="font-mono">{{ note.id.slice(0, 8) }}</span>
+                                                                </div>
+                                                            </div>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <span class="w-[1px] h-3 bg-slate-300 dark:bg-slate-600"></span>
                                             <div class="relative group">
                                                 <div @click.stop="toggleFolderSelectMenu"
                                                     class="cursor-pointer px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[11px] flex items-center gap-1 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
@@ -1929,44 +1987,85 @@
                                             class="w-full text-3xl font-extrabold text-[#2E3440] dark:text-[#ECEFF4] leading-tight break-words m-0">
                                             {{ selectedNote.title || 'Untitled Note' }}
                                         </h1>
-                                        <div
-                                            class="flex items-center gap-3 mt-2 text-xs text-slate-400 dark:text-slate-500 font-medium">
-                                            <span>{{ formatDateParts(selectedNote.updated_at).date.replace(/\./g,
-                                                '-') }} {{
-                                                formatDateParts(selectedNote.updated_at).time.substring(0, 5)
-                                                }}</span>
-                                            <span class="w-[1px] h-3 bg-slate-300 dark:bg-slate-600"></span>
-                                            <span>{{ selectedNote.content ? selectedNote.content.length : 0 }}
-                                                chars</span>
-                                            <span class="w-[1px] h-3 bg-slate-300 dark:bg-slate-600"></span>
-                                            <div class="relative group">
-                                                <div @click.stop="toggleFolderSelectMenu"
-                                                    class="cursor-pointer px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[11px] flex items-center gap-1 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
-                                                    {{ selectedNote.folder_id ? (folders.find(f => f.id ===
-                                                    selectedNote.folder_id)?.name ||
-                                                    'Unknown') : 'Inbox' }}
-                                                    <span
-                                                        class="material-symbols-rounded text-[12px] opacity-70">expand_more</span>
-                                                </div>
-                                                <!-- Custom Dropdown -->
-                                                <div v-if="showFolderSelectMenu"
-                                                    class="absolute top-full right-0 mt-1 w-32 bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-lg shadow-xl py-1 z-50 animate-fade-in origin-top-right">
-                                                    <!-- Overlay to close -->
-                                                    <div @click="closeFolderSelectMenu"
-                                                        class="fixed inset-0 z-40 bg-transparent cursor-default">
-                                                    </div>
+                                         <div
+                                             class="flex items-center gap-3 mt-2 text-xs text-slate-400 dark:text-slate-500 font-medium">
+                                             <span>{{ formatDateParts(selectedNote.updated_at).date.replace(/\./g,
+                                                 '-') }} {{
+                                                 formatDateParts(selectedNote.updated_at).time.substring(0, 5)
+                                                 }}</span>
+                                             <span class="w-[1px] h-3 bg-slate-300 dark:bg-slate-600"></span>
+                                             <span>{{ selectedNote.content ? selectedNote.content.length : 0 }}
+                                                 chars</span>
+                                             <span class="w-[1px] h-3 bg-slate-300 dark:bg-slate-600"></span>
+                                             <!-- Backlinks Dropdown -->
+                                             <div class="relative">
+                                                 <span @click.stop="showBacklinksMenu = !showBacklinksMenu"
+                                                     class="cursor-pointer hover:text-blue-500 dark:hover:text-blue-400 transition-colors flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700">
+                                                     <span class="material-symbols-rounded text-[14px]">link</span>
+                                                     <span class="font-medium">Backlinks ({{ currentNoteBacklinks.length }})</span>
+                                                 </span>
+                                                 <!-- Backlinks Dropdown -->
+                                                 <div v-if="showBacklinksMenu"
+                                                     class="absolute top-full right-0 mt-1 w-64 bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-lg shadow-xl py-1 z-50 animate-fade-in origin-top-right max-h-80 overflow-y-auto custom-scrollbar">
+                                                     <!-- Overlay to close -->
+                                                     <div @click.stop="showBacklinksMenu = false"
+                                                         class="fixed inset-0 z-40 bg-transparent cursor-default">
+                                                     </div>
+                                                     <div class="relative z-50">
+                                                         <div class="px-3 py-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-[#434C5E] flex items-center gap-1">
+                                                             <span class="material-symbols-rounded text-[14px]">link</span>
+                                                             Backlinks ({{ currentNoteBacklinks.length }})
+                                                         </div>
+                                                         <div v-if="currentNoteBacklinks.length === 0" class="px-3 py-4 text-center text-[12px] text-slate-400 dark:text-slate-500">
+                                                             No backlinks yet
+                                                         </div>
+                                                         <button v-for="note in currentNoteBacklinks" :key="note.id"
+                                                             @click="onBacklinkClick(note.id)"
+                                                             class="w-full text-left px-3 py-2 text-[12px] hover:bg-blue-50 dark:hover:bg-blue-900/30 flex items-start gap-2 transition-colors border-b border-slate-50 dark:border-[#4C566A]/50 last:border-0">
+                                                             <span class="material-symbols-rounded text-[16px] text-blue-500 dark:text-blue-400 mt-0.5 shrink-0">description</span>
+                                                             <div class="min-w-0 flex-1">
+                                                                 <div class="font-medium text-slate-700 dark:text-slate-200 truncate">{{ note.title || 'Untitled' }}</div>
+                                                                 <div class="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1 mt-0.5">
+                                                                     <span>{{ formatDateParts(note.updated_at).date.replace(/\./g, '-') }}</span>
+                                                                     <span class="w-[1px] h-2 bg-slate-300 dark:bg-slate-600"></span>
+                                                                     <span class="font-mono">{{ note.id.slice(0, 8) }}</span>
+                                                                 </div>
+                                                             </div>
+                                                         </button>
+                                                     </div>
+                                                 </div>
+                                             </div>
+                                             <span class="w-[1px] h-3 bg-slate-300 dark:bg-slate-600"></span>
+                                             <div class="relative group">
+                                                 <div @click.stop="toggleFolderSelectMenu"
+                                                     class="cursor-pointer px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[11px] flex items-center gap-1 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                                                     <span
+                                                         class="material-symbols-rounded text-[14px] text-slate-500 dark:text-slate-400">drive_file_move</span>
+                                                     {{ selectedNote.folder_id ? (folders.find(f => f.id ===
+                                                     selectedNote.folder_id)?.name ||
+                                                     'Unknown') : 'Inbox' }}
+                                                     <span
+                                                         class="material-symbols-rounded text-[12px] opacity-70">expand_more</span>
+                                                 </div>
+                                                 <!-- Custom Dropdown -->
+                                                 <div v-if="showFolderSelectMenu"
+                                                     class="absolute top-full right-0 mt-1 w-32 bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-lg shadow-xl py-1 z-50 animate-fade-in origin-top-right">
+                                                     <!-- Overlay to close -->
+                                                     <div @click="closeFolderSelectMenu"
+                                                         class="fixed inset-0 z-40 bg-transparent cursor-default">
+                                                     </div>
 
-                                                    <div
-                                                        class="relative z-50 max-h-48 overflow-y-auto custom-scrollbar">
-                                                        <button
-                                                            @click.stop="moveSelectedNote(null); closeFolderSelectMenu()"
-                                                            class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-blue-900/30 flex items-center gap-2 transition-colors">
-                                                            <span
-                                                                class="material-symbols-rounded text-[16px] text-blue-500">move_to_inbox</span>
-                                                            Inbox
-                                                        </button>
-                                                        <div class="h-[1px] bg-slate-100 dark:bg-[#434C5E] my-1"
-                                                            v-if="sortedFolders.length > 0"></div>
+                                                     <div
+                                                         class="relative z-50 max-h-48 overflow-y-auto custom-scrollbar">
+                                                         <button
+                                                             @click.stop="moveSelectedNote(null); closeFolderSelectMenu()"
+                                                             class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-blue-900/30 flex items-center gap-2 transition-colors">
+                                                             <span
+                                                                 class="material-symbols-rounded text-[16px] text-blue-500">move_to_inbox</span>
+                                                             Inbox
+                                                         </button>
+                                                         <div class="h-[1px] bg-slate-100 dark:bg-[#434C5E] my-1"
+                                                             v-if="sortedFolders.length > 0"></div>
                                                         <button v-for="folder in sortedFolders" :key="folder.id"
                                                             @click.stop="moveSelectedNote(folder.id); closeFolderSelectMenu()"
                                                             class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-amber-900/30 flex items-center gap-2 transition-colors">
@@ -2094,7 +2193,7 @@
             });
         }
     </script>
-    <script src="/static/app.js?v=27" type="module"></script>
+    <script src="/static/app.js?v=28" type="module"></script>
 </body>
 
 </html>
