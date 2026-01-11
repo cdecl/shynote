@@ -3725,6 +3725,11 @@ createApp({
 			// Track Usage
 			if (note && note.id) trackNoteUsage(note.id);
 
+			// Mobile: Close sidebar when note is selected
+			if (window.innerWidth < 768) {
+				isSidebarOpen.value = false
+			}
+
 			// Switch to Edit Mode
 			rightPanelMode.value = 'edit'
 
