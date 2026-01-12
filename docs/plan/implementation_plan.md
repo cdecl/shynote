@@ -131,8 +131,6 @@ This document tracks the cumulative implementation details of the SHYNOTE projec
         - [x] **Scrollbar**: `color-scheme: dark` for native dark scrollbars.
     - [x] **Markdown**: `github-markdown-css` (Dark) integration.
     - [x] **Code**: `nord.css` for Highlight.js.
-- [x] **Typography**:
-    - [x] **Fonts**: D2Coding (Korean/Code) with JetBrains Mono/Inter fallback.
 - [x] **Layout Components**:
     - [x] **Sidebar**: Collapsible/Resizable sidebar with specific width control.
     - [x] **Toolbar**: "View" mode toggles (Split/Edit/Preview).

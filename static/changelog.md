@@ -348,7 +348,6 @@
 - **Preview 모드 개선**: GitHub Markdown CSS 적용으로 전문적인 문서 렌더링
 - **Nord 테마 다크 모드**: 앱 전체 테마와 일관된 Nord 색상 팔레트 적용
 - **동적 테마 전환**: Light/Dark 모드 전환 시 마크다운 CSS 자동 교체
-- **폰트 통일**: Inter, Spoqa Han Sans Neo, JetBrains Mono 일관 적용
 
 ### 2. YAML Frontmatter Support
 - **메타데이터 파싱**: 문서 상단의 YAML 블록(`---`)을 자동 감지 및 파싱

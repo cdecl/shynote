@@ -637,7 +637,6 @@ def view_shared_note(share_id: str, db: Session = Depends(database.get_db)):
         <link href='//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSansNeo.css' rel='stylesheet' type='text/css'>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-light.min.css">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
-        <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="/static/style.css?v=7">
         <style>
             body {{ font-family: 'Spoqa Han Sans Neo', 'Inter', sans-serif; background-color: #ffffff; }}

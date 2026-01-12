@@ -1617,7 +1617,7 @@ createApp({
 						let match;
 
 						backlinkRegex.lastIndex = 0;
-						
+
 						// Get notes from global shynoteData
 						const allNotes = window.shynoteData?.notes?.value || [];
 
@@ -1751,9 +1751,9 @@ createApp({
 		const getCustomTheme = (isDark) => {
 			return EditorView.theme({
 				"&": { fontSize: "inherit" },
-				".cm-scroller": { fontFamily: "'Pretendard', 'JetBrains Mono', monospace" },
+				".cm-scroller": { fontFamily: "'Pretendard', monospace" },
 				".cm-content": {
-					fontFamily: "'Pretendard', 'JetBrains Mono', monospace",
+					fontFamily: "'Pretendard', monospace",
 					padding: "5px 10px !important"
 				},
 				// Autocomplete Tooltip Font
@@ -4648,7 +4648,7 @@ createApp({
 			try {
 				const dataStr = localStorage.getItem(getUserStorageKey(key)) || '{}';
 				Object.assign(allUsage, JSON.parse(dataStr));
-			} catch (e) {}
+			} catch (e) { }
 
 			return notes.value
 				.filter(note => {
@@ -5317,7 +5317,7 @@ createApp({
 			createNoteInFolder,
 			selectNote,
 			selectNoteById,
-				onBacklinkClick,
+			onBacklinkClick,
 			deselectNote,
 			deleteNote,
 			deleteFolder,
@@ -5516,21 +5516,21 @@ createApp({
 }).mount('#app')
 
 window.shynoteData = {
-    notes: null,
-    selectNote: null
+	notes: null,
+	selectNote: null
 };
 
 const app = document.getElementById('app');
 if (app && app.__vue_app__) {
-    const vm = app.__vue_app__.config.globalProperties;
-    window.shynoteData.notes = vm.notes;
-    window.shynoteData.selectNote = vm.selectNote;
-    
-    window.selectNoteById = async (noteId) => {
-        const notes = vm.notes?.value;
-        const note = notes?.find(n => n.id === noteId);
-        if (note) {
-            await vm.selectNote(note);
-        }
-    };
+	const vm = app.__vue_app__.config.globalProperties;
+	window.shynoteData.notes = vm.notes;
+	window.shynoteData.selectNote = vm.selectNote;
+
+	window.selectNoteById = async (noteId) => {
+		const notes = vm.notes?.value;
+		const note = notes?.find(n => n.id === noteId);
+		if (note) {
+			await vm.selectNote(note);
+		}
+	};
 }
