@@ -52,6 +52,23 @@ SHYNOTE를 비유하자면, **"작성하는 순간 모든 것을 기록하고 �
 
 ---
 
+## 🔧 환경 변수 설정 (Environment Variables)
+
+배포 전, 프로젝트 루트 디렉토리에 `.env` 파일을 생성하고 필요한 환경 변수를 설정해야 합니다. `.env.template` 파일을 복사하여 사용할 수 있습니다.
+
+| 환경 변수 | 설명 | 기본값 | 비고 |
+| :--- | :--- | :--- | :--- |
+| `POSTGRES_URL` | PostgreSQL 데이터베이스 연결 URL | `sqlite:///./SHYNOTE.db` | 미설정 시 로컬 SQLite 사용. `postgres://` 자동 변환 및 URL 최적화 지원 |
+| `GOOGLE_CLIENT_ID` | Google OAuth 2.0 클라이언트 ID | - | 미설정 시 Google 로그인 기능 비활성화 |
+| `SUPABASE_URL` | Supabase 프로젝트 API URL | - | 이미지 업로드 기능을 위한 Supabase 주소 |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase 서비스 역할(Service Role) 키 | - | 이미지 업로드 권한 확인을 위한 비밀키 |
+| `SUPABASE_BUCKET` | Supabase 스토리지 버킷 이름 | `images` | 이미지가 저장될 버킷 명칭 |
+
+> **참고 (Notes):**
+> - **데이터베이스:** `POSTGRES_URL`이 설정되지 않으면 로컬 파일 시스템의 `SHYNOTE.db`를 사용합니다. 연결에 실패할 경우 메모리 기반 DB로 자동 전환됩니다.
+> - **이미지 업로드:** Supabase 관련 변수(`URL`, `KEY`)가 모두 설정되어야 이미지 업로드 기능이 활성화됩니다.
+> - **인증:** Google OAuth 기능을 사용하려면 유효한 `GOOGLE_CLIENT_ID`가 필요합니다.
+
 ## 🚀 설치 및 실행 (Installation)
 
 1. **레포지토리 클론**
@@ -71,3 +88,70 @@ SHYNOTE를 비유하자면, **"작성하는 순간 모든 것을 기록하고 �
    # http://localhost:8000 접속
    ```
 
+---
+
+## 🐳 Docker 배포 (Docker Deployment)
+
+SHYNOTE를 Docker를 사용하여 쉽고 빠르게 배포할 수 있습니다.
+
+### 1. Docker 이미지 빌드 (Build Docker Image)
+제공된 셸 스크립트나 Docker 명령어를 사용하여 이미지를 빌드합니다.
+
+**스크립트 사용:**
+```bash
+chmod +x docker-build.sh
+./docker-build.sh
+```
+
+**직접 빌드:**
+```bash
+docker build -t shynote:latest .
+```
+
+### 2. Docker 컨테이너 실행 (Run Docker Container)
+
+**스크립트 사용:**
+```bash
+chmod +x docker-run.sh
+./docker-run.sh
+```
+
+**직접 실행:**
+```bash
+docker run -dp 8000:8000 \
+  --rm \
+  -v $(pwd)/SHYNOTE.db:/app/SHYNOTE.db \
+  --name shynote \
+  --env-file .env \
+  shynote:latest
+```
+> **참고:** 데이터 영속성을 위해 `SHYNOTE.db` 파일을 볼륨 마운트합니다. 스크립트 사용 시 `-dp` 옵션을 확인하세요.
+
+### 3. Docker Compose 사용 (Using Docker Compose)
+여러 설정을 한 번에 관리하려면 Docker Compose를 사용하는 것이 권장됩니다. `docker-compose.yaml`은 자동으로 `.env` 파일을 로드하고 `SHYNOTE.db`를 마운트합니다.
+
+```bash
+# 컨테이너 실행
+docker-compose up -d
+
+# 컨테이너 중지 및 제거
+docker-compose down
+```
+
+### 4. 셸 스크립트 사용 (Shell Scripts)
+프로젝트 관리를 위해 다음과 같은 셸 스크립트를 제공합니다.
+
+| 스크립트 | 용도 | 주요 설명 |
+| :--- | :--- | :--- |
+| `run.sh` | 로컬 개발 환경 관리 | `start`, `stop`, `restart` 커맨드로 서버를 백그라운드에서 제어합니다. |
+| `docker-build.sh` | Docker 이미지 빌드 | `shynote:latest` 태그로 Docker 이미지를 생성합니다. |
+| `docker-run.sh` | Docker 컨테이너 실행 | 빌드된 이미지를 포트 8000에서 실행하며 로컬 DB를 연동합니다. |
+
+### 5. 배포 방법 비교 (Deployment Methods Comparison)
+
+| 비교 항목 | 로컬 실행 (Local) | Docker 배포 (Docker) |
+| :--- | :--- | :--- |
+| **권장 용도** | 개발 및 코드 수정 | 운영 서버 구축 및 셀프 호스팅 |
+| **필수 도구** | Python 3.12, uv | Docker, Docker Compose |
+| **데이터 저장** | 로컬 파일 (`SHYNOTE.db`) | 볼륨 마운트 (`/app/SHYNOTE.db`) |
+| **격리 수준** | 낮음 (OS 환경 영향 받음) | 높음 (컨테이너 기반 독립 환경) |
