@@ -125,6 +125,33 @@ textarea {
     font-family: 'CloudSansCode', monospace !important;
 }
 
+.markdown-body pre {
+    margin: 16px 0 !important;
+    padding: 16px !important;
+    overflow: auto !important;
+    background-color: #f6f8fa !important;
+    border-radius: 6px !important;
+    border: 1px solid #d0d7de !important;
+}
+
+.markdown-body pre code {
+    display: block !important;
+    width: 100% !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+}
+
+.markdown-body :not(pre)>code {
+    background-color: #f1f3f4 !important;
+    color: #24292e !important;
+    padding: 2px 4px !important;
+    border-radius: 3px !important;
+    font-size: 0.9em !important;
+}
+
 /* Paragraph Spacing Fix */
 #app .markdown-body p {
     margin-bottom: 24px !important;
@@ -252,20 +279,33 @@ textarea {
 
 /* Code Blocks */
 .dark .markdown-body pre {
+    margin: 16px 0 !important;
+    padding: 16px !important;
+    overflow: auto !important;
     background-color: #2E3440 !important;
     /* Nord1 */
+    border-radius: 6px !important;
     border: 1px solid #3B4252 !important;
 }
 
 .dark .markdown-body pre code {
+    display: block !important;
+    width: 100% !important;
     background-color: transparent !important;
     color: #E5E9F0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
 }
 
 /* Inline Code */
 .dark .markdown-body :not(pre)>code {
     background-color: #3B4252 !important;
     color: #E5E9F0 !important;
+    padding: 2px 4px !important;
+    border-radius: 3px !important;
+    font-size: 0.9em !important;
 }
 
 /* Lists */
