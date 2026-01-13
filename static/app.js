@@ -866,6 +866,22 @@ createApp({
 
 		let isSyncingProcess = false
 		// --- Sync Helpers ---
+		const pullSync = async () => {
+			if (!hasIDB || !isAuthenticated.value || currentUserId.value === 'guest') return;
+			
+			try {
+				await syncWorker();
+				await Promise.all([fetchFolders(false), fetchNotes(false)]);
+				
+				loadingState.value = { source: 'CLOUD', message: 'Sync Complete' };
+				setTimeout(() => loadingState.value = { source: 'NONE', message: 'Idle' }, 2000);
+				
+			} catch (error) {
+				console.error('Pull sync failed:', error);
+				loadingState.value = { source: 'CLOUD', message: 'Sync Failed' };
+			}
+		}
+
 		const buildRequest = (log) => {
 			const isCreate = log.action === 'CREATE'
 			const isDelete = log.action === 'DELETE'
@@ -1328,9 +1344,7 @@ createApp({
 				isOnline.value = true
 				startSync()
 				if (isAuthenticated.value) {
-					Promise.all([fetchFolders(false), fetchNotes(false)]).then(() => {
-						loadingState.value = { source: 'CLOUD', message: 'Pull Complete' }
-					})
+					pullSync()
 				}
 			})
 
@@ -5049,7 +5063,7 @@ createApp({
 				{ id: 'note.new', title: 'Create New Note', icon: 'add_circle', desc: '새 노트 생성', handler: () => { createNote(); closeCommandPalette() }, shortcut: 'Cmd+Shift+N' },
 				{ id: 'view.zen', title: 'Toggle Sidebar', icon: 'menu_open', desc: '사이드바 토글 On/Off', handler: () => { toggleSidebar(); closeCommandPalette() } },
 				{ id: 'view.dark', title: 'Toggle Dark Mode', icon: 'dark_mode', desc: '다크 모드 전환', handler: () => { toggleDarkMode(); closeCommandPalette() } },
-				{ id: 'sys.sync', title: 'Sync Now', icon: 'sync', desc: '강제 동기화 수행 (Pull Only)', handler: () => { fetchNotes(true); closeCommandPalette() } },
+				{ id: 'sys.sync', title: 'Sync Now', icon: 'sync', desc: '강제 동기화 수행', handler: async () => { await pullSync(); closeCommandPalette() } },
 				{ id: 'sys.clearCache', title: 'Clear Local Cache', icon: 'delete_sweep', desc: '캐시 및 데이터 초기화', handler: () => { clearLocalCache(); closeCommandPalette() } },
 				{ id: 'sys.reload', title: 'Reload App', icon: 'refresh', desc: '앱 새로고침', handler: () => window.location.reload() }
 			]
@@ -5456,7 +5470,8 @@ createApp({
 			lastSyncTime,
 			syncQueueCount,
 			manualSync: syncWorker,
-			fetchNotes, // Expose for manual pull
+			pullSync,
+			fetchNotes,
 
 			rightPanelMode,
 			listViewMode,
