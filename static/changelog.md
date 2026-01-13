@@ -1,3 +1,34 @@
+## [0.5.10] - 2026-01-14
+### 🚀 주요 기능
+- **통합 동기화 시스템**: `pullSync()` 함수 도입으로 Push+Pull 양방향 동기화 통일
+- **일관된 Sync 경험**: Status Bar, Command Palette, 온라인 전환 시 동일한 동기화 동작 보장
+- **안정성 강화**: loadingState null 참조 오류 수정 및 UI 안정성 향상
+
+### 🔧 개선 사항
+- **pullSync 통합 함수**:
+  - Push (syncWorker) + Pull (fetchFolders + fetchNotes) 양방향 처리
+  - 모든 동기화 트리거에서 통일된 동작 보장
+  - 성공/실패 시 일관된 사용자 피드백 제공
+- **동기화 버튼 통일**:
+  - Status Bar Online 클릭 → pullSync()로 변경
+  - Command Palette "Sync Now" → pullSync()로 변경  
+  - 온라인 전환 → pullSync()로 변경
+- **UI 오류 수정**:
+  - loadingState.value = null 대신 기본값 객체 사용
+  - Vue 템플릿 오류 방지
+
+### 🐛 버그 수정
+- **폴더 복현 문제**: Sync Now 시 폴더가 다시 나타나는 현상 해결 (근본 원인 분석 및 해결 방안 마련)
+- **동기화 불일치**: 세 곳의 다른 함수 호출로 인한 혼란 해소
+- **Vue 렌더링 오류**: Cannot read properties of null 오류 수정
+
+### 📚 문서화
+- **시계열 기반 분석**: sync_analysis_feat.md에 Notes/Folders 동기화 시계열 추가
+- **동기화 방향 매핑**: Push/Pull/양방향별 함수 역할 명확화
+- **문제 해결 프로세스**: 폴더 삭제 시나리오와 해결 방안 상세 기록
+
+---
+
 ## [0.5.9] - 2026-01-11
 ### 새 기능
 - **Backlink 기능**: 노트 간 양방향 링크 지원
