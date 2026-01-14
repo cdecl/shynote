@@ -2146,6 +2146,12 @@ createApp({
 						} else {
 							lineText = prefix + lineText.replace(/^#+ /, '')
 						}
+					} else if (type === 'quote') {
+						if (lineText.match(/^> /)) {
+							lineText = lineText.replace(/^> /, '')
+						} else {
+							lineText = '> ' + lineText
+						}
 					} else if (type === 'dash') {
 						if (lineText.match(/^-\s/)) {
 							lineText = lineText.replace(/^-\s/, '')

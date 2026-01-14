@@ -1945,6 +1945,11 @@
                                                     title="Code (Inline/Block)">
                                                     <span class="material-symbols-rounded text-[18px]">code</span>
                                                 </button>
+                                                <button @mousedown.prevent="formatText('quote')"
+                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                                    title="Blockquote">
+                                                    <span class="material-symbols-rounded text-[18px]">format_quote</span>
+                                                </button>
                                                 <button @mousedown.prevent="formatText('dash')"
                                                     class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
                                                     title="Bullet List">
