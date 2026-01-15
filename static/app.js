@@ -875,7 +875,7 @@ createApp({
 				await Promise.all([fetchFolders(false), fetchNotes(false)]);
 
 				loadingState.value = { source: 'CLOUD', message: 'Sync Complete' };
-				showSignpost('🔄 동기화 완료');
+				showSignpost('🔄 Pull Sync Complete');
 				setTimeout(() => loadingState.value = { source: 'NONE', message: 'Idle' }, 2000);
 
 			} catch (error) {
@@ -3184,17 +3184,17 @@ createApp({
 			})
 		}
 
-	// Show signpost with custom text, opacity, and fade animation
-	const showSignpost = (text, duration = 1500, opacity = 0.5) => {
-		console.log(`[showSignpost] Called with text: "${text}", duration: ${duration}, opacity: ${opacity}`);
-		// Replace newlines with <br> tags for multi-line support
-		const formattedText = text.replace(/\n/g, '<br>')
-		signpost.value = { show: true, text: formattedText, opacity: opacity }
-		// Hide after specified duration
-		setTimeout(() => {
-			signpost.value = { show: false, text: '', opacity: 0.5 }
-		}, duration)
-	}
+		// Show signpost with custom text, opacity, and fade animation
+		const showSignpost = (text, duration = 1500, opacity = 0.5) => {
+			console.log(`[showSignpost] Called with text: "${text}", duration: ${duration}, opacity: ${opacity}`);
+			// Replace newlines with <br> tags for multi-line support
+			const formattedText = text.replace(/\n/g, '<br>')
+			signpost.value = { show: true, text: formattedText, opacity: opacity }
+			// Hide after specified duration
+			setTimeout(() => {
+				signpost.value = { show: false, text: '', opacity: 0.5 }
+			}, duration)
+		}
 
 		// Sort Functions
 		const setSortOption = (type, value) => {
