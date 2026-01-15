@@ -321,6 +321,16 @@
         [v-cloak] {
             display: none !important;
         }
+        
+        /* Double-click hint animation */
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; }
+            10%, 90% { opacity: 1; }
+        }
+        
+        .animate-fade-in-out {
+            animation: fadeInOut 2s ease-in-out;
+        }
     </style>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -2117,9 +2127,19 @@
                                         </div>
                                     </div>
                                     <div class="flex-1 overflow-hidden relative">
-                                        <div ref="previewRef" @scroll="handleScroll" v-html="previewContent"
+                                        <div ref="previewRef" @scroll="handleScroll"
+                                            v-html="previewContent"
                                             :style="'font-size: ' + fontSize + 'px !important;'"
                                             class="markdown-body overflow-y-auto h-full bg-white dark:bg-[#2E3440] transition-colors">
+                                        </div>
+                                        <!-- Signpost message -->
+                                        <div v-if="signpost.show"
+                                            class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                                            <div
+                                                class="bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-out text-sm font-medium"
+                                                :style="{ opacity: signpost.opacity }">
+                                                <span v-html="signpost.text"></span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

@@ -350,6 +350,7 @@ createApp({
 		const editorRef = ref(null)
 		const previewRef = ref(null)
 		const currentUserEmail = ref(null) // Added for UI
+		const signpost = ref({ show: false, text: '', opacity: 0.3 }) // For general signpost messages
 
 		// Multi-Select State
 		const isSelectionMode = ref(false)
@@ -868,14 +869,14 @@ createApp({
 		// --- Sync Helpers ---
 		const pullSync = async () => {
 			if (!hasIDB || !isAuthenticated.value || currentUserId.value === 'guest') return;
-			
+
 			try {
 				await syncWorker();
 				await Promise.all([fetchFolders(false), fetchNotes(false)]);
-				
+
 				loadingState.value = { source: 'CLOUD', message: 'Sync Complete' };
 				setTimeout(() => loadingState.value = { source: 'NONE', message: 'Idle' }, 2000);
-				
+
 			} catch (error) {
 				console.error('Pull sync failed:', error);
 				loadingState.value = { source: 'CLOUD', message: 'Sync Failed' };
@@ -3149,7 +3150,51 @@ createApp({
 		const setViewMode = (mode) => {
 			viewMode.value = mode
 			updateUserProfile({ view_mode: mode })
+			// Show signpost when entering preview mode
+			if (mode === 'preview') {
+				showSignpost('🔖 Preview mode: Double-click to enter Editor mode.')
+			}
 		}
+
+		const handlePreviewDoubleClick = (event) => {
+			console.log('Preview double-click event triggered')
+			// Only switch to editor mode if currently in preview mode
+			if (viewMode.value === 'preview') {
+				console.log('Switching from preview to editor mode')
+				setViewMode('edit')
+				// Focus the editor after switching
+				nextTick(() => {
+					const editorView = editorView.value
+					if (editorView) {
+						editorView.focus()
+					}
+				})
+			}
+		}
+
+		// Add event listener for preview double-click
+		const setupPreviewDoubleClick = () => {
+			nextTick(() => {
+				const previewElement = previewRef.value
+				if (previewElement) {
+					// Remove existing listener to prevent duplicates
+					previewElement.removeEventListener('dblclick', handlePreviewDoubleClick)
+					previewElement.addEventListener('dblclick', handlePreviewDoubleClick)
+					console.log('Preview double-click event listener added')
+				}
+			})
+		}
+
+	// Show signpost with custom text, opacity, and fade animation
+	const showSignpost = (text, duration = 1500, opacity = 0.9) => {
+		// Replace newlines with <br> tags for multi-line support
+		const formattedText = text.replace(/\n/g, '<br>')
+		signpost.value = { show: true, text: formattedText, opacity: opacity }
+		// Hide after specified duration
+		setTimeout(() => {
+			signpost.value = { show: false, text: '', opacity: 0.3 }
+		}, duration)
+	}
 
 		// Sort Functions
 		const setSortOption = (type, value) => {
@@ -4575,9 +4620,8 @@ createApp({
 						console.warn('Mermaid rendering failed:', err)
 					}
 				}
-
-				// Remove any existing table edit buttons (cleanup)
-				document.querySelectorAll('.table-edit-btn').forEach(btn => btn.remove())
+				// Setup preview double-click event listener
+				setupPreviewDoubleClick()
 			})
 		})
 
@@ -5420,6 +5464,10 @@ createApp({
 			addTableCol,
 			setColumnAlignment,
 			handleEditorDoubleClick,
+			handlePreviewDoubleClick,
+			setupPreviewDoubleClick,
+			showSignpost,
+			signpost,
 			// Sort exports
 			sortOption,
 			setSortOption,
