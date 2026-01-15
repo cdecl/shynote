@@ -350,7 +350,7 @@ createApp({
 		const editorRef = ref(null)
 		const previewRef = ref(null)
 		const currentUserEmail = ref(null) // Added for UI
-		const signpost = ref({ show: false, text: '', opacity: 0.3 }) // For general signpost messages
+		const signpost = ref({ show: false, text: '', opacity: 0.5 }) // For general signpost messages
 
 		// Multi-Select State
 		const isSelectionMode = ref(false)
@@ -875,6 +875,7 @@ createApp({
 				await Promise.all([fetchFolders(false), fetchNotes(false)]);
 
 				loadingState.value = { source: 'CLOUD', message: 'Sync Complete' };
+				showSignpost('🔄 동기화 완료');
 				setTimeout(() => loadingState.value = { source: 'NONE', message: 'Idle' }, 2000);
 
 			} catch (error) {
@@ -2722,9 +2723,7 @@ createApp({
 				if (cachedId) {
 					currentUserId.value = cachedId // Keep as string for UUIDv7
 					// Fire fetches immediately (parallel)
-					const pFolders = fetchFolders()
-					const pNotes = fetchNotes()
-					await Promise.all([pFolders, pNotes])
+					await pullSync()
 					didOptimisticLoad = true
 					restoreState() // Instant UI Restore
 				}
@@ -2742,11 +2741,11 @@ createApp({
 				if (currentUserId.value !== oldId) {
 					// console.log('User ID changed, refetching data...')
 					loadUserSettings() // Ensure settings are loaded for new ID
-					await Promise.all([fetchFolders(false), fetchNotes(false)])
+					await pullSync()
 					restoreState()
 				} else if (!didOptimisticLoad) {
 					// If we didn't do optimistic load (no cached ID), fetch now
-					await Promise.all([fetchFolders(false), fetchNotes(false)])
+					await pullSync()
 					restoreState()
 				}
 
@@ -3186,13 +3185,14 @@ createApp({
 		}
 
 	// Show signpost with custom text, opacity, and fade animation
-	const showSignpost = (text, duration = 1500, opacity = 0.9) => {
+	const showSignpost = (text, duration = 1500, opacity = 0.5) => {
+		console.log(`[showSignpost] Called with text: "${text}", duration: ${duration}, opacity: ${opacity}`);
 		// Replace newlines with <br> tags for multi-line support
 		const formattedText = text.replace(/\n/g, '<br>')
 		signpost.value = { show: true, text: formattedText, opacity: opacity }
 		// Hide after specified duration
 		setTimeout(() => {
-			signpost.value = { show: false, text: '', opacity: 0.3 }
+			signpost.value = { show: false, text: '', opacity: 0.5 }
 		}, duration)
 	}
 
