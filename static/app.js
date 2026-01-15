@@ -3164,9 +3164,9 @@ createApp({
 				setViewMode('edit')
 				// Focus the editor after switching
 				nextTick(() => {
-					const editorView = editorView.value
-					if (editorView) {
-						editorView.focus()
+					const editorViewInstance = editorView.value
+					if (editorViewInstance) {
+						editorViewInstance.focus()
 					}
 				})
 			}
