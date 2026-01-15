@@ -3185,17 +3185,15 @@ createApp({
 		}
 
 		// Show signpost with custom text, opacity, and fade animation
-		const showSignpost = (text, duration = 1500, opacity = 0.5) => {
-			console.log(`[showSignpost] Called with text: "${text}", duration: ${duration}, opacity: ${opacity}`);
-			// Replace newlines with <br> tags for multi-line support
-			const formattedText = text.replace(/\n/g, '<br>')
-			signpost.value = { show: true, text: formattedText, opacity: opacity }
-			// Hide after specified duration
-			setTimeout(() => {
-				signpost.value = { show: false, text: '', opacity: 0.5 }
-			}, duration)
-		}
-
+			const showSignpost = (text, duration = 1500, opacity = 0.5) => {
+				// Replace newlines with <br> tags for multi-line support
+				const formattedText = text.replace(/\n/g, '<br>')
+				signpost.value = { show: true, text: formattedText, opacity: opacity }
+				// Hide after specified duration
+				setTimeout(() => {
+					signpost.value = { show: false, text: '', opacity: 0.5 }
+				}, duration)
+			}
 		// Sort Functions
 		const setSortOption = (type, value) => {
 			if (type === 'field') {

@@ -2132,15 +2132,7 @@
                                             :style="'font-size: ' + fontSize + 'px !important;'"
                                             class="markdown-body overflow-y-auto h-full bg-white dark:bg-[#2E3440] transition-colors">
                                         </div>
-                                        <!-- Signpost message -->
-                                        <div v-if="signpost.show"
-                                            class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                                            <div
-                                                class="bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-out text-sm font-medium"
-                                                :style="{ opacity: signpost.opacity }">
-                                                <span v-html="signpost.text"></span>
-                                            </div>
-                                        </div>
+
                                     </div>
                                 </div>
                             </div>
@@ -2235,6 +2227,15 @@
                         </div>
                     </footer>
                 </div> <!-- Close flex-col -->
+            <!-- Signpost message -->
+            <div v-if="signpost.show"
+                class="absolute top-8 left-1/2 -translate-x-1/2 pointer-events-none z-[9999]">
+                <div
+                    class="bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-out text-sm font-medium"
+                    :style="{ opacity: signpost.opacity }">
+                    <span v-html="signpost.text"></span>
+                </div>
+            </div>
         </main>
     </div> <!-- Close #app -->
 
