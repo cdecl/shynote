@@ -363,10 +363,10 @@ createApp({
 		// Dark mode is global/device specific usually, but code requested "User Info". 
 		// Let's keep dark mode global for now as per industry standard? 
 		// Or user profile has 'is_dark_mode' so it syncs from DB actually!
-		// But local fallback:
-		const isDarkMode = ref(localStorage.getItem(STORAGE_KEYS.DARK_MODE) === null ? true : localStorage.getItem(STORAGE_KEYS.DARK_MODE) === 'true')
+ 		// But local fallback:
+ 		const isDarkMode = ref(localStorage.getItem(STORAGE_KEYS.DARK_MODE) === null ? true : localStorage.getItem(STORAGE_KEYS.DARK_MODE) === 'true')
 
-		const isAuthenticated = ref(false)
+ 		const isAuthenticated = ref(false) // Default to false (Guest Mode until logged in)
 
 
 		const serverDbType = ref(null) // Added for DB Type Logic
@@ -636,16 +636,38 @@ createApp({
 			],
 			folders: []
 		}
-
+ 
 		// Dependencies needed early
 		const logout = () => {
 			localStorage.removeItem(STORAGE_KEYS.TOKEN)
 			localStorage.removeItem(STORAGE_KEYS.USER_ID)
 			isAuthenticated.value = false
 			currentUserId.value = null
+			currentUserEmail.value = null
 			notes.value = []
 			folders.value = []
 			selectedNote.value = null
+		}
+
+		// Handle Logout with confirmation and cache clearing
+		const handleLogout = () => {
+			modalState.value = {
+				isOpen: true,
+				type: 'logout',
+				title: 'Logout',
+				message: 'Are you sure you want to logout? Local data will be cleared and app will return to Guest Mode.',
+				confirmText: 'Logout',
+				cancelText: 'Cancel',
+				inputValue: '',
+				inputPlaceholder: '',
+				targetId: null,
+				data: null
+			}
+		}
+
+		// Show login modal
+		const showLoginModal = () => {
+			logout() // Clear any existing auth state
 		}
 
 		const authenticatedFetch = async (url, options = {}) => {
@@ -2546,12 +2568,39 @@ createApp({
 						await Promise.all(cacheNames.map(cacheName => caches.delete(cacheName)));
 						// console.log('Service Worker caches cleared:', cacheNames);
 					}
-
+ 
 					// Unregister service worker (optional - will re-register on reload)
 					if ('serviceWorker' in navigator) {
 						const registrations = await navigator.serviceWorker.getRegistrations();
 						await Promise.all(registrations.map(reg => reg.unregister()));
 						// console.log('Service Workers unregistered');
+					}
+
+					window.location.reload();
+				} catch (e) { console.error(e); alert(e.message); }
+			} else if (type === 'logout') {
+				try {
+					// Clear localStorage (including auth tokens for full logout)
+					for (let i = localStorage.length - 1; i >= 0; i--) {
+						const key = localStorage.key(i);
+						if (key && (key.startsWith('shynote_') || key === 'access_token' || key === 'shynote_user_id')) {
+							localStorage.removeItem(key);
+						}
+					}
+
+					// Clear IndexedDB
+					if (typeof LocalDB !== 'undefined') await LocalDB.clearAll();
+
+					// Clear Service Worker caches
+					if ('caches' in window) {
+						const cacheNames = await caches.keys();
+						await Promise.all(cacheNames.map(cacheName => caches.delete(cacheName)));
+					}
+
+					// Unregister service worker
+					if ('serviceWorker' in navigator) {
+						const registrations = await navigator.serviceWorker.getRegistrations();
+						await Promise.all(registrations.map(reg => reg.unregister()));
 					}
 
 					window.location.reload();
@@ -2751,7 +2800,13 @@ createApp({
 
 				// autoSelectNote(); // Disabled: Default to Inbox list view
 			} else {
-				isAuthenticated.value = false;
+				// Auto-create guest session when no token is present
+				localStorage.setItem(STORAGE_KEYS.TOKEN, 'guest');
+				isAuthenticated.value = true;
+				currentUserId.value = 'guest';
+				await fetchUserProfile();
+				await fetchFolders();
+				await fetchNotes();
 			}
 		}
 
@@ -3343,25 +3398,28 @@ createApp({
 			} finally {
 				// console.log('[fetchFolders] Completed')
 			}
-		}
+ 		}
 
-		const fetchUserProfile = async () => {
-			try {
-				const response = await authenticatedFetch('/auth/me')
-				if (response && response.ok) {
-					const user = await response.json()
-					if (user.id) {
-						currentUserId.value = user.id; // Set ID
-						localStorage.setItem(STORAGE_KEYS.USER_ID, user.id); // Cache ID
-					}
-					// UI preferences (is_dark_mode, view_mode) are now managed via localStorage only
-				}
-			} catch (e) {
-				console.error("Failed to fetch user profile", e)
-			}
-		}
+ 		const fetchUserProfile = async () => {
+ 			try {
+ 				const response = await authenticatedFetch('/auth/me')
+ 				if (response && response.ok) {
+ 					const user = await response.json()
+ 					if (user.id) {
+ 						currentUserId.value = user.id; // Set ID
+ 						localStorage.setItem(STORAGE_KEYS.USER_ID, user.id); // Cache ID
+ 					}
+ 					if (user.email) {
+ 						currentUserEmail.value = user.email;
+ 					}
+ 					// UI preferences (is_dark_mode, view_mode) are now managed via localStorage only
+ 				}
+ 			} catch (e) {
+ 				console.error("Failed to fetch user profile", e)
+ 			}
+ 		}
 
-		const updateUserProfile = async (updates) => {
+ 		const updateUserProfile = async (updates) => {
 			if (!isAuthenticated.value) return
 			try {
 				await authenticatedFetch('/auth/me', {
@@ -5397,9 +5455,13 @@ createApp({
 			isDarkMode,
 			toggleDarkMode,
 
-			initGoogleAuth,
-			isAuthenticated,
-			renameState,
+ 			initGoogleAuth,
+ 			isAuthenticated,
+ 			handleLogout,
+ 			showLoginModal,
+ 			currentUserId,
+ 			currentUserEmail,
+ 			renameState,
 			startRename,
 			saveRename,
 

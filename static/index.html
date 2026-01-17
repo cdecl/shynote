@@ -717,6 +717,13 @@
                                     {{ isDarkMode ? 'light_mode' : 'dark_mode' }}
                                 </span>
                             </button>
+                            <!-- Login/Logout Button -->
+                            <button v-show="isSidebarOpen" @click="currentUserId === 'guest' ? showLoginModal() : handleLogout()"
+                                class="px-2 py-0.5 text-[10px] font-medium rounded transition-colors"
+                                :class="currentUserId === 'guest' ? 'bg-[#263557] text-white hover:bg-[#1a2744]' : 'text-slate-400 hover:text-red-500'"
+                                :title="currentUserId === 'guest' ? 'Login' : 'Logout'">
+                                {{ currentUserId === 'guest' ? 'LOGIN' : 'LOGOUT' }}
+                            </button>
                             <!-- Sidebar Toggle (Close) -->
                             <button @click.stop="toggleSidebar" v-show="isSidebarOpen"
                                 class="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-200 dark:hover:text-[#ECEFF4] dark:hover:bg-[#4C566A] rounded-lg transition-colors"
@@ -2169,6 +2176,13 @@
                                     :class="isOnline ? 'bg-green-500' : 'bg-red-500'"></span>
                                 {{ isOnline ? 'Online' : 'Offline' }}
                             </span>
+                            <!-- User Status (Guest Mode or User Email) -->
+                            <span
+                                class="text-[10px] font-medium flex items-center gap-1 px-1.5 py-0.25 rounded"
+                                :class="currentUserId === 'guest' ? 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30' : 'text-slate-600 dark:text-slate-400 bg-slate-200 dark:bg-slate-700'">
+                                <span v-if="currentUserId === 'guest'">Guest Mode</span>
+                                <span v-else>LOGIN: {{ currentUserEmail || currentUserId }}</span>
+                            </span>
                         </div>
 
                         <div class="flex items-center gap-2">
@@ -2252,7 +2266,7 @@
             });
         }
     </script>
-    <script src="/static/app.js?v=28" type="module"></script>
+    <script src="/static/app.js?v=33" type="module"></script>
 </body>
 
 </html>
