@@ -10,6 +10,7 @@ This document lists the UI elements currently present in `index.html`, organized
 - **Logo/Title**: Link to Home
 - **Controls (Right)**:
   - **Dark Mode Toggle**: Button (Icon: `light_mode` / `dark_mode`)
+  - **Login/Logout Toggle**: Button (Text: `LOGIN` (Navy bg) / `LOGOUT` (Slate text), visible when sidebar is open)
   - **Close Sidebar**: Button (Icon: `arrow_back_ios_new`)
 
 ### Search Toolbar
@@ -98,7 +99,9 @@ The main panel switches between **List Mode** and **Editor Mode**.
 
 #### Status Bar (Bottom Footer)
 *Visible in all modes.*
-- **Left**: **Online Status** (Green/Red Dot + Text)
+- **Left**: 
+  - **Online Status**: Green/Red Dot + Text ("Online" / "Offline")
+  - **User Status**: Badge ("Guest Mode" in Amber / "LOGIN: {email}" in Slate)
 - **Right**:
   - **Sync Status**: Icon (`dns`) + Text ("Save Complete" / "Pushing...")
   - **Sync Queue**: Button (Icon: `sync` + Count) - *Visible when pending items exist*

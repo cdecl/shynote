@@ -85,6 +85,7 @@ SHYNOTE의 모든 기능을 계층별로 세분화하여 정리한 문서입니�
 - **FastAPI Backend**: 가볍고 빠른 Python 서버 레이어.
 - **PostgreSQL (Vercel)**: 운영 환경의 안정적인 관리형 DB 사용.
 - **Google OAuth 2.0**: JWT 기반의 안전한 세션 관리 및 소셜 로그인.
+- **게스트 모드 (Guest Mode)**: 로그인 없이도 로컬 IndexedDB를 활용하여 모든 기능을 즉시 사용할 수 있으며, 로그인 시 데이터가 클라우드와 동기화됩니다.
 
 ### 📦 도커 및 셀프 호스팅
 - **Docker 기반 배포**: `Dockerfile` 및 빌드 스크립트를 통한 간편한 자체 서버 구축 지원.

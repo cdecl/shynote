@@ -48,6 +48,11 @@
     *   **Notes**: 노트 검색/선택 모드
     *   **Folders**: 폴더 탐색 모드
     *   **Move-dest**: 노트 이동 대상 선택 모드
+ 
+## 5. 인증 상태 (Authentication States)
+ 
+*   **게스트 모드 (Guest Mode)**: 로그인하지 않은 상태. "Guest Mode" 배지가 상태바에 표시되며, 로컬 스토리지 위주로 동작합니다.
+*   **로그인 상태 (Authenticated)**: 구글 계정으로 인증된 상태. 사용자의 이메일이 상태바에 표시되며, 서버와 실시간으로 데이터를 동기화합니다.
 
 ### 관련 파일
 *   코드상 변수명: `showCommandPalette`, `paletteMode`, `paletteQuery`, `paletteIndex`
