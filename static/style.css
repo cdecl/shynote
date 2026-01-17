@@ -697,3 +697,17 @@ body.zen-mode .cm-editor {
 .dark .cm-tooltip-autocomplete li.cm-focused {
     background-color: rgba(136, 192, 208, 0.2) !important;
 }
+/* iOS Safe Area Support for PWA */
+.safe-area-top {
+    /* 기존 높이 h-7(1.75rem)에 노치 높이를 더함 */
+    height: calc(1.75rem + env(safe-area-inset-top)) !important;
+    padding-top: env(safe-area-inset-top) !important;
+}
+
+/* 데스크탑(768px 이상)에서는 기존 높이 유지 */
+@media (min-width: 768px) {
+    .safe-area-top {
+        height: 1.75rem !important;
+        padding-top: 0 !important;
+    }
+}

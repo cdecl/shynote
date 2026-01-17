@@ -695,7 +695,7 @@
                     :class="isSidebarOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'">
 
                     <!-- Header -->
-                    <div class="h-7 px-2 border-b border-[#E6E4DD] dark:border-[#3B4252] flex items-center bg-[#F2F0EA] dark:bg-[#242933] flex-shrink-0 transition-all font-sans"
+                    <div class="h-7 safe-area-top px-2 border-b border-[#E6E4DD] dark:border-[#3B4252] flex items-center bg-[#F2F0EA] dark:bg-[#242933] flex-shrink-0 transition-all font-sans"
                         :class="isSidebarOpen ? 'justify-between' : 'justify-center'">
                         <a :href="homeUrl" class="flex items-center gap-2 cursor-pointer group/logo no-underline flex-1"
                             title="Go to Home">
@@ -1048,7 +1048,7 @@
             <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeCommandPalette"></div>
 
             <!-- Palette Container Wrapper (Positioning) -->
-            <div class="absolute top-[32px] left-1/2 -translate-x-1/2 w-[90%] sm:w-full max-w-2xl z-[1001]" @click.stop>
+            <div class="absolute top-[calc(32px+env(safe-area-inset-top))] left-1/2 -translate-x-1/2 w-[90%] sm:w-full max-w-2xl z-[1001]" @click.stop>
                 <!-- Animated Content Box -->
                 <div
                     class="w-full bg-white dark:bg-[#2E3440] rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[40vh] border border-gray-200 dark:border-[#3B4252] animate-fade-in-up">
@@ -1134,7 +1134,7 @@
             <div class="flex flex-col h-full">
                 <!-- Toolbar -->
                 <div v-if="rightPanelMode !== 'list' && selectedNote"
-                    class="h-7 border-b border-slate-100 dark:border-[#434C5E] bg-white/80 dark:bg-[#24292F]/80 backdrop-blur-sm flex justify-between items-center pl-1 pr-2 flex-shrink-0 transition-colors duration-300 relative z-10 md:z-40">
+                    class="h-7 safe-area-top border-b border-slate-100 dark:border-[#434C5E] bg-white/80 dark:bg-[#24292F]/80 backdrop-blur-sm flex justify-between items-center pl-1 pr-2 flex-shrink-0 transition-colors duration-300 relative z-10 md:z-40">
                     <div class="flex items-center gap-2">
                         <button @click.stop="toggleSidebar" v-if="!isSidebarOpen"
                             class="p-0.5 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded transition-all flex-shrink-0"
@@ -1269,7 +1269,7 @@
                             style="touch-action: none;"></div>
                         <!-- List Header -->
                         <div
-                            class="h-7 border-b border-slate-200 dark:border-[#3B4252] flex items-center justify-between px-2 bg-white dark:bg-[#2E3440] z-10 shrink-0">
+                            class="h-7 safe-area-top border-b border-slate-200 dark:border-[#3B4252] flex items-center justify-between px-2 bg-white dark:bg-[#2E3440] z-10 shrink-0">
                             <div class="flex items-center gap-2">
                                 <button @click.stop="toggleSidebar" v-if="!isSidebarOpen"
                                     class="p-0.5 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded transition-all"
