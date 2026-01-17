@@ -677,6 +677,10 @@ createApp({
 			logout() // Clear any existing auth state
 		}
 
+		const cancelLogin = async () => {
+			await checkAuth()
+		}
+
 		const authenticatedFetch = async (url, options = {}) => {
 			const token = localStorage.getItem('access_token')
 
@@ -5652,6 +5656,7 @@ createApp({
 			isOnline,
 			useRedirectFlow,
 			loginWithGoogleRedirect,
+			cancelLogin,
 			swipeState,
 			handleNoteTouchStart,
 			handleNoteTouchMove,
