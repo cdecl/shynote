@@ -269,21 +269,28 @@ createApp({
 			return isNaN(date.getTime()) ? null : date
 		}
 
-		// Hash Helper for Sync
-		const shynote_hash = async (text) => {
-			if (crypto && crypto.subtle) {
-				const encoder = new TextEncoder();
-				const data = encoder.encode(text);
-				const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-				const hashArray = Array.from(new Uint8Array(hashBuffer));
-				return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-			} else {
-				// Fallback for secure context requirement (HTTP/Mobile LAN)
-				return sha256(text).toString();
-			}
-		}
+ 		// Hash Helper for Sync
+ 		const shynote_hash = async (text) => {
+ 			if (crypto && crypto.subtle) {
+ 				const encoder = new TextEncoder();
+ 				const data = encoder.encode(text);
+ 				const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+ 				const hashArray = Array.from(new Uint8Array(hashBuffer));
+ 				return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+ 			} else {
+ 				// Fallback for secure context requirement (HTTP/Mobile LAN)
+ 				return sha256(text).toString();
+ 			}
+ 		}
 
-		// User Settings Helper
+ 		// Clear Pending Logs Helper
+ 		const clearPendingLogs = async () => {
+ 			if (hasIDB && LocalDB.clearPendingLogs) {
+ 				await LocalDB.clearPendingLogs();
+ 			}
+ 		}
+
+ 		// User Settings Helper
 		const getUserStorageKey = (key) => {
 			const prefix = currentUserId.value ? `${currentUserId.value}_` : 'guest_';
 			return `${prefix}${key}`;
@@ -2345,83 +2352,97 @@ createApp({
 			isSettingsModalOpen.value = false;
 		}
 
-		const backupData = async () => {
-			try {
-				const response = await authenticatedFetch('/api/backup');
-				if (response && response.ok) {
-					const data = await response.json();
-					const jsonString = JSON.stringify(data, null, 2);
-					const blob = new Blob([jsonString], { type: 'application/json' });
-					const url = URL.createObjectURL(blob);
-					const a = document.createElement('a');
-					a.href = url;
-					const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-					a.download = `shynote_backup_${timestamp}.json`;
-					document.body.appendChild(a);
-					a.click();
-					document.body.removeChild(a);
-					URL.revokeObjectURL(url);
-					closeSettingsModal();
-				} else {
-					alert('Backup failed.');
-				}
-			} catch (error) {
-				console.error('Backup error:', error);
-				alert('An error occurred during backup.');
-			}
-		};
+ 		const backupData = async () => {
+ 			try {
+ 				const response = await authenticatedFetch('/api/backup');
+ 				if (response && response.ok) {
+ 					const data = await response.json();
+ 					const jsonString = JSON.stringify(data, null, 2);
+ 					const blob = new Blob([jsonString], { type: 'application/json' });
+ 					const url = URL.createObjectURL(blob);
+ 					const a = document.createElement('a');
+ 					a.href = url;
+ 					const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+ 					a.download = `shynote_backup_${timestamp}.json`;
+ 					document.body.appendChild(a);
+ 					a.click();
+ 					document.body.removeChild(a);
+ 					URL.revokeObjectURL(url);
+ 					closeSettingsModal();
+ 				} else {
+ 					alert('Backup failed.');
+ 				}
+ 			} catch (error) {
+ 				console.error('Backup error:', error);
+ 				alert('An error occurred during backup.');
+ 			}
+ 		};
 
-		const restoreData = async (event) => {
-			const file = event.target.files[0];
-			if (!file) return;
+ 		const restoreData = async (event) => {
+ 			const file = event.target.files[0];
+ 			if (!file) return;
 
-			const reader = new FileReader();
-			reader.onload = async (e) => {
-				try {
-					const backupData = JSON.parse(e.target.result);
+ 			const reader = new FileReader();
+ 			reader.onload = async (e) => {
+ 				try {
+ 					const backupData = JSON.parse(e.target.result);
 
-					if (!backupData.folders || !backupData.notes) {
-						throw new Error('Invalid backup file format.');
-					}
+ 					// Validate backup format
+ 					if (!backupData.folders || !backupData.notes) {
+ 						throw new Error('Invalid backup file format. Missing folders or notes.');
+ 					}
 
-					const response = await authenticatedFetch('/api/restore', {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify(backupData)
-					});
+ 					// Validate backup version
+ 					if (backupData.backup_version && backupData.backup_version > 1) {
+ 						alert(`This backup was created with a newer version of the app (v${backupData.backup_version}). Some features may not be restored correctly.`);
+ 					}
 
-					if (response && response.ok) {
-						const result = await response.json();
-						closeSettingsModal();
+ 					// Clear local data before restore to avoid sync conflicts
+ 					if (hasIDB) {
+ 						await LocalDB.clearAll();
+ 					}
+ 					// Clear pending logs
+ 					if (typeof clearPendingLogs === 'function') {
+ 						await clearPendingLogs();
+ 					}
 
-						modalState.value = {
-							isOpen: true,
-							type: 'info',
-							title: 'Restore Complete',
-							message: `Successfully restored data.\nFolders added: ${result.folders_added}\nNotes added: ${result.notes_added}`,
-							confirmText: 'OK',
-							cancelText: null,
-							inputValue: '',
-							inputPlaceholder: '',
-							targetId: null
-						};
+ 					const response = await authenticatedFetch('/api/restore', {
+ 						method: 'POST',
+ 						headers: { 'Content-Type': 'application/json' },
+ 						body: JSON.stringify(backupData)
+ 					});
 
-						// Refresh data from server
-						await fetchFolders();
-						await fetchNotes();
-					} else {
-						const error = await response.json();
-						alert(`Restore failed: ${error.detail || 'Unknown error'}`);
-					}
-				} catch (error) {
-					console.error('Restore error:', error);
-					alert(`An error occurred during restore: ${error.message}`);
-				} finally {
-					event.target.value = '';
-				}
-			};
-			reader.readAsText(file);
-		};
+ 					if (response && response.ok) {
+ 						const result = await response.json();
+ 						closeSettingsModal();
+
+ 						modalState.value = {
+ 							isOpen: true,
+ 							type: 'info',
+ 							title: 'Restore Complete',
+ 							message: `Successfully restored data.\nFolders added: ${result.folders_added}\nNotes added: ${result.notes_added}`,
+ 							confirmText: 'OK',
+ 							cancelText: null,
+ 							inputValue: '',
+ 							inputPlaceholder: '',
+ 							targetId: null
+ 						};
+
+ 						// Reload page to get clean state
+ 						window.location.reload();
+ 					} else {
+ 						const error = await response.json();
+ 						alert(`Restore failed: ${error.detail || 'Unknown error'}`);
+ 					}
+ 				} catch (error) {
+ 					console.error('Restore error:', error);
+ 					alert(`An error occurred during restore: ${error.message}`);
+ 				} finally {
+ 					event.target.value = '';
+ 				}
+ 			};
+ 			reader.readAsText(file);
+ 		};
 
 		const clearLocalCache = async () => {
 			closeSettingsModal();
