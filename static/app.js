@@ -3229,10 +3229,7 @@ createApp({
 		const setViewMode = (mode) => {
 			viewMode.value = mode
 			updateUserProfile({ view_mode: mode })
-			// Show signpost when entering preview mode
-			if (mode === 'preview') {
-				showSignpost('🔖 Preview mode: Double-click to enter Editor mode.')
-			}
+
 		}
 
 		const handlePreviewDoubleClick = (event) => {

@@ -2186,7 +2186,7 @@
                                 class="text-[10px] font-medium flex items-center gap-1 px-1.5 py-0.25 rounded"
                                 :class="currentUserId === 'guest' ? 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30' : 'text-slate-600 dark:text-slate-400 bg-slate-200 dark:bg-slate-700'">
                                 <span v-if="currentUserId === 'guest'">Guest Mode</span>
-                                <span v-else>LOGIN: {{ currentUserEmail || currentUserId }}</span>
+                                <span v-else class="flex items-center gap-1"><span class="material-symbols-rounded text-[12px] opacity-70">person</span>{{ currentUserEmail || currentUserId }}</span>
                             </span>
                         </div>
 
