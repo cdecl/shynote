@@ -77,6 +77,8 @@
 
         .cta-button {
             display: inline-block;
+            min-width: 160px;
+            text-align: center;
             padding: 10px 24px;
             text-decoration: none;
             border-radius: 6px;
@@ -84,6 +86,7 @@
             font-size: 0.9rem;
             transition: all 0.2s ease-in-out;
             border: 1.5px solid transparent;
+            box-sizing: border-box;
         }
 
         .primary {
@@ -277,7 +280,7 @@
             <p class="intro">SHYNOTE는 복잡한 설정 없이 사용자가 온전히 글쓰기에만 몰입할 수 있도록 설계된 경량 웹 기반 마크다운 노트 어플리케이션입니다.</p>
             <div class="cta-buttons">
                 <a href="https://shynote.vercel.app/" class="cta-button primary">앱 실행</a>
-                <a href="https://shynote.vercel.app/?mode=guest" class="cta-button secondary">게스트 모드</a>
+                
                 <a href="https://github.com/cdecl/shynote" class="cta-button secondary">GitHub Source</a>
             </div>
         </div>
@@ -321,7 +324,7 @@
                     <h3>4. 보안 및 간편한 공유 (Security & Sharing)</h3>
                     <ul>
                         <li><strong>Google OAuth 2.0</strong>: 가입 절차 없이 안전한 구글 로그인으로 시작하세요.</li>
-                        <li><strong>게스트 모드</strong>: 로그인 없이 앱의 모든 기능을 인메모리 환경에서 미리 체험해볼 수 있습니다.</li>
+                        <li><strong>게스트 모드</strong>: 로그인 없이도 모든 기능을 즉시 사용할 수 있으며, 로컬 IndexedDB를 통해 데이터를 안전하게 보존합니다.</li>
                         <li><strong>고유 링크 공유</strong>: 특정 노트를 읽기 전용 링크로 생성하여 외부에 간편하게 공유할 수 있습니다.</li>
                     </ul>
                 </div>
@@ -329,7 +332,7 @@
                     <h3>5. 극한의 미니멀리즘 디자인 (Minimalist UX)</h3>
                     <ul>
                         <li><strong>Nord 테마 & 다크 모드</strong>: 눈의 피로를 최소화하는 Nord 테마 기반의 아름다운 UI를 제공합니다.</li>
-                        <li><strong>Ultra-Compact UI</strong>: 헤더와 툴바의 높이를 24px로 최소화하여 오직 콘텐츠에만 집중할 수 있는 공간을 확보했습니다.
+                        <li><strong>Ultra-Compact UI</strong>: 헤더와 툴바의 높이를 28px(h-7)로 최적화하여 오직 콘텐츠에만 집중할 수 있는 공간을 확보했습니다.
                         </li>
                     </ul>
                 </div>

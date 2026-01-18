@@ -4,7 +4,7 @@ This document lists the UI elements currently present in `index.html`, organized
 
 ## 1. Sidebar (Left Panel)
 
-### Header
+### Header (h-7/28px)
 - **Logo**: Image & App Name "SHYNOTE"
 - **Version**: Text "v{version}"
 - **Logo/Title**: Link to Home
@@ -45,7 +45,7 @@ The main panel switches between **List Mode** and **Editor Mode**.
 
 ### (A) List Mode (`rightPanelMode === 'list'`)
 
-#### Header
+#### Header (h-7/28px) (h-7/28px)
 - **Navigation (Left)**:
   - **Open Sidebar**: Button (Icon: `view_sidebar`) *Visible only when sidebar is closed*
   - **Return to Editor**: Button (Icon: `edit_note`) *Visible when a note is active*
@@ -66,7 +66,7 @@ The main panel switches between **List Mode** and **Editor Mode**.
 
 ### (B) Editor Mode (`rightPanelMode === 'edit'`)
 
-#### Top Toolbar (Editor Header)
+#### Top Toolbar (Editor Header, h-7/28px)
 *Located at the very top of the editor pane.*
 
 - **Navigation (Left)**:
@@ -101,7 +101,7 @@ The main panel switches between **List Mode** and **Editor Mode**.
 *Visible in all modes.*
 - **Left**: 
   - **Online Status**: Green/Red Dot + Text ("Online" / "Offline")
-  - **User Status**: Badge ("Guest Mode" in Amber / "LOGIN: {email}" in Slate)
+  - **User Status**: Badge ("Guest Mode" in Amber / Icon (person) + email in Slate)
 - **Right**:
   - **Sync Status**: Icon (`dns`) + Text ("Save Complete" / "Pushing...")
   - **Sync Queue**: Button (Icon: `sync` + Count) - *Visible when pending items exist*
