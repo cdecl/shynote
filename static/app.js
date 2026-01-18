@@ -4577,6 +4577,10 @@ createApp({
 		}
 
 		const renderer = new marked.Renderer()
+		renderer.link = function(href, title, text) {
+			// Open external links in new tab with security attributes
+			return `<a href="${href}" target="_blank" rel="noopener noreferrer" ${title ? `title="${title}"` : ''}>${text}</a>`
+		}
 		renderer.code = function (code, language) {
 			if (language === 'mermaid') {
 				return `<div class="mermaid my-4 flex justify-center bg-white dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700 overflow-x-auto">${code}</div>`

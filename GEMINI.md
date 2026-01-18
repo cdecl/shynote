@@ -15,6 +15,7 @@
 1.  **`static/version.json`**: 앱 내 표시용 버전.
 2.  **`pyproject.toml`**: 패키지 관리용 버전.
 3.  **`static/changelog.md`**: 변경 이력 기록 (최상단에 최신 버전 추가).
+4.  **`static/sw.js`**: Service Worker 버전.
 
 
 ---
