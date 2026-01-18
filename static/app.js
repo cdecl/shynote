@@ -5646,6 +5646,7 @@ createApp({
 			searchResults,
 			isSearchOpen,
 			selectSearchResult,
+			getHighlightedText,
 
 			TRASH_FOLDER_ID,
 			emptyTrash,
