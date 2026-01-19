@@ -873,6 +873,15 @@
                                                     <span class="text-slate-500 dark:text-slate-400 font-medium text-[12px] bg-slate-200 dark:bg-[#4C566A] px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{{ getSortedFolderNotes(folder.id).length }}</span>
                                                 </div>
                                             </div>
+                                        <!-- Inline Delete Confirmation -->
+                                        <div v-if="deleteConfirmation.id === folder.id && deleteConfirmation.type === 'folder'"
+                                            class="mx-3 mb-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-xs flex flex-col gap-2 items-start animate-fade-in">
+                                            <span class="text-red-700 dark:text-red-300 font-semibold w-full">Delete folder & move notes to Trash?</span>
+                                            <div class="flex items-center gap-2 self-end">
+                                                <button @click.stop="confirmDelete" class="px-3 py-1 bg-red-600 text-white rounded-md font-semibold text-[11px] hover:bg-red-700 transition-colors">Yes</button>
+                                                <button @click.stop="cancelDelete" class="px-3 py-1 bg-slate-200 dark:bg-slate-700 rounded-md font-semibold text-[11px] hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">No</button>
+                                            </div>
+                                        </div>
                                         </div>
                                     </div>
                                 </div>
@@ -889,6 +898,14 @@
                                             <button v-if="getSortedFolderNotes(TRASH_FOLDER_ID).length > 0" @click.stop="deleteConfirmation = { id: TRASH_FOLDER_ID, type: 'trash' }" class="p-1 text-slate-400 hover:text-red-500 rounded transition-colors"><span class="material-symbols-rounded text-[16px]">delete_forever</span></button>
                                             <span class="bg-slate-200 dark:bg-[#4C566A] text-slate-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{{ getSortedFolderNotes(TRASH_FOLDER_ID).length }}</span>
                                         </div>
+                                    <!-- Empty Trash Confirmation -->
+                                    <div v-if="deleteConfirmation.type === 'trash'" class="absolute inset-0 bg-red-50 dark:bg-red-900/90 rounded-lg flex items-center justify-between px-2 z-10 animate-fade-in" @click.stop>
+                                        <span class="text-xs font-bold text-red-600">Empty Trash?</span>
+                                        <div class="flex gap-1">
+                                            <button @click.stop="confirmDelete" class="px-2 py-0.5 bg-red-600 text-white rounded text-[10px] font-bold">Yes</button>
+                                            <button @click.stop="cancelDelete" class="px-2 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-[10px] font-bold">No</button>
+                                        </div>
+                                    </div>
                                     </div>
                                 </div>
                                 <!-- Recent Notes Section -->
