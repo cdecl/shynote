@@ -63,19 +63,16 @@ textarea {
 /* Custom Cursor Colors for Better Visibility */
 .cm-content {
     caret-color: #000000;
-    /* Native Caret: Black */
 }
 
 /* CodeMirror Custom Cursor (PC/Mac) */
 .cm-cursor {
     border-left-width: 2px !important;
-    /* Thicker Cursor */
     border-left-color: #000000 !important;
 }
 
 .dark .cm-content {
     caret-color: #00E5FF;
-    /* Native Caret: Neon Cyan */
 }
 
 .dark .cm-cursor {
@@ -86,37 +83,23 @@ textarea {
 /* Markdown Preview Styling (GitHub Flavored)                                 */
 /* -------------------------------------------------------------------------- */
 
-/* Base Container */
 .markdown-body {
     font-family: 'Pretendard', sans-serif !important;
     box-sizing: border-box;
     min-width: 200px;
     max-width: none !important;
     margin: 0 !important;
-    padding: 12px !important;
+    padding: 16px !important;
     width: 100% !important;
     background-color: transparent !important;
-    /* Allow parent bg to show */
+    tab-size: 4;
+    -moz-tab-size: 4;
 }
 
 @media (max-width: 767px) {
     .markdown-body {
-        padding: 8px !important;
+        padding: 12px !important;
     }
-}
-
-/* No Wrap Mode (Optional Helper) */
-.markdown-body.no-wrap p,
-.markdown-body.no-wrap h1,
-.markdown-body.no-wrap h2,
-.markdown-body.no-wrap h3,
-.markdown-body.no-wrap h4,
-.markdown-body.no-wrap h5,
-.markdown-body.no-wrap h6,
-.markdown-body.no-wrap li,
-.markdown-body.no-wrap blockquote {
-    white-space: nowrap !important;
-    overflow-x: visible;
 }
 
 /* Code Blocks & Inline Code Font */
@@ -152,16 +135,26 @@ textarea {
     font-size: 0.9em !important;
 }
 
-/* Paragraph Spacing Fix */
-#app .markdown-body p {
-    margin-bottom: 24px !important;
-    line-height: 1.8;
+/* Responsive Images */
+.markdown-body img {
+    max-width: 100% !important;
+    height: auto !important;
+    border-radius: 4px;
+    margin: 8px 0;
 }
 
-/* -------------------------------------------------------------------------- */
-/* Light Mode Tweaks                                                          */
-/* -------------------------------------------------------------------------- */
-/* We generally trust github-markdown-light.css, but ensure fonts match */
+/* Base element spacing - Let them collapse naturally */
+.markdown-body p,
+.markdown-body ul,
+.markdown-body ol,
+.markdown-body dl,
+.markdown-body table,
+.markdown-body pre {
+    margin-top: 0 !important;
+    margin-bottom: 16px !important;
+    line-height: 1.7;
+}
+
 .markdown-body h1,
 .markdown-body h2,
 .markdown-body h3,
@@ -170,158 +163,90 @@ textarea {
 .markdown-body h6 {
     font-family: 'Pretendard', sans-serif !important;
     font-weight: 600 !important;
+    margin-top: 1.5em !important;
+    margin-bottom: 0.5em !important;
+    line-height: 1.25;
 }
 
-/* Fix List Styles (Ensure markers are visible) */
-.markdown-body ul {
-    list-style-type: disc !important;
-    padding-left: 2em !important;
-}
-
-.markdown-body ol {
-    list-style-type: decimal !important;
-    padding-left: 2em !important;
-}
+/* List handling */
+.markdown-body ul { list-style-type: disc !important; padding-left: 1.5em !important; }
+.markdown-body ol { list-style-type: decimal !important; padding-left: 1.5em !important; }
 
 .markdown-body li {
-    display: list-item !important;
-    /* Force list item display */
+    margin-bottom: 4px !important;
 }
 
-/* Fix: Reset paragraph margin inside lists to prevent huge gaps in loose lists */
-#app .markdown-body li p {
-    margin-bottom: 0 !important;
+/* Reset margins for elements inside list items to prevent double spacing */
+.markdown-body li > p { margin-top: 8px !important; margin-bottom: 0 !important; }
+.markdown-body li > p:first-child { margin-top: 0 !important; }
+.markdown-body li > ul, .markdown-body li > ol { margin-top: 4px !important; margin-bottom: 0 !important; }
+
+/* Empty list items height */
+.markdown-body li:empty::after { content: "\00a0"; }
+
+/* Task Lists (Checkboxes) */
+.markdown-body .task-list-item { list-style-type: none !important; padding-left: 0 !important; }
+.markdown-body li.task-list-item input[type="checkbox"] {
+    margin: 0 0.4em 0.25em -1.4em !important;
+    vertical-align: middle;
+}
+
+/* Tables */
+.markdown-body table {
+    display: table !important;
+    width: 100% !important;
+    margin-bottom: 16px !important;
+    border-collapse: collapse !important;
 }
 
 /* -------------------------------------------------------------------------- */
-/* Dark Mode Overrides (Nord Theme Adapter)                                   */
+/* Dark Mode Overrides                                                        */
 /* -------------------------------------------------------------------------- */
 
-/* 
-   GitHub Dark uses #0d1117. We want to match Shynote's #24292F (or Nord #2E3440).
-   We override the CSS variables used by github-markdown-css.
-*/
 .dark .markdown-body {
     color-scheme: dark;
-    /* Backgrounds */
     --color-canvas-default: #24292F;
     --color-canvas-subtle: #2E3440;
-    /* Slightly lighter for blockquotes/tables */
     --color-border-default: #3B4252;
     --color-border-muted: #3B4252;
-    /* Text */
     --color-fg-default: #D8DEE9;
-    /* Nord4 */
     --color-fg-muted: #E5E9F0;
-    /* Nord5 */
     --color-accent-fg: #88C0D0;
-    /* Nord8 (Links) */
-    /* Elements */
     --color-canvas-overlay: #2E3440;
     --color-prettylights-syntax-comment: #616E88;
 }
 
-/* Explicit Element Overrides for Dark Mode */
+.dark .markdown-body a { color: #88C0D0 !important; text-decoration: none; }
+.dark .markdown-body a:hover { text-decoration: underline; }
 
-/* Links */
-.dark .markdown-body a {
-    color: #88C0D0 !important;
-    text-decoration: none;
-}
-
-.dark .markdown-body a:hover {
-    text-decoration: underline;
-}
-
-/* Headlines */
-.dark .markdown-body h1,
-.dark .markdown-body h2,
-.dark .markdown-body h3,
-.dark .markdown-body h4,
-.dark .markdown-body h5,
-.dark .markdown-body h6 {
+.dark .markdown-body h1, .dark .markdown-body h2, .dark .markdown-body h3,
+.dark .markdown-body h4, .dark .markdown-body h5, .dark .markdown-body h6 {
     color: #ECEFF4 !important;
-    /* Nord6 */
     border-bottom-color: #3B4252 !important;
 }
 
-/* Horizontal Rule */
-.dark .markdown-body hr {
-    background-color: #3B4252 !important;
-    height: 1px !important;
-    border: none !important;
-}
+.dark .markdown-body hr { background-color: #3B4252 !important; height: 1px !important; border: none !important; }
 
-/* Blockquotes */
 .dark .markdown-body blockquote {
     color: #E5E9F0 !important;
     border-left-color: #88C0D0 !important;
-    background: transparent !important;
-    /* GitHub css adds padding, we might want bg? */
+    background-color: rgba(59, 66, 82, 0.3) !important;
+    padding: 0.5em 1em !important;
 }
 
-/* Tables */
-.dark .markdown-body table tr {
-    background-color: #24292F !important;
-    border-top-color: #3B4252 !important;
-}
+.dark .markdown-body table tr { background-color: #24292F !important; border-top-color: #3B4252 !important; }
+.dark .markdown-body table tr:nth-child(2n) { background-color: #2E3440 !important; }
+.dark .markdown-body table th, .dark .markdown-body table td { border-color: #3B4252 !important; color: #D8DEE9 !important; }
 
-.dark .markdown-body table tr:nth-child(2n) {
-    background-color: #2E3440 !important;
-    /* Zebra stripe */
-}
+.dark .markdown-body pre { background-color: #2E3440 !important; border: 1px solid #3B4252 !important; }
+.dark .markdown-body pre code { background-color: transparent !important; color: #E5E9F0 !important; }
+.dark .markdown-body :not(pre)>code { background-color: #3B4252 !important; color: #E5E9F0 !important; }
 
-.dark .markdown-body table th,
-.dark .markdown-body table td {
-    border-color: #3B4252 !important;
-    color: #D8DEE9 !important;
-}
+.dark .markdown-body ul, .dark .markdown-body ol { color: #D8DEE9 !important; }
+.dark .markdown-body li::marker { color: #88C0D0 !important; }
 
-/* Code Blocks */
-.dark .markdown-body pre {
-    margin: 16px 0 !important;
-    padding: 16px !important;
-    overflow: auto !important;
-    background-color: #2E3440 !important;
-    /* Nord1 */
-    border-radius: 6px !important;
-    border: 1px solid #3B4252 !important;
-}
-
-.dark .markdown-body pre code {
-    display: block !important;
-    width: 100% !important;
-    background-color: transparent !important;
-    color: #E5E9F0 !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    font-size: 14px !important;
-    line-height: 1.6 !important;
-}
-
-/* Inline Code */
-.dark .markdown-body :not(pre)>code {
-    background-color: #3B4252 !important;
-    color: #E5E9F0 !important;
-    padding: 2px 4px !important;
-    border-radius: 3px !important;
-    font-size: 0.9em !important;
-}
-
-/* Lists */
-.dark .markdown-body ul,
-.dark .markdown-body ol {
-    color: #D8DEE9 !important;
-}
-
-.dark .markdown-body li::marker {
-    color: #88C0D0 !important;
-}
-
-:root {
-    --vh: 1vh;
-}
-
+/* Global Utilities */
+:root { --vh: 1vh; }
 @supports (-webkit-touch-callout: none) {
     body {
         -webkit-text-size-adjust: 100%;
@@ -331,383 +256,67 @@ textarea {
     }
 }
 
-html,
-body {
-    min-height: 100%;
-    height: 100%;
-}
-
+html, body { min-height: 100%; height: 100%; }
 @media screen and (max-width: 767px) {
-    body {
-        height: calc(var(--vh, 1vh) * 100);
-        min-height: calc(var(--vh, 1vh) * 100);
-        touch-action: manipulation;
-    }
-
-    #app {
-        height: 100%;
-        overflow: hidden;
-    }
+    body { height: calc(var(--vh, 1vh) * 100); min-height: calc(var(--vh, 1vh) * 100); touch-action: manipulation; }
+    #app { height: 100%; overflow: hidden; }
 }
 
-/* Animations */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.animate-fade-in-up { animation: fadeInUp 0.2s ease-out forwards; }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.animate-fade-in-up {
-    animation: fadeInUp 0.2s ease-out forwards;
-}
-
-/* Material Symbols alignment */
 .material-symbols-rounded {
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     vertical-align: middle;
 }
 
-/* -------------------------------------------------------------------------- */
-/* YAML Frontmatter Styling                                                   */
-/* -------------------------------------------------------------------------- */
-.frontmatter-container {
-    margin-bottom: 24px;
-    border-bottom: 1px solid #d0d7de;
-    padding-bottom: 16px;
-    font-family: monospace;
-    /* Monospace for metadata */
+/* YAML Frontmatter */
+.frontmatter-container { margin-bottom: 24px; border-bottom: 1px solid #d0d7de; padding-bottom: 16px; font-family: monospace; }
+.dark .frontmatter-container { border-bottom-color: #3B4252; }
+.frontmatter-table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
+.frontmatter-table tr { background: transparent !important; border: none !important; }
+.frontmatter-table td { padding: 2px 8px 2px 0 !important; border: none !important; vertical-align: top; }
+.fm-key { font-weight: 600; color: #57606a; width: 100px; white-space: nowrap; }
+.dark .fm-key { color: #88C0D0; }
+.fm-val { color: #24292F; }
+.dark .fm-val { color: #D8DEE9; }
+
+/* Scrollbars */
+.thin-scrollbar::-webkit-scrollbar { height: 2px; }
+.thin-scrollbar::-webkit-scrollbar-thumb { background-color: transparent; border-radius: 10px; }
+.thin-scrollbar:hover::-webkit-scrollbar-thumb { background-color: #cbd5e1; }
+.dark .thin-scrollbar:hover::-webkit-scrollbar-thumb { background-color: #4b5563; }
+
+.cm-scroller::-webkit-scrollbar, .split-container .markdown-body::-webkit-scrollbar,
+.layout-container .sidebar::-webkit-scrollbar, .notes-list::-webkit-scrollbar { width: 10px; height: 10px; }
+.cm-scroller::-webkit-scrollbar-thumb, .split-container .markdown-body::-webkit-scrollbar-thumb,
+.layout-container .sidebar::-webkit-scrollbar-thumb, .notes-list::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.1); border: 3px solid transparent; background-clip: content-box; border-radius: 99px;
 }
-
-.dark .frontmatter-container {
-    border-bottom-color: #3B4252;
-}
-
-.frontmatter-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.85em;
-    /* Slightly smaller */
-}
-
-.frontmatter-table tr {
-    background: transparent !important;
-    border: none !important;
-}
-
-.frontmatter-table td {
-    padding: 2px 8px 2px 0 !important;
-    border: none !important;
-    vertical-align: top;
-}
-
-.fm-key {
-    font-weight: 600;
-    color: #57606a;
-    width: 100px;
-    /* Fixed width for keys */
-    white-space: nowrap;
-}
-
-.dark .fm-key {
-    color: #88C0D0;
-    /* Nord8 */
-}
-
-.fm-val {
-    color: #24292F;
-}
-
-.dark .fm-val {
-    color: #D8DEE9;
-}
-
-/* Custom Thin Overlay Scrollbar */
-.thin-scrollbar::-webkit-scrollbar {
-    height: 2px;
-    /* Very thin */
-}
-
-.thin-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.thin-scrollbar::-webkit-scrollbar-thumb {
-    background-color: transparent;
-    /* Hidden by default */
-    border-radius: 10px;
-}
-
-.thin-scrollbar:hover::-webkit-scrollbar-thumb,
-.thin-scrollbar:active::-webkit-scrollbar-thumb {
-    background-color: #cbd5e1;
-    /* visible on hover - slate-300 */
-}
-
-.dark .thin-scrollbar:hover::-webkit-scrollbar-thumb,
-.dark .thin-scrollbar:active::-webkit-scrollbar-thumb {
-    background-color: #4b5563;
-    /* dark mode - gray-600 */
-}
-
-/* -------------------------------------------------------------------------- */
-/* Custom Scrollbar for Editor & Split View                                   */
-/* -------------------------------------------------------------------------- */
-
-/* Editor Scroller (CodeMirror) & Preview Scroller */
-.cm-scroller::-webkit-scrollbar,
-.split-container .markdown-body::-webkit-scrollbar,
-.layout-container .sidebar::-webkit-scrollbar,
-.notes-list::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-}
-
-.cm-scroller::-webkit-scrollbar-track,
-.split-container .markdown-body::-webkit-scrollbar-track,
-.layout-container .sidebar::-webkit-scrollbar-track,
-.notes-list::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.cm-scroller::-webkit-scrollbar-thumb,
-.split-container .markdown-body::-webkit-scrollbar-thumb,
-.layout-container .sidebar::-webkit-scrollbar-thumb,
-.notes-list::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.1);
-    border: 3px solid transparent;
-    background-clip: content-box;
-    border-radius: 99px;
-}
-
-.cm-scroller::-webkit-scrollbar-thumb:hover,
-.split-container .markdown-body::-webkit-scrollbar-thumb:hover,
-.layout-container .sidebar::-webkit-scrollbar-thumb:hover,
-.notes-list::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(0, 0, 0, 0.2);
-}
-
-/* Dark Mode Scrollbar Overrides */
-.dark .cm-scroller::-webkit-scrollbar-thumb,
-.dark .split-container .markdown-body::-webkit-scrollbar-thumb,
-.dark .layout-container .sidebar::-webkit-scrollbar-thumb,
-.dark .notes-list::-webkit-scrollbar-thumb {
+.dark .cm-scroller::-webkit-scrollbar-thumb, .dark .split-container .markdown-body::-webkit-scrollbar-thumb,
+.dark .layout-container .sidebar::-webkit-scrollbar-thumb, .dark .notes-list::-webkit-scrollbar-thumb {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-.dark .cm-scroller::-webkit-scrollbar-thumb:hover,
-.dark .split-container .markdown-body::-webkit-scrollbar-thumb:hover,
-.dark .layout-container .sidebar::-webkit-scrollbar-thumb:hover,
-.dark .notes-list::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-}
+.dark .cm-editor .cm-selectionBackground, .dark .cm-editor ::selection { background-color: rgba(235, 203, 139, 0.4) !important; }
+.search-highlight { background-color: rgba(255, 235, 59, 0.5); border-radius: 2px; }
+.dark .search-highlight { background-color: rgba(235, 203, 139, 0.6); color: white; }
 
-/* Hide scrollbar corner */
-.cm-scroller::-webkit-scrollbar-corner {
-    background: transparent;
-}
+body.zen-mode #app-sidebar { display: none !important; width: 0 !important; }
+.markdown-body table td, .markdown-body table th { min-width: 1.5em; }
+body.zen-mode .flex.h-14.items-center, body.zen-mode .h-12.border-b { display: none !important; }
+body.zen-mode .cm-editor { height: 100vh !important; }
 
-/* CodeMirror Selection Override for Dark Mode */
-.dark .cm-editor .cm-selectionBackground,
-.dark .cm-editor ::selection {
-    background-color: rgba(235, 203, 139, 0.4) !important;
-}
+.cm-backlink { color: #0969da; text-decoration: underline; cursor: pointer; background-color: rgba(9, 105, 218, 0.1); border-radius: 2px; padding: 0 2px; }
+.dark .cm-backlink { color: #88C0D0; background-color: rgba(136, 192, 208, 0.15); }
+.markdown-body .backlink { color: #0969da; text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; gap: 2px; }
+.dark .markdown-body .backlink { color: #88C0D0; }
 
-/* Search Highlight in Sidebar */
-.search-highlight {
-    background-color: rgba(255, 235, 59, 0.5);
-    border-radius: 2px;
-}
+.cm-tooltip-autocomplete { z-index: 9999 !important; }
+.cm-tooltip-autocomplete ul { max-height: 300px !important; overflow-y: auto !important; }
+.cm-tooltip-autocomplete li { cursor: pointer !important; padding: 4px 8px !important; border-radius: 4px !important; }
+.cm-tooltip-autocomplete li:hover, .cm-tooltip-autocomplete li.cm-focused { background-color: rgba(9, 105, 218, 0.1) !important; }
+.dark .cm-tooltip-autocomplete li:hover, .dark .cm-tooltip-autocomplete li.cm-focused { background-color: rgba(136, 192, 208, 0.2) !important; }
 
-.dark .search-highlight {
-    background-color: rgba(235, 203, 139, 0.6);
-    color: white;
-}
-
-/* Zen Mode Styles */
-body.zen-mode #app-sidebar {
-    display: none !important;
-    width: 0 !important;
-}
-
-/* Table Stability */
-.markdown-body table td,
-.markdown-body table th {
-    min-width: 1.5em;
-    /* Ensure empty cells don't collapse */
-}
-
-/* Hide header bars in Zen Mode */
-body.zen-mode .flex.h-14.items-center,
-/* Sidebar Header */
-body.zen-mode .h-12.border-b
-
-/* Editor Toolbar */
-    {
-    display: none !important;
-}
-
-/* In Zen Mode, Editor should be clean */
-body.zen-mode .cm-editor {
-    height: 100vh !important;
-}
-
-/* Table Editor */
-
-/* Backlink Styling */
-.cm-backlink {
-    color: #0969da;
-    text-decoration: underline;
-    text-decoration-color: #0969da;
-    cursor: pointer;
-    background-color: rgba(9, 105, 218, 0.1);
-    border-radius: 2px;
-    padding: 0 2px;
-}
-
-.cm-backlink:hover {
-    background-color: rgba(9, 105, 218, 0.2);
-}
-
-.cm-backlink-broken {
-    color: #BF616A;
-    text-decoration: underline;
-    text-decoration-style: dotted;
-    text-decoration-color: #BF616A;
-    cursor: not-allowed;
-    background-color: rgba(191, 97, 106, 0.1);
-    border-radius: 2px;
-    padding: 0 2px;
-}
-
-.dark .cm-backlink {
-    color: #88C0D0;
-    text-decoration-color: #88C0D0;
-    background-color: rgba(136, 192, 208, 0.15);
-}
-
-.dark .cm-backlink:hover {
-    background-color: rgba(136, 192, 208, 0.25);
-}
-
-.dark .cm-backlink-broken {
-    color: #BF616A;
-    text-decoration-color: #BF616A;
-    background-color: rgba(191, 97, 106, 0.15);
-}
-
-/* Preview Backlink Styles */
-.markdown-body .backlink {
-    color: #0969da;
-    text-decoration: none;
-    border-bottom: 1px solid transparent;
-    transition: all 0.2s;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-}
-
-.markdown-body .backlink:hover {
-    color: #0969da;
-    border-bottom-color: #0969da;
-}
-
-.markdown-body .backlink .material-symbols-rounded {
-    font-size: 16px;
-    line-height: 1;
-}
-
-.dark .markdown-body .backlink {
-    color: #88C0D0;
-}
-
-.dark .markdown-body .backlink:hover {
-    border-bottom-color: #88C0D0;
-}
-
-.markdown-body .backlink-broken {
-    color: #BF616A;
-    cursor: not-allowed;
-    opacity: 0.7;
-}
-
-.dark .markdown-body .backlink-broken {
-    color: #BF616A;
-}
-
-/* Legacy classes */
-.cm-link-valid {
-    color: #88C0D0;
-    text-decoration: underline;
-    cursor: pointer;
-}
-
-.cm-link-broken {
-    color: #BF616A;
-    text-decoration: underline;
-    text-decoration-style: dotted;
-    cursor: not-allowed;
-}
-
-.dark .cm-link-valid {
-    color: #88C0D0;
-}
-
-.dark .cm-link-broken {
-    color: #BF616A;
-}
-
-/* Autocomplete Dropdown Styles */
-.cm-tooltip-autocomplete {
-    z-index: 9999 !important;
-}
-
-.cm-tooltip-autocomplete .cm-scroller {
-    overflow: visible !important;
-}
-
-.cm-tooltip-autocomplete ul {
-    max-height: 300px !important;
-    overflow-y: auto !important;
-}
-
-.cm-tooltip-autocomplete li {
-    cursor: pointer !important;
-    padding: 4px 8px !important;
-    margin: 0 !important;
-    border-radius: 4px !important;
-}
-
-.cm-tooltip-autocomplete li:hover,
-.cm-tooltip-autocomplete li.cm-focused {
-    background-color: rgba(9, 105, 218, 0.1) !important;
-}
-
-.cm-tooltip-autocomplete li.cm-focused {
-    background-color: rgba(9, 105, 218, 0.2) !important;
-}
-
-.dark .cm-tooltip-autocomplete li:hover,
-.dark .cm-tooltip-autocomplete li.cm-focused {
-    background-color: rgba(136, 192, 208, 0.2) !important;
-}
-/* iOS Safe Area Support for PWA */
-.safe-area-top {
-    /* 기존 높이 h-7(1.75rem)에 노치 높이를 더함 */
-    height: calc(1.75rem + env(safe-area-inset-top)) !important;
-    padding-top: env(safe-area-inset-top) !important;
-}
-
-/* 데스크탑(768px 이상)에서는 기존 높이 유지 */
-@media (min-width: 768px) {
-    .safe-area-top {
-        height: 1.75rem !important;
-        padding-top: 0 !important;
-    }
-}
+.safe-area-top { height: calc(1.75rem + env(safe-area-inset-top)) !important; padding-top: env(safe-area-inset-top) !important; }
+@media (min-width: 768px) { .safe-area-top { height: 1.75rem !important; padding-top: 0 !important; } }

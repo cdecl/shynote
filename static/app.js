@@ -4759,62 +4759,44 @@ createApp({
 			let content = selectedNote.value.content
 			let frontmatterHtml = ''
 
-			// Frontmatter Regex: Start of file, ---, content, ---, newline
+			// Frontmatter Regex
 			const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n/)
 			if (fmMatch) {
 				try {
 					const yamlContent = fmMatch[1]
 					const metadata = jsyaml.load(yamlContent)
-
-					// Remove frontmatter from markdown content
 					content = content.replace(fmMatch[0], '')
-
-					// Generate Metadata HTML Table
 					if (metadata && typeof metadata === 'object') {
 						let rows = ''
 						for (const [key, value] of Object.entries(metadata)) {
 							let displayValue = value
 							if (Array.isArray(value)) displayValue = value.join(', ')
 							else if (typeof value === 'object') displayValue = JSON.stringify(value)
-
-							rows += `<tr>
-								<td class="fm-key">${key}</td>
-								<td class="fm-val">${displayValue}</td>
-							</tr>`
+							rows += `<tr><td class="fm-key">${key}</td><td class="fm-val">${displayValue}</td></tr>`
 						}
-						frontmatterHtml = `<div class="frontmatter-container">
-							<table class="frontmatter-table">
-								<tbody>${rows}</tbody>
-							</table>
-						</div>`
+						frontmatterHtml = `<div class="frontmatter-container"><table class="frontmatter-table"><tbody>${rows}</tbody></table></div>`
 					}
 				} catch (e) {
 					console.warn('Frontmatter parsing failed', e)
-					// If parsing fails, render as code block or just ignore? 
-					// For now, let marked render the raw --- block if we don't strip it?
-					// Or better: strip it but show error? Let's just fall back to standard rendering if regex matches but yaml fails
-					// Actually, if regex matches, we stripped it. So if load fails, we should probably output the error or raw text.
-					// Let's just not set frontmatterHtml.
 				}
 			}
 
-			// GFM Table Fix: 
-			// 1. Ensure tables are surrounded by newlines if missing
-			// Finds: Non-newline -> Newline -> Header Row (containing |) -> Newline -> Delimiter Row (containing | and -)
+			// Markdown pre-processing
+			
+			// 1. Remove empty list items (e.g., lines with only "- " or "* ")
+			// This prevents broken styles when user is in the middle of typing a list
+			content = content.replace(/\n\s*[-*+]\s*(\n|$)/g, '\n')
+
+			// 2. GFM Table Fix: Ensure tables are surrounded by newlines
 			content = content.replace(/([^\n])\n(\s*\|.*?\|.*?)\n(\s*\|[:\s-]+\|)/g, '$1\n\n$2\n$3')
 
-			// 2. Fix empty first columns (especially rows like |     | 합계 | ...)
-			// `marked` sometimes skips rows that look like indented code if there are spaces at the start.
-			// However, if it's a table row (| is present), we should ensure it's treated as a table row.
-			// This regex finds lines that start with optional spaces, then |, then optional spaces, then | (or end of line).
-			// We'll replace the leading spaces of such rows with nothing to prevent "indented block" misinterpretation.
+			// 3. Fix empty first columns in tables
 			content = content.replace(/^\s+(\|.*\|)\s*$/gm, '$1')
 
-			// Backlink Processing: [[title|id:noteid]] or [[title]] -> [title](#noteid)
+			// Backlink Processing
 			content = content.replace(/\[\[([^\]]*)\]\]/g, (match, content) => {
 				let title = content;
 				let noteId = null;
-
 				if (content.includes('|id:')) {
 					const parts = content.split('|id:');
 					title = parts[0].trim();
@@ -4824,14 +4806,9 @@ createApp({
 					const note = notes.value.find(n => n.title === title);
 					noteId = note?.id || null;
 				}
-
 				if (noteId) {
-					return `<a href="#${noteId}" class="backlink" data-note-id="${noteId}">
-						<span class="material-symbols-rounded text-[14px] align-middle mr-0.5">description</span>
-						${title}
-					</a>`;
+					return `<a href="#${noteId}" class="backlink" data-note-id="${noteId}"><span class="material-symbols-rounded text-[14px] align-middle mr-0.5">description</span>${title}</a>`;
 				} else {
-					// Broken link - show as-is with warning style
 					return `<span class="backlink-broken" data-title="${title}" title="Note not found">⚠️ ${title}</span>`;
 				}
 			});
@@ -4839,13 +4816,11 @@ createApp({
 			const parsedMarkdown = marked.parse(content, {
 				renderer: renderer,
 				gfm: true,
-				breaks: false // Standard GFM: single newline is a space, double newline is a paragraph
+				breaks: true // Enable single line breaks
 			})
 
 			return frontmatterHtml + parsedMarkdown
 		})
-
-		// Re-run Mermaid when preview content changes
 		watch(previewContent, () => {
 			nextTick(async () => {
 				const nodes = document.querySelectorAll('.mermaid')
