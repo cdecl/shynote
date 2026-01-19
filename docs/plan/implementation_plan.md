@@ -249,3 +249,23 @@ This document tracks the cumulative implementation details of the SHYNOTE projec
     - [x] **Styling**: Applied global font (`Pretendard`) to autocomplete tooltip.
 
 
+
+## 12. Modern Navigation & Activity Bar
+**Date**: 2026-01-19
+**Status**: Implemented
+
+### UI/UX Refinement Checklist
+- [x] **Activity Bar**: Slim left-side bar (44px) for global actions.
+- [x] **Sidebar Modes**: Split functionality into `explorer` and `search` panels.
+- [x] **Sidebar Resizing**: Draggable right edge for sidebar width customization (PC).
+- [x] **Search History**:
+    - [x] Shared history across all search interfaces (max 10).
+    - [x] Arrow key navigation in Editor search.
+    - [x] Visual Dropdown in Sidebar search.
+- [x] **PWA Robustness**:
+    - [x] Auto-reload logic on Service Worker update.
+    - [x] iOS Safe Area (Notch) layout stabilization.
+- [x] **Markdown Rendering**:
+    - [x] Implemented `breaks: true` (GFM style breaks).
+    - [x] Fixed List-item padding and double-spacing issues.
+    - [x] Auto-clean of empty list markers (`- `) in preview.
