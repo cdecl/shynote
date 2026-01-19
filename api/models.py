@@ -33,7 +33,7 @@ class Note(Base):
     id = Column(String, primary_key=True, index=True)
     title = Column(String, index=True)
     content = Column(Text)
-    folder_id = Column(String, ForeignKey("folders.id"), nullable=True)
+    folder_id = Column(String, ForeignKey("folders.id"), nullable=True, index=True)
     user_id = Column(String, ForeignKey("users.id"), index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())
