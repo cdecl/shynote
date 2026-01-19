@@ -742,31 +742,45 @@
                     <div class="px-3 py-2 border-b border-[#E6E4DD] dark:border-[#3B4252] flex flex-col gap-2 transition-all bg-[#F2F0EA] dark:bg-[#242933]"
                         :class="searchQuery ? 'flex-1 overflow-hidden' : 'flex-shrink-0'" v-show="isSidebarOpen">
 
-                        <!-- Search Input -->
-                        <div
-                            class="flex items-center gap-2 bg-white dark:bg-[#2E3440] border border-slate-200 dark:border-[#434C5E] rounded-lg px-2 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/50">
-                            <span class="material-symbols-rounded text-slate-400 text-[18px]">search</span>
-                            <input type="text" v-model="searchQuery"
-                                class="flex-1 bg-transparent text-sm text-slate-700 dark:text-white placeholder-slate-400 outline-none min-w-0"
-                                placeholder="Search notes...">
-                            <div class="flex items-center gap-0.5 mr-1">
-                                <button @click="searchOptions.caseSensitive = !searchOptions.caseSensitive"
-                                    class="px-1.5 py-0.5 text-[10px] font-bold border rounded transition-colors"
-                                    :class="searchOptions.caseSensitive ? 'bg-blue-100 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800' : 'bg-transparent text-slate-400 border-transparent hover:bg-slate-200 dark:hover:bg-[#4C566A]'"
-                                    title="Case Sensitive">
-                                    Aa
-                                </button>
-                                <button @click="searchOptions.useRegex = !searchOptions.useRegex"
-                                    class="px-1.5 py-0.5 text-[10px] font-bold border rounded transition-colors"
-                                    :class="searchOptions.useRegex ? 'bg-blue-100 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800' : 'bg-transparent text-slate-400 border-transparent hover:bg-slate-200 dark:hover:bg-[#4C566A]'"
-                                    title="Regular Expression">
-                                    .*
+                        <div class="relative">
+                            <div
+                                class="flex items-center gap-2 bg-white dark:bg-[#2E3440] border border-slate-200 dark:border-[#434C5E] rounded-lg px-2 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/50">
+                                <span class="material-symbols-rounded text-slate-400 text-[18px]">search</span>
+                                <input type="text" id="sidebar-search-input" v-model="searchQuery"
+                                    @focus="showSearchHistoryDropdown = true"
+                                    @blur="hideSearchHistoryDropdown"
+                                    class="flex-1 bg-transparent text-sm text-slate-700 dark:text-white placeholder-slate-400 outline-none min-w-0"
+                                    placeholder="Search notes...">
+                                <div class="flex items-center gap-0.5 mr-1">
+                                    <button @click="searchOptions.caseSensitive = !searchOptions.caseSensitive"
+                                        class="px-1.5 py-0.5 text-[10px] font-bold border rounded transition-colors"
+                                        :class="searchOptions.caseSensitive ? 'bg-blue-100 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800' : 'bg-transparent text-slate-400 border-transparent hover:bg-slate-200 dark:hover:bg-[#4C566A]'"
+                                        title="Case Sensitive">
+                                        Aa
+                                    </button>
+                                    <button @click="searchOptions.useRegex = !searchOptions.useRegex"
+                                        class="px-1.5 py-0.5 text-[10px] font-bold border rounded transition-colors"
+                                        :class="searchOptions.useRegex ? 'bg-blue-100 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800' : 'bg-transparent text-slate-400 border-transparent hover:bg-slate-200 dark:hover:bg-[#4C566A]'"
+                                        title="Regular Expression">
+                                        .*
+                                    </button>
+                                </div>
+                                <button @click="searchQuery = ''" v-show="searchQuery"
+                                    class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                                    <span class="material-symbols-rounded text-[16px]">close</span>
                                 </button>
                             </div>
-                            <button @click="searchQuery = ''" v-show="searchQuery"
-                                class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
-                                <span class="material-symbols-rounded text-[16px]">close</span>
-                            </button>
+                            
+                            <div v-if="showSearchHistoryDropdown && searchHistory.length > 0"
+                                 class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-[#2E3440] border border-slate-200 dark:border-[#434C5E] rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                                <div v-for="(item, idx) in searchHistory" :key="idx"
+                                     @mousedown="selectSearchHistoryItem(item)"
+                                     :class="idx === searchHistoryDropdownIndex ? 'bg-blue-50 dark:bg-blue-900/30' : ''"
+                                     class="px-3 py-2 text-sm text-slate-700 dark:text-slate-200 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#3B4252] transition-colors flex items-center gap-2">
+                                    <span class="material-symbols-rounded text-[14px] text-slate-400">history</span>
+                                    <span>{{ item }}</span>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Results Count -->

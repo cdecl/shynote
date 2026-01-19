@@ -434,6 +434,41 @@ createApp({
 			window.addEventListener('resize', handleWindowResize)
 			initMobileDragDrop()
 
+			const sidebarSearchInput = document.getElementById('sidebar-search-input')
+			if (sidebarSearchInput) {
+				setupSearchHistoryNavigation(sidebarSearchInput)
+			}
+
+			searchHistoryObserver = new MutationObserver((mutations) => {
+				for (const mutation of mutations) {
+					for (const node of mutation.addedNodes) {
+						if (node.nodeType === 1) {
+							const searchInput = node.querySelector?.('.cm-search input[name="search"]')
+							if (searchInput) {
+								setupSearchHistoryNavigation(searchInput)
+							} else if (node.classList?.contains('cm-panel') && node.classList?.contains('cm-search')) {
+								const nestedSearchInput = node.querySelector('input[name="search"]')
+								if (nestedSearchInput) {
+									setupSearchHistoryNavigation(nestedSearchInput)
+								}
+							}
+						}
+					}
+				}
+			})
+
+			if (editorRef.value) {
+				searchHistoryObserver.observe(editorRef.value, {
+					childList: true,
+					subtree: true
+				})
+			} else {
+				searchHistoryObserver.observe(document.body, {
+					childList: true,
+					subtree: true
+				})
+			}
+
 			// Backlink click handler for preview + Close menus on outside click
 			document.addEventListener('click', (e) => {
 				// Handle preview backlinks
@@ -459,6 +494,9 @@ createApp({
 
 		onUnmounted(() => {
 			window.removeEventListener('resize', handleWindowResize)
+			if (searchHistoryObserver) {
+				searchHistoryObserver.disconnect()
+			}
 		})
 
 		const setFontSize = (size) => {
@@ -466,12 +504,131 @@ createApp({
 			saveUserSetting(STORAGE_KEYS.FONT_SIZE, size)
 		}
 
+		const searchHistory = ref(JSON.parse(localStorage.getItem('shynote_search_history') || '[]'))
+		const searchInputStates = new WeakMap()
+		let searchHistoryObserver = null
+		const showSearchHistoryDropdown = ref(false)
+		const searchHistoryDropdownIndex = ref(-1)
+
+	const hideSearchHistoryDropdown = () => {
+		setTimeout(() => {
+			showSearchHistoryDropdown.value = false
+			searchHistoryDropdownIndex.value = -1
+		}, 200)
+	}
+
+	const selectSearchHistoryItem = (item) => {
+		searchQuery.value = item
+		showSearchHistoryDropdown.value = false
+		searchHistoryDropdownIndex.value = -1
+		const sidebarSearchInput = document.getElementById('sidebar-search-input')
+		if (sidebarSearchInput) {
+			sidebarSearchInput.value = item
+			sidebarSearchInput.dispatchEvent(new Event('input'))
+		}
+	}
+		
+		const saveSearchHistory = (query) => {
+			if (!query || query.trim() === '') return
+
+			const trimmed = query.trim()
+			const history = [...searchHistory.value]
+
+			const filtered = history.filter(h => h !== trimmed)
+			filtered.unshift(trimmed)
+
+			searchHistory.value = filtered.slice(0, 10)
+			localStorage.setItem('shynote_search_history', JSON.stringify(searchHistory.value))
+		}
+		
+
+
+
+		const setupSearchHistoryNavigation = (searchInput) => {
+			if (!searchInput) return
+
+			if (searchInputStates.has(searchInput)) return
+
+			const state = {
+				index: searchHistory.value.length,
+				currentQuery: '',
+				isDropdownVisible: false
+			}
+
+			searchInputStates.set(searchInput, state)
+
+			const keydownHandler = (e) => {
+				if (e.key === 'ArrowUp' && state.index > 0) {
+					e.preventDefault()
+					state.index--
+					searchInput.value = searchHistory.value[state.index]
+					if (searchInput.id === 'sidebar-search-input') {
+						searchQuery.value = searchInput.value
+					}
+				} else if (e.key === 'ArrowDown') {
+					e.preventDefault()
+					if (state.index < searchHistory.value.length - 1) {
+						state.index++
+						searchInput.value = searchHistory.value[state.index]
+						if (searchInput.id === 'sidebar-search-input') {
+							searchQuery.value = searchInput.value
+						}
+					} else if (state.index === searchHistory.value.length - 1) {
+						state.index = searchHistory.value.length
+						searchInput.value = state.currentQuery
+						if (searchInput.id === 'sidebar-search-input') {
+							searchQuery.value = searchInput.value
+						}
+					}
+				} else if (e.key === 'Enter' && searchInput.value.trim()) {
+					saveSearchHistory(searchInput.value)
+					state.index = searchHistory.value.length
+					state.currentQuery = ''
+					if (searchInput.id === 'sidebar-search-input') {
+						showSearchHistoryDropdown.value = false
+						searchHistoryDropdownIndex.value = -1
+					}
+				} else if (e.key === 'Escape') {
+					if (searchInput.id === 'sidebar-search-input') {
+						showSearchHistoryDropdown.value = false
+						searchHistoryDropdownIndex.value = -1
+					}
+				}
+			}
+
+			const inputHandler = (e) => {
+				if (state.index === searchHistory.value.length) {
+					state.currentQuery = e.target.value
+				}
+			}
+
+			const focusHandler = () => {
+				state.index = searchHistory.value.length
+				state.currentQuery = searchInput.value
+				if (searchInput.id === 'sidebar-search-input') {
+					showSearchHistoryDropdown.value = true
+					searchHistoryDropdownIndex.value = -1
+				}
+			}
+
+			const cleanup = () => {
+				searchInput.removeEventListener('keydown', keydownHandler)
+				searchInput.removeEventListener('input', inputHandler)
+				searchInput.removeEventListener('focus', focusHandler)
+				searchInput.removeEventListener('blur', cleanup)
+			}
+
+			searchInput.addEventListener('keydown', keydownHandler)
+			searchInput.addEventListener('input', inputHandler)
+			searchInput.addEventListener('focus', focusHandler)
+			searchInput.addEventListener('blur', cleanup)
+		}
+
 		const sidebarViewMode = ref(localStorage.getItem('shynote_sidebar_view_mode') || 'simple')
 		const setSidebarViewMode = (mode) => {
 			sidebarViewMode.value = mode
 			localStorage.setItem('shynote_sidebar_view_mode', mode)
 		}
-
 		// List View Mode (Grid vs List)
 		const listViewMode = ref(localStorage.getItem('shynote_list_view_mode') || 'grid')
 		const toggleListViewMode = () => {
@@ -5520,15 +5677,15 @@ createApp({
 				if (editorView.value) {
 					const panel = document.querySelector('.cm-panel.cm-search')
 					if (panel) {
-						// Toggle Off
 						closeSearchPanel(editorView.value)
-						editorView.value.focus() // Return focus to editor
+						editorView.value.focus()
 					} else {
-						// Toggle On
 						openSearchPanel(editorView.value)
 						setTimeout(() => {
 							const searchInput = document.querySelector('.cm-search input[name="search"]')
-							if (searchInput) searchInput.focus()
+							if (searchInput) {
+								searchInput.focus()
+							}
 						}, 50)
 					}
 				}
@@ -5627,7 +5784,6 @@ createApp({
 			getPlainContent,
 			guestMode: computed(() => !isAuthenticated.value),
 			// Config
-
 			splitRatio,
 			startResize,
 			hasIDB,
@@ -5641,16 +5797,20 @@ createApp({
 			toggleNewItemMenu,
 			closeNewItemMenu,
 			showAbout,
-			showAbout,
 			isSharing,
 			isSortMenuOpen,
 			// Search
 			searchQuery,
 			searchOptions,
 			searchResults,
+			showSearchHistoryDropdown,
+			searchHistoryDropdownIndex,
+			selectSearchHistoryItem,
+			hideSearchHistoryDropdown,
 			isSearchOpen,
 			selectSearchResult,
 			getHighlightedText,
+			searchHistory,
 
 			TRASH_FOLDER_ID,
 			emptyTrash,
@@ -5666,7 +5826,6 @@ createApp({
 			isMobile,
 			isEditModeActive,
 			conflictMap,
-			conflictState,
 			triggerTableEditor
 		}
 	}
@@ -5677,9 +5836,9 @@ window.shynoteData = {
 	selectNote: null
 };
 
-const app = document.getElementById('app');
-if (app && app.__vue_app__) {
-	const vm = app.__vue_app__.config.globalProperties;
+const appElement = document.getElementById('app');
+if (appElement && appElement.__vue_app__) {
+	const vm = appElement.__vue_app__.config.globalProperties;
 	window.shynoteData.notes = vm.notes;
 	window.shynoteData.selectNote = vm.selectNote;
 
