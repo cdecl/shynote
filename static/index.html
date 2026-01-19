@@ -891,21 +891,21 @@
                                         class="relative flex items-center justify-between px-3 h-9 cursor-pointer transition-all duration-200 group rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 mx-2"
                                         :class="[dropTargetId === TRASH_FOLDER_ID ? 'translate-x-1 bg-red-50 dark:bg-red-900/20 ring-1 ring-red-200 dark:ring-red-800' : '', currentFolderId === TRASH_FOLDER_ID ? 'bg-blue-100 dark:bg-blue-600/20 shadow-sm' : '']">
                                         <div class="flex items-center gap-3">
-                                            <span class="material-symbols-rounded text-[22px]" :class="dropTargetId === TRASH_FOLDER_ID ? 'text-red-500' : 'text-slate-400'" style="font-variation-settings: 'FILL' 1">{{ getSortedFolderNotes(TRASH_FOLDER_ID).length > 0 ? 'delete' : 'delete_outline' }}</span>
+                                            <span class="material-symbols-rounded text-[22px]" :class="dropTargetId === TRASH_FOLDER_ID ? 'text-red-500' : 'text-slate-400'" style="font-variation-settings: 'FILL' 1">{{ trashNotesCount > 0 ? 'delete' : 'delete_outline' }}</span>
                                             <span class="text-[14px] font-medium" :class="currentFolderId === TRASH_FOLDER_ID ? 'text-slate-800 dark:text-white' : 'text-slate-600 dark:text-slate-400'">TRASH</span>
                                         </div>
                                         <div class="flex items-center gap-2">
-                                            <button v-if="getSortedFolderNotes(TRASH_FOLDER_ID).length > 0" @click.stop="deleteConfirmation = { id: TRASH_FOLDER_ID, type: 'trash' }" class="p-1 text-slate-400 hover:text-red-500 rounded transition-colors"><span class="material-symbols-rounded text-[16px]">delete_forever</span></button>
-                                            <span class="bg-slate-200 dark:bg-[#4C566A] text-slate-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{{ getSortedFolderNotes(TRASH_FOLDER_ID).length }}</span>
+                                            <button v-if="trashNotesCount > 0" @click.stop="deleteConfirmation = { id: TRASH_FOLDER_ID, type: 'trash' }" class="p-1 text-slate-400 hover:text-red-500 rounded transition-colors"><span class="material-symbols-rounded text-[16px]">delete_forever</span></button>
+                                            <span class="bg-slate-200 dark:bg-[#4C566A] text-slate-600 dark:text-slate-400 text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{{ trashNotesCount || 0 }}</span>
                                         </div>
-                                    <!-- Empty Trash Confirmation -->
-                                    <div v-if="deleteConfirmation.type === 'trash'" class="absolute inset-0 bg-red-50 dark:bg-red-900/90 rounded-lg flex items-center justify-between px-2 z-10 animate-fade-in" @click.stop>
-                                        <span class="text-xs font-bold text-red-600">Empty Trash?</span>
-                                        <div class="flex gap-1">
-                                            <button @click.stop="confirmDelete" class="px-2 py-0.5 bg-red-600 text-white rounded text-[10px] font-bold">Yes</button>
-                                            <button @click.stop="cancelDelete" class="px-2 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-[10px] font-bold">No</button>
+                                        <!-- Empty Trash Confirmation Overlay -->
+                                        <div v-if="deleteConfirmation.type === 'trash'" class="absolute inset-0 bg-red-50 dark:bg-red-900/90 rounded-lg flex items-center justify-between px-2 z-10 animate-fade-in" @click.stop>
+                                            <span class="text-xs font-bold text-red-600">Empty Trash?</span>
+                                            <div class="flex gap-1">
+                                                <button @click.stop="confirmDelete" class="px-2 py-0.5 bg-red-600 text-white rounded text-[10px] font-bold">Yes</button>
+                                                <button @click.stop="cancelDelete" class="px-2 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-[10px] font-bold">No</button>
+                                            </div>
                                         </div>
-                                    </div>
                                     </div>
                                 </div>
                                 <!-- Recent Notes Section -->
@@ -2158,7 +2158,7 @@
             });
         }
     </script>
-    <script src="/static/app.js?v=34" type="module"></script>
+    <script src="/static/app.js?v=37" type="module"></script>
 </body>
 
 </html>

@@ -345,7 +345,19 @@ createApp({
 			}
 		}
 
+		const TRASH_FOLDER_ID = computed(() => {
+			const uid = currentUserId.value;
+			return uid ? `trash-${uid}` : "trash-guest";
+		});
 		const notes = ref([])
+		const trashNotesCount = computed(() => {
+			if (!notes.value) return 0;
+			const tid = TRASH_FOLDER_ID.value;
+			return notes.value.filter(n => 
+				n && (n.folder_id == tid || 
+				(typeof n.folder_id === 'string' && n.folder_id.startsWith('trash-')))
+			).length;
+		});
 		const pinnedNotes = ref([])
 		const folders = ref([])
 		const selectedNote = ref(null)
@@ -4216,10 +4228,6 @@ createApp({
 		// Trash Feature Constants
 		// Trash Feature Constants
 		// Use computed to generate unique Trash ID per user to prevent DB Primary Key collisions
-		const TRASH_FOLDER_ID = computed(() => {
-			const uid = currentUserId.value;
-			return uid ? `trash-${uid}` : 'trash-guest';
-		});
 
 		const confirmDelete = async () => {
 			document.removeEventListener('click', handleDeleteOutsideClick)
@@ -4915,6 +4923,7 @@ createApp({
 			})
 			return sortItems(regularFolders)
 		})
+
 
 		const getFolderNotes = (folderId) => {
 			// Use loose equality (==) to handle mix of string/number IDs
@@ -5854,6 +5863,7 @@ createApp({
 			selectSearchResult,
 			getHighlightedText,
 			searchHistory,
+			trashNotesCount,
 
 			TRASH_FOLDER_ID,
 			emptyTrash,
