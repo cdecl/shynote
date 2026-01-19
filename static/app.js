@@ -251,7 +251,8 @@ createApp({
 			SPLIT_RATIO: 'shynote_split_ratio',
 			LAST_FOLDER_ID: 'shynote_last_folder_id',
 			LAST_PANEL_MODE: 'shynote_last_panel_mode',
-			NOTE_USAGE_DATA: 'shynote_note_usage_v1'
+			NOTE_USAGE_DATA: 'shynote_note_usage_v1',
+			SIDEBAR_WIDTH: 'shynote_sidebar_width'
 		}
 
 
@@ -332,6 +333,9 @@ createApp({
 
 			const ratio = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.SPLIT_RATIO))
 			splitRatio.value = Number(ratio) || 50
+
+			const sWidth = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.SIDEBAR_WIDTH))
+			sidebarWidth.value = Number(sWidth) || 320
 
 			// Dark Mode (Local Preference override before DB)
 			const localDark = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.DARK_MODE))
@@ -788,6 +792,33 @@ createApp({
 			document.removeEventListener('mouseup', stopResize)
 			document.body.style.userSelect = ''
 			saveUserSetting(STORAGE_KEYS.SPLIT_RATIO, splitRatio.value)
+		}
+		const sidebarWidth = ref(320)
+		const isResizingSidebar = ref(false)
+
+		const startSidebarResize = (e) => {
+			isResizingSidebar.value = true
+			document.addEventListener('mousemove', handleSidebarResize)
+			document.addEventListener('mouseup', stopSidebarResize)
+			document.body.style.cursor = 'col-resize'
+			document.body.style.userSelect = 'none'
+		}
+
+		const handleSidebarResize = (e) => {
+			if (!isResizingSidebar.value) return
+			const newWidth = e.clientX
+			if (newWidth > 200 && newWidth < 600) {
+				sidebarWidth.value = newWidth
+			}
+		}
+
+		const stopSidebarResize = () => {
+			isResizingSidebar.value = false
+			document.removeEventListener('mousemove', handleSidebarResize)
+			document.removeEventListener('mouseup', stopSidebarResize)
+			document.body.style.cursor = ''
+			document.body.style.userSelect = ''
+			saveUserSetting(STORAGE_KEYS.SIDEBAR_WIDTH, sidebarWidth.value)
 		}
 
 
@@ -5760,6 +5791,8 @@ createApp({
 			guestMode: computed(() => !isAuthenticated.value),
 			// Config
 			splitRatio,
+			sidebarWidth,
+			startSidebarResize,
 			startResize,
 			hasIDB,
 			isSyncing,

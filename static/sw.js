@@ -1,4 +1,4 @@
-const CACHE_NAME = 'shynote-v161';
+const CACHE_NAME = 'shynote-v163';
 const CRITICAL_ASSETS = [
 	'/',
 	'/static/index.html',
@@ -75,20 +75,6 @@ self.addEventListener('activate', (event) => {
 	self.clients.claim();
 });
 
-// Notify all clients when a new SW is waiting
-self.addEventListener('updatefound', () => {
-	const newWorker = self.registration.installing;
-	newWorker.addEventListener('statechange', () => {
-		if (newWorker.state === 'installed' && self.registration.waiting) {
-			// Notify all clients to reload
-			self.clients.matchAll().then((clients) => {
-				clients.forEach((client) => {
-					client.postMessage({ type: 'SW_UPDATED' });
-				});
-			});
-		}
-	});
-});
 
 self.addEventListener('fetch', (event) => {
 	// Only handle GET requests

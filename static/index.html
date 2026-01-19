@@ -321,13 +321,21 @@
         [v-cloak] {
             display: none !important;
         }
-        
+
         /* Double-click hint animation */
         @keyframes fadeInOut {
-            0%, 100% { opacity: 0; }
-            10%, 90% { opacity: 1; }
+
+            0%,
+            100% {
+                opacity: 0;
+            }
+
+            10%,
+            90% {
+                opacity: 1;
+            }
         }
-        
+
         .animate-fade-in-out {
             animation: fadeInOut 2s ease-in-out;
         }
@@ -675,17 +683,21 @@
 
         <!-- Mobile Sidebar Overlay -->
         <div id="app-sidebar" :class="[
-                isSidebarOpen ? 'w-full md:w-80' : 'w-0', 
+                isSidebarOpen ? (isMobile ? 'w-full' : '') : 'w-0', 
                 'md:relative absolute inset-y-0 left-0 z-20',
                 'flex-shrink-0 transition-all duration-150 ease-in-out',
                 'md:overflow-visible overflow-hidden'
-            ]">
+            ]" :style="{ width: isSidebarOpen && !isMobile ? sidebarWidth + 'px' : '' }">
             <div class="w-full h-full flex flex-col transition-all duration-150 ease-in-out group/sidebar shadow-xl md:shadow-none"
                 :class="[
                     !isSidebarOpen ? 'cursor-pointer' : '',
                     isSidebarOpen ? 'bg-[#F2F0EA] dark:bg-[#242933] border-r border-[#E6E4DD] dark:border-[#3B4252]' : 'bg-transparent border-none'
                 ]" @click="!isSidebarOpen && toggleSidebar()">
 
+                <!-- Resize Handle (PC only) -->
+                <div v-if="!isMobile && isSidebarOpen" @mousedown="startSidebarResize"
+                    class="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-blue-500/30 transition-colors z-50">
+                </div>
                 <!-- Bookmark/Handle Indicator -->
                 <div class="md:block hidden absolute -right-1.5 top-1/2 -translate-y-1/2 w-1.5 h-10 bg-slate-300 dark:bg-slate-600 rounded-r-md transition-all duration-300 shadow-md transform opacity-60 group-hover/sidebar:opacity-100 group-hover/sidebar:translate-x-0.5 group-hover/sidebar:bg-blue-400 group-hover/sidebar:w-2 cursor-pointer"
                     @click.stop="toggleSidebar" :class="!isSidebarOpen ? 'translate-x-0' : 'hidden'"></div>
@@ -723,7 +735,8 @@
                                 </span>
                             </button>
                             <!-- Login/Logout Button -->
-                            <button v-show="isSidebarOpen" @click="currentUserId === 'guest' ? showLoginModal() : handleLogout()"
+                            <button v-show="isSidebarOpen"
+                                @click="currentUserId === 'guest' ? showLoginModal() : handleLogout()"
                                 class="px-2 py-0.5 text-[10px] font-medium rounded transition-colors"
                                 :class="currentUserId === 'guest' ? 'bg-[#263557] text-white hover:bg-[#1a2744]' : 'text-slate-400 hover:text-red-500'"
                                 :title="currentUserId === 'guest' ? 'Login' : 'Logout'">
@@ -747,8 +760,7 @@
                                 class="flex items-center gap-2 bg-white dark:bg-[#2E3440] border border-slate-200 dark:border-[#434C5E] rounded-lg px-2 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/50">
                                 <span class="material-symbols-rounded text-slate-400 text-[18px]">search</span>
                                 <input type="text" id="sidebar-search-input" v-model="searchQuery"
-                                    @focus="showSearchHistoryDropdown = true"
-                                    @blur="hideSearchHistoryDropdown"
+                                    @focus="showSearchHistoryDropdown = true" @blur="hideSearchHistoryDropdown"
                                     class="flex-1 bg-transparent text-sm text-slate-700 dark:text-white placeholder-slate-400 outline-none min-w-0"
                                     placeholder="Search notes...">
                                 <div class="flex items-center gap-0.5 mr-1">
@@ -770,13 +782,13 @@
                                     <span class="material-symbols-rounded text-[16px]">close</span>
                                 </button>
                             </div>
-                            
+
                             <div v-if="showSearchHistoryDropdown && searchHistory.length > 0"
-                                 class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-[#2E3440] border border-slate-200 dark:border-[#434C5E] rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                                class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-[#2E3440] border border-slate-200 dark:border-[#434C5E] rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
                                 <div v-for="(item, idx) in searchHistory" :key="idx"
-                                     @mousedown="selectSearchHistoryItem(item)"
-                                     :class="idx === searchHistoryDropdownIndex ? 'bg-blue-50 dark:bg-blue-900/30' : ''"
-                                     class="px-3 py-2 text-sm text-slate-700 dark:text-slate-200 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#3B4252] transition-colors flex items-center gap-2">
+                                    @mousedown="selectSearchHistoryItem(item)"
+                                    :class="idx === searchHistoryDropdownIndex ? 'bg-blue-50 dark:bg-blue-900/30' : ''"
+                                    class="px-3 py-2 text-sm text-slate-700 dark:text-slate-200 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#3B4252] transition-colors flex items-center gap-2">
                                     <span class="material-symbols-rounded text-[14px] text-slate-400">history</span>
                                     <span>{{ item }}</span>
                                 </div>
@@ -824,7 +836,7 @@
                                     <div class="flex items-center gap-1">
                                         <h2
                                             class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                                            My Folders
+                                            NEW
                                         </h2>
                                         <button @click.stop="createFolder()" @mousedown.stop
                                             class="text-slate-400 hover:text-blue-500 transition-colors"
@@ -835,7 +847,8 @@
                                     <button @click.stop="createNoteInFolder(null)" @mousedown.stop
                                         class="flex items-center gap-1.5 px-2 py-1 hover:bg-slate-200 dark:hover:bg-[#4C566A] rounded-full text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors text-xs font-medium"
                                         title="Quick Inbox Note">
-                                        <span class="text-[10px] font-medium text-slate-500 dark:text-slate-400">Quick</span>
+                                        <span
+                                            class="text-[10px] font-medium text-slate-500 dark:text-slate-400">Quick</span>
                                         <div class="relative w-[16px] h-[16px] flex items-center justify-center">
                                             <span class="material-symbols-rounded text-[20px]">description</span>
                                             <span
@@ -1062,7 +1075,8 @@
             <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeCommandPalette"></div>
 
             <!-- Palette Container Wrapper (Positioning) -->
-            <div class="absolute top-[calc(32px+env(safe-area-inset-top))] left-1/2 -translate-x-1/2 w-[90%] sm:w-full max-w-2xl z-[1001]" @click.stop>
+            <div class="absolute top-[calc(32px+env(safe-area-inset-top))] left-1/2 -translate-x-1/2 w-[90%] sm:w-full max-w-2xl z-[1001]"
+                @click.stop>
                 <!-- Animated Content Box -->
                 <div
                     class="w-full bg-white dark:bg-[#2E3440] rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[40vh] border border-gray-200 dark:border-[#3B4252] animate-fade-in-up">
@@ -1984,7 +1998,8 @@
                                                 <button @mousedown.prevent="formatText('quote')"
                                                     class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
                                                     title="Blockquote">
-                                                    <span class="material-symbols-rounded text-[18px]">format_quote</span>
+                                                    <span
+                                                        class="material-symbols-rounded text-[18px]">format_quote</span>
                                                 </button>
                                                 <button @mousedown.prevent="formatText('dash')"
                                                     class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
@@ -2153,8 +2168,7 @@
                                         </div>
                                     </div>
                                     <div class="flex-1 overflow-hidden relative">
-                                        <div ref="previewRef" @scroll="handleScroll"
-                                            v-html="previewContent"
+                                        <div ref="previewRef" @scroll="handleScroll" v-html="previewContent"
                                             :style="'font-size: ' + fontSize + 'px !important;'"
                                             class="markdown-body overflow-y-auto h-full bg-white dark:bg-[#2E3440] transition-colors">
                                         </div>
@@ -2196,11 +2210,12 @@
                                 {{ isOnline ? 'Online' : 'Offline' }}
                             </span>
                             <!-- User Status (Guest Mode or User Email) -->
-                            <span
-                                class="text-[10px] font-medium flex items-center gap-1 px-1.5 py-0.25 rounded"
+                            <span class="text-[10px] font-medium flex items-center gap-1 px-1.5 py-0.25 rounded"
                                 :class="currentUserId === 'guest' ? 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30' : 'text-slate-600 dark:text-slate-400 bg-slate-200 dark:bg-slate-700'">
                                 <span v-if="currentUserId === 'guest'">Guest Mode</span>
-                                <span v-else class="flex items-center gap-1"><span class="material-symbols-rounded text-[12px] opacity-70">person</span>{{ currentUserEmail || currentUserId }}</span>
+                                <span v-else class="flex items-center gap-1"><span
+                                        class="material-symbols-rounded text-[12px] opacity-70">person</span>{{
+                                    currentUserEmail || currentUserId }}</span>
                             </span>
                         </div>
 
@@ -2260,28 +2275,46 @@
                         </div>
                     </footer>
                 </div> <!-- Close flex-col -->
-            <!-- Signpost message -->
-            <div v-if="signpost.show"
-                class="absolute top-8 left-1/2 -translate-x-1/2 pointer-events-none z-[9999]">
-                <div
-                    class="bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-out text-sm font-medium"
-                    :style="{ opacity: signpost.opacity }">
-                    <span v-html="signpost.text"></span>
+                <!-- Signpost message -->
+                <div v-if="signpost.show" class="absolute top-8 left-1/2 -translate-x-1/2 pointer-events-none z-[9999]">
+                    <div class="bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-out text-sm font-medium"
+                        :style="{ opacity: signpost.opacity }">
+                        <span v-html="signpost.text"></span>
+                    </div>
                 </div>
-            </div>
         </main>
     </div> <!-- Close #app -->
 
     <script>
         if ('serviceWorker' in navigator) {
+            // Register the service worker
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')
                     .then(registration => {
                         console.log('SW registered:', registration);
+
+                        // Check for updates manually on registration
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('New content is available; please refresh.');
+                                }
+                            });
+                        });
                     })
                     .catch(error => {
                         console.log('SW registration failed:', error);
                     });
+            });
+
+            // Logic to handle immediate update and reload
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (refreshing) return;
+                refreshing = true;
+                console.log('[Client] Service Worker updated. Reloading...');
+                window.location.reload();
             });
         }
     </script>
