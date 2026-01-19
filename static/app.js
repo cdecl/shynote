@@ -633,6 +633,21 @@ createApp({
 			sidebarViewMode.value = mode
 			localStorage.setItem('shynote_sidebar_view_mode', mode)
 		}
+		const sidebarPanelMode = ref('explorer') // 'explorer' | 'search'
+		const setSidebarPanelMode = (mode) => {
+			if (sidebarPanelMode.value === mode && isSidebarOpen.value) {
+				isSidebarOpen.value = false
+			} else {
+				sidebarPanelMode.value = mode
+				isSidebarOpen.value = true
+				if (mode === 'search') {
+					setTimeout(() => {
+						const searchInput = document.getElementById('sidebar-search-input')
+						if (searchInput) searchInput.focus()
+					}, 300)
+				}
+			}
+		}
 		// List View Mode (Grid vs List)
 		const listViewMode = ref(localStorage.getItem('shynote_list_view_mode') || 'grid')
 		const toggleListViewMode = () => {
@@ -5801,6 +5816,8 @@ createApp({
 			dbType,
 			sidebarViewMode,
 			setSidebarViewMode,
+			sidebarPanelMode,
+			setSidebarPanelMode,
 			showNewItemMenu,
 			toggleNewItemMenu,
 			closeNewItemMenu,

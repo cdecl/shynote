@@ -401,7 +401,7 @@
             class="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center backdrop-blur-sm"
             @click.self="closeModal">
             <div
-                class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-2xl w-72 transform transition-all scale-100 border border-slate-200 dark:border-slate-700">
+                class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-2xl w-72 transform transition-all scale-100 border border-slate-200 dark:border-slate-700">
                 <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-2">{{ modalState.title }}</h3>
                 <p v-if="modalState.message"
                     class="text-slate-600 dark:text-slate-300 text-sm mb-4 whitespace-pre-line">{{ modalState.message }}
@@ -550,7 +550,7 @@
                     <p class="text-slate-500 dark:text-slate-400 mb-6">A simple, privacy-focused
                         markdown editor with local-first sync.</p>
                     <div
-                        class="flex flex-col gap-2 text-sm text-slate-600 dark:text-[#D8DEE9] bg-slate-50 dark:bg-[#3B4252] p-4 rounded-xl mb-6">
+                        class="flex flex-col gap-2 text-sm text-slate-600 dark:text-[#D8DEE9] bg-slate-50 dark:bg-[#3B4252] p-4 rounded-lg mb-6">
                         <div class="flex justify-between">
                             <span>Version</span>
                             <span class="font-mono font-bold">{{ appVersion }}</span>
@@ -569,7 +569,7 @@
                         </div>
                     </div>
                     <button @click="showAbout = false"
-                        class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-colors">
+                        class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-colors">
                         Close
                     </button>
                 </div>
@@ -581,7 +581,7 @@
             class="fixed inset-0 bg-black/50 z-[1001] flex items-center justify-center backdrop-blur-sm"
             @click.self="closeTableEditor">
             <div
-                class="bg-white dark:bg-[#2E3440] rounded-xl shadow-2xl w-[90vw] max-w-lg max-h-[80vh] flex flex-col border border-slate-300 dark:border-slate-600">
+                class="bg-white dark:bg-[#2E3440] rounded-lg shadow-2xl w-[90vw] max-w-lg max-h-[80vh] flex flex-col border border-slate-300 dark:border-slate-600">
                 <!-- Header -->
                 <div
                     class="flex items-center justify-between px-4 py-1 border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-black/20">
@@ -681,393 +681,242 @@
         <!-- Sidebar -->
 
 
-        <!-- Mobile Sidebar Overlay -->
+        <!-- Mobile & PC Sidebar Wrapper -->
         <div id="app-sidebar" :class="[
-                isSidebarOpen ? (isMobile ? 'w-full' : '') : 'w-0', 
-                'md:relative absolute inset-y-0 left-0 z-20',
-                'flex-shrink-0 transition-all duration-150 ease-in-out',
-                'md:overflow-visible overflow-hidden'
-            ]" :style="{ width: isSidebarOpen && !isMobile ? sidebarWidth + 'px' : '' }">
-            <div class="w-full h-full flex flex-col transition-all duration-150 ease-in-out group/sidebar shadow-xl md:shadow-none"
-                :class="[
-                    !isSidebarOpen ? 'cursor-pointer' : '',
-                    isSidebarOpen ? 'bg-[#F2F0EA] dark:bg-[#242933] border-r border-[#E6E4DD] dark:border-[#3B4252]' : 'bg-transparent border-none'
-                ]" @click="!isSidebarOpen && toggleSidebar()">
+                'relative flex-shrink-0 transition-all duration-300 ease-in-out md:overflow-visible overflow-hidden z-20',
+                isSidebarOpen && isMobile ? 'w-full' : ''
+            ]" :style="{ width: isSidebarOpen ? (isMobile ? '100%' : sidebarWidth + 'px') : '44px' }">
+            
+            <div class="w-full h-full flex transition-all duration-300 ease-in-out group/sidebar shadow-xl md:shadow-none bg-[#F2F0EA] dark:bg-[#242933] border-r border-[#E6E4DD] dark:border-[#3B4252]">
 
-                <!-- Resize Handle (PC only) -->
-                <div v-if="!isMobile && isSidebarOpen" @mousedown="startSidebarResize"
-                    class="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-blue-500/30 transition-colors z-50">
-                </div>
-                <!-- Bookmark/Handle Indicator -->
-                <div class="md:block hidden absolute -right-1.5 top-1/2 -translate-y-1/2 w-1.5 h-10 bg-slate-300 dark:bg-slate-600 rounded-r-md transition-all duration-300 shadow-md transform opacity-60 group-hover/sidebar:opacity-100 group-hover/sidebar:translate-x-0.5 group-hover/sidebar:bg-blue-400 group-hover/sidebar:w-2 cursor-pointer"
-                    @click.stop="toggleSidebar" :class="!isSidebarOpen ? 'translate-x-0' : 'hidden'"></div>
-
-                <!-- Sidebar Content Wrapper (Hidden when closed on desktop) -->
-                <div class="flex flex-col h-full w-full transition-opacity duration-150"
-                    :class="isSidebarOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'">
-
-                    <!-- Header -->
-                    <div class="h-7 safe-area-top px-2 border-b border-[#E6E4DD] dark:border-[#3B4252] flex items-center bg-[#F2F0EA] dark:bg-[#242933] flex-shrink-0 transition-all font-sans"
-                        :class="isSidebarOpen ? 'justify-between' : 'justify-center'">
-                        <a :href="homeUrl" class="flex items-center gap-2 cursor-pointer group/logo no-underline flex-1"
-                            title="Go to Home">
-                            <img src="/static/logo.png"
-                                class="w-6 h-6 rounded-full shadow-sm object-cover group-hover/logo:scale-110 transition-transform"
-                                alt="SHYNOTE Logo">
-                            <div class="relative" v-show="isSidebarOpen">
-                                <h1
-                                    class="text-xs font-bold text-[#44403C] dark:text-[#ECEFF4] tracking-wider inline-block">
-                                    SHYNOTE
-                                </h1>
-                                <span v-if="appVersion"
-                                    class="absolute -top-1 -right-8 text-[9px] font-normal text-slate-400 dark:text-slate-500 select-none">v{{
-                                    appVersion }}</span>
-                            </div>
+                <!-- Activity Bar (Narrow fixed icon bar) - ALWAYS VISIBLE -->
+                <div class="w-11 flex-shrink-0 flex flex-col bg-[#F2F0EA] dark:bg-[#242933] border-r border-[#E6E4DD] dark:border-[#3B4252] z-30 transition-all duration-300">
+                    
+                    <!-- Top: Logo -->
+                    <div class="h-11 flex items-center justify-center border-b border-transparent">
+                        <a :href="homeUrl" title="Go to Home">
+                            <img src="/static/logo.png" class="w-6 h-6 rounded-full shadow-sm object-cover hover:scale-110 transition-transform" alt="Logo">
                         </a>
-                        <div class="flex items-center gap-1">
-                            <button @click="toggleDarkMode" v-show="isSidebarOpen"
-                                class="p-0.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 dark:hover:text-[#ECEFF4] dark:hover:bg-[#4C566A] rounded-full transition-colors"
-                                :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
-                                <span
-                                    class="material-symbols-rounded text-[14px] block transition-transform duration-300"
-                                    :class="isDarkMode ? 'rotate-180' : 'rotate-0'">
-                                    {{ isDarkMode ? 'light_mode' : 'dark_mode' }}
-                                </span>
-                            </button>
-                            <!-- Login/Logout Button -->
-                            <button v-show="isSidebarOpen"
-                                @click="currentUserId === 'guest' ? showLoginModal() : handleLogout()"
-                                class="px-2 py-0.5 text-[10px] font-medium rounded transition-colors"
-                                :class="currentUserId === 'guest' ? 'bg-[#263557] text-white hover:bg-[#1a2744]' : 'text-slate-400 hover:text-red-500'"
-                                :title="currentUserId === 'guest' ? 'Login' : 'Logout'">
-                                {{ currentUserId === 'guest' ? 'LOGIN' : 'LOGOUT' }}
-                            </button>
-                            <!-- Sidebar Toggle (Close) -->
-                            <button @click.stop="toggleSidebar" v-show="isSidebarOpen"
-                                class="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-200 dark:hover:text-[#ECEFF4] dark:hover:bg-[#4C566A] rounded-lg transition-colors"
-                                title="Close Sidebar">
-                                <span class="material-symbols-rounded text-[20px]">arrow_back_ios_new</span>
-                            </button>
-                        </div>
                     </div>
 
-                    <!-- Search Toolbar -->
-                    <div class="px-3 py-2 border-b border-[#E6E4DD] dark:border-[#3B4252] flex flex-col gap-2 transition-all bg-[#F2F0EA] dark:bg-[#242933]"
-                        :class="searchQuery ? 'flex-1 overflow-hidden' : 'flex-shrink-0'" v-show="isSidebarOpen">
+                    <!-- Middle: Actions -->
+                    <div class="flex-1 flex flex-col items-center py-4 gap-4">
+                        <!-- 1. Library/Explorer Toggle -->
+                        <button @click.stop="setSidebarPanelMode('explorer')" 
+                            class="p-1.5 rounded-lg transition-all duration-200"
+                            :class="isSidebarOpen && sidebarPanelMode === 'explorer' ? 'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/30' : 'text-slate-400 hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-200 dark:hover:bg-[#4C566A]'"
+                            :title="isSidebarOpen && sidebarPanelMode === 'explorer' ? 'Close Explorer' : 'Open Explorer'">
+                            <span class="material-symbols-rounded text-[20px]">folder_open</span>
+                        </button>
 
-                        <div class="relative">
-                            <div
-                                class="flex items-center gap-2 bg-white dark:bg-[#2E3440] border border-slate-200 dark:border-[#434C5E] rounded-lg px-2 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/50">
-                                <span class="material-symbols-rounded text-slate-400 text-[18px]">search</span>
-                                <input type="text" id="sidebar-search-input" v-model="searchQuery"
-                                    @focus="showSearchHistoryDropdown = true" @blur="hideSearchHistoryDropdown"
-                                    class="flex-1 bg-transparent text-sm text-slate-700 dark:text-white placeholder-slate-400 outline-none min-w-0"
-                                    placeholder="Search notes...">
-                                <div class="flex items-center gap-0.5 mr-1">
-                                    <button @click="searchOptions.caseSensitive = !searchOptions.caseSensitive"
-                                        class="px-1.5 py-0.5 text-[10px] font-bold border rounded transition-colors"
-                                        :class="searchOptions.caseSensitive ? 'bg-blue-100 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800' : 'bg-transparent text-slate-400 border-transparent hover:bg-slate-200 dark:hover:bg-[#4C566A]'"
-                                        title="Case Sensitive">
-                                        Aa
-                                    </button>
-                                    <button @click="searchOptions.useRegex = !searchOptions.useRegex"
-                                        class="px-1.5 py-0.5 text-[10px] font-bold border rounded transition-colors"
-                                        :class="searchOptions.useRegex ? 'bg-blue-100 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800' : 'bg-transparent text-slate-400 border-transparent hover:bg-slate-200 dark:hover:bg-[#4C566A]'"
-                                        title="Regular Expression">
-                                        .*
+                        <!-- 2. Search Panel Toggle -->
+                        <button @click.stop="setSidebarPanelMode('search')" 
+                            class="p-1.5 rounded-lg transition-all duration-200"
+                            :class="isSidebarOpen && sidebarPanelMode === 'search' ? 'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/30' : 'text-slate-400 hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-200 dark:hover:bg-[#4C566A]'"
+                            :title="isSidebarOpen && sidebarPanelMode === 'search' ? 'Close Search' : 'Open Search'">
+                            <span class="material-symbols-rounded text-[20px]">search</span>
+                        </button>
+
+                        <!-- 3. Menu/Command Palette -->
+                        <button @click="openCommandPalette()"
+                            class="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-slate-200 dark:hover:bg-[#4C566A] rounded-lg transition-all"
+                            title="Menu (Cmd+P)">
+                            <span class="material-symbols-rounded text-[22px]">menu_open</span>
+                        </button>
+
+                        <!-- 4. Quick Note -->
+                        <button @click="createNoteInFolder(null)"
+                            class="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-slate-200 dark:hover:bg-[#4C566A] rounded-lg transition-all"
+                            title="Quick Inbox Note">
+                            <span class="material-symbols-rounded text-[20px]" style="font-variation-settings: 'FILL' 1">note_add</span>
+                        </button>
+                    </div>
+                    <!-- Bottom: Settings/Profile -->
+                    <div class="pb-6 flex flex-col items-center gap-4">
+                        <button @click="toggleDarkMode"
+                            class="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-slate-200 dark:hover:bg-[#4C566A] rounded-lg transition-all"
+                            :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+                            <span class="material-symbols-rounded text-[20px] transition-transform duration-500" :class="isDarkMode ? 'rotate-180' : ''">
+                                {{ isDarkMode ? 'light_mode' : 'dark_mode' }}
+                            </span>
+                        </button>
+
+                        <button @click="currentUserId === 'guest' ? showLoginModal() : handleLogout()"
+                            class="w-7 h-7 flex items-center justify-center rounded-full overflow-hidden border-2 transition-all"
+                            :class="currentUserId === 'guest' ? 'border-slate-300 text-slate-400 hover:border-blue-500 hover:text-blue-500' : 'border-blue-500 text-blue-500'"
+                            :title="currentUserId === 'guest' ? 'Login' : 'Logout'">
+                            <span class="material-symbols-rounded text-[20px]">{{ currentUserId === 'guest' ? 'person' : 'logout' }}</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Content Panel (The actual sidebar content) -->
+                <div class="flex-1 flex flex-col min-w-0 h-full transition-all duration-300 overflow-hidden"
+                    >
+                    
+                    <!-- Resize Handle (PC only) -->
+                    <div v-if="!isMobile && isSidebarOpen" @mousedown="startSidebarResize"
+                        class="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-blue-500/30 transition-colors z-50">
+                    </div>
+
+                    <!-- Search Panel -->
+                    <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[#F2F0EA] dark:bg-[#242933]" v-show="sidebarPanelMode === 'search'">
+                        <!-- Search Header -->
+                        <div class="h-14 safe-area-top px-4 flex items-center justify-between border-b border-[#E6E4DD] dark:border-[#3B4252] flex-shrink-0">
+                             <h2 class="text-sm font-bold text-[#44403C] dark:text-[#ECEFF4] tracking-tight uppercase">Search</h2>
+                        </div>
+                        
+                        <!-- Search Toolbar Area -->
+                        <div class="px-3 py-3 border-b border-[#E6E4DD] dark:border-[#3B4252] flex flex-col gap-2 transition-all">
+                            <div class="relative">
+                                <div class="flex items-center gap-2 bg-white dark:bg-[#2E3440] border border-slate-200 dark:border-[#434C5E] rounded-lg px-2 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/50">
+                                    <span class="material-symbols-rounded text-slate-400 text-[18px]">search</span>
+                                    <input type="text" id="sidebar-search-input" v-model="searchQuery"
+                                        @focus="showSearchHistoryDropdown = true" @blur="hideSearchHistoryDropdown"
+                                        class="flex-1 bg-transparent text-sm text-slate-700 dark:text-white placeholder-slate-400 outline-none min-w-0"
+                                        placeholder="Search notes...">
+                                    <div class="flex items-center gap-0.5 mr-1">
+                                        <button @click="searchOptions.caseSensitive = !searchOptions.caseSensitive"
+                                            class="px-1.5 py-0.5 text-[10px] font-bold border rounded transition-colors"
+                                            :class="searchOptions.caseSensitive ? 'bg-blue-100 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800' : 'bg-transparent text-slate-400 border-transparent hover:bg-slate-200 dark:hover:bg-[#4C566A]'"
+                                            title="Case Sensitive">Aa</button>
+                                        <button @click="searchOptions.useRegex = !searchOptions.useRegex"
+                                            class="px-1.5 py-0.5 text-[10px] font-bold border rounded transition-colors"
+                                            :class="searchOptions.useRegex ? 'bg-blue-100 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800' : 'bg-transparent text-slate-400 border-transparent hover:bg-slate-200 dark:hover:bg-[#4C566A]'"
+                                            title="Regular Expression">.*</button>
+                                    </div>
+                                    <button @click="searchQuery = ''" v-show="searchQuery" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                                        <span class="material-symbols-rounded text-[16px]">close</span>
                                     </button>
                                 </div>
-                                <button @click="searchQuery = ''" v-show="searchQuery"
-                                    class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
-                                    <span class="material-symbols-rounded text-[16px]">close</span>
-                                </button>
+                                <div v-if="showSearchHistoryDropdown && searchHistory.length > 0"
+                                    class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-[#2E3440] border border-slate-200 dark:border-[#434C5E] rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                                    <div v-for="(item, idx) in searchHistory" :key="idx" @mousedown="selectSearchHistoryItem(item)"
+                                        :class="idx === searchHistoryDropdownIndex ? 'bg-blue-50 dark:bg-blue-900/30' : ''"
+                                        class="px-3 py-2 text-sm text-slate-700 dark:text-slate-200 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#3B4252] transition-colors flex items-center gap-2">
+                                        <span class="material-symbols-rounded text-[14px] text-slate-400">history</span>
+                                        <span>{{ item }}</span>
+                                    </div>
+                                </div>
                             </div>
-
-                            <div v-if="showSearchHistoryDropdown && searchHistory.length > 0"
-                                class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-[#2E3440] border border-slate-200 dark:border-[#434C5E] rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-                                <div v-for="(item, idx) in searchHistory" :key="idx"
-                                    @mousedown="selectSearchHistoryItem(item)"
-                                    :class="idx === searchHistoryDropdownIndex ? 'bg-blue-50 dark:bg-blue-900/30' : ''"
-                                    class="px-3 py-2 text-sm text-slate-700 dark:text-slate-200 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#3B4252] transition-colors flex items-center gap-2">
-                                    <span class="material-symbols-rounded text-[14px] text-slate-400">history</span>
-                                    <span>{{ item }}</span>
-                                </div>
+                            <div class="flex items-center justify-end px-1" v-if="searchQuery">
+                                <span class="text-[10px] text-slate-400">{{ searchResults.length }} results</span>
                             </div>
                         </div>
 
-                        <!-- Results Count -->
-                        <div class="flex items-center justify-end px-1" v-if="searchQuery">
-                            <span class="text-[10px] text-slate-400">{{ searchResults.length }} results</span>
-                        </div>
-
-                        <!-- Search Results List (Only when searching) -->
-                        <div v-if="searchQuery"
-                            class="flex flex-col gap-1 overflow-y-auto thin-scrollbar mt-1 pr-1 flex-1">
-                            <div v-if="searchResults.length === 0" class="text-xs text-slate-400 text-center py-2">
-                                No results found
-                            </div>
-                            <div v-else v-for="(result, idx) in searchResults" :key="result.note.id + '_' + idx"
-                                @click.stop="selectSearchResult(result.note)"
-                                class="p-2 rounded hover:bg-white dark:hover:bg-[#3B4252] cursor-pointer group border border-transparent hover:border-slate-200 dark:hover:border-[#434C5E] transition-all">
+                        <!-- Search Results List -->
+                        <div class="flex-1 flex flex-col gap-1 overflow-y-auto thin-scrollbar p-3" v-if="searchQuery">
+                            <div v-if="searchResults.length === 0" class="text-xs text-slate-400 text-center py-4">No results found</div>
+                            <div v-else v-for="(result, idx) in searchResults" :key="result.note.id + '_' + idx" @click.stop="selectSearchResult(result.note)"
+                                class="p-2 rounded hover:bg-white dark:hover:bg-[#3B4252] cursor-pointer group border border-transparent hover:border-slate-200 dark:hover:border-[#434C5E] transition-all bg-white/40 dark:bg-white/5 mb-1">
                                 <div class="flex items-center gap-1.5 mb-0.5 max-w-full overflow-hidden">
                                     <span class="material-symbols-rounded text-[14px] text-slate-400">description</span>
-                                    <span v-if="result.note"
-                                        class="text-xs font-bold text-slate-700 dark:text-[#ECEFF4] truncate"
-                                        v-html="getHighlightedText(result.note.title || 'Untitled')"></span>
+                                    <span class="text-xs font-bold text-slate-700 dark:text-[#ECEFF4] truncate" v-html="getHighlightedText(result.note.title || 'Untitled')"></span>
                                 </div>
-                                <div v-if="result.snippet"
-                                    class="text-[10px] text-slate-500 dark:text-slate-400 pl-5 line-clamp-4 leading-tight font-mono break-all"
-                                    v-html="getHighlightedText(result.snippet)"></div>
+                                <div v-if="result.snippet" class="text-[10px] text-slate-500 dark:text-slate-400 pl-5 line-clamp-3 leading-tight font-mono break-all" v-html="getHighlightedText(result.snippet)"></div>
                             </div>
                         </div>
-                    </div>
+                        <div v-else class="flex-1 flex flex-col items-center justify-center text-slate-400 gap-2 opacity-50">
+                            <span class="material-symbols-rounded text-[48px]">search_check</span>
+                            <span class="text-xs">Search for notes and content</span>
+                        </div>
+                    </div> <!-- Close Search Panel -->
 
-
-                    <!-- Spacer for collapsed state to push footer to bottom -->
-                    <div class="flex-1" v-if="!isSidebarOpen"></div>
-
-                    <!-- List -->
-                    <div class="flex-1 overflow-y-auto px-3 py-2 relative" v-show="isSidebarOpen && !searchQuery">
-                        <div v-if="loading" class="text-center text-gray-400 p-4">Loading...</div>
-                        <div v-else class="space-y-4">
-                            <!-- User Folders Card -->
-                            <div v-if="sortedFolders.length >= 0">
-                                <div class="px-3 mb-1 flex items-center justify-between group/header">
-                                    <div class="flex items-center gap-1">
-                                        <h2
-                                            class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                                            NEW
-                                        </h2>
-                                        <button @click.stop="createFolder()" @mousedown.stop
-                                            class="text-slate-400 hover:text-blue-500 transition-colors"
-                                            title="New Folder">
-                                            <span class="material-symbols-rounded text-[20px]">create_new_folder</span>
-                                        </button>
-                                    </div>
-                                    <button @click.stop="createNoteInFolder(null)" @mousedown.stop
-                                        class="flex items-center gap-1.5 px-2 py-1 hover:bg-slate-200 dark:hover:bg-[#4C566A] rounded-full text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors text-xs font-medium"
-                                        title="Quick Inbox Note">
-                                        <span
-                                            class="text-[10px] font-medium text-slate-500 dark:text-slate-400">Quick</span>
-                                        <div class="relative w-[16px] h-[16px] flex items-center justify-center">
-                                            <span class="material-symbols-rounded text-[20px]">description</span>
-                                            <span
-                                                class="material-symbols-rounded text-[8px] text-amber-500 absolute -bottom-0.5 -right-0.5"
-                                                style="font-variation-settings: 'FILL' 1">bolt</span>
+                    <!-- Explorer Panel -->
+                    <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden" v-show="sidebarPanelMode === 'explorer'">
+                        <!-- Explorer Header -->
+                        <div class="h-14 safe-area-top px-4 flex items-center justify-between border-b border-[#E6E4DD] dark:border-[#3B4252] flex-shrink-0">
+                             <h2 class="text-sm font-bold text-[#44403C] dark:text-[#ECEFF4] tracking-tight uppercase">Explorer</h2>
+                             <div class="flex items-center gap-1">
+                                <span v-if="appVersion" class="text-[9px] text-slate-400">v{{ appVersion }}</span>
+                             </div>
+                        </div>
+                        
+                        <div class="flex-1 overflow-y-auto px-3 py-2 relative">
+                            <div v-if="loading" class="text-center text-gray-400 p-4">Loading...</div>
+                            <div v-else class="space-y-4">
+                                <!-- Library Section -->
+                                <div>
+                                    <div class="px-3 mb-1 flex items-center justify-between group/header">
+                                        <div class="flex items-center gap-1">
+                                            <h2 class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">LIBRARY</h2>
+                                            <button @click.stop="createFolder()" class="text-slate-400 hover:text-blue-500 transition-colors" title="New Folder">
+                                                <span class="material-symbols-rounded text-[20px]">create_new_folder</span>
+                                            </button>
                                         </div>
-                                    </button>
-                                </div>
-                                <div class="space-y-0.5">
-                                    <!-- System Folders (Inbox) -->
-                                    <div class="space-y-0.5 mb-0.5" id="system-folders">
+                                    </div>
+                                    <div class="space-y-0.5">
                                         <!-- Inbox -->
-                                        <div @click.stop="selectFolder(null)" @drop="handleDrop(null, $event)"
-                                            @dragover.prevent @dragenter.prevent="handleDragEnter('inbox')"
-                                            @dragleave.prevent="handleDragLeave('inbox')"
+                                        <div @click.stop="selectFolder(null)" @drop="handleDrop(null, $event)" @dragover.prevent @dragenter.prevent="handleDragEnter('inbox')" @dragleave.prevent="handleDragLeave('inbox')"
                                             class="relative flex items-center justify-between px-3 h-9 cursor-pointer active:bg-blue-200 dark:active:bg-blue-600/30 transition-all duration-200 group rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 mx-2"
-                                            :class="[
-                                        dropTargetId === 'inbox' ? 'translate-x-1 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-200 dark:ring-blue-800' : '',
-                                        currentFolderId === null ? 'bg-blue-100 dark:bg-blue-600/20 shadow-sm' : ''
-                                    ]">
+                                            :class="[dropTargetId === 'inbox' ? 'translate-x-1 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-200 dark:ring-blue-800' : '', currentFolderId === null ? 'bg-blue-100 dark:bg-blue-600/20 shadow-sm' : '']">
                                             <div class="flex items-center gap-3 flex-1 min-w-0">
-                                                <span class="material-symbols-rounded text-[22px] transition-colors"
-                                                    :class="[
-                                                dropTargetId === 'inbox' || currentFolderId === null ? 'text-blue-500' : 'text-slate-400 dark:text-slate-500'
-                                            ]" style="font-variation-settings: 'FILL' 1">home</span>
-                                                <span
-                                                    class="text-[14px] font-medium truncate transition-colors duration-200"
-                                                    :class="currentFolderId === null ? 'text-slate-800 dark:text-white' : 'text-slate-600 dark:text-slate-400'">INBOX</span>
+                                                <span class="material-symbols-rounded text-[22px] transition-colors" :class="[dropTargetId === 'inbox' || currentFolderId === null ? 'text-blue-500' : 'text-slate-400 dark:text-slate-500']" style="font-variation-settings: 'FILL' 1">home</span>
+                                                <span class="text-[14px] font-medium truncate transition-colors duration-200" :class="currentFolderId === null ? 'text-slate-800 dark:text-white' : 'text-slate-600 dark:text-slate-400'">INBOX</span>
                                             </div>
-                                            <div class="flex items-center gap-1 min-h-[24px]">
-
-                                                <span
-                                                    class="text-slate-500 dark:text-slate-400 font-medium text-[12px] bg-slate-200 dark:bg-[#4C566A] px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{{
-                                                    sortedRootNotes.length }}</span>
-                                            </div>
+                                            <span class="text-slate-500 dark:text-slate-400 font-medium text-[12px] bg-slate-200 dark:bg-[#4C566A] px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{{ sortedRootNotes.length }}</span>
                                         </div>
-                                    </div>
-                                    <div v-for="(folder, index) in sortedFolders" :key="folder.id" @dragover.prevent
-                                        @dragenter.prevent="handleDragEnter(folder.id)"
-                                        @dragleave.prevent="handleDragLeave(folder.id)"
-                                        @drop="handleDrop(folder.id, $event)">
-
-                                        <!-- Folder Item (Styled like Trash) -->
-                                        <div @click.stop="selectFolder(folder.id)"
-                                            class="relative flex items-center justify-between px-3 h-9 cursor-pointer active:bg-blue-200 dark:active:bg-blue-600/30 transition-all duration-200 group rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 mx-2"
-                                            :class="[
-                                            dropTargetId === folder.id ? 'translate-x-1 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-200 dark:ring-blue-800' : '',
-                                            currentFolderId === folder.id ? 'bg-blue-100 dark:bg-blue-600/20 shadow-sm' : ''
-                                        ]">
-
-                                            <!-- Rename Input -->
-                                            <input v-if="renameState.id === folder.id && renameState.type === 'folder'"
-                                                :id="'rename-input-folder-' + folder.id" v-model="renameState.name"
-                                                @click.stop @blur="saveRename" @keyup.enter="saveRename"
-                                                class="flex-1 bg-white dark:bg-[#2E3440] border border-blue-400 rounded px-2 py-1 text-sm font-medium text-slate-800 dark:text-white outline-none shadow-sm">
-
-                                            <!-- Normal Display -->
-                                            <div v-else @dblclick.stop="startRename(folder, 'folder')"
-                                                class="flex items-center gap-3 flex-1 min-w-0">
-                                                <span class="material-symbols-rounded text-[22px] transition-colors"
-                                                    :class="[
-                                                        dropTargetId === folder.id ? 'text-blue-500' : 'text-slate-400 dark:text-slate-500',
-                                                        currentFolderId === folder.id ? 'text-blue-500 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'
-                                                    ]" style="font-variation-settings: 'FILL' 1">{{ dropTargetId ===
-                                                    folder.id ? 'folder_open' : 'folder' }}</span>
-                                                <span
-                                                    class="text-[14px] font-medium truncate transition-colors duration-200"
-                                                    :class="currentFolderId === folder.id ? 'text-slate-800 dark:text-white' : 'text-slate-600 dark:text-slate-400'">{{
-                                                    folder.name }}</span>
-                                            </div>
-
-                                            <!-- Actions & Count -->
-                                            <div class="flex items-center gap-1 ml-2">
-                                                <!-- Hover Actions -->
-                                                <div
-                                                    class="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center gap-0.5 transition-opacity">
-                                                    <button @click.stop="startRename(folder, 'folder')"
-                                                        class="p-1 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 rounded transition-colors"
-                                                        title="Rename">
-                                                        <span class="material-symbols-rounded text-[16px]"
-                                                            style="font-variation-settings: 'FILL' 1">edit_square</span>
-                                                    </button>
-                                                    <button @click.stop="deleteFolder(folder.id)"
-                                                        class="p-1 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded transition-colors"
-                                                        title="Delete">
-                                                        <span class="material-symbols-rounded text-[16px]"
-                                                            style="font-variation-settings: 'FILL' 1">delete</span>
-                                                    </button>
+                                        <!-- Folder Items -->
+                                        <div v-for="folder in sortedFolders" :key="folder.id" @dragover.prevent @dragenter.prevent="handleDragEnter(folder.id)" @dragleave.prevent="handleDragLeave(folder.id)" @drop="handleDrop(folder.id, $event)">
+                                            <div @click.stop="selectFolder(folder.id)" class="relative flex items-center justify-between px-3 h-9 cursor-pointer active:bg-blue-200 dark:active:bg-blue-600/30 transition-all duration-200 group rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 mx-2"
+                                                :class="[dropTargetId === folder.id ? 'translate-x-1 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-200 dark:ring-blue-800' : '', currentFolderId === folder.id ? 'bg-blue-100 dark:bg-blue-600/20 shadow-sm' : '']">
+                                                <input v-if="renameState.id === folder.id && renameState.type === 'folder'" :id="'rename-input-folder-' + folder.id" v-model="renameState.name" @click.stop @blur="saveRename" @keyup.enter="saveRename" class="flex-1 bg-white dark:bg-[#2E3440] border border-blue-400 rounded px-2 py-1 text-sm font-medium text-slate-800 dark:text-white outline-none shadow-sm">
+                                                <div v-else @dblclick.stop="startRename(folder, 'folder')" class="flex items-center gap-3 flex-1 min-w-0">
+                                                    <span class="material-symbols-rounded text-[22px] transition-colors" :class="[dropTargetId === folder.id ? 'text-blue-500' : 'text-slate-400 dark:text-slate-500', currentFolderId === folder.id ? 'text-blue-500 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500']" style="font-variation-settings: 'FILL' 1">{{ dropTargetId === folder.id ? 'folder_open' : 'folder' }}</span>
+                                                    <span class="text-[14px] font-medium truncate transition-colors duration-200" :class="currentFolderId === folder.id ? 'text-slate-800 dark:text-white' : 'text-slate-600 dark:text-slate-400'">{{ folder.name }}</span>
                                                 </div>
-                                                <span
-                                                    class="text-slate-500 dark:text-slate-400 font-medium text-[12px] bg-slate-200 dark:bg-[#4C566A] px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
-                                                    {{ getSortedFolderNotes(folder.id).length }}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <!-- Inline Delete Confirmation -->
-                                        <div v-if="deleteConfirmation.id === folder.id && deleteConfirmation.type === 'folder'"
-                                            class="mx-3 mb-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-xs flex flex-col gap-2 items-start">
-                                            <span class="text-red-700 dark:text-red-300 font-semibold w-full">Delete
-                                                folder & move notes to Trash?</span>
-                                            <div class="flex items-center gap-2 self-end">
-                                                <button @click.stop="confirmDelete"
-                                                    class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-md font-semibold transition-colors text-[11px]">Yes</button>
-                                                <button @click.stop="cancelDelete"
-                                                    class="px-3 py-1 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-md font-semibold transition-colors text-[11px]">No</button>
+                                                <div class="flex items-center gap-1 ml-2">
+                                                    <div class="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center gap-0.5 transition-opacity">
+                                                        <button @click.stop="startRename(folder, 'folder')" class="p-1 text-slate-400 hover:text-blue-600 rounded transition-colors"><span class="material-symbols-rounded text-[16px]" style="font-variation-settings: 'FILL' 1">edit_square</span></button>
+                                                        <button @click.stop="deleteFolder(folder.id)" class="p-1 text-slate-400 hover:text-red-600 rounded transition-colors"><span class="material-symbols-rounded text-[16px]" style="font-variation-settings: 'FILL' 1">delete</span></button>
+                                                    </div>
+                                                    <span class="text-slate-500 dark:text-slate-400 font-medium text-[12px] bg-slate-200 dark:bg-[#4C566A] px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{{ getSortedFolderNotes(folder.id).length }}</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-
-
-
-
-                        </div>
-                        <!-- Trash Folder (Fixed at bottom of list) -->
-                        <div class="mt-4 pt-2 border-t border-slate-200 dark:border-[#3B4252]">
-                            <div @click.stop="selectFolder(TRASH_FOLDER_ID)" @drop="handleDrop(TRASH_FOLDER_ID, $event)"
-                                @dragover.prevent @dragenter.prevent="handleDragEnter(TRASH_FOLDER_ID)"
-                                @dragleave.prevent="handleDragLeave(TRASH_FOLDER_ID)"
-                                class="relative flex items-center justify-between px-3 h-9 cursor-pointer active:bg-blue-200 dark:active:bg-blue-600/30 transition-all duration-200 group rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 mx-2"
-                                :class="[
-									dropTargetId === TRASH_FOLDER_ID ? 'translate-x-1 bg-red-50 dark:bg-red-900/20 ring-1 ring-red-200 dark:ring-red-800' : '',
-									currentFolderId === TRASH_FOLDER_ID ? 'bg-blue-100 dark:bg-blue-600/20 shadow-sm' : ''
-								]">
-
-                                <div class="flex items-center gap-3">
-                                    <span class="material-symbols-rounded text-[22px] transition-colors"
-                                        :class="dropTargetId === TRASH_FOLDER_ID ? 'text-red-500' : 'text-slate-400 dark:text-slate-500'"
-                                        style="font-variation-settings: 'FILL' 1">
-                                        {{ getSortedFolderNotes(TRASH_FOLDER_ID).length > 0 ? 'delete' :
-                                        'delete_outline' }}
-                                    </span>
-                                    <span class="text-[14px] font-medium transition-colors duration-200"
-                                        :class="currentFolderId === TRASH_FOLDER_ID ? 'text-slate-800 dark:text-white' : 'text-slate-600 dark:text-slate-400'">
-                                        TRASH
-                                    </span>
+                                <!-- Trash Section -->
+                                <div class="mt-4 pt-2 border-t border-slate-200 dark:border-[#3B4252]">
+                                    <div @click.stop="selectFolder(TRASH_FOLDER_ID)" @drop="handleDrop(TRASH_FOLDER_ID, $event)" @dragover.prevent @dragenter.prevent="handleDragEnter(TRASH_FOLDER_ID)" @dragleave.prevent="handleDragLeave(TRASH_FOLDER_ID)"
+                                        class="relative flex items-center justify-between px-3 h-9 cursor-pointer transition-all duration-200 group rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 mx-2"
+                                        :class="[dropTargetId === TRASH_FOLDER_ID ? 'translate-x-1 bg-red-50 dark:bg-red-900/20 ring-1 ring-red-200 dark:ring-red-800' : '', currentFolderId === TRASH_FOLDER_ID ? 'bg-blue-100 dark:bg-blue-600/20 shadow-sm' : '']">
+                                        <div class="flex items-center gap-3">
+                                            <span class="material-symbols-rounded text-[22px]" :class="dropTargetId === TRASH_FOLDER_ID ? 'text-red-500' : 'text-slate-400'" style="font-variation-settings: 'FILL' 1">{{ getSortedFolderNotes(TRASH_FOLDER_ID).length > 0 ? 'delete' : 'delete_outline' }}</span>
+                                            <span class="text-[14px] font-medium" :class="currentFolderId === TRASH_FOLDER_ID ? 'text-slate-800 dark:text-white' : 'text-slate-600 dark:text-slate-400'">TRASH</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <button v-if="getSortedFolderNotes(TRASH_FOLDER_ID).length > 0" @click.stop="deleteConfirmation = { id: TRASH_FOLDER_ID, type: 'trash' }" class="p-1 text-slate-400 hover:text-red-500 rounded transition-colors"><span class="material-symbols-rounded text-[16px]">delete_forever</span></button>
+                                            <span class="bg-slate-200 dark:bg-[#4C566A] text-slate-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{{ getSortedFolderNotes(TRASH_FOLDER_ID).length }}</span>
+                                        </div>
+                                    </div>
                                 </div>
-
-                                <div class="flex items-center gap-2">
-                                    <button v-if="getSortedFolderNotes(TRASH_FOLDER_ID).length > 0"
-                                        @click.stop="deleteConfirmation = { id: TRASH_FOLDER_ID, type: 'trash' }"
-                                        class="p-1 text-slate-400 hover:text-red-500 rounded transition-colors"
-                                        title="Empty Trash">
-                                        <span class="material-symbols-rounded text-[16px]">delete_forever</span>
-                                    </button>
-                                    <span
-                                        class="bg-slate-200 dark:bg-[#4C566A] text-slate-600 dark:text-slate-300 text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
-                                        {{ getSortedFolderNotes(TRASH_FOLDER_ID).length }}
-                                    </span>
-                                </div>
-
-                                <!-- Inline Empty Trash Confirmation -->
-                                <div v-if="deleteConfirmation.type === 'trash'"
-                                    class="absolute inset-0 bg-red-50 dark:bg-red-900/90 rounded-lg flex items-center justify-between px-2 z-10 border border-red-200 dark:border-red-800 animate-fade-in"
-                                    @click.stop>
-                                    <span class="text-xs font-bold text-red-600 dark:text-red-300">Empty Trash?</span>
-                                    <div class="flex gap-1">
-                                        <button @click.stop="confirmDelete"
-                                            class="px-2 py-0.5 bg-red-600 hover:bg-red-700 text-white rounded text-[10px] font-bold transition-colors">Yes</button>
-                                        <button @click.stop="cancelDelete"
-                                            class="px-2 py-0.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded text-[10px] font-bold transition-colors">No</button>
+                                <!-- Recent Notes Section -->
+                                <div v-if="recentNotes.length > 0" class="px-3 pb-2">
+                                    <h3 class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 mt-6 mb-2">Recent Notes</h3>
+                                    <div class="space-y-1">
+                                        <div v-for="note in recentNotes" :key="note.id" @click.stop="selectNoteById(note.id)"
+                                            class="flex items-center gap-3 px-3 h-[22px] cursor-pointer rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-all duration-200 group"
+                                            :class="selectedNote?.id === note.id ? 'bg-blue-50 dark:bg-blue-600/20' : ''">
+                                            <span class="material-symbols-rounded text-[18px] text-slate-400 shrink-0">description</span>
+                                            <span class="flex-1 text-sm truncate text-slate-700 dark:text-slate-300">{{ note.title || 'Untitled' }}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <p class="text-center py-2 text-[#2663EB] text-[10px] select-none pointer-events-none">
-                            Drag notes to folder to move
-                        </p>
-
-                        <div v-if="recentNotes.length > 0" class="px-3 pb-2" v-show="isSidebarOpen">
-                            <h3
-                                class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 mt-6 mb-2">
-                                Recent Notes
-                            </h3>
-                            <div class="space-y-1">
-                                <div v-for="note in recentNotes" :key="note.id" @click.stop="selectNoteById(note.id)"
-                                    class="flex items-center gap-3 px-3 h-[22px] cursor-pointer rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-all duration-200 group"
-                                    :class="selectedNote?.id === note.id ? 'bg-blue-50 dark:bg-blue-600/20' : ''">
-                                    <span
-                                        class="material-symbols-rounded text-[18px] text-slate-400 dark:text-slate-500 shrink-0">
-                                        description
-                                    </span>
-                                    <span class="flex-1 text-sm truncate text-slate-700 dark:text-slate-300">
-                                        {{ note.title || 'Untitled' }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
+                    </div> <!-- Close Explorer Panel -->
                     <!-- Sidebar Footer -->
-                    <div class="p-3 border-t border-[#E6E4DD] dark:border-[#3B4252] bg-[#F2F0EA] dark:bg-[#242933] flex items-center justify-between shrink-0 transition-all duration-300"
-                        v-show="isSidebarOpen">
+                    <div class="p-3 border-t border-[#E6E4DD] dark:border-[#3B4252] bg-[#F2F0EA] dark:bg-[#242933] flex items-center justify-between shrink-0 transition-all duration-300">
                         <div class="flex items-center gap-1">
-                            <button @click.stop="showAbout = true"
-                                class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-200 dark:text-slate-400 dark:hover:text-[#ECEFF4] dark:hover:bg-[#4C566A] rounded-lg transition-colors"
-                                title="About">
-                                <span class="material-symbols-rounded text-[20px]">info</span>
-                            </button>
-                            <button @click.stop="openSettingsModal"
-                                class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-200 dark:text-slate-400 dark:hover:text-[#ECEFF4] dark:hover:bg-[#4C566A] rounded-lg transition-colors"
-                                title="Settings">
-                                <span class="material-symbols-rounded text-[20px]">settings</span>
-                            </button>
+                            <button @click.stop="showAbout = true" class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-200 dark:hover:bg-[#4C566A] rounded-lg transition-colors" title="About"><span class="material-symbols-rounded text-[20px]">info</span></button>
+                            <button @click.stop="openSettingsModal" class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-200 dark:hover:bg-[#4C566A] rounded-lg transition-colors" title="Settings"><span class="material-symbols-rounded text-[20px]">settings</span></button>
                         </div>
                     </div>
-
-                </div> <!-- Close Sidebar Content Wrapper (New) -->
-
-            </div> <!-- Close Sidebar Inner -->
+                </div> <!-- Close Content Panel -->
+            </div> <!-- Close Sidebar Inner Flex Row -->
         </div> <!-- Close Sidebar Wrapper -->
 
-
-        <!-- Fixed Sidebar Handle (when fully collapsed) -->
-        <div v-if="!isSidebarOpen" @click="toggleSidebar"
-            class="fixed left-0 top-1/2 -translate-y-1/2 w-1.5 h-10 bg-slate-300 dark:bg-slate-600 rounded-r-md transition-all duration-300 shadow-md transform opacity-60 hover:opacity-100 hover:translate-x-0.5 hover:bg-blue-400 hover:w-2 cursor-pointer z-40">
-        </div>
 
         <!-- Command Palette Modal (Upper Center) -->
         <div v-if="showCommandPalette" class="fixed inset-0 z-[1000] transition-all duration-200" v-cloak>
@@ -1079,7 +928,7 @@
                 @click.stop>
                 <!-- Animated Content Box -->
                 <div
-                    class="w-full bg-white dark:bg-[#2E3440] rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[40vh] border border-gray-200 dark:border-[#3B4252] animate-fade-in-up">
+                    class="w-full bg-white dark:bg-[#2E3440] rounded-lg shadow-2xl overflow-hidden flex flex-col max-h-[40vh] border border-gray-200 dark:border-[#3B4252] animate-fade-in-up">
 
                     <!-- Input Area -->
                     <div class="flex items-center p-2 border-b border-gray-100 dark:border-[#3B4252]">
@@ -1156,7 +1005,7 @@
 
         <!-- Main Editor -->
         <main class="flex-1 flex flex-col bg-white dark:bg-[#24292F] overflow-hidden relative"
-            :class="isSidebarOpen ? 'md:block hidden' : 'block'">
+            :class="(isSidebarOpen && isMobile) ? 'hidden' : 'flex'">
 
 
             <div class="flex flex-col h-full">
@@ -1164,25 +1013,14 @@
                 <div v-if="rightPanelMode !== 'list' && selectedNote"
                     class="h-7 safe-area-top border-b border-slate-100 dark:border-[#434C5E] bg-white/80 dark:bg-[#24292F]/80 backdrop-blur-sm flex justify-between items-center pl-1 pr-2 flex-shrink-0 transition-colors duration-300 relative z-10 md:z-40">
                     <div class="flex items-center gap-2">
-                        <button @click.stop="toggleSidebar" v-if="!isSidebarOpen"
-                            class="p-0.5 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded transition-all flex-shrink-0"
-                            title="Open Sidebar">
-                            <span class="material-symbols-rounded text-[18px]">{{ isMobile ? 'chevron_left' :
-                                'view_sidebar' }}</span>
-                        </button>
                         <button @click="toggleRightPanelMode()"
                             class="p-0.5 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded transition-all flex-shrink-0"
-                            title="Return to Folder View">
-                            <span class="material-symbols-rounded text-[18px]">drive_folder_upload</span>
-                        </button>
-                        <button @click="openCommandPalette()"
-                            class="p-0.5 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded transition-all flex-shrink-0"
-                            title="Command Palette (Cmd+Shift+P)">
-                            <span class="material-symbols-rounded text-[22px]">menu_open</span>
+                            title="Back to List">
+                            <span class="material-symbols-rounded text-[18px]">arrow_back_ios_new</span>
                         </button>
 
                         <!-- View Mode Tabs (Moved to Header) -->
-                        <div class="flex bg-slate-100 dark:bg-[#3B4252] rounded-lg p-0.5 gap-0.5">
+                        <div class="flex bg-slate-100 dark:bg-[#3B4252] rounded-lg p-0.5 gap-0.5 ml-1">
                             <button @click="setViewMode('edit')"
                                 :class="viewMode === 'edit' ? 'bg-white dark:bg-[#4C566A] shadow-sm text-blue-600 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'"
                                 class="px-2 py-0.5 text-[10px] font-bold rounded-md transition-all flex items-center gap-1"
@@ -1217,7 +1055,7 @@
                                 <span class="material-symbols-rounded text-[18px]">delete</span>
                             </button>
 
-                            <!-- Toolbar Confirmation Popup (Teleported to Body to avoid clipping) -->
+                            <!-- Toolbar Confirmation Popup -->
                             <teleport to="body">
                                 <div v-if="showToolbarDeleteConfirm"
                                     class="fixed top-14 right-4 mt-2 w-48 bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-lg shadow-xl p-3 z-[9999] flex flex-col gap-2 animate-fade-in origin-top-right">
@@ -1299,26 +1137,11 @@
                         <div
                             class="h-7 safe-area-top border-b border-slate-200 dark:border-[#3B4252] flex items-center justify-between px-2 bg-white dark:bg-[#2E3440] z-10 shrink-0">
                             <div class="flex items-center gap-2">
-                                <button @click.stop="toggleSidebar" v-if="!isSidebarOpen"
-                                    class="p-0.5 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded transition-all"
-                                    title="Open Sidebar">
-                                    <span class="material-symbols-rounded text-[16px]">{{ isMobile ? 'chevron_left'
-                                        :
-                                        'view_sidebar' }}</span>
-                                </button>
                                 <button @click="toggleRightPanelMode()" :disabled="!selectedNote"
                                     class="p-0.5 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-400"
                                     title="Return to Editor">
                                     <span class="material-symbols-rounded text-[18px]">edit_note</span>
                                 </button>
-                                <button @click="openCommandPalette()"
-                                    class="p-0.5 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded transition-all"
-                                    title="Command Palette (Cmd+Shift+P)">
-                                    <span class="material-symbols-rounded text-[22px]">menu_open</span>
-                                </button>
-                                <!-- Folder Info Removed -->
-                                <!-- Controls: Pin, Settings, About -->
-                                <!-- (Settings/About/Pin removed) -->
                             </div>
 
                             <!-- Sort Controls (Inline) -->
@@ -1381,10 +1204,10 @@
                             <div class="mb-8 mt-4 flex items-center gap-3">
                                 <!-- Icon -->
                                 <span v-if="currentFolderId === null"
-                                    class="material-symbols-rounded text-blue-500 text-[26px]">home</span>
+                                    class="material-symbols-rounded text-blue-500 text-[22px]">home</span>
                                 <span v-else-if="currentFolderId === TRASH_FOLDER_ID"
-                                    class="material-symbols-rounded text-red-500 text-[26px]">delete</span>
-                                <span v-else class="material-symbols-rounded text-amber-500 text-[26px]">folder</span>
+                                    class="material-symbols-rounded text-red-500 text-[22px]">delete</span>
+                                <span v-else class="material-symbols-rounded text-amber-500 text-[22px]">folder</span>
 
                                 <!-- Folder Name -->
                                 <h1 class="text-2xl font-bold text-slate-800 dark:text-[#ECEFF4] tracking-tight">
@@ -1439,7 +1262,7 @@
                                             <div v-for="note in (currentFolderId === null ? sortedRootNotes : getSortedFolderNotes(currentFolderId)).filter(n => n.is_pinned)"
                                                 :key="note.id" @click="selectNote(note)" draggable="true"
                                                 @dragstart="handleDragStart(note, $event)" :data-id="note.id"
-                                                class="note-item group draggable-touch bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-xl hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer p-3 flex flex-col relative h-36">
+                                                class="note-item group draggable-touch bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-lg hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer p-3 flex flex-col relative h-36">
 
                                                 <!-- Selection Checkbox -->
                                                 <div v-if="isSelectionMode"
@@ -1627,7 +1450,7 @@
                                             <div v-for="note in (currentFolderId === null ? sortedRootNotes : getSortedFolderNotes(currentFolderId)).filter(n => !n.is_pinned)"
                                                 :key="note.id" @click="selectNote(note)" draggable="true"
                                                 @dragstart="handleDragStart(note, $event)" :data-id="note.id"
-                                                class="note-item group draggable-touch touch-pan-y bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-xl hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer p-3 flex flex-col relative h-36">
+                                                class="note-item group draggable-touch touch-pan-y bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-lg hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer p-3 flex flex-col relative h-36">
 
                                                 <!-- Selection Checkbox -->
                                                 <div v-if="isSelectionMode"

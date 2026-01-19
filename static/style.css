@@ -320,3 +320,28 @@ body.zen-mode .cm-editor { height: 100vh !important; }
 
 .safe-area-top { height: calc(1.75rem + env(safe-area-inset-top)) !important; padding-top: env(safe-area-inset-top) !important; }
 @media (min-width: 768px) { .safe-area-top { height: 1.75rem !important; padding-top: 0 !important; } }
+
+/* Activity Bar Customizations */
+.cursor-col-resize {
+    cursor: col-resize;
+}
+
+/* Tooltip or hover effect for activity bar icons */
+.group\/sidebar button {
+    position: relative;
+}
+
+/* Ensure smooth sidebar transition */
+#app-sidebar {
+    will-change: width;
+    backface-visibility: hidden;
+}
+
+/* Highlight for active section in Activity Bar */
+.activity-item-active {
+    color: #88C0D0 !important;
+}
+
+.dark .activity-item-active {
+    color: #88C0D0 !important;
+}
