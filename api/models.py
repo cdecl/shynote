@@ -21,7 +21,7 @@ class Folder(Base):
     __tablename__ = "folders"
 
     id = Column(String, primary_key=True, index=True)
-    name = Column(String, index=True)
+    name = Column(String)
     user_id = Column(String, ForeignKey("users.id"), index=True)
     
     user = relationship("User", back_populates="folders")
@@ -31,7 +31,7 @@ class Note(Base):
     __tablename__ = "notes"
 
     id = Column(String, primary_key=True, index=True)
-    title = Column(String, index=True)
+    title = Column(String)
     content = Column(Text)
     folder_id = Column(String, ForeignKey("folders.id"), nullable=True, index=True)
     user_id = Column(String, ForeignKey("users.id"), index=True)
