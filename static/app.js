@@ -1144,8 +1144,8 @@ createApp({
 
 				if (body.folder_id === 'null' || body.folder_id === '') {
 					body.folder_id = null
-				} else if (body.folder_id === LEGACY_TRASH_ID) {
-					// Fix Legacy Trash ID in pending logs
+				} else if (body.folder_id === LEGACY_TRASH_ID || (typeof body.folder_id === 'string' && body.folder_id.startsWith('trash-'))) {
+					// Remap ANY trash folder ID to the CURRENT user's trash ID during sync
 					if (typeof TRASH_FOLDER_ID !== 'undefined' && TRASH_FOLDER_ID.value) {
 						body.folder_id = TRASH_FOLDER_ID.value
 					}
@@ -1153,7 +1153,6 @@ createApp({
 			}
 			return { url, method, body, isDelete, isCreate }
 		}
-
 		const syncWithRetry = async (url, options, retries = 0) => {
 			const MAX_RETRIES = 2
 			const DELAY = 1000
@@ -1278,6 +1277,18 @@ createApp({
 
 							// --- Phase 1: Folders (Sequential) ---
 							for (const log of folderUpdates) {
+								// SKIP syncing Trash folders to server (System reserved)
+								if (log.entity_id === TRASH_FOLDER_ID.value || 
+									(typeof log.entity_id === 'string' && log.entity_id.startsWith('trash-')) ||
+									(log.payload && log.payload.name === 'Trash')) {
+									
+									const processedLogIds = logs.filter(l => l.entity === 'folder' && l.entity_id === log.entity_id).map(l => l.id)
+									await LocalDB.removeLogsBulk(processedLogIds)
+									await LocalDB.markFolderSynced(log.entity_id)
+									syncQueueCount.value = Math.max(0, syncQueueCount.value - processedLogIds.length)
+									continue
+								}
+
 								const { url, method, body, isDelete } = buildRequest(log)
 
 								try {
@@ -3526,7 +3537,7 @@ createApp({
 					}
 
 					// Ensure Trash Folder Exists (Idempotent)
-					const trashExists = localFolders && localFolders.some(f => f.id === TRASH_FOLDER_ID.value)
+					const trashExists = localFolders && localFolders.some(f => f.id === TRASH_FOLDER_ID.value || f.name === "Trash")
 					if (!trashExists) {
 						// console.log("Initializing Trash Folder...")
 						const trashFolder = {
@@ -4891,10 +4902,17 @@ createApp({
 		})
 
 		const sortedFolders = computed(() => {
-			// Folders always use 'name' instead of 'title', handled in sortItems
-			// Use same sort criteria as notes for consistency
-			// Filter out the Trash folder as it's handled separately in UI
-			const regularFolders = folders.value.filter(f => f.id !== TRASH_FOLDER_ID.value)
+			const uid = currentUserId.value || 'guest';
+			const regularFolders = folders.value.filter(f => {
+				if (!f) return false;
+				// 1. Ownership Check (Guard)
+				if (f.user_id !== uid) return false;
+				// 2. System Trash Exclusion
+				if (f.id === TRASH_FOLDER_ID.value) return false;
+				if (typeof f.id === 'string' && f.id.startsWith('trash-')) return false;
+				if (f.name && f.name.toLowerCase() === 'trash') return false;
+				return true;
+			})
 			return sortItems(regularFolders)
 		})
 
