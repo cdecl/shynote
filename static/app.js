@@ -670,8 +670,7 @@ createApp({
 		// New 2-Column Layout State
 		const rightPanelMode = ref(localStorage.getItem(getUserStorageKey(STORAGE_KEYS.LAST_PANEL_MODE)) || 'list') // 'list' | 'edit'
 		const currentFolderId = ref(null) // null = Inbox (Root)
-		const showAbout = ref(false)
-		const isSharing = ref(false)
+				const isSharing = ref(false)
 		const isSortMenuOpen = ref(false)
 
 		// Search State
@@ -5848,7 +5847,6 @@ createApp({
 			showNewItemMenu,
 			toggleNewItemMenu,
 			closeNewItemMenu,
-			showAbout,
 			isSharing,
 			isSortMenuOpen,
 			// Search
