@@ -18,7 +18,7 @@ const { MergeView } = CodeMirror;
 
 
 // UUID v7 Generator (Time-ordered)
-const uuidv7 = () => {
+export const uuidv7 = () => {
 	const now = Date.now();
 	const bytes = new Uint8Array(16);
 	crypto.getRandomValues(bytes);
@@ -42,7 +42,7 @@ const uuidv7 = () => {
 };
 
 // Table Editor Utilities
-const parseMarkdownTable = (markdownText) => {
+export const parseMarkdownTable = (markdownText) => {
 	const lines = markdownText.trim().split('\n').filter(line => line.includes('|'));
 	if (lines.length < 2) return null;
 
@@ -74,7 +74,7 @@ const parseMarkdownTable = (markdownText) => {
 	return { rows: dataRows, alignments };
 };
 
-const generateMarkdownTable = (rows, alignments = null) => {
+export const generateMarkdownTable = (rows, alignments = null) => {
 	if (!rows || rows.length === 0) return '';
 	const options = {};
 	if (alignments) {
@@ -88,7 +88,7 @@ const generateMarkdownTable = (rows, alignments = null) => {
 };
 
 // Format markdown table with aligned columns
-const formatMarkdownTable = (markdownText, forcedAlignments = null) => {
+export const formatMarkdownTable = (markdownText, forcedAlignments = null) => {
 	const lines = markdownText.trim().split('\n');
 	if (lines.length < 2) return markdownText;
 
@@ -162,7 +162,7 @@ const formatMarkdownTable = (markdownText, forcedAlignments = null) => {
 	return result.join('\n');
 };
 
-const findTableBounds = (doc, position) => {
+export const findTableBounds = (doc, position) => {
 	const text = doc.toString();
 	const lines = text.split('\n');
 	const lineNumber = doc.lineAt(position).number;
@@ -199,16 +199,17 @@ const findTableBounds = (doc, position) => {
 };
 
 // Simple Fuzzy Matching with Scoring
-const fuzzyScore = (text, query) => {
+export const fuzzyScore = (text, query) => {
 	if (!query) return 1;
 	const t = text.toLowerCase();
 	const q = query.toLowerCase();
 
 	if (t === q) return 1000;
 	if (t.startsWith(q)) return 800;
-	if (t.includes(q)) return 600;
+	// if (t.includes(q)) return 600; // Removed to allow more detailed scoring
 
 	let score = 0;
+	if (t.includes(q)) score += 600; // Base score for inclusion
 	let queryIdx = 0;
 	let lastMatchIdx = -1;
 
@@ -237,7 +238,7 @@ const fuzzyScore = (text, query) => {
 	return 0; // No match
 };
 
-createApp({
+export const App = {
 	setup() {
 		const STORAGE_KEYS = {
 			TOKEN: 'access_token',
@@ -270,28 +271,28 @@ createApp({
 			return isNaN(date.getTime()) ? null : date
 		}
 
- 		// Hash Helper for Sync
- 		const shynote_hash = async (text) => {
- 			if (crypto && crypto.subtle) {
- 				const encoder = new TextEncoder();
- 				const data = encoder.encode(text);
- 				const hashBuffer = await crypto.subtle.digest('SHA-256', data);
- 				const hashArray = Array.from(new Uint8Array(hashBuffer));
- 				return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
- 			} else {
- 				// Fallback for secure context requirement (HTTP/Mobile LAN)
- 				return sha256(text).toString();
- 			}
- 		}
+		// Hash Helper for Sync
+		const shynote_hash = async (text) => {
+			if (crypto && crypto.subtle) {
+				const encoder = new TextEncoder();
+				const data = encoder.encode(text);
+				const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+				const hashArray = Array.from(new Uint8Array(hashBuffer));
+				return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+			} else {
+				// Fallback for secure context requirement (HTTP/Mobile LAN)
+				return sha256(text).toString();
+			}
+		}
 
- 		// Clear Pending Logs Helper
- 		const clearPendingLogs = async () => {
- 			if (hasIDB && LocalDB.clearPendingLogs) {
- 				await LocalDB.clearPendingLogs();
- 			}
- 		}
+		// Clear Pending Logs Helper
+		const clearPendingLogs = async () => {
+			if (hasIDB && LocalDB.clearPendingLogs) {
+				await LocalDB.clearPendingLogs();
+			}
+		}
 
- 		// User Settings Helper
+		// User Settings Helper
 		const getUserStorageKey = (key) => {
 			const prefix = currentUserId.value ? `${currentUserId.value}_` : 'guest_';
 			return `${prefix}${key}`;
@@ -353,9 +354,9 @@ createApp({
 		const trashNotesCount = computed(() => {
 			if (!notes.value) return 0;
 			const tid = TRASH_FOLDER_ID.value;
-			return notes.value.filter(n => 
-				n && (n.folder_id == tid || 
-				(typeof n.folder_id === 'string' && n.folder_id.startsWith('trash-')))
+			return notes.value.filter(n =>
+				n && (n.folder_id == tid ||
+					(typeof n.folder_id === 'string' && n.folder_id.startsWith('trash-')))
 			).length;
 		});
 		const pinnedNotes = ref([])
@@ -386,10 +387,10 @@ createApp({
 		// Dark mode is global/device specific usually, but code requested "User Info". 
 		// Let's keep dark mode global for now as per industry standard? 
 		// Or user profile has 'is_dark_mode' so it syncs from DB actually!
- 		// But local fallback:
- 		const isDarkMode = ref(localStorage.getItem(STORAGE_KEYS.DARK_MODE) === null ? true : localStorage.getItem(STORAGE_KEYS.DARK_MODE) === 'true')
+		// But local fallback:
+		const isDarkMode = ref(localStorage.getItem(STORAGE_KEYS.DARK_MODE) === null ? true : localStorage.getItem(STORAGE_KEYS.DARK_MODE) === 'true')
 
- 		const isAuthenticated = ref(false) // Default to false (Guest Mode until logged in)
+		const isAuthenticated = ref(false) // Default to false (Guest Mode until logged in)
 
 
 		const serverDbType = ref(null) // Added for DB Type Logic
@@ -526,24 +527,24 @@ createApp({
 		const showSearchHistoryDropdown = ref(false)
 		const searchHistoryDropdownIndex = ref(-1)
 
-	const hideSearchHistoryDropdown = () => {
-		setTimeout(() => {
+		const hideSearchHistoryDropdown = () => {
+			setTimeout(() => {
+				showSearchHistoryDropdown.value = false
+				searchHistoryDropdownIndex.value = -1
+			}, 200)
+		}
+
+		const selectSearchHistoryItem = (item) => {
+			searchQuery.value = item
 			showSearchHistoryDropdown.value = false
 			searchHistoryDropdownIndex.value = -1
-		}, 200)
-	}
-
-	const selectSearchHistoryItem = (item) => {
-		searchQuery.value = item
-		showSearchHistoryDropdown.value = false
-		searchHistoryDropdownIndex.value = -1
-		const sidebarSearchInput = document.getElementById('sidebar-search-input')
-		if (sidebarSearchInput) {
-			sidebarSearchInput.value = item
-			sidebarSearchInput.dispatchEvent(new Event('input'))
+			const sidebarSearchInput = document.getElementById('sidebar-search-input')
+			if (sidebarSearchInput) {
+				sidebarSearchInput.value = item
+				sidebarSearchInput.dispatchEvent(new Event('input'))
+			}
 		}
-	}
-		
+
 		const saveSearchHistory = (query) => {
 			if (!query || query.trim() === '') return
 
@@ -556,7 +557,7 @@ createApp({
 			searchHistory.value = filtered.slice(0, 10)
 			localStorage.setItem('shynote_search_history', JSON.stringify(searchHistory.value))
 		}
-		
+
 
 
 
@@ -857,7 +858,7 @@ createApp({
 			],
 			folders: []
 		}
- 
+
 		// Dependencies needed early
 		const logout = () => {
 			localStorage.removeItem(STORAGE_KEYS.TOKEN)
@@ -1289,10 +1290,10 @@ createApp({
 							// --- Phase 1: Folders (Sequential) ---
 							for (const log of folderUpdates) {
 								// SKIP syncing Trash folders to server (System reserved)
-								if (log.entity_id === TRASH_FOLDER_ID.value || 
+								if (log.entity_id === TRASH_FOLDER_ID.value ||
 									(typeof log.entity_id === 'string' && log.entity_id.startsWith('trash-')) ||
 									(log.payload && log.payload.name === 'Trash')) {
-									
+
 									const processedLogIds = logs.filter(l => l.entity === 'folder' && l.entity_id === log.entity_id).map(l => l.id)
 									await LocalDB.removeLogsBulk(processedLogIds)
 									await LocalDB.markFolderSynced(log.entity_id)
@@ -2581,97 +2582,97 @@ createApp({
 			isSettingsModalOpen.value = false;
 		}
 
- 		const backupData = async () => {
- 			try {
- 				const response = await authenticatedFetch('/api/backup');
- 				if (response && response.ok) {
- 					const data = await response.json();
- 					const jsonString = JSON.stringify(data, null, 2);
- 					const blob = new Blob([jsonString], { type: 'application/json' });
- 					const url = URL.createObjectURL(blob);
- 					const a = document.createElement('a');
- 					a.href = url;
- 					const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
- 					a.download = `shynote_backup_${timestamp}.json`;
- 					document.body.appendChild(a);
- 					a.click();
- 					document.body.removeChild(a);
- 					URL.revokeObjectURL(url);
- 					closeSettingsModal();
- 				} else {
- 					alert('Backup failed.');
- 				}
- 			} catch (error) {
- 				console.error('Backup error:', error);
- 				alert('An error occurred during backup.');
- 			}
- 		};
+		const backupData = async () => {
+			try {
+				const response = await authenticatedFetch('/api/backup');
+				if (response && response.ok) {
+					const data = await response.json();
+					const jsonString = JSON.stringify(data, null, 2);
+					const blob = new Blob([jsonString], { type: 'application/json' });
+					const url = URL.createObjectURL(blob);
+					const a = document.createElement('a');
+					a.href = url;
+					const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+					a.download = `shynote_backup_${timestamp}.json`;
+					document.body.appendChild(a);
+					a.click();
+					document.body.removeChild(a);
+					URL.revokeObjectURL(url);
+					closeSettingsModal();
+				} else {
+					alert('Backup failed.');
+				}
+			} catch (error) {
+				console.error('Backup error:', error);
+				alert('An error occurred during backup.');
+			}
+		};
 
- 		const restoreData = async (event) => {
- 			const file = event.target.files[0];
- 			if (!file) return;
+		const restoreData = async (event) => {
+			const file = event.target.files[0];
+			if (!file) return;
 
- 			const reader = new FileReader();
- 			reader.onload = async (e) => {
- 				try {
- 					const backupData = JSON.parse(e.target.result);
+			const reader = new FileReader();
+			reader.onload = async (e) => {
+				try {
+					const backupData = JSON.parse(e.target.result);
 
- 					// Validate backup format
- 					if (!backupData.folders || !backupData.notes) {
- 						throw new Error('Invalid backup file format. Missing folders or notes.');
- 					}
+					// Validate backup format
+					if (!backupData.folders || !backupData.notes) {
+						throw new Error('Invalid backup file format. Missing folders or notes.');
+					}
 
- 					// Validate backup version
- 					if (backupData.backup_version && backupData.backup_version > 1) {
- 						alert(`This backup was created with a newer version of the app (v${backupData.backup_version}). Some features may not be restored correctly.`);
- 					}
+					// Validate backup version
+					if (backupData.backup_version && backupData.backup_version > 1) {
+						alert(`This backup was created with a newer version of the app (v${backupData.backup_version}). Some features may not be restored correctly.`);
+					}
 
- 					// Clear local data before restore to avoid sync conflicts
- 					if (hasIDB) {
- 						await LocalDB.clearAll();
- 					}
- 					// Clear pending logs
- 					if (typeof clearPendingLogs === 'function') {
- 						await clearPendingLogs();
- 					}
+					// Clear local data before restore to avoid sync conflicts
+					if (hasIDB) {
+						await LocalDB.clearAll();
+					}
+					// Clear pending logs
+					if (typeof clearPendingLogs === 'function') {
+						await clearPendingLogs();
+					}
 
- 					const response = await authenticatedFetch('/api/restore', {
- 						method: 'POST',
- 						headers: { 'Content-Type': 'application/json' },
- 						body: JSON.stringify(backupData)
- 					});
+					const response = await authenticatedFetch('/api/restore', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(backupData)
+					});
 
- 					if (response && response.ok) {
- 						const result = await response.json();
- 						closeSettingsModal();
+					if (response && response.ok) {
+						const result = await response.json();
+						closeSettingsModal();
 
- 						modalState.value = {
- 							isOpen: true,
- 							type: 'info',
- 							title: 'Restore Complete',
- 							message: `Successfully restored data.\nFolders added: ${result.folders_added}\nNotes added: ${result.notes_added}`,
- 							confirmText: 'OK',
- 							cancelText: null,
- 							inputValue: '',
- 							inputPlaceholder: '',
- 							targetId: null
- 						};
+						modalState.value = {
+							isOpen: true,
+							type: 'info',
+							title: 'Restore Complete',
+							message: `Successfully restored data.\nFolders added: ${result.folders_added}\nNotes added: ${result.notes_added}`,
+							confirmText: 'OK',
+							cancelText: null,
+							inputValue: '',
+							inputPlaceholder: '',
+							targetId: null
+						};
 
- 						// Reload page to get clean state
- 						window.location.reload();
- 					} else {
- 						const error = await response.json();
- 						alert(`Restore failed: ${error.detail || 'Unknown error'}`);
- 					}
- 				} catch (error) {
- 					console.error('Restore error:', error);
- 					alert(`An error occurred during restore: ${error.message}`);
- 				} finally {
- 					event.target.value = '';
- 				}
- 			};
- 			reader.readAsText(file);
- 		};
+						// Reload page to get clean state
+						window.location.reload();
+					} else {
+						const error = await response.json();
+						alert(`Restore failed: ${error.detail || 'Unknown error'}`);
+					}
+				} catch (error) {
+					console.error('Restore error:', error);
+					alert(`An error occurred during restore: ${error.message}`);
+				} finally {
+					event.target.value = '';
+				}
+			};
+			reader.readAsText(file);
+		};
 
 		const clearLocalCache = async () => {
 			closeSettingsModal();
@@ -2818,7 +2819,7 @@ createApp({
 						await Promise.all(cacheNames.map(cacheName => caches.delete(cacheName)));
 						// console.log('Service Worker caches cleared:', cacheNames);
 					}
- 
+
 					// Unregister service worker (optional - will re-register on reload)
 					if ('serviceWorker' in navigator) {
 						const registrations = await navigator.serviceWorker.getRegistrations();
@@ -3487,15 +3488,15 @@ createApp({
 		}
 
 		// Show signpost with custom text, opacity, and fade animation
-			const showSignpost = (text, duration = 1500, opacity = 0.5) => {
-				// Replace newlines with <br> tags for multi-line support
-				const formattedText = text.replace(/\n/g, '<br>')
-				signpost.value = { show: true, text: formattedText, opacity: opacity }
-				// Hide after specified duration
-				setTimeout(() => {
-					signpost.value = { show: false, text: '', opacity: 0.5 }
-				}, duration)
-			}
+		const showSignpost = (text, duration = 1500, opacity = 0.5) => {
+			// Replace newlines with <br> tags for multi-line support
+			const formattedText = text.replace(/\n/g, '<br>')
+			signpost.value = { show: true, text: formattedText, opacity: opacity }
+			// Hide after specified duration
+			setTimeout(() => {
+				signpost.value = { show: false, text: '', opacity: 0.5 }
+			}, duration)
+		}
 		// Sort Functions
 		const setSortOption = (type, value) => {
 			if (type === 'field') {
@@ -3645,28 +3646,28 @@ createApp({
 			} finally {
 				// console.log('[fetchFolders] Completed')
 			}
- 		}
+		}
 
- 		const fetchUserProfile = async () => {
- 			try {
- 				const response = await authenticatedFetch('/auth/me')
- 				if (response && response.ok) {
- 					const user = await response.json()
- 					if (user.id) {
- 						currentUserId.value = user.id; // Set ID
- 						localStorage.setItem(STORAGE_KEYS.USER_ID, user.id); // Cache ID
- 					}
- 					if (user.email) {
- 						currentUserEmail.value = user.email;
- 					}
- 					// UI preferences (is_dark_mode, view_mode) are now managed via localStorage only
- 				}
- 			} catch (e) {
- 				console.error("Failed to fetch user profile", e)
- 			}
- 		}
+		const fetchUserProfile = async () => {
+			try {
+				const response = await authenticatedFetch('/auth/me')
+				if (response && response.ok) {
+					const user = await response.json()
+					if (user.id) {
+						currentUserId.value = user.id; // Set ID
+						localStorage.setItem(STORAGE_KEYS.USER_ID, user.id); // Cache ID
+					}
+					if (user.email) {
+						currentUserEmail.value = user.email;
+					}
+					// UI preferences (is_dark_mode, view_mode) are now managed via localStorage only
+				}
+			} catch (e) {
+				console.error("Failed to fetch user profile", e)
+			}
+		}
 
- 		const updateUserProfile = async (updates) => {
+		const updateUserProfile = async (updates) => {
 			if (!isAuthenticated.value) return
 			try {
 				await authenticatedFetch('/auth/me', {
@@ -4798,7 +4799,7 @@ createApp({
 		}
 
 		const renderer = new marked.Renderer()
-		renderer.link = function(href, title, text) {
+		renderer.link = function (href, title, text) {
 			// Open external links in new tab with security attributes
 			return `<a href="${href}" target="_blank" rel="noopener noreferrer" ${title ? `title="${title}"` : ''}>${text}</a>`
 		}
@@ -4846,7 +4847,7 @@ createApp({
 			}
 
 			// Markdown pre-processing
-			
+
 			// 1. Remove empty list items (e.g., lines with only "- " or "* ")
 			// This prevents broken styles when user is in the middle of typing a list
 			content = content.replace(/\n\s*[-*+]\s*(\n|$)/g, '\n')
@@ -5685,13 +5686,13 @@ createApp({
 			isDarkMode,
 			toggleDarkMode,
 
- 			initGoogleAuth,
- 			isAuthenticated,
- 			handleLogout,
- 			showLoginModal,
- 			currentUserId,
- 			currentUserEmail,
- 			renameState,
+			initGoogleAuth,
+			isAuthenticated,
+			handleLogout,
+			showLoginModal,
+			currentUserId,
+			currentUserEmail,
+			renameState,
 			startRename,
 			saveRename,
 
@@ -5880,7 +5881,11 @@ createApp({
 			triggerTableEditor
 		}
 	}
-}).mount('#app')
+};
+
+if (typeof window !== 'undefined' && document.getElementById('app')) {
+	createApp(App).mount('#app');
+}
 
 window.shynoteData = {
 	notes: null,

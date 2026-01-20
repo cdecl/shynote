@@ -19,5 +19,10 @@ export default defineConfig({
 	},
 	define: {
 		'process.env.NODE_ENV': '"production"'
+	},
+	test: {
+		globals: true,
+		environment: 'jsdom',
+		include: ['tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
 	}
 });
