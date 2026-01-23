@@ -369,6 +369,43 @@ export const App = {
 		const conflictState = ref({ isConflict: false, localNote: null, serverNote: null })
 		const conflictMap = ref({}) // { noteId: { local: Note, server: Note } }
 		const statusMessage = ref('Ready')
+
+	const shortStatusMessage = computed(() => {
+		const msg = statusMessage.value === 'Ready' ? 'Save Complete' : statusMessage.value;
+		const map = {
+			'Save Complete': 'Saved',
+			'Typing...': 'Typing',
+			'Saving...': 'Saving',
+			'Error saving': 'Save Err',
+			'Push Complete': 'Pushed',
+		};
+		// Handle "Pushing (N)..." -> "Push(N)"
+		if (msg.startsWith('Pushing')) {
+			return msg.replace('Pushing ', 'Push').replace('...', '');
+		}
+		// Handle "Imported N files" -> "Import(N)"
+		if (msg.startsWith('Imported')) {
+			const match = msg.match(/Imported (\d+) files/);
+			if (match) return `Import(${match[1]})`;
+		}
+		return map[msg] || msg.replace('...', '');
+	});
+
+	const shortLoadingMessage = computed(() => {
+		const msg = loadingState.value.message;
+		const map = {
+			'Idle': '-',
+			'Authenticating...': 'Auth...',
+			'Login successful': 'Hello',
+			'Load Complete': 'Loaded',
+			'Local Cache': 'Cache',
+			'Syncing...': 'Syncing',
+			'Pull Complete': 'Pulled',
+			'Sync Complete': 'Synced',
+			'Sync Failed': 'Sync Err',
+		};
+		return map[msg] || msg;
+	});
 		const loadingState = ref({ source: 'NONE', message: 'Idle' }) // NEW: Data Source Tracking
 		const isSidebarOpen = ref(true)
 		const editorRef = ref(null)
@@ -5662,6 +5699,8 @@ export const App = {
 			startDragSelection, // Expose for @mousedown
 			loading,
 			statusMessage,
+		shortStatusMessage,
+		shortLoadingMessage,
 			loadingState, // NEW
 			createFolder,
 			createNote,

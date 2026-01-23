@@ -2022,15 +2022,20 @@
                                 :class="isOnline ? 'text-green-600 dark:text-green-400' : 'text-red-500'">
                                 <span class="w-1.5 h-1.5 rounded-full"
                                     :class="isOnline ? 'bg-green-500' : 'bg-red-500'"></span>
-                                {{ isOnline ? 'Online' : 'Offline' }}
+                                <span class="hidden sm:inline">{{ isOnline ? 'Online' : 'Offline' }}</span>
                             </span>
                             <!-- User Status (Guest Mode or User Email) -->
                             <span class="text-[10px] font-medium flex items-center gap-1 px-1.5 py-0.25 rounded"
                                 :class="currentUserId === 'guest' ? 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30' : 'text-slate-600 dark:text-slate-400 bg-slate-200 dark:bg-slate-700'">
-                                <span v-if="currentUserId === 'guest'">Guest Mode</span>
-                                <span v-else class="flex items-center gap-1"><span
-                                        class="material-symbols-rounded text-[12px] opacity-70">person</span>{{
-                                    currentUserEmail || currentUserId }}</span>
+                                <span v-if="currentUserId === 'guest'">
+                                    <span class="hidden sm:inline">Guest Mode</span>
+                                    <span class="sm:hidden">Guest</span>
+                                </span>
+                                <span v-else class="flex items-center gap-1">
+                                    <span class="material-symbols-rounded text-[12px] opacity-70">person</span>
+                                    <span class="hidden sm:inline">{{ currentUserEmail || currentUserId }}</span>
+                                    <span class="sm:hidden">Me</span>
+                                </span>
                             </span>
                         </div>
 
@@ -2041,8 +2046,8 @@
                                 <span v-if="hasIDB" class="material-symbols-rounded text-[10px] mr-1"
                                     :class="isSyncing ? 'animate-spin text-green-500' : ''"
                                     title="Local-First Storage Active">dns</span>
-                                <span class="mr-1">{{ statusMessage === 'Ready' ? 'Save Complete' : statusMessage
-                                    }}</span>
+                                <span class="mr-1 hidden sm:inline">{{ statusMessage === 'Ready' ? 'Save Complete' : statusMessage }}</span>
+                                <span class="mr-1 sm:hidden">{{ shortStatusMessage }}</span>
                             </span>
 
 
@@ -2083,7 +2088,8 @@
                                     title="Syncing...">sync</span>
                                 <span v-else class="material-symbols-rounded text-[14px]">cloud_off</span>
 
-                                <span class="uppercase tracking-wide">{{ loadingState.message }}</span>
+                                <span class="uppercase tracking-wide hidden sm:inline">{{ loadingState.message }}</span>
+                                <span class="uppercase tracking-wide sm:hidden">{{ shortLoadingMessage }}</span>
                             </span>
 
                             </span>
