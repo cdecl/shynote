@@ -1638,15 +1638,24 @@
                                         <div class="flex items-center gap-2">
                                             <span class="material-symbols-rounded">warning</span>
                                             <span class="font-bold">Sync Conflict Detected!</span>
-                                            <span class="text-sm">Left: Your Changes | Right: Server Changes</span>
+                                            <span class="text-sm">
+                                                <template v-if="conflictState.serverNote && conflictState.serverNote.is_deleted">
+                                                    Left: Your Changes | Right: <span class="font-bold">Deleted on Server</span>
+                                                </template>
+                                                <template v-else>
+                                                    Left: Your Changes | Right: Server Changes
+                                                </template>
+                                            </span>
                                         </div>
                                         <div class="flex items-center gap-2">
                                             <button @click="resolveConflict('use_local')"
-                                                class="px-3 py-1 bg-white border border-red-300 rounded text-sm hover:bg-red-50 font-medium">Keep
-                                                My Version</button>
+                                                class="px-3 py-1 bg-white border border-red-300 rounded text-sm hover:bg-red-50 font-medium">
+                                                {{ conflictState.serverNote && conflictState.serverNote.is_deleted ? 'Restore (Keep Mine)' : 'Keep My Version' }}
+                                            </button>
                                             <button @click="resolveConflict('use_server')"
-                                                class="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700 font-medium">Use
-                                                Server Version</button>
+                                                class="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700 font-medium">
+                                                {{ conflictState.serverNote && conflictState.serverNote.is_deleted ? 'Accept Deletion' : 'Use Server Version' }}
+                                            </button>
                                         </div>
                                     </div>
 

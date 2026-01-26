@@ -370,42 +370,42 @@ export const App = {
 		const conflictMap = ref({}) // { noteId: { local: Note, server: Note } }
 		const statusMessage = ref('Ready')
 
-	const shortStatusMessage = computed(() => {
-		const msg = statusMessage.value === 'Ready' ? 'Save Complete' : statusMessage.value;
-		const map = {
-			'Save Complete': 'Saved',
-			'Typing...': 'Typing',
-			'Saving...': 'Saving',
-			'Error saving': 'Save Err',
-			'Push Complete': 'Pushed',
-		};
-		// Handle "Pushing (N)..." -> "Push(N)"
-		if (msg.startsWith('Pushing')) {
-			return msg.replace('Pushing ', 'Push').replace('...', '');
-		}
-		// Handle "Imported N files" -> "Import(N)"
-		if (msg.startsWith('Imported')) {
-			const match = msg.match(/Imported (\d+) files/);
-			if (match) return `Import(${match[1]})`;
-		}
-		return map[msg] || msg.replace('...', '');
-	});
+		const shortStatusMessage = computed(() => {
+			const msg = statusMessage.value === 'Ready' ? 'Save Complete' : statusMessage.value;
+			const map = {
+				'Save Complete': 'Saved',
+				'Typing...': 'Typing',
+				'Saving...': 'Saving',
+				'Error saving': 'Save Err',
+				'Push Complete': 'Pushed',
+			};
+			// Handle "Pushing (N)..." -> "Push(N)"
+			if (msg.startsWith('Pushing')) {
+				return msg.replace('Pushing ', 'Push').replace('...', '');
+			}
+			// Handle "Imported N files" -> "Import(N)"
+			if (msg.startsWith('Imported')) {
+				const match = msg.match(/Imported (\d+) files/);
+				if (match) return `Import(${match[1]})`;
+			}
+			return map[msg] || msg.replace('...', '');
+		});
 
-	const shortLoadingMessage = computed(() => {
-		const msg = loadingState.value.message;
-		const map = {
-			'Idle': '-',
-			'Authenticating...': 'Auth...',
-			'Login successful': 'Hello',
-			'Load Complete': 'Loaded',
-			'Local Cache': 'Cache',
-			'Syncing...': 'Syncing',
-			'Pull Complete': 'Pulled',
-			'Sync Complete': 'Synced',
-			'Sync Failed': 'Sync Err',
-		};
-		return map[msg] || msg;
-	});
+		const shortLoadingMessage = computed(() => {
+			const msg = loadingState.value.message;
+			const map = {
+				'Idle': '-',
+				'Authenticating...': 'Auth...',
+				'Login successful': 'Hello',
+				'Load Complete': 'Loaded',
+				'Local Cache': 'Cache',
+				'Syncing...': 'Syncing',
+				'Pull Complete': 'Pulled',
+				'Sync Complete': 'Synced',
+				'Sync Failed': 'Sync Err',
+			};
+			return map[msg] || msg;
+		});
 		const loadingState = ref({ source: 'NONE', message: 'Idle' }) // NEW: Data Source Tracking
 		const isSidebarOpen = ref(true)
 		const editorRef = ref(null)
@@ -2286,46 +2286,71 @@ export const App = {
 			if (!localNote || !serverNote) return
 
 			if (action === 'use_local') {
-				// Rebase: We are keeping local content, BUT we must adopt the server's version number
-				// so that our next Push attempts to increment FROM that version (e.g. v8 -> v9), not v1 -> v2.
-				localNote.version = serverNote.version;
-
-				// Force a save to update LocalDB and trigger a dirty push
-				if (hasIDB) {
-					// We use saveNote to trigger the log and dirty status
+				// Rebase or Restore
+				if (serverNote.is_deleted) {
+					// RESTORE: Server deleted, but we want to keep it.
+					// We just mark it dirty so it pushes again (Resurrection).
+					// Version? We can keep local version or increment.
+					// saveNote will mark it dirty.
 					await LocalDB.saveNote(localNote);
+				} else {
+					// UPDATE CONFLICT:
+					// Rebase: We are keeping local content, BUT we must adopt the server's version number
+					// so that our next Push attempts to increment FROM that version (e.g. v8 -> v9), not v1 -> v2.
+					localNote.version = serverNote.version;
+
+					// Force a save to update LocalDB and trigger a dirty push
+					if (hasIDB) {
+						// We use saveNote to trigger the log and dirty status
+						await LocalDB.saveNote(localNote);
+					}
 				}
+
 				// updateNote() is called by saveNote debounce, but we can call manualSave or just let triggers handle it.
 			} else if (action === 'use_server') {
-				// Overwrite local with server content AND version
-				localNote.title = serverNote.title
-				localNote.content = serverNote.content
-				localNote.folder_id = serverNote.folder_id
-				localNote.content_hash = serverNote.content_hash
-				localNote.version = serverNote.version
-				localNote.updated_at = serverNote.updated_at
+				if (serverNote.is_deleted) {
+					// ACCEPT DELETION:
+					if (hasIDB) {
+						await LocalDB.deleteNote(localNote.id);
+					}
+					// Remove from memory
+					if (selectedNote.value && selectedNote.value.id === localNote.id) {
+						selectedNote.value = null; // Close editor or go to inbox
+						rightPanelMode.value = 'list';
+					}
+					const idx = notes.value.findIndex(n => n.id === localNote.id);
+					if (idx !== -1) notes.value.splice(idx, 1);
+				} else {
+					// Overwrite local with server content AND version
+					localNote.title = serverNote.title
+					localNote.content = serverNote.content
+					localNote.folder_id = serverNote.folder_id
+					localNote.content_hash = serverNote.content_hash
+					localNote.version = serverNote.version
+					localNote.updated_at = serverNote.updated_at
 
-				// Save as synced (Clean)
-				if (hasIDB) {
-					// Mark as synced immediately
-					const cleanNote = { ...localNote, sync_status: 'synced', local_updated_at: new Date().toISOString() };
+					// Save as synced (Clean)
+					if (hasIDB) {
+						// Mark as synced immediately
+						const cleanNote = { ...localNote, sync_status: 'synced', local_updated_at: new Date().toISOString() };
 
-					// Actually LocalDB.saveNotesBulk handles saving as-is.
-					await LocalDB.saveNotesBulk([cleanNote]);
+						// Actually LocalDB.saveNotesBulk handles saving as-is.
+						await LocalDB.saveNotesBulk([cleanNote]);
 
-					// Also remove any pending logs for this note, as we accepted server state
-					const logs = await LocalDB.getPendingLogs();
-					const noteLogs = logs.filter(l => l.entity_id === localNote.id).map(l => l.id);
-					if (noteLogs.length > 0) await LocalDB.removeLogsBulk(noteLogs);
+						// Also remove any pending logs for this note, as we accepted server state
+						const logs = await LocalDB.getPendingLogs();
+						const noteLogs = logs.filter(l => l.entity_id === localNote.id).map(l => l.id);
+						if (noteLogs.length > 0) await LocalDB.removeLogsBulk(noteLogs);
+					}
+					// Update Memory
+					if (selectedNote.value && selectedNote.value.id === localNote.id) {
+						// Deep copy to reactive ref
+						Object.assign(selectedNote.value, localNote);
+					}
+					// Update List in Memory
+					const idx = notes.value.findIndex(n => n.id === localNote.id);
+					if (idx !== -1) notes.value[idx] = { ...localNote };
 				}
-				// Update Memory
-				if (selectedNote.value && selectedNote.value.id === localNote.id) {
-					// Deep copy to reactive ref
-					Object.assign(selectedNote.value, localNote);
-				}
-				// Update List in Memory
-				const idx = notes.value.findIndex(n => n.id === localNote.id);
-				if (idx !== -1) notes.value[idx] = { ...localNote };
 			}
 
 			conflictState.value.isConflict = false
@@ -3757,8 +3782,33 @@ export const App = {
 							const serverIds = new Set(serverNotes.map(n => n.id))
 
 							for (const ln of localNotesAll) {
-								if (!serverIds.has(ln.id) && ln.sync_status !== 'dirty') {
-									await LocalDB.deleteNote(ln.id)
+								if (!serverIds.has(ln.id)) {
+									// Strict Safety: NEVER delete automatically. Treat as Conflict.
+									console.log(`[Sync] Note ${ln.id} missing on server. Marking as Conflict (Deleted on Server).`);
+
+									// Register Virtual Server Note (Deleted)
+									const virtualServerNote = {
+										...ln, // Copy basics
+										content: '', // Empty content for MergeView
+										version: (ln.version || 1) + 1, // Force version mismatch
+										updated_at: new Date().toISOString(),
+										is_deleted: true // Marker for UI
+									};
+
+									conflictMap.value[ln.id] = { local: ln, server: virtualServerNote };
+
+									// If this note is currently selected, trigger UI update immediately if needed
+									// (Logic handled below in Step 3 Conflict Check loop? 
+									//  No, Step 3 iterates 'currentLocalNotes' matching 'notesToSave'.
+									//  Since this note is NOT in 'notesToSave' (server list), Step 3 won't touch it.
+									//  So we must handle active selection trigger here if needed?
+									//  Actually, if we add to conflictMap, the UI will update when 'selectNote' is called or if we force reactivity.)
+
+									if (selectedNote.value && selectedNote.value.id === ln.id) {
+										if (!conflictState.value.isConflict) {
+											enterConflictMode(ln, virtualServerNote);
+										}
+									}
 								}
 							}
 
@@ -5699,8 +5749,8 @@ export const App = {
 			startDragSelection, // Expose for @mousedown
 			loading,
 			statusMessage,
-		shortStatusMessage,
-		shortLoadingMessage,
+			shortStatusMessage,
+			shortLoadingMessage,
 			loadingState, // NEW
 			createFolder,
 			createNote,
