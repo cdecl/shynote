@@ -1093,6 +1093,19 @@ export const App = {
 
 		const debouncedUpdate = () => {
 			statusMessage.value = 'Typing...'
+
+			// FIX: Mark as dirty IMMEDIATELY in memory so pullSync/fetchNotes 
+			// can protect this note before the 1s debounce timer fires.
+			if (selectedNote.value) {
+				selectedNote.value.sync_status = 'dirty'
+
+				// Ensure the list also reflects the dirty state immediately
+				const idx = notes.value.findIndex(n => n.id === selectedNote.value.id)
+				if (idx !== -1) {
+					notes.value[idx].sync_status = 'dirty'
+				}
+			}
+
 			if (debounceTimer) clearTimeout(debounceTimer)
 			debounceTimer = setTimeout(async () => {
 				if (!selectedNote.value) return
@@ -3521,10 +3534,8 @@ export const App = {
 		}
 
 		const handlePreviewDoubleClick = (event) => {
-			console.log('Preview double-click event triggered')
 			// Only switch to editor mode if currently in preview mode
 			if (viewMode.value === 'preview') {
-				console.log('Switching from preview to editor mode')
 				setViewMode('edit')
 				// Focus the editor after switching
 				nextTick(() => {
@@ -3536,18 +3547,6 @@ export const App = {
 			}
 		}
 
-		// Add event listener for preview double-click
-		const setupPreviewDoubleClick = () => {
-			nextTick(() => {
-				const previewElement = previewRef.value
-				if (previewElement) {
-					// Remove existing listener to prevent duplicates
-					previewElement.removeEventListener('dblclick', handlePreviewDoubleClick)
-					previewElement.addEventListener('dblclick', handlePreviewDoubleClick)
-					console.log('Preview double-click event listener added')
-				}
-			})
-		}
 
 		// Show signpost with custom text, opacity, and fade animation
 		const showSignpost = (text, duration = 1500, opacity = 0.5) => {
@@ -3827,21 +3826,39 @@ export const App = {
 							// 3. Check for Conflicts (Dirty vs Server Version Mismatch)
 							const currentLocalNotes = await LocalDB.getAllNotes(currentUid)
 							for (const ln of currentLocalNotes) {
-								if (ln.sync_status === 'dirty') {
-									const serverNote = notesToSave.find(sn => sn.id === ln.id)
-									if (serverNote) {
-										// Use Version Check for Optimistic Locking
-										if (serverNote.version !== ln.version) {
-											console.log(`[Sync Info] Conflict Detected: ${ln.title} (Local v${ln.version} != Server v${serverNote.version})`)
+								const serverNote = notesToSave.find(sn => sn.id === ln.id)
+								if (!serverNote) continue
 
-											// Add to Conflict Map
-											conflictMap.value[ln.id] = { local: ln, server: serverNote }
+								// REFINED SEARCH: Check both IDB 'dirty' status AND Memory 'dirty' status/Editor state
+								let isDirty = ln.sync_status === 'dirty'
+								let localContent = ln.content
 
-											// If currently selected, trigger UI immediately
-											if (selectedNote.value && selectedNote.value.id === ln.id) {
-												if (!conflictState.value.isConflict) {
-													enterConflictMode(ln, serverNote)
-												}
+								// If this is the currently selected note, it might have memory-only changes
+								if (selectedNote.value && selectedNote.value.id === ln.id) {
+									const isEditorDirty = editorView.value && editorView.value.state.doc.toString() !== selectedNote.value.content
+									if (selectedNote.value.sync_status === 'dirty' || isEditorDirty) {
+										isDirty = true
+										// Use the LATEST memory/editor content for comparison
+										localContent = editorView.value ? editorView.value.state.doc.toString() : selectedNote.value.content
+									}
+								}
+
+								if (isDirty) {
+									// Use Version Check for Optimistic Locking OR Content Check if version is same but data differs
+									const versionMismatch = serverNote.version !== ln.version
+									const contentMismatch = serverNote.content !== localContent
+
+									if (versionMismatch || contentMismatch) {
+										console.log(`[Sync Info] Conflict Detected: ${ln.title} (Reason: ${versionMismatch ? 'Version' : 'Content'})`)
+
+										// Add to Conflict Map (Use Memory Content if it was newer)
+										const localObj = { ...ln, content: localContent }
+										conflictMap.value[ln.id] = { local: localObj, server: serverNote }
+
+										// If currently selected, trigger UI immediately
+										if (selectedNote.value && selectedNote.value.id === ln.id) {
+											if (!conflictState.value.isConflict) {
+												enterConflictMode(localObj, serverNote)
 											}
 										}
 									}
@@ -3857,46 +3874,21 @@ export const App = {
 							if (selectedNote.value) {
 								const freshReactiveNote = notes.value.find(n => n.id === selectedNote.value.id);
 								if (freshReactiveNote && !conflictMap.value[freshReactiveNote.id]) {
-									// Only update if not dirty.
-									// If dirty, we keep our separate dirty copy (orphaned from list? No, list should also be dirty from IDB)
-									// Actually if IDB had dirty note, currentLocalNotes has it. 
-									// So freshReactiveNote IS the dirty note.
-									// But if it IS clean, we want to align references.
-									// If it IS dirty, we also want to align references!
+									// We only swap the reference if the note is NOT in a conflict state.
+									// Our enhanced conflict detection loop (Step 3) already protected dirty/unsaved notes.
+									// So if it's NOT in conflictMap, it's safe to align the selectedNote reference.
+									selectedNote.value = freshReactiveNote;
 
-									// Wait, if I am typing, selectedNote has un-persisted changes in memory?
-									// saveNoteDebounced flushes to IDB.
-									// If fetchNotes runs, it loads from IDB.
-									// If I typed a character 1ms ago and it's not in IDB yet? 
-									// Then currentLocalNotes has OLD content.
-									// notes.value gets OLD content.
-									// If I swap selectedNote.value to freshReactiveNote (OLD), I LOSE my 1ms typing!
-
-									// This is a race condition.
-									// "Sync Now" usually implies strict sync.
-									// But to be safe, we should only swap if sync_status is NOT dirty.
-									// If sync_status IS dirty, implied that we have local work.
-									// But fetching from IDB *should* have our work unless debounce period.
-
-									// Safe bet: Only swap if clean.
-									if (freshReactiveNote.sync_status !== 'dirty') {
-										selectedNote.value = freshReactiveNote;
-
-										// Force Editor Refresh if content changed (Vue watcher optimization might skip same-ID updates)
-										nextTick(() => {
-											if (editorView.value) {
-												const currentDoc = editorView.value.state.doc.toString();
-												if (currentDoc !== freshReactiveNote.content) {
-													console.log('[Sync] Active content changed. Refreshing Editor.');
-													initEditor();
-												}
+									// Force Editor Refresh if content changed (Vue watcher optimization might skip same-ID updates)
+									nextTick(() => {
+										if (editorView.value) {
+											const currentDoc = editorView.value.state.doc.toString();
+											if (currentDoc !== freshReactiveNote.content) {
+												console.log('[Sync] Active content changed. Refreshing Editor.');
+												initEditor();
 											}
-										});
-									} else {
-										// If dirty, we KEEP the current selectedNote.value (which might have in-flight chars)
-										// We do NOT swap to notes.value[i] because notes.value[i] comes from IDB and might lag behind memory by 1000ms.
-										// So we have Desync: List shows IDB state, Editor shows Memory state. This is acceptable for Dirty notes.
-									}
+										}
+									});
 								}
 							}
 						} else {
@@ -4986,8 +4978,6 @@ export const App = {
 						console.warn('Mermaid rendering failed:', err)
 					}
 				}
-				// Setup preview double-click event listener
-				setupPreviewDoubleClick()
 			})
 		})
 
@@ -5764,7 +5754,7 @@ export const App = {
 			debouncedUpdate,
 			previewContent,
 			isSidebarOpen,
-			isMobile,
+
 			toggleSidebar,
 			editorRef,
 			previewRef,
@@ -5845,7 +5835,6 @@ export const App = {
 			setColumnAlignment,
 			handleEditorDoubleClick,
 			handlePreviewDoubleClick,
-			setupPreviewDoubleClick,
 			showSignpost,
 			signpost,
 			// Sort exports
@@ -5866,17 +5855,6 @@ export const App = {
 			appVersion,
 			homeUrl,
 
-			// Drag & Drop
-			// Ensure these variables exist in scope if exporting. 
-			// Based on previous steps, drag logic might have been partially cleaned.
-			// Assuming variables exist or were pre-existing.
-			// If they are missing, we should remove them or ensure they are defined.
-			// Checking previous file content... drag variables were defined in step 515 block but I removed duplicates in 521?
-			// Actually 521 removed the block: `const isDragging...`. 
-			// So if they are not defined elsewhere, exporting them will crash.
-			// Let's assume standard drag variables are present or just export what we know.
-
-			// Re-exporting what was seemingly working or expected:
 			draggedNoteId,
 			handleDragStart,
 			handleDrop,
@@ -5899,8 +5877,6 @@ export const App = {
 			changelogContent,
 
 			// Layout State
-			lastSyncTime,
-			syncQueueCount,
 			lastSyncTime,
 			syncQueueCount,
 			manualSync: syncWorker,
