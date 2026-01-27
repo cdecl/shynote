@@ -42,160 +42,160 @@ export const uuidv7 = () => {
 };
 
 // Table Editor Utilities
-export const parseMarkdownTable = (markdownText) => {
-	const lines = markdownText.trim().split('\n').filter(line => line.includes('|'));
-	if (lines.length < 2) return null;
+const TableUtils = {
+	parse(markdownText) {
+		if (!markdownText) return null;
+		const lines = markdownText.trim().split('\n').filter(line => line.includes('|'));
+		if (lines.length < 2) return null;
 
-	const allRows = lines.map(line => {
-		return line.split('|').slice(1, -1).map(cell => cell.trim());
-	});
+		const allRows = lines.map(line => line.split('|').slice(1, -1).map(cell => cell.trim()));
+		const separatorRowIndex = allRows.findIndex(row => row.every(cell => /^[:\-\s]+$/.test(cell)));
+		let alignments = [];
 
-	// Extract alignment from separator row
-	let alignments = [];
-	const separatorRowIndex = allRows.findIndex(row => row.every(cell => /^[:\-\s]+$/.test(cell)));
+		if (separatorRowIndex !== -1) {
+			alignments = allRows[separatorRowIndex].map(cell => {
+				const hasLeft = cell.startsWith(':');
+				const hasRight = cell.endsWith(':');
+				if (hasLeft && hasRight) return 'c';
+				return hasRight ? 'r' : (hasLeft ? 'l' : 'c');
+			});
+		}
 
-	if (separatorRowIndex !== -1) {
-		alignments = allRows[separatorRowIndex].map(cell => {
-			const hasLeft = cell.startsWith(':');
-			const hasRight = cell.endsWith(':');
-			if (hasLeft && hasRight) return 'c';
-			if (hasRight) return 'r';
-			if (hasLeft) return 'l';
-			return 'c'; // Default changed to center as per user request
+		const dataRows = allRows.filter((_, idx) => idx !== separatorRowIndex);
+		if (dataRows.length === 0) return null;
+		if (alignments.length === 0) alignments = dataRows[0].map(() => 'c');
+
+		return { rows: dataRows, alignments };
+	},
+
+	format(markdownText, forcedAlignments = null) {
+		const parsed = this.parse(markdownText);
+		if (!parsed) return markdownText;
+
+		const { rows: dataRows, alignments: originalAlignments } = parsed;
+		const alignments = forcedAlignments || originalAlignments;
+
+		// Calculate max width for each column
+		const colWidths = dataRows[0].map((_, c) => {
+			return Math.max(3, ...dataRows.map(row => (row[c] ? row[c].length : 0)));
 		});
+
+		// Format data rows
+		const formattedDataLines = dataRows.map(row => {
+			const cells = row.map((cell, c) => {
+				const w = colWidths[c];
+				const align = alignments[c];
+				if (align === 'c') {
+					const left = Math.floor((w - cell.length) / 2);
+					return ' '.repeat(left) + cell + ' '.repeat(w - cell.length - left);
+				}
+				return align === 'r' ? cell.padStart(w, ' ') : cell.padEnd(w, ' ');
+			});
+			return '| ' + cells.join(' | ') + ' |';
+		});
+
+		// Format separator row
+		const sepCells = colWidths.map((w, c) => {
+			const align = alignments[c];
+			if (align === 'c') return ':' + '-'.repeat(w - 2) + ':';
+			return align === 'r' ? '-'.repeat(w - 1) + ':' : ':' + '-'.repeat(w - 1);
+		});
+		const sepLine = '| ' + sepCells.join(' | ') + ' |';
+
+		return [formattedDataLines[0], sepLine, ...formattedDataLines.slice(1)].join('\n');
+	},
+
+	generate(rows, alignments = null) {
+		if (!rows || rows.length === 0) return '';
+		const headers = rows[0].map((_, i) => `Col ${i + 1}`);
+		let md = `| ${headers.join(' | ')} |\n`;
+		md += `| ${headers.map((_, i) => {
+			const a = alignments ? alignments[i] : 'c';
+			if (a === 'c' || a === 'center') return ':---:';
+			if (a === 'r' || a === 'right') return '---:';
+			return ':---';
+		}).join(' | ')} |\n`;
+		for (const row of rows) {
+			md += `| ${row.join(' | ')} |\n`;
+		}
+		return md;
+	},
+
+	findBounds(doc, position) {
+		const text = doc.toString();
+		const lines = text.split('\n');
+		const lineNo = doc.lineAt(position).number;
+
+		if (!lines[lineNo - 1].includes('|')) return null;
+
+		let start = lineNo, end = lineNo;
+		while (start > 1 && lines[start - 2].includes('|')) start--;
+		while (end < lines.length && lines[end].includes('|')) end++;
+
+		const from = doc.line(start).from;
+		const to = doc.line(end).to;
+		return { from, to, text: text.substring(from, to) };
 	}
-
-	// Filter out separator row
-	const dataRows = allRows.filter((row, idx) => idx !== separatorRowIndex);
-
-	if (dataRows.length === 0) return null;
-	if (alignments.length === 0) alignments = dataRows[0].map(() => 'c');
-
-	return { rows: dataRows, alignments };
 };
 
-export const generateMarkdownTable = (rows, alignments = null) => {
-	if (!rows || rows.length === 0) return '';
-	const options = {};
-	if (alignments) {
-		options.align = alignments.map(a => {
-			if (a === 'c') return 'center';
-			if (a === 'r') return 'right';
-			return 'left';
-		});
-	}
-	return markdownTable(rows, { align: alignments });
-};
+// Compatibility Exports
+export const parseMarkdownTable = TableUtils.parse;
+export const generateMarkdownTable = TableUtils.generate;
+export const formatMarkdownTable = TableUtils.format;
+export const findTableBounds = TableUtils.findBounds;
 
-// Format markdown table with aligned columns
-export const formatMarkdownTable = (markdownText, forcedAlignments = null) => {
-	const lines = markdownText.trim().split('\n');
-	if (lines.length < 2) return markdownText;
+// Search & Highlight Utilities
+const SearchUtils = {
+	getRegex(query, options = {}) {
+		if (!query) return null;
+		const { caseSensitive = false, useRegex = false } = options;
+		try {
+			const flags = caseSensitive ? 'g' : 'gi';
+			const pattern = useRegex ? query : query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+			return new RegExp(pattern, flags);
+		} catch (e) { return null; }
+	},
 
-	// Parse table rows
-	const rows = lines.map(line => {
-		const cells = line.split('|').slice(1, -1).map(cell => cell.trim());
-		return cells;
-	});
+	highlight(text, query, options = {}) {
+		if (!text || !query) return text;
+		const regex = this.getRegex(query, options);
+		if (!regex) return text;
 
-	if (rows.length < 2) return markdownText;
+		const capRegex = new RegExp(`(${regex.source})`, regex.flags);
+		const parts = text.split(capRegex);
+		const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-	// Extract alignment from original or use forced
-	let alignments = forcedAlignments;
-	const separatorRowIndex = rows.findIndex(row => row.every(cell => /^[:\-\s]+$/.test(cell)));
-
-	if (!alignments && separatorRowIndex !== -1) {
-		alignments = rows[separatorRowIndex].map(cell => {
-			const hasLeft = cell.startsWith(':');
-			const hasRight = cell.endsWith(':');
-			if (hasLeft && hasRight) return 'c';
-			if (hasRight) return 'r';
-			return 'l';
-		});
-	}
-
-	// Filter out separator row for width calculation
-	const dataRows = rows.filter((row, idx) => idx !== separatorRowIndex);
-	if (dataRows.length === 0) return markdownText;
-
-	if (!alignments) alignments = dataRows[0].map(() => 'l');
-
-	// Calculate max width for each column
-	const colWidths = [];
-	for (let c = 0; c < dataRows[0].length; c++) {
-		let maxLen = 0;
-		for (let r = 0; r < dataRows.length; r++) {
-			if (dataRows[r][c] && dataRows[r][c].length > maxLen) {
-				maxLen = dataRows[r][c].length;
+		return parts.map(part => {
+			if (part && new RegExp('^' + regex.source + '$', regex.flags.replace('g', '')).test(part)) {
+				return `<span class="search-highlight">${esc(part)}</span>`;
 			}
-		}
-		colWidths[c] = Math.max(maxLen, 3);
+			return esc(part);
+		}).join('');
 	}
-
-	// Format each data row
-	const formattedDataLines = dataRows.map((row) => {
-		const formattedCells = row.map((cell, cIndex) => {
-			const align = alignments[cIndex];
-			if (align === 'c') {
-				const totalPad = colWidths[cIndex] - cell.length;
-				const leftPad = Math.floor(totalPad / 2);
-				return ' '.repeat(leftPad) + cell + ' '.repeat(totalPad - leftPad);
-			} else if (align === 'r') {
-				return cell.padStart(colWidths[cIndex], ' ');
-			}
-			return cell.padEnd(colWidths[cIndex], ' ');
-		});
-		return '| ' + formattedCells.join(' | ') + ' |';
-	});
-
-	// Format separator row with alignment markers
-	const separatorCells = colWidths.map((w, cIndex) => {
-		const align = alignments[cIndex];
-		if (align === 'c') return ':' + '-'.repeat(w - 2) + ':';
-		if (align === 'r') return '-'.repeat(w - 1) + ':';
-		return ':' + '-'.repeat(w - 1);
-	});
-	const separatorLine = '| ' + separatorCells.join(' | ') + ' |';
-
-	// Construct final table
-	const result = [formattedDataLines[0], separatorLine, ...formattedDataLines.slice(1)];
-	return result.join('\n');
 };
 
-export const findTableBounds = (doc, position) => {
-	const text = doc.toString();
-	const lines = text.split('\n');
-	const lineNumber = doc.lineAt(position).number;
-
-	// Check if current line even has a pipe
-	if (!lines[lineNumber - 1].includes('|')) {
-		return { from: position, to: position, text: '' };
+// UI Utilities
+const UIUtils = {
+	createResizeHandler({ onResize, onStop, isHorizontal = true }) {
+		let isResizing = false;
+		const start = (e) => {
+			isResizing = true;
+			document.addEventListener('mousemove', move);
+			document.addEventListener('mouseup', stop);
+			document.body.style.userSelect = 'none';
+			if (!isHorizontal) document.body.style.cursor = 'col-resize';
+		};
+		const move = (e) => { if (isResizing) onResize(e); };
+		const stop = () => {
+			isResizing = false;
+			document.removeEventListener('mousemove', move);
+			document.removeEventListener('mouseup', stop);
+			document.body.style.userSelect = '';
+			document.body.style.cursor = '';
+			if (onStop) onStop();
+		};
+		return { start };
 	}
-
-	// Find the start of the table block (consecutive lines with |)
-	let startLine = lineNumber;
-	for (let i = lineNumber - 1; i >= 1; i--) {
-		if (lines[i - 1].includes('|')) {
-			startLine = i;
-		} else {
-			break;
-		}
-	}
-
-	// Find the end of the table block (consecutive lines with |)
-	let endLine = lineNumber;
-	for (let i = lineNumber + 1; i <= lines.length; i++) {
-		if (lines[i - 1].includes('|')) {
-			endLine = i;
-		} else {
-			break;
-		}
-	}
-
-	const from = doc.line(startLine).from;
-	const to = doc.line(endLine).to;
-
-	return { from, to, text: text.substring(from, to) };
 };
 
 // Simple Fuzzy Matching with Scoring
@@ -257,7 +257,49 @@ export const App = {
 		}
 
 
+		const sidebarWidth = ref(320)
+		const isResizingSidebar = ref(false)
 		const currentUserId = ref(null)
+		const sidebarViewMode = ref(localStorage.getItem('shynote_sidebar_view_mode') || 'simple')
+		const sidebarPanelMode = ref('explorer') // 'explorer' | 'search'
+		const listViewMode = ref(localStorage.getItem('shynote_list_view_mode') || 'grid')
+		const rightPanelMode = ref('list')
+		const currentFolderId = ref(null)
+		const isSharing = ref(false)
+		const isSortMenuOpen = ref(false)
+		const searchQuery = ref('')
+		const searchOptions = ref({ caseSensitive: false, useRegex: false })
+		const isSearchOpen = ref(false)
+		const splitRatio = ref(50)
+		const isDarkMode = ref(true) // Initialized from localStorage later or below
+		const isAuthenticated = ref(false)
+		const fontSize = ref('14')
+		const sortOption = ref({ field: 'title', direction: 'asc' })
+		const appVersion = ref('')
+		const changelogContent = ref('')
+		const modalState = ref({
+			isOpen: false,
+			type: null,
+			title: '',
+			message: '',
+			inputValue: '',
+			inputPlaceholder: '',
+			targetId: null,
+			confirmText: 'Confirm',
+			cancelText: 'Cancel',
+			data: null
+		})
+		const tableEditorState = ref({
+			isOpen: false,
+			tableData: [],
+			alignments: [],
+			tableFrom: 0,
+			tableTo: 0,
+			rowCount: 0,
+			colCount: 0,
+			activeRow: 0,
+			activeCol: 0
+		})
 		const hasIDB = typeof window !== 'undefined' && 'indexedDB' in window
 
 		// Private Helpers
@@ -425,13 +467,13 @@ export const App = {
 		// Let's keep dark mode global for now as per industry standard? 
 		// Or user profile has 'is_dark_mode' so it syncs from DB actually!
 		// But local fallback:
-		const isDarkMode = ref(localStorage.getItem(STORAGE_KEYS.DARK_MODE) === null ? true : localStorage.getItem(STORAGE_KEYS.DARK_MODE) === 'true')
 
-		const isAuthenticated = ref(false) // Default to false (Guest Mode until logged in)
+		isAuthenticated.value = false // reset explicitly if needed or remove redunant
+		isDarkMode.value = localStorage.getItem(STORAGE_KEYS.DARK_MODE) === null ? true : localStorage.getItem(STORAGE_KEYS.DARK_MODE) === 'true'
 
 
 		const serverDbType = ref(null) // Added for DB Type Logic
-		const fontSize = ref('14')
+
 		const isMobile = ref(window.innerWidth < 768)
 		const showCommandPalette = ref(false)
 		const paletteMode = ref('commands') // 'commands', 'notes', 'folders', 'move-dest'
@@ -678,12 +720,12 @@ export const App = {
 			searchInput.addEventListener('blur', cleanup)
 		}
 
-		const sidebarViewMode = ref(localStorage.getItem('shynote_sidebar_view_mode') || 'simple')
+
 		const setSidebarViewMode = (mode) => {
 			sidebarViewMode.value = mode
 			localStorage.setItem('shynote_sidebar_view_mode', mode)
 		}
-		const sidebarPanelMode = ref('explorer') // 'explorer' | 'search'
+
 		const setSidebarPanelMode = (mode) => {
 			if (sidebarPanelMode.value === mode && isSidebarOpen.value) {
 				isSidebarOpen.value = false
@@ -699,58 +741,30 @@ export const App = {
 			}
 		}
 		// List View Mode (Grid vs List)
-		const listViewMode = ref(localStorage.getItem('shynote_list_view_mode') || 'grid')
+
 		const toggleListViewMode = () => {
 			listViewMode.value = listViewMode.value === 'grid' ? 'list' : 'grid'
 			localStorage.setItem('shynote_list_view_mode', listViewMode.value)
 		}
 
 		// New 2-Column Layout State
-		const rightPanelMode = ref(localStorage.getItem(getUserStorageKey(STORAGE_KEYS.LAST_PANEL_MODE)) || 'list') // 'list' | 'edit'
-		const currentFolderId = ref(null) // null = Inbox (Root)
-		const isSharing = ref(false)
-		const isSortMenuOpen = ref(false)
 
-		// Search State
-		const searchQuery = ref('')
-		const searchOptions = ref({ caseSensitive: false, useRegex: false })
-		const isSearchOpen = ref(false)
 
 
 		const searchResults = computed(() => {
 			if (!searchQuery.value) return []
 
-			const query = searchQuery.value
-			const { caseSensitive, useRegex } = searchOptions.value
-			let regex
-
-			try {
-				const flags = caseSensitive ? 'g' : 'gi'
-				if (useRegex) {
-					regex = new RegExp(query, flags)
-				} else {
-					const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-					regex = new RegExp(escaped, flags)
-				}
-			} catch (e) {
-				return []
-			}
+			const regex = SearchUtils.getRegex(searchQuery.value, searchOptions.value)
+			if (!regex) return []
 
 			const results = []
-			// Search all notes
-			// We search in sortedRootNotes + all folder notes? 
-			// Better to search 'notes.value' directly as it contains everything.
 			for (const note of notes.value) {
 				let noteMatched = false
 				const matchedLines = []
 
-				// Title Match
 				regex.lastIndex = 0
-				if (regex.test(note.title)) {
-					noteMatched = true
-				}
+				if (regex.test(note.title)) noteMatched = true
 
-				// Content Matches (Find All and Aggregate)
 				regex.lastIndex = 0
 				const content = note.content || ''
 				let match
@@ -770,10 +784,8 @@ export const App = {
 
 				if (noteMatched) {
 					const uniqueLines = [...new Set(matchedLines)]
-					const snippet = uniqueLines.join(' ... ')
-					results.push({ note, snippet })
+					results.push({ note, snippet: uniqueLines.join(' ... ') })
 				}
-
 				if (results.length > 50) break
 			}
 			return results
@@ -781,45 +793,10 @@ export const App = {
 
 		const selectSearchResult = (note) => {
 			selectNote(note)
-			// Auto-close sidebar on mobile
-			if (window.innerWidth < 768) {
-				isSidebarOpen.value = false
-			}
+			if (window.innerWidth < 768) isSidebarOpen.value = false
 		}
 
-		const getHighlightedText = (text) => {
-			if (!text || !searchQuery.value) return text
-			const { caseSensitive, useRegex } = searchOptions.value
-			try {
-				const flags = caseSensitive ? 'g' : 'gi'
-				let pattern = searchQuery.value
-				if (!useRegex) {
-					pattern = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-				}
-				const regex = new RegExp(`(${pattern})`, flags)
-				// Start with escaping HTML to prevent XSS from note content
-				const safeText = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-				// But highlighting needs to match the Original text logic? 
-				// If we escape first, the regex might fail if it contains special chars.
-				// Correct approach: Split by regex, escape parts, wrap matches.
-
-				const parts = text.split(regex)
-				return parts.map(part => {
-					// We need to check if 'part' matches the regex pattern.
-					// The split with capturing group returns the delimiter (match) as well.
-					// So if proper regex, every odd element is a match?
-					// RegExp(`(${pattern})`) creates capturing group 1.
-					// splitting 'aXc' by /(X)/ gives ['a', 'X', 'c']
-					// splitting 'abc' by /(X)/ gives ['abc']
-
-					if (new RegExp('^' + regex.source + '$', flags.replace('g', '')).test(part)) {
-						return `<span class="search-highlight">${part.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}.</span>`
-					} else {
-						return part.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-					}
-				}).join('')
-			} catch (e) { return text }
-		}
+		const getHighlightedText = (text) => SearchUtils.highlight(text, searchQuery.value, searchOptions.value)
 
 		const dbType = computed(() => {
 			if (currentUserId.value === 'guest') {
@@ -830,60 +807,28 @@ export const App = {
 
 
 		// New UI States
-		const splitRatio = ref(50)
+
 
 		// Split Resize Logic
-		const isResizing = ref(false)
-		const startResize = () => {
-			isResizing.value = true
-			document.addEventListener('mousemove', handleResize)
-			document.addEventListener('mouseup', stopResize)
-			document.body.style.userSelect = 'none'
-		}
-		const handleResize = (e) => {
-			if (!isResizing.value) return
-			const container = document.querySelector('.split-container')
-			if (!container) return
-			const containerRect = container.getBoundingClientRect()
-			const newRatio = ((e.clientX - containerRect.left) / containerRect.width) * 100
-			if (newRatio > 20 && newRatio < 80) {
-				splitRatio.value = newRatio
-			}
-		}
-		const stopResize = () => {
-			isResizing.value = false
-			document.removeEventListener('mousemove', handleResize)
-			document.removeEventListener('mouseup', stopResize)
-			document.body.style.userSelect = ''
-			saveUserSetting(STORAGE_KEYS.SPLIT_RATIO, splitRatio.value)
-		}
-		const sidebarWidth = ref(320)
-		const isResizingSidebar = ref(false)
+		const { start: startResize } = UIUtils.createResizeHandler({
+			onResize: (e) => {
+				const container = document.querySelector('.split-container')
+				if (!container) return
+				const containerRect = container.getBoundingClientRect()
+				const newRatio = ((e.clientX - containerRect.left) / containerRect.width) * 100
+				if (newRatio > 20 && newRatio < 80) splitRatio.value = newRatio
+			},
+			onStop: () => saveUserSetting(STORAGE_KEYS.SPLIT_RATIO, splitRatio.value)
+		})
 
-		const startSidebarResize = (e) => {
-			isResizingSidebar.value = true
-			document.addEventListener('mousemove', handleSidebarResize)
-			document.addEventListener('mouseup', stopSidebarResize)
-			document.body.style.cursor = 'col-resize'
-			document.body.style.userSelect = 'none'
-		}
-
-		const handleSidebarResize = (e) => {
-			if (!isResizingSidebar.value) return
-			const newWidth = e.clientX
-			if (newWidth > 200 && newWidth < 600) {
-				sidebarWidth.value = newWidth
-			}
-		}
-
-		const stopSidebarResize = () => {
-			isResizingSidebar.value = false
-			document.removeEventListener('mousemove', handleSidebarResize)
-			document.removeEventListener('mouseup', stopSidebarResize)
-			document.body.style.cursor = ''
-			document.body.style.userSelect = ''
-			saveUserSetting(STORAGE_KEYS.SIDEBAR_WIDTH, sidebarWidth.value)
-		}
+		const { start: startSidebarResize } = UIUtils.createResizeHandler({
+			onResize: (e) => {
+				const newWidth = e.clientX
+				if (newWidth > 200 && newWidth < 600) sidebarWidth.value = newWidth
+			},
+			onStop: () => saveUserSetting(STORAGE_KEYS.SIDEBAR_WIDTH, sidebarWidth.value),
+			isHorizontal: false
+		})
 
 
 
@@ -933,53 +878,29 @@ export const App = {
 			await checkAuth()
 		}
 
-		const authenticatedFetch = async (url, options = {}) => {
-			const token = localStorage.getItem('access_token')
-
-			// Guest Mode Bypass & Mock
-			if (token === 'guest') {
-				await new Promise(r => setTimeout(r, 50)); // Tiny network delay simulation
-
-				// Mock Response Helper
+		const GuestHandlers = {
+			handle(url, method, body) {
 				const ok = (data) => Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(data) })
-				const bad = () => Promise.resolve({ ok: false, status: 400, json: () => Promise.resolve({ error: 'Bad Request' }) })
+				const bad = (msg = 'Bad Request') => Promise.resolve({ ok: false, status: 400, json: () => Promise.resolve({ error: msg }) })
 
-				const method = options.method || 'GET'
-				let body = {}
-				if (options.body) {
-					if (options.body instanceof FormData) {
-						body = {}
-						options.body.forEach((value, key) => body[key] = value)
-					} else {
-						try { body = JSON.parse(options.body) } catch (e) { }
-					}
-				}
-
-				// 1. Auth / Profile
+				// 1. Auth
 				if (url.includes('/auth/me')) {
 					if (method === 'GET') return ok(guestStore.user)
-					if (method === 'PATCH') {
-						Object.assign(guestStore.user, body)
-						return ok(guestStore.user)
-					}
+					if (method === 'PATCH') return Object.assign(guestStore.user, body), ok(guestStore.user)
 				}
 
 				// 2. Folders
 				if (url.includes('/api/folders')) {
 					if (method === 'GET') return ok([...guestStore.folders])
 					if (method === 'POST') {
-						const newFolder = { id: Date.now(), name: body.name, user_id: 'guest', created_at: new Date().toISOString() }
-						guestStore.folders.push(newFolder)
-						return ok(newFolder)
+						const f = { id: Date.now(), name: body.name, user_id: 'guest', created_at: new Date().toISOString() }
+						guestStore.folders.push(f)
+						return ok(f)
 					}
-					const idMatch = url.match(/\/api\/folders\/(\d+)/)
-					if (idMatch) {
-						const id = parseInt(idMatch[1])
-						if (method === 'PUT') {
-							const f = guestStore.folders.find(x => x.id === id)
-							if (f) f.name = body.name
-							return ok(f)
-						}
+					const id = parseInt(url.match(/\/api\/folders\/(\d+)/)?.[1])
+					if (id) {
+						const f = guestStore.folders.find(x => x.id === id)
+						if (method === 'PUT' && f) return f.name = body.name, ok(f)
 						if (method === 'DELETE') {
 							guestStore.folders = guestStore.folders.filter(x => x.id !== id)
 							guestStore.notes = guestStore.notes.filter(x => x.folder_id !== id)
@@ -992,60 +913,56 @@ export const App = {
 				if (url.includes('/api/notes')) {
 					if (method === 'GET') return ok([...guestStore.notes].sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)))
 					if (method === 'POST') {
-						const newNote = { id: Date.now(), title: body.title || 'Untitled', content: body.content || '', folder_id: body.folder_id, updated_at: new Date().toISOString(), created_at: new Date().toISOString() }
-						guestStore.notes.unshift(newNote)
-						return ok(newNote)
+						const n = { id: Date.now(), title: body.title || 'Untitled', content: body.content || '', folder_id: body.folder_id, updated_at: new Date().toISOString(), created_at: new Date().toISOString() }
+						guestStore.notes.unshift(n)
+						return ok(n)
 					}
-					const idMatch = url.match(/\/api\/notes\/(\d+)/)
-					if (idMatch) {
-						const id = parseInt(idMatch[1])
+					const id = parseInt(url.match(/\/api\/notes\/(\d+)/)?.[1])
+					if (id) {
+						const n = guestStore.notes.find(x => x.id === id)
+						if (!n) return bad('Not Found')
 						if (method === 'PUT') {
-							const n = guestStore.notes.find(x => x.id === id)
-							if (n) {
-								if (body.title !== undefined) n.title = body.title
-								if (body.content !== undefined) n.content = body.content
-								if (body.folder_id !== undefined) n.folder_id = body.folder_id
-								n.updated_at = new Date().toISOString()
-								return ok(n)
-							}
-							return bad()
+							if (body.title !== undefined) n.title = body.title
+							if (body.content !== undefined) n.content = body.content
+							if (body.folder_id !== undefined) n.folder_id = body.folder_id
+							n.updated_at = new Date().toISOString()
+							return ok(n)
 						}
-						if (method === 'DELETE') {
-							guestStore.notes = guestStore.notes.filter(x => x.id !== id)
-							return ok({ success: true })
-						}
+						if (method === 'DELETE') return guestStore.notes = guestStore.notes.filter(x => x.id !== id), ok({ success: true })
 					}
 				}
-
 				return ok({})
 			}
+		}
 
-			if (!token) return null // Return null or throw error if no token for non-guest mode
+		const authenticatedFetch = async (url, options = {}) => {
+			const token = localStorage.getItem('access_token')
 
-			const headers = {
-				...options.headers,
-				'Authorization': `Bearer ${token}`
+			if (token === 'guest') {
+				await new Promise(r => setTimeout(r, 50))
+				const method = options.method || 'GET'
+				let body = {}
+				if (options.body) {
+					try {
+						body = options.body instanceof FormData ? Object.fromEntries(options.body) : JSON.parse(options.body)
+					} catch (e) { }
+				}
+				return GuestHandlers.handle(url, method, body)
 			}
 
-			// Timeout Logic (30s)
+			if (!token) return null
+
 			const controller = new AbortController()
 			const timeoutId = setTimeout(() => controller.abort(), 30000)
 
 			try {
-				const response = await fetch(url, { ...options, headers, signal: controller.signal })
+				const res = await fetch(url, { ...options, headers: { ...options.headers, 'Authorization': `Bearer ${token}` }, signal: controller.signal })
 				clearTimeout(timeoutId)
-
-				if (response.status === 401) {
-					logout()
-					return null
-				}
-				return response
+				if (res.status === 401) return logout(), null
+				return res
 			} catch (e) {
 				clearTimeout(timeoutId)
-				if (e.name === 'AbortError') {
-					console.warn(`Request timed out: ${url}`)
-					throw new Error('Network timeout')
-				}
+				if (e.name === 'AbortError') throw new Error('Network timeout')
 				throw e
 			}
 		}
@@ -2577,7 +2494,7 @@ export const App = {
 		}
 
 		// App Version & Config
-		const appVersion = ref('')
+
 		const fetchAppConfig = async () => {
 			try {
 				const res = await fetch('/static/version.json?v=' + Date.now())
@@ -2602,7 +2519,7 @@ export const App = {
 
 
 		// Sort State
-		const changelogContent = ref('')
+
 		const fetchChangelog = async () => {
 			try {
 				const res = await fetch('/static/changelog.md?v=' + Date.now())
@@ -2615,11 +2532,6 @@ export const App = {
 			}
 		}
 
-
-		const sortOption = ref({
-			field: localStorage.getItem(STORAGE_KEYS.SORT_FIELD) || 'title', // 'title', 'updated_at', 'created_at'
-			direction: localStorage.getItem(STORAGE_KEYS.SORT_DIRECTION) || 'asc' // 'asc', 'desc'
-		})
 
 		const sortLabel = computed(() => {
 			const f = sortOption.value.field
@@ -2761,31 +2673,10 @@ export const App = {
 
 
 		// Modal State
-		const modalState = ref({
-			isOpen: false,
-			type: null,
-			title: '',
-			message: '',
-			inputValue: '',
-			inputPlaceholder: '',
-			targetId: null,
-			confirmText: 'Confirm',
-			cancelText: 'Cancel',
-			data: null
-		})
+
 
 		// Table Editor State
-		const tableEditorState = ref({
-			isOpen: false,
-			tableData: [],
-			alignments: [],
-			tableFrom: 0,
-			tableTo: 0,
-			rowCount: 0,
-			colCount: 0,
-			activeRow: 0,
-			activeCol: 0
-		})
+
 
 		const openModal = (type, targetId = null, data = null) => {
 			modalState.value.type = type
@@ -2976,8 +2867,8 @@ export const App = {
 
 		const saveTableEditor = (editedData) => {
 			if (typeof window.tableEditorView !== 'undefined' && window.tableEditorView) {
-				// Pass alignments to formatMarkdownTable to ensure markers are generated
-				const markdown = formatMarkdownTable(generateMarkdownTable(editedData, tableEditorState.value.alignments), tableEditorState.value.alignments)
+				// Pass alignments to TableUtils.format to ensure markers are generated
+				const markdown = TableUtils.format(TableUtils.generate(editedData, tableEditorState.value.alignments), tableEditorState.value.alignments)
 				window.tableEditorView.dispatch({
 					changes: {
 						from: tableEditorState.value.tableFrom,
@@ -3040,10 +2931,9 @@ export const App = {
 			if (!view) return;
 
 			const pos = view.state.selection.main.head;
-			const { from, to, text } = findTableBounds(view.state.doc, pos);
-
-			if (from !== to) {
-				const parsed = parseMarkdownTable(text);
+			const { from, to, text } = TableUtils.findBounds(view.state.doc, pos);
+			if (text) {
+				const parsed = TableUtils.parse(text);
 				if (parsed) {
 					openTableEditor(parsed.rows, parsed.alignments, from, to);
 					return;
@@ -3062,13 +2952,13 @@ export const App = {
 			const position = view.posAtDOM(event.target)
 			if (position === null) return
 
-			const { from, to, text } = findTableBounds(view.state.doc, position)
-			if (from === to) return
-
-			const parsedTable = parseMarkdownTable(text)
-			if (parsedTable) {
-				openTableEditor(parsedTable.rows, parsedTable.alignments, from, to)
-				return true
+			const { from, to, text } = TableUtils.findBounds(view.state.doc, position)
+			if (text) {
+				const parsedTable = TableUtils.parse(text)
+				if (parsedTable) {
+					openTableEditor(parsedTable.rows, parsedTable.alignments, from, to)
+					return true
+				}
 			}
 			return false
 		}

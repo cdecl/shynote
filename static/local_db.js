@@ -46,17 +46,18 @@ export const LocalDB = {
 		return db.getAll('folders');
 	},
 
-	async saveFoldersBulk(folders) {
+	// Private Helper for Bulk Write with Conflict Protection
+	async _saveBulk(storeName, items, transform = (x) => x) {
 		const db = await initDB();
-		const tx = db.transaction('folders', 'readwrite');
-		const store = tx.objectStore('folders');
-		for (const folder of folders) {
-			// Only overwrite if not dirty
-			const existing = await store.get(folder.id);
+		const tx = db.transaction(storeName, 'readwrite');
+		const store = tx.objectStore(storeName);
+		for (const item of items) {
+			const existing = await store.get(item.id);
 			if (existing && existing.sync_status === 'dirty') continue;
+			if (existing && existing.content_hash && item.content_hash && existing.content_hash === item.content_hash) continue;
 
 			await store.put({
-				...folder,
+				...transform(item),
 				sync_status: 'synced',
 				local_updated_at: new Date().toISOString()
 			});
@@ -64,27 +65,39 @@ export const LocalDB = {
 		await tx.done;
 	},
 
-	async saveFolder(folder, action = 'UPDATE') {
+	async saveFoldersBulk(folders) {
+		await this._saveBulk('folders', folders);
+	},
+
+	// Private Helper for Atomic Write + Log
+	async _writeWithLog(stores, callback) {
 		const db = await initDB();
-		const tx = db.transaction(['folders', 'pending_logs'], 'readwrite');
+		const tx = db.transaction(stores, 'readwrite');
+		try {
+			await callback(tx);
+			await tx.done;
+		} catch (e) {
+			console.error(`[LocalDB] Transaction failed:`, e);
+			throw e;
+		}
+	},
 
-		// 1. Update State
-		await tx.objectStore('folders').put({
-			...folder,
-			sync_status: 'dirty',
-			local_updated_at: new Date().toISOString()
+	async saveFolder(folder, action = 'UPDATE') {
+		await this._writeWithLog(['folders', 'pending_logs'], async (tx) => {
+			await tx.objectStore('folders').put({
+				...folder,
+				sync_status: 'dirty',
+				local_updated_at: new Date().toISOString()
+			});
+
+			await tx.objectStore('pending_logs').add({
+				action,
+				entity: 'folder',
+				entity_id: folder.id,
+				payload: { name: folder.name },
+				created_at: new Date().toISOString()
+			});
 		});
-
-		// 2. Add Log
-		await tx.objectStore('pending_logs').add({
-			action: action,
-			entity: 'folder',
-			entity_id: folder.id,
-			payload: { name: folder.name },
-			created_at: new Date().toISOString()
-		});
-
-		await tx.done;
 	},
 
 	async markFolderSynced(id) {
@@ -101,33 +114,30 @@ export const LocalDB = {
 
 	async getAllNotes(userId) {
 		const db = await initDB();
-		if (userId) {
-			return db.getAllFromIndex('notes', 'user_id', userId);
-		}
-		return db.getAll('notes');
+		return userId ? db.getAllFromIndex('notes', 'user_id', userId) : db.getAll('notes');
 	},
 
 	async saveNote(note, action = 'UPDATE') {
-		const db = await initDB();
-		const tx = db.transaction(['notes', 'pending_logs'], 'readwrite');
+		await this._writeWithLog(['notes', 'pending_logs'], async (tx) => {
+			await tx.objectStore('notes').put({
+				...note,
+				sync_status: 'dirty',
+				local_updated_at: new Date().toISOString()
+			});
 
-		// 1. Update State
-		await tx.objectStore('notes').put({
-			...note,
-			sync_status: 'dirty',
-			local_updated_at: new Date().toISOString()
+			await tx.objectStore('pending_logs').add({
+				action,
+				entity: 'note',
+				entity_id: note.id,
+				payload: {
+					title: note.title,
+					content: note.content,
+					folder_id: note.folder_id,
+					is_pinned: note.is_pinned
+				},
+				created_at: new Date().toISOString()
+			});
 		});
-
-		// 2. Add Log
-		await tx.objectStore('pending_logs').add({
-			action: action, // 'CREATE' or 'UPDATE'
-			entity: 'note',
-			entity_id: note.id,
-			payload: { title: note.title, content: note.content, folder_id: note.folder_id, is_pinned: note.is_pinned },
-			created_at: new Date().toISOString()
-		});
-
-		await tx.done;
 	},
 
 	async updateNoteVersion(id, newVersion) {
@@ -148,31 +158,7 @@ export const LocalDB = {
 	},
 
 	async saveNotesBulk(notes) {
-		const db = await initDB();
-		const tx = db.transaction('notes', 'readwrite');
-		const store = tx.objectStore('notes');
-		for (const note of notes) {
-			const existing = await store.get(note.id);
-
-			// 1. Conflict Protection: If Local is Dirty, NEVER overwrite.
-			if (existing && existing.sync_status === 'dirty') {
-				continue;
-			}
-
-			// 2. Optimization: If Hash matches, SKIP overwrite (No change).
-			// Note: We need to store content_hash in DB for this to work.
-			// If existing has no hash (migration), we update.
-			if (existing && existing.content_hash && existing.content_hash === note.content_hash) {
-				continue;
-			}
-
-			await store.put({
-				...note,
-				sync_status: 'synced',
-				local_updated_at: new Date().toISOString()
-			});
-		}
-		await tx.done;
+		await this._saveBulk('notes', notes);
 	},
 
 	async getPendingLogs() {
@@ -183,28 +169,28 @@ export const LocalDB = {
 	async removeLog(logId) {
 		const db = await initDB();
 		await db.delete('pending_logs', logId);
- 	},
+	},
 
- 	async removeLogsBulk(logIds) {
- 		const db = await initDB();
- 		const tx = db.transaction('pending_logs', 'readwrite');
- 		const store = tx.objectStore('pending_logs');
+	async removeLogsBulk(logIds) {
+		const db = await initDB();
+		const tx = db.transaction('pending_logs', 'readwrite');
+		const store = tx.objectStore('pending_logs');
 
- 		for (const id of logIds) {
- 			await store.delete(id);
- 		}
+		for (const id of logIds) {
+			await store.delete(id);
+		}
 
- 		await tx.done;
- 	},
+		await tx.done;
+	},
 
- 	async clearPendingLogs() {
- 		const db = await initDB();
- 		const tx = db.transaction('pending_logs', 'readwrite');
- 		await tx.objectStore('pending_logs').clear();
- 		await tx.done;
- 	},
+	async clearPendingLogs() {
+		const db = await initDB();
+		const tx = db.transaction('pending_logs', 'readwrite');
+		await tx.objectStore('pending_logs').clear();
+		await tx.done;
+	},
 
- 	async markNoteSynced(id) {
+	async markNoteSynced(id) {
 		const db = await initDB();
 		const tx = db.transaction('notes', 'readwrite');
 		const store = tx.objectStore('notes');
@@ -217,35 +203,27 @@ export const LocalDB = {
 	},
 
 	async deleteNote(id) {
-		const db = await initDB();
-		const tx = db.transaction(['notes', 'pending_logs'], 'readwrite');
-		await tx.objectStore('notes').delete(id);
-
-		// Add Log
-		await tx.objectStore('pending_logs').add({
-			action: 'DELETE',
-			entity: 'note',
-			entity_id: id,
-			created_at: new Date().toISOString()
+		await this._writeWithLog(['notes', 'pending_logs'], async (tx) => {
+			await tx.objectStore('notes').delete(id);
+			await tx.objectStore('pending_logs').add({
+				action: 'DELETE',
+				entity: 'note',
+				entity_id: id,
+				created_at: new Date().toISOString()
+			});
 		});
-
-		await tx.done;
 	},
 
 	async deleteFolder(id) {
-		const db = await initDB();
-		const tx = db.transaction(['folders', 'pending_logs'], 'readwrite');
-		await tx.objectStore('folders').delete(id);
-
-		// Add Log
-		await tx.objectStore('pending_logs').add({
-			action: 'DELETE',
-			entity: 'folder',
-			entity_id: id,
-			created_at: new Date().toISOString()
+		await this._writeWithLog(['folders', 'pending_logs'], async (tx) => {
+			await tx.objectStore('folders').delete(id);
+			await tx.objectStore('pending_logs').add({
+				action: 'DELETE',
+				entity: 'folder',
+				entity_id: id,
+				created_at: new Date().toISOString()
+			});
 		});
-
-		await tx.done;
 	},
 
 	async deleteNotesBulk(ids) {
