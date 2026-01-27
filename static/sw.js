@@ -1,4 +1,4 @@
-const CACHE_NAME = 'shynote-v192';
+const CACHE_NAME = 'shynote-v200';
 const CRITICAL_ASSETS = [
 	'/',
 	'/static/index.html',
@@ -39,14 +39,24 @@ self.addEventListener('install', (event) => {
 		caches.open(CACHE_NAME).then(async (cache) => {
 			console.log('[SW] Caching critical assets...');
 			// 1. Critical Assets: Must succeed for SW to install
-			await cache.addAll(CRITICAL_ASSETS);
+			// Bypass HTTP cache to ensure we get fresh files from the server
+			const criticalFetchPromises = CRITICAL_ASSETS.map(url =>
+				fetch(url, { cache: 'reload' }).then(response => {
+					if (!response.ok) throw new Error(`Request failed for ${url}`);
+					return cache.put(url, response);
+				})
+			);
+			await Promise.all(criticalFetchPromises);
 
 			console.log('[SW] Caching external assets...');
 			// 2. External Assets: Attempt to cache, but don't fail install if they error (e.g. CORS/Timeout)
-			try {
-				await cache.addAll(EXTERNAL_ASSETS);
-			} catch (err) {
-				console.warn('[SW] Failed to cache some external assets:', err);
+			for (const url of EXTERNAL_ASSETS) {
+				try {
+					const response = await fetch(url, { cache: 'reload' });
+					if (response.ok) await cache.put(url, response);
+				} catch (err) {
+					console.warn('[SW] Failed to cache external asset:', url, err);
+				}
 			}
 		})
 	);

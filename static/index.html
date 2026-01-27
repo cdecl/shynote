@@ -241,7 +241,7 @@
 
 
     <!-- Custom Styles (Loaded last to override libraries) -->
-    <link rel="stylesheet" href="/static/style.css?v=27">
+    <link rel="stylesheet" href="/static/style.css?v=28">
 
 
 
@@ -2213,14 +2213,20 @@
                     .then(registration => {
                         console.log('SW registered:', registration);
 
+                        // Force update check on every page load
+                        registration.update();
+
                         // Check for updates manually on registration
                         registration.addEventListener('updatefound', () => {
                             const newWorker = registration.installing;
-                            newWorker.addEventListener('statechange', () => {
-                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    console.log('New content is available; please refresh.');
-                                }
-                            });
+                            if (newWorker) {
+                                newWorker.addEventListener('statechange', () => {
+                                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                        console.log('New content is available; update will be applied on next controller change.');
+                                        // Optional: show a small toast or signpost to user
+                                    }
+                                });
+                            }
                         });
                     })
                     .catch(error => {
@@ -2238,7 +2244,7 @@
             });
         }
     </script>
-    <script src="/static/app.js?v=38" type="module"></script>
+    <script src="/static/app.js?v=39" type="module"></script>
 </body>
 
 </html>

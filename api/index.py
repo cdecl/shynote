@@ -85,7 +85,11 @@ def read_root():
 def read_sw():
     sw_path = os.path.join(STATIC_DIR, "sw.js")
     if os.path.exists(sw_path):
-        return FileResponse(sw_path, media_type="application/javascript")
+        return FileResponse(
+            sw_path,
+            media_type="application/javascript",
+            headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+        )
     return {"error": "Service Worker not found", "path": sw_path}
 
 
