@@ -2933,11 +2933,11 @@ export const App = {
 			if (!view) return;
 
 			const pos = view.state.selection.main.head;
-			const { from, to, text } = TableUtils.findBounds(view.state.doc, pos);
-			if (text) {
-				const parsed = TableUtils.parse(text);
+			const bounds = TableUtils.findBounds(view.state.doc, pos);
+			if (bounds && bounds.text) {
+				const parsed = TableUtils.parse(bounds.text);
 				if (parsed) {
-					openTableEditor(parsed.rows, parsed.alignments, from, to);
+					openTableEditor(parsed.rows, parsed.alignments, bounds.from, bounds.to);
 					return;
 				}
 			}
