@@ -18,6 +18,7 @@
 		"@codemirror/view": "^6.23.0",
 		"@replit/codemirror-vscode-keymap": "^6.0.2",
 		"@uiw/codemirror-theme-github": "^4.23.0",
+		"@uiw/codemirror-theme-dracula": "^4.23.0",
 		"@uiw/codemirror-theme-nord": "^4.23.0",
 		"crypto-js": "^4.2.0",
 		"highlight.js": "^11.9.0",

@@ -1,5 +1,5 @@
-import { bF as a, bG as r } from "./vendor-BCH5z7Ar.js";
-import { bK as i, bA as m, bD as t, bH as n, bJ as p, bC as d, bE as c, bB as h, bI as v } from "./vendor-BCH5z7Ar.js";
+import { bF as a, bG as r } from "./vendor-T05Wpcog.js";
+import { bK as i, bA as m, bD as t, bH as n, bJ as p, bC as d, bE as c, bB as h, bI as v } from "./vendor-T05Wpcog.js";
 const o = a.polyfill, e = r.scrollBehaviourDragImageTranslateOverride;
 export {
   i as CodeMirror,

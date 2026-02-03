@@ -11,7 +11,7 @@ const { defaultKeymap, history, historyKeymap } = CodeMirror;
 const { vscodeKeymap } = CodeMirror;
 const { search, searchKeymap, highlightSelectionMatches, setSearchQuery, SearchQuery, findNext, findPrevious, openSearchPanel, closeSearchPanel } = CodeMirror;
 const { githubLight } = CodeMirror;
-const { nord } = CodeMirror;
+const { dracula, nord } = CodeMirror;
 const { syntaxHighlighting, defaultHighlightStyle, bracketMatching } = CodeMirror;
 const { closeBrackets, closeBracketsKeymap, autocompletion, snippet } = CodeMirror;
 const { MergeView } = CodeMirror;
@@ -69,7 +69,7 @@ const TableUtils = {
 	},
 
 	format(markdownText, forcedAlignments = null) {
-		const parsed = this.parse(markdownText);
+		const parsed = TableUtils.parse(markdownText);
 		if (!parsed) return markdownText;
 
 		const { rows: dataRows, alignments: originalAlignments } = parsed;
@@ -301,6 +301,8 @@ export const App = {
 			activeCol: 0
 		})
 		const hasIDB = typeof window !== 'undefined' && 'indexedDB' in window
+
+		const getDarkTheme = () => (dracula || nord || githubLight);
 
 		// Private Helpers
 		const parseSafeDate = (dateStr) => {
@@ -1928,7 +1930,7 @@ export const App = {
 					highlightSpecialChars(),
 					placeholder('Start typing...'),
 					// Base Theme Compartment (Nord for Dark / GitHub Light)
-					themeCompartment.of(isDarkMode.value ? nord : githubLight),
+					themeCompartment.of(isDarkMode.value ? getDarkTheme() : githubLight),
 					// Custom Theme Compartment (Colors, Fonts, Overrides)
 					customThemeCompartment.of(getCustomTheme(isDarkMode.value)),
 					// Word Wrap Compartment
@@ -2011,26 +2013,26 @@ export const App = {
 					fontStyle: "normal",
 					opacity: "0.6"
 				},
-				// Cursor Color (Nord8 for Dark, GitHub Like for Light)
-				".cm-cursor, .cm-dropCursor": { borderLeftColor: isDark ? "#88C0D0" : "#0969da" },
-				"&.cm-focused .cm-cursor": { borderLeftColor: isDark ? "#88C0D0" : "#0969da" },
+				// Cursor Color (Dracula for Dark, GitHub Like for Light)
+				".cm-cursor, .cm-dropCursor": { borderLeftColor: isDark ? "#8be9fd" : "#0969da" },
+				"&.cm-focused .cm-cursor": { borderLeftColor: isDark ? "#8be9fd" : "#0969da" },
 				"&.cm-focused .cm-selectionBackground, ::selection": {
-					backgroundColor: isDark ? "rgba(235, 203, 139, 0.4) !important" : "#b6e3ff !important" // Nord13 (Yellow) for Dark
+					backgroundColor: isDark ? "rgba(68, 71, 90, 0.6) !important" : "#b6e3ff !important" // Dracula selection for Dark
 				},
 
-				// Search Match Colors (Nord13 for Dark)
+				// Search Match Colors (Dracula)
 				".cm-searchMatch": {
-					backgroundColor: isDark ? "rgba(235, 203, 139, 0.4) !important" : "#fff8c5 !important",
+					backgroundColor: isDark ? "rgba(241, 250, 140, 0.45) !important" : "#fff8c5 !important",
 					color: "inherit !important"
 				},
 				".cm-searchMatch-selected": {
-					backgroundColor: isDark ? "rgba(235, 203, 139, 1) !important" : "#f2cc60 !important",
-					color: "#000000 !important",
-					outline: isDark ? "1px solid #D08770" : "1px solid #7D4E00",
+					backgroundColor: isDark ? "rgba(241, 250, 140, 1) !important" : "#f2cc60 !important",
+					color: "#282a36 !important",
+					outline: isDark ? "1px solid #ffb86c" : "1px solid #7D4E00",
 					fontWeight: "bold"
 				},
 				".cm-selectionMatch": {
-					backgroundColor: isDark ? "rgba(136, 192, 208, 0.3) !important" : "rgba(182, 227, 255, 0.5) !important" // Nord8 for Dark
+					backgroundColor: isDark ? "rgba(139, 233, 253, 0.25) !important" : "rgba(182, 227, 255, 0.5) !important"
 				},
 
 				// Search Panel Styles
@@ -2042,9 +2044,9 @@ export const App = {
 				},
 				".cm-panel.cm-search": {
 					// Nord / GitHub Bg Colors
-					background: isDark ? "#2E3440 !important" : "#ffffff !important",
-					color: isDark ? "#D8DEE9 !important" : "#24292f !important",
-					borderBottom: isDark ? "1px solid #3B4252" : "1px solid #e1e4e8",
+					background: isDark ? "#282a36 !important" : "#ffffff !important",
+					color: isDark ? "#f8f8f2 !important" : "#24292f !important",
+					borderBottom: isDark ? "1px solid #44475a" : "1px solid #e1e4e8",
 					borderTop: "none",
 					padding: "8px 12px",
 					// Robust 2-Row Grid
@@ -2071,9 +2073,9 @@ export const App = {
 				".cm-search input[name='search']": {
 					gridColumn: "1",
 					gridRow: "1",
-					background: isDark ? "#3B4252 !important" : "#f6f8fa !important",
-					color: isDark ? "#ECEFF4 !important" : "#24292f !important",
-					border: isDark ? "1px solid #4C566A" : "1px solid #d1d5da",
+					background: isDark ? "#2f3242 !important" : "#f6f8fa !important",
+					color: isDark ? "#f8f8f2 !important" : "#24292f !important",
+					border: isDark ? "1px solid #44475a" : "1px solid #d1d5da",
 					borderRadius: "6px",
 					padding: "4px 8px",
 					width: "240px",
@@ -2089,9 +2091,9 @@ export const App = {
 				".cm-search input[name='replace']": {
 					gridColumn: "1",
 					gridRow: "2",
-					background: isDark ? "#010409 !important" : "#f6f8fa !important",
-					color: isDark ? "#c9d1d9 !important" : "#24292f !important",
-					border: isDark ? "1px solid #30363d" : "1px solid #d1d5da",
+					background: isDark ? "#2f3242 !important" : "#f6f8fa !important",
+					color: isDark ? "#f8f8f2 !important" : "#24292f !important",
+					border: isDark ? "1px solid #44475a" : "1px solid #d1d5da",
 					borderRadius: "6px",
 					padding: "4px 8px",
 					width: "240px",
@@ -2191,7 +2193,7 @@ export const App = {
 			if (editorView.value) {
 				editorView.value.dispatch({
 					effects: [
-						themeCompartment.reconfigure(newVal ? nord : githubLight),
+						themeCompartment.reconfigure(newVal ? getDarkTheme() : githubLight),
 						customThemeCompartment.reconfigure(getCustomTheme(newVal))
 					]
 				})
@@ -3379,7 +3381,7 @@ export const App = {
 			}
 			if (highlightLink) {
 				highlightLink.href = isDarkMode.value
-					? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css'
+					? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/dracula.min.css'
 					: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css'
 			}
 
@@ -3394,7 +3396,7 @@ export const App = {
 			if (editorView.value) {
 				editorView.value.dispatch({
 					effects: [
-						themeCompartment.reconfigure(isDarkMode.value ? nord : githubLight),
+						themeCompartment.reconfigure(isDarkMode.value ? getDarkTheme() : githubLight),
 						customThemeCompartment.reconfigure(getCustomTheme(isDarkMode.value))
 					]
 				})
@@ -5121,7 +5123,7 @@ export const App = {
 		watch(isDarkMode, (val) => {
 			if (editorView.value) {
 				editorView.value.dispatch({
-					effects: themeCompartment.reconfigure(val ? nord : [])
+					effects: themeCompartment.reconfigure(val ? getDarkTheme() : [])
 				})
 			}
 		})

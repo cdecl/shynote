@@ -9,7 +9,7 @@
     <link rel="icon" href="/static/favicon.ico">
     <link rel="manifest" href="/static/manifest.json">
     <link rel="apple-touch-icon" href="/static/icon-192.png">
-    <meta name="theme-color" content="#24292F">
+    <meta name="theme-color" content="#282a36">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -223,7 +223,8 @@
 
     <link id="github-theme" rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.8.1/github-markdown-light.min.css">
-    <link id="highlight-theme" rel="stylesheet" href="https://unpkg.com/nord-highlightjs@0.1/dist/nord.css">
+    <link id="highlight-theme" rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/dracula.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
@@ -344,11 +345,11 @@
 </head>
 
 <body
-    class="bg-gray-100 dark:bg-[#24292F] h-screen overflow-hidden overscroll-none text-gray-800 dark:text-[#D8DEE9] font-sans transition-colors duration-300"
+    class="bg-gray-100 dark:bg-[#282a36] h-screen overflow-hidden overscroll-none text-gray-800 dark:text-[#cfcfe8] font-sans transition-colors duration-300"
     style="height: calc(var(--vh, 1vh) * 100);">
     <div id="app" class="flex h-full">
         <!-- Splash Screen (Auto-removed when Vue mounts) -->
-        <div class="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gray-100 dark:bg-[#24292F]"
+        <div class="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gray-100 dark:bg-[#282a36]"
             v-if="loading && notes.length === 0">
             <img src="/static/logo.png" class="w-24 h-24 rounded-full shadow-2xl animate-pulse mb-4" alt="SHYNOTE">
 
@@ -365,20 +366,20 @@
         <div v-if="!isAuthenticated && !loading"
             class="fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center backdrop-blur-sm">
             <div
-                class="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-2xl w-96 text-center transform transition-all scale-100 dark:text-white">
+                class="bg-white dark:bg-[#2f3242] p-8 rounded-2xl shadow-2xl w-96 text-center transform transition-all scale-100 dark:text-[#f8f8f2]">
                 <div class="mb-6">
-                    <span class="material-symbols-rounded text-6xl text-blue-600 dark:text-[#88C0D0] mb-2">lock</span>
-                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Welcome Back</h2>
-                    <p class="text-gray-500 dark:text-slate-400 text-sm mt-1">Sign in to access your notes</p>
+                    <span class="material-symbols-rounded text-6xl text-blue-600 dark:text-[#8be9fd] mb-2">lock</span>
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-[#f8f8f2]">Welcome Back</h2>
+                    <p class="text-gray-500 dark:text-[#cfcfe8] text-sm mt-1">Sign in to access your notes</p>
                 </div>
 
                 <!-- Google Login Button -->
                 <div v-if="!isAuthenticated" class="space-y-3">
                     <!-- Redirect Flow Button (Mobile) -->
                     <button v-if="useRedirectFlow" @click="loginWithGoogleRedirect"
-                        class="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white dark:bg-[#3B4252] border border-gray-300 dark:border-[#4C566A] rounded-lg hover:bg-gray-50 dark:hover:bg-[#434C5E] transition-colors">
+                        class="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white dark:bg-[#44475a] border border-gray-300 dark:border-[#6272a4] rounded-lg hover:bg-gray-50 dark:hover:bg-[#44475a] transition-colors">
                         <img src="https://www.google.com/favicon.ico" alt="Google" class="w-5 h-5">
-                        <span class="font-medium text-gray-700 dark:text-[#D8DEE9]">Continue with Google</span>
+                        <span class="font-medium text-gray-700 dark:text-[#cfcfe8]">Continue with Google</span>
                     </button>
 
                     <!-- One Tap Button (Desktop) -->
@@ -386,11 +387,11 @@
                 </div>
 
                 <button @click="cancelLogin"
-                    class="mt-4 px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">
+                    class="mt-4 px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-[#cfcfe8] dark:hover:text-slate-200 transition-colors">
                     Cancel
                 </button>
 
-                <p class="mt-6 text-xs text-gray-400 dark:text-slate-500">
+                <p class="mt-6 text-xs text-gray-400 dark:text-[#cfcfe8]">
                     By continuing, you agree to our Terms of Service and Privacy Policy.
                 </p>
             </div>
@@ -401,19 +402,19 @@
             class="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center backdrop-blur-sm"
             @click.self="closeModal">
             <div
-                class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-2xl w-72 transform transition-all scale-100 border border-slate-200 dark:border-slate-700">
-                <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-2">{{ modalState.title }}</h3>
+                class="bg-white dark:bg-[#2f3242] p-6 rounded-lg shadow-2xl w-72 transform transition-all scale-100 border border-slate-200 dark:border-[#6272a4]">
+                <h3 class="text-lg font-bold text-slate-800 dark:text-[#f8f8f2] mb-2">{{ modalState.title }}</h3>
                 <p v-if="modalState.message"
-                    class="text-slate-600 dark:text-slate-300 text-sm mb-4 whitespace-pre-line">{{ modalState.message }}
+                    class="text-slate-600 dark:text-[#f8f8f2] text-sm mb-4 whitespace-pre-line">{{ modalState.message }}
                 </p>
 
                 <!-- File Info Content -->
                 <div v-if="modalState.type === 'file-info'" class="mb-6">
                     <div class="space-y-3">
                         <div v-for="(value, key) in modalState.data" :key="key"
-                            class="flex justify-between items-center text-sm border-b border-slate-100 dark:border-[#3B4252] pb-2 last:border-0 last:pb-0">
-                            <span class="text-slate-500 dark:text-slate-400 capitalize font-medium">{{ key }}</span>
-                            <span class="text-slate-800 dark:text-[#ECEFF4] font-mono">{{ value }}</span>
+                            class="flex justify-between items-center text-sm border-b border-slate-100 dark:border-[#44475a] pb-2 last:border-0 last:pb-0">
+                            <span class="text-slate-500 dark:text-[#cfcfe8] capitalize font-medium">{{ key }}</span>
+                            <span class="text-slate-800 dark:text-[#f8f8f2] font-mono">{{ value }}</span>
                         </div>
                     </div>
                 </div>
@@ -421,10 +422,10 @@
                 <!-- Share Note Content -->
                 <div v-if="modalState.type === 'share-note'">
                     <div
-                        class="flex items-center gap-2 mb-4 bg-slate-100 dark:bg-slate-700 p-2 rounded border border-slate-200 dark:border-slate-600">
-                        <span class="material-symbols-rounded text-slate-500 dark:text-slate-400">link</span>
+                        class="flex items-center gap-2 mb-4 bg-slate-100 dark:bg-[#2f3242] p-2 rounded border border-slate-200 dark:border-[#6272a4]">
+                        <span class="material-symbols-rounded text-slate-500 dark:text-[#cfcfe8]">link</span>
                         <input id="share-link-input" type="text" readonly :value="modalState.inputValue"
-                            class="flex-1 bg-transparent text-sm text-slate-700 dark:text-slate-200 outline-none w-full"
+                            class="flex-1 bg-transparent text-sm text-slate-700 dark:text-[#f8f8f2] outline-none w-full"
                             style="font-family: monospace;" @click="$event.target.select()">
                     </div>
                 </div>
@@ -432,18 +433,18 @@
                 <!-- Input for Create Folder -->
                 <input v-if="['create-folder', 'factory-reset'].includes(modalState.type)" id="modal-input"
                     v-model="modalState.inputValue" @keyup.enter="confirmAction" @keydown.esc="closeModal"
-                    class="w-full bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded px-3 py-2 text-sm outline-none focus:ring-2 ring-blue-500 mb-4 dark:text-white"
+                    class="w-full bg-slate-100 dark:bg-[#2f3242] border border-slate-200 dark:border-[#6272a4] rounded px-3 py-2 text-sm outline-none focus:ring-2 ring-blue-500 mb-4 dark:text-[#f8f8f2]"
                     :placeholder="modalState.inputPlaceholder || 'Folder Name'">
 
                 <div class="flex justify-end gap-2">
                     <button @click="closeModal" v-if="modalState.cancelText" id="modal-cancel-btn"
-                        class="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
+                        class="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-[#cfcfe8] dark:hover:text-slate-200">
                         {{ modalState.cancelText }}
                     </button>
                     <!-- Special Buttons for Share Modal -->
                     <template v-if="modalState.type === 'share-note'">
                         <button @click="stopSharing"
-                            class="px-4 py-2 text-sm font-medium text-red-500 hover:text-red-700 border border-red-200 hover:bg-red-50 dark:border-red-900/50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                            class="px-4 py-2 text-sm font-medium text-red-500 hover:text-red-700 border border-red-200 hover:bg-red-50 dark:border-#ff5555/40 dark:hover:bg-#3b1f2b/70 rounded-lg transition-colors">
                             Stop Sharing
                         </button>
                         <button @click="copyShareLink"
@@ -465,9 +466,9 @@
             class="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center backdrop-blur-sm"
             @click.self="closeSettingsModal">
             <div
-                class="bg-white dark:bg-[#2E3440] p-10 rounded-3xl shadow-2xl w-80 min-h-[520px] transform transition-all scale-100 border border-slate-200 dark:border-[#3B4252] relative">
+                class="bg-white dark:bg-[#2f3242] p-10 rounded-3xl shadow-2xl w-80 min-h-[520px] transform transition-all scale-100 border border-slate-200 dark:border-[#44475a] relative">
                 <button @click="closeSettingsModal"
-                    class="absolute top-4 right-4 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-[#4C566A] transition-colors">
+                    class="absolute top-4 right-4 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-[#6272a4] transition-colors">
                     <span class="material-symbols-rounded text-slate-400">close</span>
                 </button>
 
@@ -477,30 +478,30 @@
                         <img src="/static/logo.png" alt="Shynote Logo"
                             class="w-full h-full object-contain drop-shadow-xl rounded-2xl">
                     </div>
-                    <h3 class="text-xl font-bold text-slate-800 dark:text-white tracking-tight">SHYNOTE</h3>
+                    <h3 class="text-xl font-bold text-slate-800 dark:text-[#f8f8f2] tracking-tight">SHYNOTE</h3>
                 </div>
 
                 <div class="space-y-16">
                     <!-- About Section -->
                     <div>
                         <h4
-                            class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-1">
+                            class="text-[10px] font-bold text-slate-400 dark:text-[#cfcfe8] uppercase tracking-widest mb-3 flex items-center gap-1">
                             <span class="material-symbols-rounded text-[14px]">info</span> About
                         </h4>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">
+                        <p class="text-xs text-slate-500 dark:text-[#cfcfe8] mb-3 leading-relaxed">
                             A simple, privacy-focused markdown editor with local-first sync.
                         </p>
                         <div class="space-y-1.5 text-xs">
-                            <div class="flex justify-between text-slate-600 dark:text-[#D8DEE9]">
+                            <div class="flex justify-between text-slate-600 dark:text-[#cfcfe8]">
                                 <span>Version</span>
                                 <span class="font-mono font-bold">{{ appVersion }}</span>
                             </div>
-                            <div class="flex justify-between text-slate-600 dark:text-[#D8DEE9]">
+                            <div class="flex justify-between text-slate-600 dark:text-[#cfcfe8]">
                                 <span>License</span>
                                 <span class="font-bold">MIT</span>
                             </div>
                             <a href="https://github.com/cdecl/shynote/blob/main/static/changelog.md" target="_blank"
-                                class="flex justify-between text-blue-600 dark:text-blue-400 hover:underline items-center gap-2">
+                                class="flex justify-between text-blue-600 dark:text-[#8be9fd] hover:underline items-center gap-2">
                                 <span>Changelog</span>
                                 <span class="material-symbols-rounded text-[14px]">open_in_new</span>
                             </a>
@@ -510,20 +511,20 @@
                     <!-- Data Management -->
                     <div>
                         <h4
-                            class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 flex items-center justify-between">
+                            class="text-[10px] font-bold text-slate-400 dark:text-[#cfcfe8] uppercase tracking-widest mb-3 flex items-center justify-between">
                             Backup & Restore
                             <span v-if="dbType"
-                                class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#4C566A] font-mono text-slate-500 dark:text-slate-400">{{
+                                class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#6272a4] font-mono text-slate-500 dark:text-[#cfcfe8]">{{
                                 dbType }}</span>
                         </h4>
                         <div class="flex gap-2">
                             <button @click="backupData"
-                                class="flex-1 py-2 text-xs font-semibold text-slate-600 dark:text-[#D8DEE9] bg-slate-50 dark:bg-[#3B4252] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded-lg transition-colors border border-slate-200 dark:border-[#434C5E] flex items-center justify-center gap-1.5">
+                                class="flex-1 py-2 text-xs font-semibold text-slate-600 dark:text-[#cfcfe8] bg-slate-50 dark:bg-[#44475a] hover:bg-slate-100 dark:hover:bg-[#6272a4] rounded-lg transition-colors border border-slate-200 dark:border-[#44475a] flex items-center justify-center gap-1.5">
                                 <span class="material-symbols-rounded text-[16px]">download</span>
                                 Backup
                             </button>
                             <label
-                                class="flex-1 py-2 text-xs font-semibold text-slate-600 dark:text-[#D8DEE9] bg-slate-50 dark:bg-[#3B4252] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded-lg transition-colors border border-slate-200 dark:border-[#434C5E] flex items-center justify-center gap-1.5 cursor-pointer">
+                                class="flex-1 py-2 text-xs font-semibold text-slate-600 dark:text-[#cfcfe8] bg-slate-50 dark:bg-[#44475a] hover:bg-slate-100 dark:hover:bg-[#6272a4] rounded-lg transition-colors border border-slate-200 dark:border-[#44475a] flex items-center justify-center gap-1.5 cursor-pointer">
                                 <span class="material-symbols-rounded text-[16px]">upload</span>
                                 Restore
                                 <input type="file" @change="restoreData" accept=".json" class="hidden">
@@ -534,18 +535,18 @@
                     <!-- Danger Zone -->
                     <div>
                         <h4
-                            class="text-[10px] font-bold text-red-500/80 dark:text-red-400/80 uppercase tracking-widest mb-3 flex items-center gap-1">
+                            class="text-[10px] font-bold text-red-500/80 dark:text-[#ff5555]/80 uppercase tracking-widest mb-3 flex items-center gap-1">
                             <span class="material-symbols-rounded text-[14px]">warning</span> Danger Zone
                         </h4>
                         <div class="space-y-2">
                             <button @click="clearLocalCache"
-                                class="w-full py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-amber-50 dark:bg-amber-900/10 hover:bg-amber-100 dark:hover:bg-amber-900/20 rounded-lg transition-colors border border-amber-200/50 dark:border-amber-700/30 flex items-center justify-center gap-2">
+                                class="w-full py-2 text-xs font-semibold text-slate-600 dark:text-[#f8f8f2] bg-amber-50 dark:bg-#3b3a22/40 hover:bg-amber-100 dark:hover:bg-#3b3a22/60 rounded-lg transition-colors border border-amber-200/50 dark:border-#f1fa8c/30 flex items-center justify-center gap-2">
                                 <span
                                     class="material-symbols-rounded text-[16px] text-amber-500">cleaning_services</span>
                                 Clear Local Cache
                             </button>
                             <button @click="factoryReset"
-                                class="w-full py-2 text-xs font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors border border-red-200/50 dark:border-red-700/30 flex items-center justify-center gap-2">
+                                class="w-full py-2 text-xs font-semibold text-red-600 dark:text-[#ff5555] bg-red-50 dark:bg-#3b1f2b/50 hover:bg-red-100 dark:hover:bg-#3b1f2b/70 rounded-lg transition-colors border border-red-200/50 dark:border-#ff5555/40 flex items-center justify-center gap-2">
                                 <span class="material-symbols-rounded text-[16px]">delete_forever</span>
                                 Factory Reset (All Data)
                             </button>
@@ -560,28 +561,28 @@
             class="fixed inset-0 bg-black/50 z-[1001] flex items-center justify-center backdrop-blur-sm"
             @click.self="closeTableEditor">
             <div
-                class="bg-white dark:bg-[#2E3440] rounded-lg shadow-2xl w-[90vw] max-w-lg max-h-[80vh] flex flex-col border border-slate-300 dark:border-slate-600">
+                class="bg-white dark:bg-[#2f3242] rounded-lg shadow-2xl w-[90vw] max-w-lg max-h-[80vh] flex flex-col border border-slate-300 dark:border-[#6272a4]">
                 <!-- Header -->
                 <div
-                    class="flex items-center justify-between px-4 py-1 border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-black/20">
-                    <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Edit
+                    class="flex items-center justify-between px-4 py-1 border-b border-slate-200 dark:border-[#6272a4] bg-slate-50/50 dark:bg-[#2f3242]">
+                    <h3 class="text-xs font-semibold text-slate-500 dark:text-[#cfcfe8] uppercase tracking-wider">Edit
                         Table</h3>
                     <button @click="closeTableEditor"
-                        class="p-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-[#4C566A] transition-colors">
+                        class="p-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-[#6272a4] transition-colors">
                         <span class="material-symbols-rounded text-slate-400 text-[18px]">close</span>
                     </button>
                 </div>
                 <!-- Spreadsheet Grid -->
-                <div class="flex-1 overflow-auto p-1 bg-white dark:bg-black/10">
+                <div class="flex-1 overflow-auto p-1 bg-white dark:bg-[#2f3242]">
                     <table class="w-full border-collapse">
                         <thead>
                             <tr>
                                 <th v-for="(col, cIdx) in tableEditorState.colCount" :key="'header-'+cIdx"
-                                    class="border border-slate-300 dark:border-slate-600 bg-slate-100/80 dark:bg-[#3B4252] p-0 min-w-[80px]">
+                                    class="border border-slate-300 dark:border-[#6272a4] bg-slate-100/80 dark:bg-[#44475a] p-0 min-w-[80px]">
                                     <div class="flex flex-col">
                                         <input v-model="tableEditorState.tableData[0][cIdx]"
                                             @focus="tableEditorState.activeCol = cIdx; tableEditorState.activeRow = 0"
-                                            class="w-full bg-transparent text-center text-[11px] font-bold text-slate-700 dark:text-[#ECEFF4] outline-none px-1.5 py-1"
+                                            class="w-full bg-transparent text-center text-[11px] font-bold text-slate-700 dark:text-[#f8f8f2] outline-none px-1.5 py-1"
                                             :style="{ textAlign: tableEditorState.alignments[cIdx] === 'c' ? 'center' : (tableEditorState.alignments[cIdx] === 'r' ? 'right' : 'left') }">
                                         <div class="flex justify-center gap-1 pb-1 transition-opacity">
                                             <button @click="setColumnAlignment(cIdx, 'l')"
@@ -610,11 +611,11 @@
                         <tbody>
                             <tr v-for="(row, rIdx) in tableEditorState.tableData.slice(1)" :key="'row-'+rIdx">
                                 <td v-for="(cell, cIdx) in row" :key="'cell-'+rIdx+'-'+cIdx"
-                                    class="border border-slate-300 dark:border-slate-600 p-0">
+                                    class="border border-slate-300 dark:border-[#6272a4] p-0">
                                     <input v-model="tableEditorState.tableData[rIdx + 1][cIdx]"
                                         @focus="tableEditorState.activeCol = cIdx; tableEditorState.activeRow = rIdx + 1"
                                         :style="{ textAlign: tableEditorState.alignments[cIdx] === 'c' ? 'center' : (tableEditorState.alignments[cIdx] === 'r' ? 'right' : 'left') }"
-                                        class="w-full bg-transparent text-[11px] text-slate-700 dark:text-[#D8DEE9] outline-none px-1.5 py-1.5"
+                                        class="w-full bg-transparent text-[11px] text-slate-700 dark:text-[#cfcfe8] outline-none px-1.5 py-1.5"
                                         @change="tableEditorState.tableData[rIdx + 1][cIdx] = $event.target.value">
                                 </td>
                             </tr>
@@ -623,22 +624,22 @@
                 </div>
                 <!-- Footer -->
                 <div
-                    class="flex items-center justify-between px-4 py-1 border-t border-slate-100 dark:border-[#3B4252]/50 bg-white dark:bg-[#2E3440]">
+                    class="flex items-center justify-between px-4 py-1 border-t border-slate-100 dark:border-[#44475a]/50 bg-white dark:bg-[#2f3242]">
                     <div class="flex gap-1">
                         <button @click="addTableRow"
-                            class="px-1.5 py-0.5 text-[10px] font-medium text-slate-400 dark:text-slate-500 bg-white dark:bg-[#2E3440] border border-slate-200/60 dark:border-[#4C566A]/40 rounded hover:bg-slate-50 dark:hover:bg-[#4C566A]/20 transition-colors">
+                            class="px-1.5 py-0.5 text-[10px] font-medium text-slate-400 dark:text-[#cfcfe8] bg-white dark:bg-[#2f3242] border border-slate-200/60 dark:border-[#6272a4]/40 rounded hover:bg-slate-50 dark:hover:bg-[#6272a4]/20 transition-colors">
                             + Row
                         </button>
                         <button @click="addTableCol"
-                            class="px-1.5 py-0.5 text-[10px] font-medium text-slate-400 dark:text-slate-500 bg-white dark:bg-[#2E3440] border border-slate-200/60 dark:border-[#4C566A]/40 rounded hover:bg-slate-50 dark:hover:bg-[#4C566A]/20 transition-colors">
+                            class="px-1.5 py-0.5 text-[10px] font-medium text-slate-400 dark:text-[#cfcfe8] bg-white dark:bg-[#2f3242] border border-slate-200/60 dark:border-[#6272a4]/40 rounded hover:bg-slate-50 dark:hover:bg-[#6272a4]/20 transition-colors">
                             + Col
                         </button>
                         <button @click="deleteActiveRow"
-                            class="px-1.5 py-0.5 text-[10px] font-medium text-red-300/70 border border-slate-200/60 dark:border-[#4C566A]/40 rounded hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors">
+                            class="px-1.5 py-0.5 text-[10px] font-medium text-red-300/70 border border-slate-200/60 dark:border-[#6272a4]/40 rounded hover:bg-red-50 dark:hover:bg-#3b1f2b/60 transition-colors">
                             - Row
                         </button>
                         <button @click="deleteActiveCol"
-                            class="px-1.5 py-0.5 text-[10px] font-medium text-red-300/70 border border-slate-200/60 dark:border-[#4C566A]/40 rounded hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors">
+                            class="px-1.5 py-0.5 text-[10px] font-medium text-red-300/70 border border-slate-200/60 dark:border-[#6272a4]/40 rounded hover:bg-red-50 dark:hover:bg-#3b1f2b/60 transition-colors">
                             - Col
                         </button>
                     </div>
@@ -667,11 +668,11 @@
             ]" :style="{ width: isSidebarOpen ? (isMobile ? '100%' : sidebarWidth + 'px') : '44px' }">
 
             <div
-                class="w-full h-full flex transition-all duration-300 ease-in-out group/sidebar shadow-xl md:shadow-none bg-[#F2F0EA] dark:bg-[#242933] border-r border-[#E6E4DD] dark:border-[#3B4252]">
+                class="w-full h-full flex transition-all duration-300 ease-in-out group/sidebar shadow-xl md:shadow-none bg-[#F2F0EA] dark:bg-[#282a36] border-r border-[#E6E4DD] dark:border-[#44475a]">
 
                 <!-- Activity Bar (Narrow fixed icon bar) - ALWAYS VISIBLE -->
                 <div
-                    class="w-11 flex-shrink-0 flex flex-col bg-[#F2F0EA] dark:bg-[#242933] border-r border-[#E6E4DD] dark:border-[#3B4252] z-30 transition-all duration-300">
+                    class="w-11 flex-shrink-0 flex flex-col bg-[#F2F0EA] dark:bg-[#282a36] border-r border-[#E6E4DD] dark:border-[#44475a] z-30 transition-all duration-300">
 
                     <!-- Top: Logo -->
                     <div class="h-11 flex items-center justify-center border-b border-transparent">
@@ -687,7 +688,7 @@
                         <!-- 1. Library/Explorer Toggle -->
                         <button @click.stop="setSidebarPanelMode('explorer')"
                             class="p-1.5 rounded-lg transition-all duration-200"
-                            :class="isSidebarOpen && sidebarPanelMode === 'explorer' ? 'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/30' : 'text-slate-400 hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-200 dark:hover:bg-[#4C566A]'"
+                            :class="isSidebarOpen && sidebarPanelMode === 'explorer' ? 'text-blue-600 bg-blue-100 dark:text-[#8be9fd] dark:bg-[#44475a]' : 'text-slate-400 hover:text-slate-600 dark:hover:text-[#f8f8f2] hover:bg-slate-200 dark:hover:bg-[#6272a4]'"
                             :title="isSidebarOpen && sidebarPanelMode === 'explorer' ? 'Close Explorer' : 'Open Explorer'">
                             <span class="material-symbols-rounded text-[20px]">folder_open</span>
                         </button>
@@ -695,21 +696,21 @@
                         <!-- 2. Search Panel Toggle -->
                         <button @click.stop="setSidebarPanelMode('search')"
                             class="p-1.5 rounded-lg transition-all duration-200"
-                            :class="isSidebarOpen && sidebarPanelMode === 'search' ? 'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/30' : 'text-slate-400 hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-200 dark:hover:bg-[#4C566A]'"
+                            :class="isSidebarOpen && sidebarPanelMode === 'search' ? 'text-blue-600 bg-blue-100 dark:text-[#8be9fd] dark:bg-[#44475a]' : 'text-slate-400 hover:text-slate-600 dark:hover:text-[#f8f8f2] hover:bg-slate-200 dark:hover:bg-[#6272a4]'"
                             :title="isSidebarOpen && sidebarPanelMode === 'search' ? 'Close Search' : 'Open Search'">
                             <span class="material-symbols-rounded text-[20px]">search</span>
                         </button>
 
                         <!-- 3. Menu/Command Palette -->
                         <button @click="openCommandPalette()"
-                            class="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-slate-200 dark:hover:bg-[#4C566A] rounded-lg transition-all"
+                            class="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-slate-200 dark:hover:bg-[#6272a4] rounded-lg transition-all"
                             title="Menu (Cmd+P)">
                             <span class="material-symbols-rounded text-[22px]">menu_open</span>
                         </button>
 
                         <!-- 4. Quick Note -->
                         <button @click="createNoteInFolder(null)"
-                            class="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-slate-200 dark:hover:bg-[#4C566A] rounded-lg transition-all"
+                            class="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-slate-200 dark:hover:bg-[#6272a4] rounded-lg transition-all"
                             title="Quick Inbox Note">
                             <span class="material-symbols-rounded text-[20px]"
                                 style="font-variation-settings: 'FILL' 1">note_add</span>
@@ -718,7 +719,7 @@
                     <!-- Bottom: Settings/Profile -->
                     <div class="pb-6 flex flex-col items-center gap-4">
                         <button @click="toggleDarkMode"
-                            class="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-slate-200 dark:hover:bg-[#4C566A] rounded-lg transition-all"
+                            class="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-slate-200 dark:hover:bg-[#6272a4] rounded-lg transition-all"
                             :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
                             <span class="material-symbols-rounded text-[20px] transition-transform duration-500"
                                 :class="isDarkMode ? 'rotate-180' : ''">
@@ -726,7 +727,7 @@
                             </span>
                         </button>
                         <button @click="openSettingsModal"
-                            class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 dark:hover:text-[#ECEFF4] dark:hover:bg-[#4C566A] rounded-lg transition-all"
+                            class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 dark:hover:text-[#f8f8f2] dark:hover:bg-[#6272a4] rounded-lg transition-all"
                             title="Settings">
                             <span class="material-symbols-rounded text-[20px]">settings</span>
                         </button>
@@ -749,34 +750,34 @@
                     </div>
 
                     <!-- Search Panel -->
-                    <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[#F2F0EA] dark:bg-[#242933]"
+                    <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[#F2F0EA] dark:bg-[#282a36]"
                         v-show="sidebarPanelMode === 'search'">
                         <!-- Search Header -->
                         <div
-                            class="h-14 safe-area-top px-4 flex items-center justify-between border-b border-[#E6E4DD] dark:border-[#3B4252] flex-shrink-0">
-                            <h2 class="text-sm font-bold text-[#44403C] dark:text-[#ECEFF4] tracking-tight uppercase">
+                            class="h-14 safe-area-top px-4 flex items-center justify-between border-b border-[#E6E4DD] dark:border-[#44475a] flex-shrink-0">
+                            <h2 class="text-sm font-bold text-[#44403C] dark:text-[#f8f8f2] tracking-tight uppercase">
                                 Search</h2>
                         </div>
 
                         <!-- Search Toolbar Area -->
                         <div
-                            class="px-3 py-3 border-b border-[#E6E4DD] dark:border-[#3B4252] flex flex-col gap-2 transition-all">
+                            class="px-3 py-3 border-b border-[#E6E4DD] dark:border-[#44475a] flex flex-col gap-2 transition-all">
                             <div class="relative">
                                 <div
-                                    class="flex items-center gap-2 bg-white dark:bg-[#2E3440] border border-slate-200 dark:border-[#434C5E] rounded-lg px-2 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/50">
+                                    class="flex items-center gap-2 bg-white dark:bg-[#2f3242] border border-slate-200 dark:border-[#44475a] rounded-lg px-2 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/50">
                                     <span class="material-symbols-rounded text-slate-400 text-[18px]">search</span>
                                     <input type="text" id="sidebar-search-input" v-model="searchQuery"
                                         @focus="showSearchHistoryDropdown = true" @blur="hideSearchHistoryDropdown"
-                                        class="flex-1 bg-transparent text-sm text-slate-700 dark:text-white placeholder-slate-400 outline-none min-w-0"
+                                        class="flex-1 bg-transparent text-sm text-slate-700 dark:text-[#f8f8f2] placeholder-slate-400 outline-none min-w-0"
                                         placeholder="Search notes...">
                                     <div class="flex items-center gap-0.5 mr-1">
                                         <button @click="searchOptions.caseSensitive = !searchOptions.caseSensitive"
                                             class="px-1.5 py-0.5 text-[10px] font-bold border rounded transition-colors"
-                                            :class="searchOptions.caseSensitive ? 'bg-blue-100 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800' : 'bg-transparent text-slate-400 border-transparent hover:bg-slate-200 dark:hover:bg-[#4C566A]'"
+                                            :class="searchOptions.caseSensitive ? 'bg-blue-100 text-blue-600 border-blue-200 dark:bg-[#44475a] dark:text-[#8be9fd] dark:border-[#6272a4]' : 'bg-transparent text-slate-400 border-transparent hover:bg-slate-200 dark:hover:bg-[#6272a4]'"
                                             title="Case Sensitive">Aa</button>
                                         <button @click="searchOptions.useRegex = !searchOptions.useRegex"
                                             class="px-1.5 py-0.5 text-[10px] font-bold border rounded transition-colors"
-                                            :class="searchOptions.useRegex ? 'bg-blue-100 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800' : 'bg-transparent text-slate-400 border-transparent hover:bg-slate-200 dark:hover:bg-[#4C566A]'"
+                                            :class="searchOptions.useRegex ? 'bg-blue-100 text-blue-600 border-blue-200 dark:bg-[#44475a] dark:text-[#8be9fd] dark:border-[#6272a4]' : 'bg-transparent text-slate-400 border-transparent hover:bg-slate-200 dark:hover:bg-[#6272a4]'"
                                             title="Regular Expression">.*</button>
                                     </div>
                                     <button @click="searchQuery = ''" v-show="searchQuery"
@@ -785,11 +786,11 @@
                                     </button>
                                 </div>
                                 <div v-if="showSearchHistoryDropdown && searchHistory.length > 0"
-                                    class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-[#2E3440] border border-slate-200 dark:border-[#434C5E] rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                                    class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-[#2f3242] border border-slate-200 dark:border-[#44475a] rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
                                     <div v-for="(item, idx) in searchHistory" :key="idx"
                                         @mousedown="selectSearchHistoryItem(item)"
-                                        :class="idx === searchHistoryDropdownIndex ? 'bg-blue-50 dark:bg-blue-900/30' : ''"
-                                        class="px-3 py-2 text-sm text-slate-700 dark:text-slate-200 cursor-pointer hover:bg-slate-100 dark:hover:bg-[#3B4252] transition-colors flex items-center gap-2">
+                                        :class="idx === searchHistoryDropdownIndex ? 'bg-blue-50 dark:bg-[#44475a]' : ''"
+                                        class="px-3 py-2 text-sm text-slate-700 dark:text-[#f8f8f2] cursor-pointer hover:bg-slate-100 dark:hover:bg-[#44475a] transition-colors flex items-center gap-2">
                                         <span class="material-symbols-rounded text-[14px] text-slate-400">history</span>
                                         <span>{{ item }}</span>
                                     </div>
@@ -806,14 +807,14 @@
                                 results found</div>
                             <div v-else v-for="(result, idx) in searchResults" :key="result.note.id + '_' + idx"
                                 @click.stop="selectSearchResult(result.note)"
-                                class="p-2 rounded hover:bg-white dark:hover:bg-[#3B4252] cursor-pointer group border border-transparent hover:border-slate-200 dark:hover:border-[#434C5E] transition-all bg-white/40 dark:bg-white/5 mb-1">
+                                class="p-2 rounded hover:bg-white dark:hover:bg-[#44475a] cursor-pointer group border border-transparent hover:border-slate-200 dark:hover:border-[#44475a] transition-all bg-white/40 dark:bg-white/5 mb-1">
                                 <div class="flex items-center gap-1.5 mb-0.5 max-w-full overflow-hidden">
                                     <span class="material-symbols-rounded text-[14px] text-slate-400">description</span>
-                                    <span class="text-xs font-bold text-slate-700 dark:text-[#ECEFF4] truncate"
+                                    <span class="text-xs font-bold text-slate-700 dark:text-[#f8f8f2] truncate"
                                         v-html="getHighlightedText(result.note.title || 'Untitled')"></span>
                                 </div>
                                 <div v-if="result.snippet"
-                                    class="text-[10px] text-slate-500 dark:text-slate-400 pl-5 line-clamp-3 leading-tight font-mono break-all"
+                                    class="text-[10px] text-slate-500 dark:text-[#cfcfe8] pl-5 line-clamp-3 leading-tight font-mono break-all"
                                     v-html="getHighlightedText(result.snippet)"></div>
                             </div>
                         </div>
@@ -829,8 +830,8 @@
                         v-show="sidebarPanelMode === 'explorer'">
                         <!-- Explorer Header -->
                         <div
-                            class="h-14 safe-area-top px-4 flex items-center justify-between border-b border-[#E6E4DD] dark:border-[#3B4252] flex-shrink-0">
-                            <h2 class="text-sm font-bold text-[#44403C] dark:text-[#ECEFF4] tracking-tight uppercase">
+                            class="h-14 safe-area-top px-4 flex items-center justify-between border-b border-[#E6E4DD] dark:border-[#44475a] flex-shrink-0">
+                            <h2 class="text-sm font-bold text-[#44403C] dark:text-[#f8f8f2] tracking-tight uppercase">
                                 Explorer</h2>
                             <div class="flex items-center gap-1">
                                 <span v-if="appVersion" class="text-[9px] text-slate-400">v{{ appVersion }}</span>
@@ -845,7 +846,7 @@
                                     <div class="px-3 mb-1 flex items-center justify-between group/header">
                                         <div class="flex items-center gap-1">
                                             <h2
-                                                class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                                                class="text-[10px] font-bold text-slate-400 dark:text-[#cfcfe8] uppercase tracking-wider">
                                                 LIBRARY</h2>
                                             <button @click.stop="createFolder()"
                                                 class="text-slate-400 hover:text-blue-500 transition-colors"
@@ -861,17 +862,17 @@
                                             @dragover.prevent @dragenter.prevent="handleDragEnter('inbox')"
                                             @dragleave.prevent="handleDragLeave('inbox')"
                                             class="relative flex items-center justify-between px-3 h-9 cursor-pointer active:bg-blue-200 dark:active:bg-blue-600/30 transition-all duration-200 group rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 mx-2"
-                                            :class="[dropTargetId === 'inbox' ? 'translate-x-1 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-200 dark:ring-blue-800' : '', currentFolderId === null ? 'bg-blue-100 dark:bg-blue-600/20 shadow-sm' : '']">
+                                            :class="[dropTargetId === 'inbox' ? 'translate-x-1 bg-blue-50 dark:bg-[#44475a] ring-1 ring-blue-200 dark:ring-[#6272a4]' : '', currentFolderId === null ? 'bg-blue-100 dark:bg-[#44475a] shadow-sm' : '']">
                                             <div class="flex items-center gap-3 flex-1 min-w-0">
                                                 <span class="material-symbols-rounded text-[22px] transition-colors"
-                                                    :class="[dropTargetId === 'inbox' || currentFolderId === null ? 'text-blue-500' : 'text-slate-400 dark:text-slate-500']"
+                                                    :class="[dropTargetId === 'inbox' || currentFolderId === null ? 'text-blue-500' : 'text-slate-400 dark:text-[#cfcfe8]']"
                                                     style="font-variation-settings: 'FILL' 1">home</span>
                                                 <span
                                                     class="text-[14px] font-medium truncate transition-colors duration-200"
-                                                    :class="currentFolderId === null ? 'text-slate-800 dark:text-white' : 'text-slate-600 dark:text-slate-400'">INBOX</span>
+                                                    :class="currentFolderId === null ? 'text-slate-800 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8]'">INBOX</span>
                                             </div>
                                             <span
-                                                class="text-slate-500 dark:text-slate-400 font-medium text-[12px] bg-slate-200 dark:bg-[#4C566A] px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{{
+                                                class="text-slate-500 dark:text-[#cfcfe8] font-medium text-[12px] bg-slate-200 dark:bg-[#6272a4] px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{{
                                                 sortedRootNotes.length }}</span>
                                         </div>
                                         <!-- Folder Items -->
@@ -881,21 +882,21 @@
                                             @drop="handleDrop(folder.id, $event)">
                                             <div @click.stop="selectFolder(folder.id)"
                                                 class="relative flex items-center justify-between px-3 h-9 cursor-pointer active:bg-blue-200 dark:active:bg-blue-600/30 transition-all duration-200 group rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 mx-2"
-                                                :class="[dropTargetId === folder.id ? 'translate-x-1 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-200 dark:ring-blue-800' : '', currentFolderId === folder.id ? 'bg-blue-100 dark:bg-blue-600/20 shadow-sm' : '']">
+                                                :class="[dropTargetId === folder.id ? 'translate-x-1 bg-blue-50 dark:bg-[#44475a] ring-1 ring-blue-200 dark:ring-[#6272a4]' : '', currentFolderId === folder.id ? 'bg-blue-100 dark:bg-[#44475a] shadow-sm' : '']">
                                                 <input
                                                     v-if="renameState.id === folder.id && renameState.type === 'folder'"
                                                     :id="'rename-input-folder-' + folder.id" v-model="renameState.name"
                                                     @click.stop @blur="saveRename" @keyup.enter="saveRename"
-                                                    class="flex-1 bg-white dark:bg-[#2E3440] border border-blue-400 rounded px-2 py-1 text-sm font-medium text-slate-800 dark:text-white outline-none shadow-sm">
+                                                    class="flex-1 bg-white dark:bg-[#2f3242] border border-blue-400 rounded px-2 py-1 text-sm font-medium text-slate-800 dark:text-[#f8f8f2] outline-none shadow-sm">
                                                 <div v-else @dblclick.stop="startRename(folder, 'folder')"
                                                     class="flex items-center gap-3 flex-1 min-w-0">
                                                     <span class="material-symbols-rounded text-[22px] transition-colors"
-                                                        :class="[dropTargetId === folder.id ? 'text-blue-500' : 'text-slate-400 dark:text-slate-500', currentFolderId === folder.id ? 'text-blue-500 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500']"
+                                                        :class="[dropTargetId === folder.id ? 'text-blue-500' : 'text-slate-400 dark:text-[#cfcfe8]', currentFolderId === folder.id ? 'text-blue-500 dark:text-[#8be9fd]' : 'text-slate-400 dark:text-[#cfcfe8]']"
                                                         style="font-variation-settings: 'FILL' 1">{{ dropTargetId ===
                                                         folder.id ? 'folder_open' : 'folder' }}</span>
                                                     <span
                                                         class="text-[14px] font-medium truncate transition-colors duration-200"
-                                                        :class="currentFolderId === folder.id ? 'text-slate-800 dark:text-white' : 'text-slate-600 dark:text-slate-400'">{{
+                                                        :class="currentFolderId === folder.id ? 'text-slate-800 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8]'">{{
                                                         folder.name }}</span>
                                                 </div>
                                                 <div class="flex items-center gap-1 ml-2">
@@ -911,40 +912,40 @@
                                                                 style="font-variation-settings: 'FILL' 1">delete</span></button>
                                                     </div>
                                                     <span
-                                                        class="text-slate-500 dark:text-slate-400 font-medium text-[12px] bg-slate-200 dark:bg-[#4C566A] px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{{
+                                                        class="text-slate-500 dark:text-[#cfcfe8] font-medium text-[12px] bg-slate-200 dark:bg-[#6272a4] px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{{
                                                         getSortedFolderNotes(folder.id).length }}</span>
                                                 </div>
                                             </div>
                                             <!-- Inline Delete Confirmation -->
                                             <div v-if="deleteConfirmation.id === folder.id && deleteConfirmation.type === 'folder'"
-                                                class="mx-3 mb-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-xs flex flex-col gap-2 items-start animate-fade-in">
-                                                <span class="text-red-700 dark:text-red-300 font-semibold w-full">Delete
+                                                class="mx-3 mb-2 p-2 bg-red-50 dark:bg-#3b1f2b/65 border border-red-200 dark:border-#ff5555/50 rounded-lg text-xs flex flex-col gap-2 items-start animate-fade-in">
+                                                <span class="text-red-700 dark:text-[#ff6e6e] font-semibold w-full">Delete
                                                     folder & move notes to Trash?</span>
                                                 <div class="flex items-center gap-2 self-end">
                                                     <button @click.stop="confirmDelete"
                                                         class="px-3 py-1 bg-red-600 text-white rounded-md font-semibold text-[11px] hover:bg-red-700 transition-colors">Yes</button>
                                                     <button @click.stop="cancelDelete"
-                                                        class="px-3 py-1 bg-slate-200 dark:bg-slate-700 rounded-md font-semibold text-[11px] hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">No</button>
+                                                        class="px-3 py-1 bg-slate-200 dark:bg-[#2f3242] rounded-md font-semibold text-[11px] hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">No</button>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <!-- Trash Section -->
-                                <div class="mt-4 pt-2 border-t border-slate-200 dark:border-[#3B4252]">
+                                <div class="mt-4 pt-2 border-t border-slate-200 dark:border-[#44475a]">
                                     <div @click.stop="selectFolder(TRASH_FOLDER_ID)"
                                         @drop="handleDrop(TRASH_FOLDER_ID, $event)" @dragover.prevent
                                         @dragenter.prevent="handleDragEnter(TRASH_FOLDER_ID)"
                                         @dragleave.prevent="handleDragLeave(TRASH_FOLDER_ID)"
                                         class="relative flex items-center justify-between px-3 h-9 cursor-pointer transition-all duration-200 group rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 mx-2"
-                                        :class="[dropTargetId === TRASH_FOLDER_ID ? 'translate-x-1 bg-red-50 dark:bg-red-900/20 ring-1 ring-red-200 dark:ring-red-800' : '', currentFolderId === TRASH_FOLDER_ID ? 'bg-blue-100 dark:bg-blue-600/20 shadow-sm' : '']">
+                                        :class="[dropTargetId === TRASH_FOLDER_ID ? 'translate-x-1 bg-red-50 dark:bg-#3b1f2b/65 ring-1 ring-red-200 dark:ring-#ff5555/50' : '', currentFolderId === TRASH_FOLDER_ID ? 'bg-blue-100 dark:bg-[#44475a] shadow-sm' : '']">
                                         <div class="flex items-center gap-3">
                                             <span class="material-symbols-rounded text-[22px]"
                                                 :class="dropTargetId === TRASH_FOLDER_ID ? 'text-red-500' : 'text-slate-400'"
                                                 style="font-variation-settings: 'FILL' 1">{{ trashNotesCount > 0 ?
                                                 'delete' : 'delete_outline' }}</span>
                                             <span class="text-[14px] font-medium"
-                                                :class="currentFolderId === TRASH_FOLDER_ID ? 'text-slate-800 dark:text-white' : 'text-slate-600 dark:text-slate-400'">TRASH</span>
+                                                :class="currentFolderId === TRASH_FOLDER_ID ? 'text-slate-800 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8]'">TRASH</span>
                                         </div>
                                         <div class="flex items-center gap-2">
                                             <button v-if="trashNotesCount > 0"
@@ -952,19 +953,19 @@
                                                 class="p-1 text-slate-400 hover:text-red-500 rounded transition-colors"><span
                                                     class="material-symbols-rounded text-[16px]">delete_forever</span></button>
                                             <span
-                                                class="bg-slate-200 dark:bg-[#4C566A] text-slate-600 dark:text-slate-400 text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{{
+                                                class="bg-slate-200 dark:bg-[#6272a4] text-slate-600 dark:text-[#cfcfe8] text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{{
                                                 trashNotesCount || 0 }}</span>
                                         </div>
                                         <!-- Empty Trash Confirmation Overlay -->
                                         <div v-if="deleteConfirmation.type === 'trash'"
-                                            class="absolute inset-0 bg-red-50 dark:bg-red-900/90 rounded-lg flex items-center justify-between px-2 z-10 animate-fade-in"
+                                            class="absolute inset-0 bg-red-50 dark:bg-#3b1f2b/90 rounded-lg flex items-center justify-between px-2 z-10 animate-fade-in"
                                             @click.stop>
                                             <span class="text-xs font-bold text-red-600">Empty Trash?</span>
                                             <div class="flex gap-1">
                                                 <button @click.stop="confirmDelete"
                                                     class="px-2 py-0.5 bg-red-600 text-white rounded text-[10px] font-bold">Yes</button>
                                                 <button @click.stop="cancelDelete"
-                                                    class="px-2 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-[10px] font-bold">No</button>
+                                                    class="px-2 py-0.5 bg-slate-200 dark:bg-[#2f3242] rounded text-[10px] font-bold">No</button>
                                             </div>
                                         </div>
                                     </div>
@@ -972,16 +973,16 @@
                                 <!-- Recent Notes Section -->
                                 <div v-if="recentNotes.length > 0" class="px-3 pb-2">
                                     <h3
-                                        class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 mt-6 mb-2">
+                                        class="text-[11px] font-bold text-slate-400 dark:text-[#cfcfe8] uppercase tracking-wider px-3 mt-6 mb-2">
                                         Recent Notes</h3>
                                     <div class="space-y-1">
                                         <div v-for="note in recentNotes" :key="note.id"
                                             @click.stop="selectNoteById(note.id)"
                                             class="flex items-center gap-3 px-3 h-[22px] cursor-pointer rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-all duration-200 group"
-                                            :class="selectedNote?.id === note.id ? 'bg-blue-50 dark:bg-blue-600/20' : ''">
+                                            :class="selectedNote?.id === note.id ? 'bg-blue-50 dark:bg-[#44475a]' : ''">
                                             <span
                                                 class="material-symbols-rounded text-[18px] text-slate-400 shrink-0">description</span>
-                                            <span class="flex-1 text-sm truncate text-slate-700 dark:text-slate-300">{{
+                                            <span class="flex-1 text-sm truncate text-slate-700 dark:text-[#f8f8f2]">{{
                                                 note.title || 'Untitled' }}</span>
                                         </div>
                                     </div>
@@ -1004,22 +1005,22 @@
                 @click.stop>
                 <!-- Animated Content Box -->
                 <div
-                    class="w-full bg-white dark:bg-[#2E3440] rounded-lg shadow-2xl overflow-hidden flex flex-col max-h-[40vh] border border-gray-200 dark:border-[#3B4252] animate-fade-in-up">
+                    class="w-full bg-white dark:bg-[#2f3242] rounded-lg shadow-2xl overflow-hidden flex flex-col max-h-[40vh] border border-gray-200 dark:border-[#44475a] animate-fade-in-up">
 
                     <!-- Input Area -->
-                    <div class="flex items-center p-2 border-b border-gray-100 dark:border-[#3B4252]">
+                    <div class="flex items-center p-2 border-b border-gray-100 dark:border-[#44475a]">
                         <span
-                            class="material-symbols-rounded text-gray-400 dark:text-gray-500 mr-3 select-none text-[20px]">
+                            class="material-symbols-rounded text-gray-400 dark:text-[#cfcfe8] mr-3 select-none text-[20px]">
                             {{ paletteMode === 'notes' ? 'search' : (paletteMode === 'folders' ? 'folder' : 'terminal')
                             }}
                         </span>
                         <input ref="paletteInput" v-model="paletteQuery"
-                            class="flex-1 bg-transparent border-none outline-none text-base text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 font-sans h-8"
+                            class="flex-1 bg-transparent border-none outline-none text-base text-gray-800 dark:text-[#f8f8f2] placeholder-gray-400 dark:placeholder-[#6272a4] font-sans h-8"
                             :placeholder="palettePlaceholder" @keydown="handlePaletteKeydown" spellcheck="false"
                             autocomplete="off">
                         <div class="flex gap-1">
                             <span v-if="paletteMode !== 'commands'"
-                                class="px-1.5 py-0.5 text-[10px] bg-gray-100 dark:bg-[#3B4252] text-gray-500 dark:text-gray-400 rounded cursor-pointer hover:bg-gray-200 dark:hover:bg-[#434C5E]"
+                                class="px-1.5 py-0.5 text-[10px] bg-gray-100 dark:bg-[#44475a] text-gray-500 dark:text-[#cfcfe8] rounded cursor-pointer hover:bg-gray-200 dark:hover:bg-[#44475a]"
                                 @click="setPaletteMode('commands')">
                                 Esc
                             </span>
@@ -1029,35 +1030,35 @@
                     <!-- Results List -->
                     <div class="overflow-y-auto flex-1 p-1 scrollbar-hide" ref="paletteList">
                         <div v-if="filteredPaletteItems.length === 0"
-                            class="p-4 text-center text-gray-400 dark:text-gray-500 text-sm">
+                            class="p-4 text-center text-gray-400 dark:text-[#cfcfe8] text-sm">
                             No matching results
                         </div>
 
                         <div v-for="(item, index) in filteredPaletteItems" :key="item.id"
                             class="flex items-center justify-between px-3 py-1.5 rounded-md cursor-pointer transition-colors duration-150 group"
-                            :class="{ 'bg-blue-50 dark:bg-[#3B4252]': index === paletteIndex, 'hover:bg-gray-50 dark:hover:bg-[#3B4252]': index !== paletteIndex }"
+                            :class="{ 'bg-blue-50 dark:bg-[#44475a]': index === paletteIndex, 'hover:bg-gray-50 dark:hover:bg-[#44475a]': index !== paletteIndex }"
                             @click="executePaletteItem(item)" @mouseenter="paletteIndex = index">
 
                             <div class="flex items-center gap-2.5 overflow-hidden">
                                 <span class="material-symbols-rounded text-[18px]"
-                                    :class="index === paletteIndex ? 'text-blue-500 dark:text-[#88C0D0]' : 'text-gray-400 dark:text-gray-500'">
+                                    :class="index === paletteIndex ? 'text-blue-500 dark:text-[#8be9fd]' : 'text-gray-400 dark:text-[#cfcfe8]'">
                                     {{ item.icon || 'terminal' }}
                                 </span>
                                 <div class="flex flex-col truncate">
                                     <span
-                                        class="text-[13px] font-medium text-gray-700 dark:text-gray-200 truncate leading-tight"
-                                        :class="{ 'text-blue-600 dark:text-[#88C0D0]': index === paletteIndex }">
+                                        class="text-[13px] font-medium text-gray-700 dark:text-[#f8f8f2] truncate leading-tight"
+                                        :class="{ 'text-blue-600 dark:text-[#8be9fd]': index === paletteIndex }">
                                         {{ item.title }}
                                     </span>
                                     <span v-if="item.desc"
-                                        class="text-[11px] text-gray-400 dark:text-gray-500 truncate leading-tight">
+                                        class="text-[11px] text-gray-400 dark:text-[#cfcfe8] truncate leading-tight">
                                         {{ item.desc }}
                                     </span>
                                 </div>
                             </div>
 
                             <div v-if="item.shortcut"
-                                class="text-[10px] text-gray-400 dark:text-gray-500 font-mono opacity-60 group-hover:opacity-100">
+                                class="text-[10px] text-gray-400 dark:text-[#cfcfe8] font-mono opacity-60 group-hover:opacity-100">
                                 {{ item.shortcut }}
                             </div>
                         </div>
@@ -1065,7 +1066,7 @@
 
                     <!-- Footer Hints -->
                     <div
-                        class="px-4 py-2 bg-gray-50 dark:bg-[#24292F] border-t border-gray-100 dark:border-[#3B4252] text-[10px] text-gray-400 flex justify-between">
+                        class="px-4 py-2 bg-gray-50 dark:bg-[#282a36] border-t border-gray-100 dark:border-[#44475a] text-[10px] text-gray-400 flex justify-between">
                         <span>
                             <span class="font-bold">↑↓</span> to navigate
                             <span class="mx-1.5">|</span>
@@ -1080,39 +1081,39 @@
         </div>
 
         <!-- Main Editor -->
-        <main class="flex-1 flex flex-col bg-white dark:bg-[#24292F] overflow-hidden relative"
+        <main class="flex-1 flex flex-col bg-white dark:bg-[#282a36] overflow-hidden relative"
             :class="(isSidebarOpen && isMobile) ? 'hidden' : 'flex'">
 
 
             <div class="flex flex-col h-full">
                 <!-- Toolbar -->
                 <div v-if="rightPanelMode !== 'list' && selectedNote"
-                    class="h-7 safe-area-top border-b border-slate-100 dark:border-[#434C5E] bg-white/80 dark:bg-[#24292F]/80 backdrop-blur-sm flex justify-between items-center pl-1 pr-2 flex-shrink-0 transition-colors duration-300 relative z-10 md:z-40">
+                    class="h-7 safe-area-top border-b border-slate-100 dark:border-[#44475a] bg-white/80 dark:bg-[#282a36]/80 backdrop-blur-sm flex justify-between items-center pl-1 pr-2 flex-shrink-0 transition-colors duration-300 relative z-10 md:z-40">
                     <div class="flex items-center gap-2">
                         <button @click="toggleRightPanelMode()"
-                            class="p-0.5 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded transition-all flex-shrink-0"
+                            class="p-0.5 text-slate-400 dark:text-[#cfcfe8] hover:text-slate-600 dark:hover:text-[#f8f8f2] hover:bg-slate-100 dark:hover:bg-[#6272a4] rounded transition-all flex-shrink-0"
                             title="Back to List">
                             <span class="material-symbols-rounded text-[18px]">arrow_back_ios_new</span>
                         </button>
 
                         <!-- View Mode Tabs (Moved to Header) -->
-                        <div class="flex bg-slate-100 dark:bg-[#3B4252] rounded-lg p-0.5 gap-0.5 ml-1">
+                        <div class="flex bg-slate-100 dark:bg-[#44475a] rounded-lg p-0.5 gap-0.5 ml-1">
                             <button @click="setViewMode('edit')"
-                                :class="viewMode === 'edit' ? 'bg-white dark:bg-[#4C566A] shadow-sm text-blue-600 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'"
+                                :class="viewMode === 'edit' ? 'bg-white dark:bg-[#6272a4] shadow-sm text-blue-600 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8] hover:text-slate-900 dark:hover:text-slate-300'"
                                 class="px-2 py-0.5 text-[10px] font-bold rounded-md transition-all flex items-center gap-1"
                                 title="Editor">
                                 <span class="material-symbols-rounded text-[14px]">edit</span>
                                 <span v-if="viewMode === 'edit'">Editor</span>
                             </button>
                             <button @click="setViewMode('preview')"
-                                :class="viewMode === 'preview' ? 'bg-white dark:bg-[#4C566A] shadow-sm text-blue-600 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'"
+                                :class="viewMode === 'preview' ? 'bg-white dark:bg-[#6272a4] shadow-sm text-blue-600 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8] hover:text-slate-900 dark:hover:text-slate-300'"
                                 class="px-2 py-0.5 text-[10px] font-bold rounded-md transition-all flex items-center gap-1"
                                 title="Preview">
                                 <span class="material-symbols-rounded text-[14px]">visibility</span>
                                 <span v-if="viewMode === 'preview'">Preview</span>
                             </button>
                             <button @click="setViewMode('split')"
-                                :class="viewMode === 'split' ? 'bg-white dark:bg-[#4C566A] shadow-sm text-blue-600 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'"
+                                :class="viewMode === 'split' ? 'bg-white dark:bg-[#6272a4] shadow-sm text-blue-600 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8] hover:text-slate-900 dark:hover:text-slate-300'"
                                 class="px-2 py-0.5 text-[10px] font-bold rounded-md transition-all flex items-center gap-1"
                                 title="Split">
                                 <span class="material-symbols-rounded text-[14px]">view_column</span>
@@ -1121,12 +1122,12 @@
                         </div>
 
                         <!-- Separator -->
-                        <div class="w-[1px] h-6 bg-slate-200 dark:bg-[#434C5E] mx-1"></div>
+                        <div class="w-[1px] h-6 bg-slate-200 dark:bg-[#44475a] mx-1"></div>
 
                         <!-- Delete Note Button & Confirmation -->
                         <div class="relative">
                             <button @click.stop="requestDelete(selectedNote.id, 'note')"
-                                class="p-0.5 text-slate-400 dark:text-[#D8DEE9] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-all flex-shrink-0"
+                                class="p-0.5 text-slate-400 dark:text-[#cfcfe8] hover:text-red-500 hover:bg-red-50 dark:hover:bg-#3b1f2b/70 rounded transition-all flex-shrink-0"
                                 title="Delete Note">
                                 <span class="material-symbols-rounded text-[18px]">delete</span>
                             </button>
@@ -1134,15 +1135,15 @@
                             <!-- Toolbar Confirmation Popup -->
                             <teleport to="body">
                                 <div v-if="showToolbarDeleteConfirm"
-                                    class="fixed top-14 right-4 mt-2 w-48 bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-lg shadow-xl p-3 z-[9999] flex flex-col gap-2 animate-fade-in origin-top-right">
-                                    <span class="text-xs font-bold text-slate-700 dark:text-slate-200 text-center">
+                                    class="fixed top-14 right-4 mt-2 w-48 bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg shadow-xl p-3 z-[9999] flex flex-col gap-2 animate-fade-in origin-top-right">
+                                    <span class="text-xs font-bold text-slate-700 dark:text-[#f8f8f2] text-center">
                                         {{ deleteButtonLabel }}
                                     </span>
                                     <div class="flex gap-2 justify-center">
                                         <button @click.stop="confirmDelete"
                                             class="flex-1 px-2 py-1.5 bg-red-600 text-white rounded text-xs font-bold hover:bg-red-700 transition-colors">Yes</button>
                                         <button @click.stop="cancelDelete"
-                                            class="flex-1 px-2 py-1.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded text-xs font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">No</button>
+                                            class="flex-1 px-2 py-1.5 bg-slate-200 dark:bg-[#2f3242] text-slate-700 dark:text-[#f8f8f2] rounded text-xs font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">No</button>
                                     </div>
                                 </div>
                             </teleport>
@@ -1153,10 +1154,10 @@
                         <!-- Font Size Selector -->
                         <div class="relative group flex items-center gap-1.5 p-1 rounded bg-transparent">
                             <span
-                                class="material-symbols-rounded text-slate-400 dark:text-[#D8DEE9] text-[20px] hidden sm:inline-block">text_fields</span>
+                                class="material-symbols-rounded text-slate-400 dark:text-[#cfcfe8] text-[20px] hidden sm:inline-block">text_fields</span>
                             <div class="relative">
                                 <select :value="fontSize" @change="setFontSize($event.target.value)"
-                                    class="appearance-none bg-slate-100 dark:bg-[#434C5E] text-slate-600 dark:text-[#D8DEE9] text-xs font-bold py-1 pl-2 pr-6 rounded-lg cursor-pointer outline-none hover:bg-slate-200 dark:hover:bg-[#4C566A] transition-colors h-[26px]">
+                                    class="appearance-none bg-slate-100 dark:bg-[#44475a] text-slate-600 dark:text-[#cfcfe8] text-xs font-bold py-1 pl-2 pr-6 rounded-lg cursor-pointer outline-none hover:bg-slate-200 dark:hover:bg-[#6272a4] transition-colors h-[26px]">
                                     <option value="12">12 px</option>
                                     <option value="14">14 px</option>
                                     <option value="16">16 px</option>
@@ -1164,17 +1165,17 @@
                                     <option value="20">20 px</option>
                                 </select>
                                 <div
-                                    class="pointer-events-none absolute right-0 top-0 bottom-0 flex items-center px-1 text-slate-500 dark:text-[#D8DEE9]">
+                                    class="pointer-events-none absolute right-0 top-0 bottom-0 flex items-center px-1 text-slate-500 dark:text-[#cfcfe8]">
                                     <span class="material-symbols-rounded text-[16px]">expand_more</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="w-[1px] h-4 bg-slate-200 dark:bg-[#434C5E] mx-1 hidden sm:block"></div>
+                        <div class="w-[1px] h-4 bg-slate-200 dark:bg-[#44475a] mx-1 hidden sm:block"></div>
 
                         <button @click="toggleShare" :disabled="isSharing" :class="selectedNote.is_shared 
-                                ? 'text-blue-600 bg-blue-100 dark:bg-blue-500 dark:text-white ring-1 ring-blue-300 dark:ring-blue-700' 
-                                : 'text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600'"
+                                ? 'text-blue-600 bg-blue-100 dark:bg-[#bd93f9] dark:text-[#f8f8f2] ring-1 ring-blue-300 dark:ring-[#6272a4]' 
+                                : 'text-slate-400 dark:text-[#cfcfe8] hover:text-slate-600'"
                             class="p-1 px-2 rounded transition-all duration-200 flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                             :title="isSharing ? 'Sharing...' : (selectedNote.is_shared ? 'Manage Sharing' : 'Share Note')">
                             <span v-if="!isSharing" class="material-symbols-rounded text-[16px] block"
@@ -1191,7 +1192,7 @@
                                 isSharing ? 'Sharing...' : 'Share' }}</span>
                         </button>
                         <!-- Settings/About Removed -->
-                        <div class="w-[1px] h-4 bg-slate-200 dark:bg-[#434C5E] mx-1 hidden sm:block"></div>
+                        <div class="w-[1px] h-4 bg-slate-200 dark:bg-[#44475a] mx-1 hidden sm:block"></div>
                         <div class="hidden sm:flex flex-col items-end justify-center select-none text-right">
                             <!-- Moved to Status Bar -->
                         </div>
@@ -1204,17 +1205,17 @@
                     <!-- View: Note List (Folder Content) -->
                     <div v-if="rightPanelMode === 'list'" @dragover.prevent
                         @drop.prevent="handleDrop(currentFolderId, $event)"
-                        class="flex-1 flex flex-col h-full bg-slate-50 dark:bg-[#2E3440] relative overflow-hidden">
+                        class="flex-1 flex flex-col h-full bg-slate-50 dark:bg-[#2f3242] relative overflow-hidden">
                         <!-- Rubberband Marquee -->
                         <div id="selection-marquee"
                             class="fixed border border-blue-500 bg-blue-500/20 z-50 pointer-events-none hidden"
                             style="touch-action: none;"></div>
                         <!-- List Header -->
                         <div
-                            class="h-7 safe-area-top border-b border-slate-200 dark:border-[#3B4252] flex items-center justify-between px-2 bg-white dark:bg-[#2E3440] z-10 shrink-0">
+                            class="h-7 safe-area-top border-b border-slate-200 dark:border-[#44475a] flex items-center justify-between px-2 bg-white dark:bg-[#2f3242] z-10 shrink-0">
                             <div class="flex items-center gap-2">
                                 <button @click="toggleRightPanelMode()" :disabled="!selectedNote"
-                                    class="p-0.5 text-slate-400 dark:text-[#D8DEE9] hover:text-slate-600 dark:hover:text-[#ECEFF4] hover:bg-slate-100 dark:hover:bg-[#4C566A] rounded transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-400"
+                                    class="p-0.5 text-slate-400 dark:text-[#cfcfe8] hover:text-slate-600 dark:hover:text-[#f8f8f2] hover:bg-slate-100 dark:hover:bg-[#6272a4] rounded transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-400"
                                     title="Return to Editor">
                                     <span class="material-symbols-rounded text-[18px]">edit_note</span>
                                 </button>
@@ -1224,22 +1225,22 @@
                             <div class="flex items-center gap-1">
                                 <!-- Grid/List Toggle -->
                                 <button @click="toggleListViewMode()"
-                                    class="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-slate-100 dark:hover:bg-[#3B4252] rounded-lg transition-all"
+                                    class="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-slate-100 dark:hover:bg-[#44475a] rounded-lg transition-all"
                                     :title="listViewMode === 'grid' ? 'Switch to List View' : 'Switch to Grid View'">
                                     <span class="material-symbols-rounded text-[20px]">{{ listViewMode === 'grid' ?
                                         'view_list' : 'grid_view' }}</span>
                                 </button>
-                                <div class="w-[1px] h-4 bg-slate-200 dark:bg-[#3B4252] mx-1"></div>
+                                <div class="w-[1px] h-4 bg-slate-200 dark:bg-[#44475a] mx-1"></div>
 
                                 <!-- Field Selection: Title / Date -->
-                                <div class="flex items-center gap-0.5 bg-slate-100 dark:bg-[#3B4252] rounded-lg p-0.5">
+                                <div class="flex items-center gap-0.5 bg-slate-100 dark:bg-[#44475a] rounded-lg p-0.5">
                                     <button @click="setSortOption('field', 'title')"
-                                        :class="sortOption.field === 'title' ? 'bg-white dark:bg-[#2E3440] text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
+                                        :class="sortOption.field === 'title' ? 'bg-white dark:bg-[#2f3242] text-blue-600 dark:text-[#8be9fd] shadow-sm' : 'text-slate-500 dark:text-[#cfcfe8] hover:text-slate-700 dark:hover:text-slate-300'"
                                         class="px-2 py-1 text-xs font-medium rounded transition-all">
                                         Title
                                     </button>
                                     <button @click="setSortOption('field', 'updated_at')"
-                                        :class="sortOption.field === 'updated_at' ? 'bg-white dark:bg-[#2E3440] text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
+                                        :class="sortOption.field === 'updated_at' ? 'bg-white dark:bg-[#2f3242] text-blue-600 dark:text-[#8be9fd] shadow-sm' : 'text-slate-500 dark:text-[#cfcfe8] hover:text-slate-700 dark:hover:text-slate-300'"
                                         class="px-2 py-1 text-xs font-medium rounded transition-all">
                                         Date
                                     </button>
@@ -1248,7 +1249,7 @@
                                 <!-- Direction Toggle: Up / Down Arrow -->
                                 <button
                                     @click="setSortOption('direction', sortOption.direction === 'asc' ? 'desc' : 'asc')"
-                                    class="flex items-center gap-1 px-2 py-1.5 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-[#3B4252] rounded-lg transition-all"
+                                    class="flex items-center gap-1 px-2 py-1.5 text-slate-500 dark:text-[#cfcfe8] hover:text-blue-600 dark:hover:text-[#8be9fd] hover:bg-slate-100 dark:hover:bg-[#44475a] rounded-lg transition-all"
                                     :title="sortOption.field === 'title' 
                                         ? (sortOption.direction === 'asc' ? 'A to Z' : 'Z to A')
                                         : (sortOption.direction === 'asc' ? 'Oldest First' : 'Newest First')">
@@ -1262,9 +1263,9 @@
                             </div>
                             <!-- Import Hint/Button -->
                             <div
-                                class="flex items-center gap-1 pl-2 border-l border-slate-200 dark:border-[#3B4252] ml-2">
+                                class="flex items-center gap-1 pl-2 border-l border-slate-200 dark:border-[#44475a] ml-2">
                                 <button onclick="document.getElementById('hidden-file-input').click()"
-                                    class="flex items-center gap-1 px-2 py-1.5 text-slate-400 hover:text-blue-500 hover:bg-slate-100 dark:hover:bg-[#3B4252] rounded-lg transition-all"
+                                    class="flex items-center gap-1 px-2 py-1.5 text-slate-400 hover:text-blue-500 hover:bg-slate-100 dark:hover:bg-[#44475a] rounded-lg transition-all"
                                     title="Import Files (or Drag & Drop)">
                                     <span class="material-symbols-rounded text-[18px]">upload_file</span>
                                     <span class="text-[10px] font-semibold uppercase hidden md:inline">Import</span>
@@ -1286,23 +1287,23 @@
                                 <span v-else class="material-symbols-rounded text-amber-500 text-[22px]">folder</span>
 
                                 <!-- Folder Name -->
-                                <h1 class="text-2xl font-bold text-slate-800 dark:text-[#ECEFF4] tracking-tight">
+                                <h1 class="text-2xl font-bold text-slate-800 dark:text-[#f8f8f2] tracking-tight">
                                     {{ currentFolderId === null ? 'INBOX' : (currentFolderId === TRASH_FOLDER_ID ?
                                     'TRASH' : (folders.find(f => f.id === currentFolderId)?.name || 'Folder')) }}
                                 </h1>
 
                                 <!-- Count -->
                                 <div class="flex items-center gap-2 mt-1">
-                                    <span class="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
+                                    <span class="w-1 h-1 rounded-full bg-slate-300 dark:bg-[#44475a]"></span>
                                     <span
-                                        class="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">{{
+                                        class="text-[10px] text-slate-400 dark:text-[#cfcfe8] font-bold uppercase tracking-wider">{{
                                         (currentFolderId === null ? sortedRootNotes :
                                         getSortedFolderNotes(currentFolderId)).length }} items</span>
 
                                     <!-- Multi-Select Toggle -->
                                     <button @click="toggleSelectionMode()"
                                         class="ml-2 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wide transition-colors"
-                                        :class="isSelectionMode ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-blue-500 hover:bg-slate-100 dark:hover:bg-[#3B4252]'">
+                                        :class="isSelectionMode ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-blue-500 hover:bg-slate-100 dark:hover:bg-[#44475a]'">
                                         {{ isSelectionMode ? 'Cancel' : 'Select' }}
                                     </button>
                                 </div>
@@ -1318,7 +1319,7 @@
                                     v-if="(currentFolderId === null ? sortedRootNotes : getSortedFolderNotes(currentFolderId)).filter(n => n.is_pinned).length > 0">
                                     <div class="flex items-center gap-2 mb-3 px-1">
                                         <h3
-                                            class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                            class="text-[11px] font-semibold text-slate-500 dark:text-[#cfcfe8] uppercase tracking-wider">
                                             📌 Pinned
                                         </h3>
                                         <!-- Note: Only show if Selection Mode is active (optional, could be always active but context implies mode) -->
@@ -1338,11 +1339,11 @@
                                             <div v-for="note in (currentFolderId === null ? sortedRootNotes : getSortedFolderNotes(currentFolderId)).filter(n => n.is_pinned)"
                                                 :key="note.id" @click="selectNote(note)" draggable="true"
                                                 @dragstart="handleDragStart(note, $event)" :data-id="note.id"
-                                                class="note-item group draggable-touch bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-lg hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer p-3 flex flex-col relative h-36">
+                                                class="note-item group draggable-touch bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer p-3 flex flex-col relative h-36">
 
                                                 <!-- Selection Checkbox -->
                                                 <div v-if="isSelectionMode"
-                                                    class="absolute top-2 left-2 z-30 flex items-center justify-center p-1 rounded-full bg-white/80 dark:bg-black/50 backdrop-blur-sm"
+                                                    class="absolute top-2 left-2 z-30 flex items-center justify-center p-1 rounded-full bg-white/80 dark:bg-[#2f3242] backdrop-blur-sm"
                                                     @click.stop>
                                                     <input type="checkbox" :checked="selectedNoteIds.has(note.id)"
                                                         @change="toggleNoteSelection(note.id)"
@@ -1353,8 +1354,8 @@
                                                 <button @click.stop="togglePin(note)" v-if="!isSelectionMode"
                                                     class="absolute top-2 right-2 rounded-full z-20 transition-all duration-200"
                                                     :class="note.is_pinned 
-                                                    ? 'p-0.5 text-orange-500 bg-orange-50 dark:bg-orange-900/20 opacity-100' 
-                                                    : 'p-1.5 text-slate-300 dark:text-slate-600 hover:text-orange-400 opacity-100 md:opacity-0 md:group-hover:opacity-100'">
+                                                    ? 'p-0.5 text-orange-500 bg-orange-50 dark:bg-#3b2a1e/60 opacity-100' 
+                                                    : 'p-1.5 text-slate-300 dark:text-[#cfcfe8] hover:text-orange-400 opacity-100 md:opacity-0 md:group-hover:opacity-100'">
                                                     <span class="material-symbols-rounded"
                                                         :class="note.is_pinned ? 'text-[10px]' : 'text-[18px]'"
                                                         :style="note.is_pinned ? 'font-variation-settings: \'FILL\' 1' : ''">push_pin</span>
@@ -1363,21 +1364,21 @@
                                                 <div class="flex justify-between items-start mb-1.5 w-full pr-8">
                                                     <div class="flex items-center gap-2 min-w-0">
                                                         <h3
-                                                            class="font-bold text-slate-700 dark:text-[#ECEFF4] truncate text-sm">
+                                                            class="font-bold text-slate-700 dark:text-[#f8f8f2] truncate text-sm">
                                                             {{ note.title || 'Untitled' }}</h3>
                                                     </div>
                                                 </div>
 
                                                 <p
-                                                    class="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 mb-auto leading-relaxed">
+                                                    class="text-xs text-slate-500 dark:text-[#cfcfe8] line-clamp-3 mb-auto leading-relaxed">
                                                     {{ getPlainContent(note.content) || 'No content' }}
                                                 </p>
 
                                                 <!-- Delete Confirmation Overlay -->
                                                 <div v-if="deleteConfirmation.id === note.id && deleteConfirmation.type === 'note'"
-                                                    class="absolute inset-x-0 bottom-0 top-auto bg-red-50 dark:bg-red-900/90 p-2 flex items-center justify-between rounded-b-xl z-20 animate-fade-in border-t border-red-200 dark:border-red-800"
+                                                    class="absolute inset-x-0 bottom-0 top-auto bg-red-50 dark:bg-#3b1f2b/90 p-2 flex items-center justify-between rounded-b-xl z-20 animate-fade-in border-t border-red-200 dark:border-#ff5555/50"
                                                     @click.stop>
-                                                    <span class="text-[10px] font-bold text-red-600 dark:text-red-300">
+                                                    <span class="text-[10px] font-bold text-red-600 dark:text-[#ff6e6e]">
                                                         {{ currentFolderId === TRASH_FOLDER_ID ? 'Delete?' :
                                                         'Trash?' }}
                                                     </span>
@@ -1385,19 +1386,19 @@
                                                         <button @click.stop="confirmDelete"
                                                             class="px-2 py-0.5 bg-red-600 text-white rounded text-[10px] font-bold hover:bg-red-700 transition-colors">Yes</button>
                                                         <button @click.stop="cancelDelete"
-                                                            class="px-2 py-0.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded text-[10px] font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">No</button>
+                                                            class="px-2 py-0.5 bg-slate-200 dark:bg-[#2f3242] text-slate-700 dark:text-[#f8f8f2] rounded text-[10px] font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">No</button>
                                                     </div>
                                                 </div>
 
                                                 <!-- Normal Footer -->
                                                 <div v-else
-                                                    class="text-[10px] text-slate-400 mt-2 flex justify-between items-end border-t border-slate-100 dark:border-[#434C5E] pt-1.5">
+                                                    class="text-[10px] text-slate-400 mt-2 flex justify-between items-end border-t border-slate-100 dark:border-[#44475a] pt-1.5">
                                                     <div class="flex items-center gap-2 font-medium">
                                                         <span>{{
                                                             formatDateParts(note.updated_at).date.replace(/\./g,
                                                             '-')
                                                             }}</span>
-                                                        <span class="w-[1px] h-2 bg-slate-300 dark:bg-slate-600"></span>
+                                                        <span class="w-[1px] h-2 bg-slate-300 dark:bg-[#44475a]"></span>
                                                         <span>{{ note.content ? note.content.length : 0 }}
                                                             chars</span>
                                                     </div>
@@ -1418,11 +1419,11 @@
                                     </template>
                                     <!-- List View -->
                                     <div v-else
-                                        class="flex flex-col bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-lg overflow-hidden divide-y divide-slate-100 dark:divide-[#434C5E]">
+                                        class="flex flex-col bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg overflow-hidden divide-y divide-slate-100 dark:divide-[#44475a]">
                                         <div v-for="note in (currentFolderId === null ? sortedRootNotes : getSortedFolderNotes(currentFolderId)).filter(n => n.is_pinned)"
                                             :key="note.id" @click="selectNote(note)" draggable="true"
                                             @dragstart="handleDragStart(note, $event)" :data-id="note.id"
-                                            class="note-item group draggable-touch hover:bg-slate-50 dark:hover:bg-[#434C5E] transition-colors cursor-pointer px-3 py-1 flex items-center gap-3 relative">
+                                            class="note-item group draggable-touch hover:bg-slate-50 dark:hover:bg-[#44475a] transition-colors cursor-pointer px-3 py-1 flex items-center gap-3 relative">
 
                                             <!-- Selection Checkbox -->
                                             <div v-if="isSelectionMode" @click.stop class="mr-1">
@@ -1433,16 +1434,16 @@
 
                                             <!-- Icon -->
                                             <span
-                                                class="material-symbols-rounded text-slate-400 dark:text-slate-500 text-[22px] shrink-0">description</span>
+                                                class="material-symbols-rounded text-slate-400 dark:text-[#cfcfe8] text-[22px] shrink-0">description</span>
 
                                             <!-- Content -->
                                             <div class="flex-1 min-w-0 flex items-center gap-2">
                                                 <h3
-                                                    class="text-[14px] font-medium text-slate-700 dark:text-[#ECEFF4] truncate max-w-[40%]">
+                                                    class="text-[14px] font-medium text-slate-700 dark:text-[#f8f8f2] truncate max-w-[40%]">
                                                     {{ note.title || 'Untitled' }}
                                                 </h3>
                                                 <span
-                                                    class="text-[12px] text-slate-400 dark:text-slate-500 truncate opacity-80 flex-1">
+                                                    class="text-[12px] text-slate-400 dark:text-[#cfcfe8] truncate opacity-80 flex-1">
                                                     {{ getPlainContent(note.content).substring(0, 100) }}
                                                 </span>
                                             </div>
@@ -1469,7 +1470,7 @@
                                                     class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <!-- Pin Toggle -->
                                                     <button @click.stop="togglePin(note)"
-                                                        class="p-1.5 text-orange-500 bg-orange-50 dark:bg-orange-900/20 rounded-full hover:bg-orange-100"
+                                                        class="p-1.5 text-orange-500 bg-orange-50 dark:bg-#3b2a1e/60 rounded-full hover:bg-orange-100"
                                                         title="Unpin">
                                                         <span class="material-symbols-rounded text-[14px]"
                                                             style="font-variation-settings: 'FILL' 1">push_pin</span>
@@ -1477,7 +1478,7 @@
 
                                                     <!-- Delete -->
                                                     <button @click.stop="requestDelete(note.id, 'note')"
-                                                        class="p-1 hover:bg-slate-200 dark:hover:bg-[#4C566A] rounded text-slate-300 dark:text-slate-500 hover:text-red-500"
+                                                        class="p-1 hover:bg-slate-200 dark:hover:bg-[#6272a4] rounded text-slate-300 dark:text-[#cfcfe8] hover:text-red-500"
                                                         title="Delete">
                                                         <span class="material-symbols-rounded text-[16px]">delete</span>
                                                     </button>
@@ -1486,9 +1487,9 @@
 
                                             <!-- Inline Delete Confirmation (List) -->
                                             <div v-if="deleteConfirmation.id === note.id && deleteConfirmation.type === 'note'"
-                                                class="absolute inset-0 bg-red-50 dark:bg-red-900/90 flex items-center justify-end px-2 z-20 animate-fade-in"
+                                                class="absolute inset-0 bg-red-50 dark:bg-#3b1f2b/90 flex items-center justify-end px-2 z-20 animate-fade-in"
                                                 @click.stop>
-                                                <span class="text-xs font-bold text-red-600 dark:text-red-300 mr-3">
+                                                <span class="text-xs font-bold text-red-600 dark:text-[#ff6e6e] mr-3">
                                                     {{ currentFolderId === TRASH_FOLDER_ID ? 'Delete Permanently?' :
                                                     'Move to Trash?' }}
                                                 </span>
@@ -1496,7 +1497,7 @@
                                                     <button @click.stop="confirmDelete"
                                                         class="px-2 py-0.5 bg-red-600 text-white rounded text-xs font-bold hover:bg-red-700 transition-colors">Yes</button>
                                                     <button @click.stop="cancelDelete"
-                                                        class="px-2 py-0.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded text-xs font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">No</button>
+                                                        class="px-2 py-0.5 bg-slate-200 dark:bg-[#2f3242] text-slate-700 dark:text-[#f8f8f2] rounded text-xs font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">No</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -1508,7 +1509,7 @@
                                     v-if="(currentFolderId === null ? sortedRootNotes : getSortedFolderNotes(currentFolderId)).filter(n => !n.is_pinned).length > 0">
                                     <div class="flex items-center gap-2 mb-3 px-1">
                                         <h3
-                                            class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                            class="text-[11px] font-semibold text-slate-500 dark:text-[#cfcfe8] uppercase tracking-wider">
                                             📄 Notes
                                         </h3>
                                         <button v-if="isSelectionMode" @click="toggleSectionSelection('regular')"
@@ -1526,11 +1527,11 @@
                                             <div v-for="note in (currentFolderId === null ? sortedRootNotes : getSortedFolderNotes(currentFolderId)).filter(n => !n.is_pinned)"
                                                 :key="note.id" @click="selectNote(note)" draggable="true"
                                                 @dragstart="handleDragStart(note, $event)" :data-id="note.id"
-                                                class="note-item group draggable-touch touch-pan-y bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-lg hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer p-3 flex flex-col relative h-36">
+                                                class="note-item group draggable-touch touch-pan-y bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer p-3 flex flex-col relative h-36">
 
                                                 <!-- Selection Checkbox -->
                                                 <div v-if="isSelectionMode"
-                                                    class="absolute top-2 left-2 z-30 flex items-center justify-center p-1 rounded-full bg-white/80 dark:bg-black/50 backdrop-blur-sm"
+                                                    class="absolute top-2 left-2 z-30 flex items-center justify-center p-1 rounded-full bg-white/80 dark:bg-[#2f3242] backdrop-blur-sm"
                                                     @click.stop>
                                                     <input type="checkbox" :checked="selectedNoteIds.has(note.id)"
                                                         @change="toggleNoteSelection(note.id)"
@@ -1541,8 +1542,8 @@
                                                 <button @click.stop="togglePin(note)" v-if="!isSelectionMode"
                                                     class="absolute top-2 right-2 rounded-full z-20 transition-all duration-200"
                                                     :class="note.is_pinned 
-                                                    ? 'p-0.5 text-orange-500 bg-orange-50 dark:bg-orange-900/20 opacity-100' 
-                                                    : 'p-1.5 text-slate-300 dark:text-slate-600 hover:text-orange-400 opacity-100 md:opacity-0 md:group-hover:opacity-100'">
+                                                    ? 'p-0.5 text-orange-500 bg-orange-50 dark:bg-#3b2a1e/60 opacity-100' 
+                                                    : 'p-1.5 text-slate-300 dark:text-[#cfcfe8] hover:text-orange-400 opacity-100 md:opacity-0 md:group-hover:opacity-100'">
                                                     <span class="material-symbols-rounded"
                                                         :class="note.is_pinned ? 'text-[10px]' : 'text-[18px]'"
                                                         :style="note.is_pinned ? 'font-variation-settings: \'FILL\' 1' : ''">push_pin</span>
@@ -1551,21 +1552,21 @@
                                                 <div class="flex justify-between items-start mb-1.5 w-full pr-8">
                                                     <div class="flex items-center gap-2 min-w-0">
                                                         <h3
-                                                            class="font-bold text-slate-700 dark:text-[#ECEFF4] truncate text-sm">
+                                                            class="font-bold text-slate-700 dark:text-[#f8f8f2] truncate text-sm">
                                                             {{ note.title || 'Untitled' }}</h3>
                                                     </div>
                                                 </div>
 
                                                 <p
-                                                    class="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 mb-auto leading-relaxed">
+                                                    class="text-xs text-slate-500 dark:text-[#cfcfe8] line-clamp-3 mb-auto leading-relaxed">
                                                     {{ getPlainContent(note.content) || 'No content' }}
                                                 </p>
 
                                                 <!-- Delete Confirmation Overlay -->
                                                 <div v-if="deleteConfirmation.id === note.id && deleteConfirmation.type === 'note'"
-                                                    class="absolute inset-x-0 bottom-0 top-auto bg-red-50 dark:bg-red-900/90 p-2 flex items-center justify-between rounded-b-xl z-20 animate-fade-in border-t border-red-200 dark:border-red-800"
+                                                    class="absolute inset-x-0 bottom-0 top-auto bg-red-50 dark:bg-#3b1f2b/90 p-2 flex items-center justify-between rounded-b-xl z-20 animate-fade-in border-t border-red-200 dark:border-#ff5555/50"
                                                     @click.stop>
-                                                    <span class="text-[10px] font-bold text-red-600 dark:text-red-300">
+                                                    <span class="text-[10px] font-bold text-red-600 dark:text-[#ff6e6e]">
                                                         {{ currentFolderId === TRASH_FOLDER_ID ? 'Delete?' :
                                                         'Trash?' }}
                                                     </span>
@@ -1573,19 +1574,19 @@
                                                         <button @click.stop="confirmDelete"
                                                             class="px-2 py-0.5 bg-red-600 text-white rounded text-[10px] font-bold hover:bg-red-700 transition-colors">Yes</button>
                                                         <button @click.stop="cancelDelete"
-                                                            class="px-2 py-0.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded text-[10px] font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">No</button>
+                                                            class="px-2 py-0.5 bg-slate-200 dark:bg-[#2f3242] text-slate-700 dark:text-[#f8f8f2] rounded text-[10px] font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">No</button>
                                                     </div>
                                                 </div>
 
                                                 <!-- Normal Footer -->
                                                 <div v-else
-                                                    class="text-[10px] text-slate-400 mt-2 flex justify-between items-end border-t border-slate-100 dark:border-[#434C5E] pt-1.5">
+                                                    class="text-[10px] text-slate-400 mt-2 flex justify-between items-end border-t border-slate-100 dark:border-[#44475a] pt-1.5">
                                                     <div class="flex items-center gap-2 font-medium">
                                                         <span>{{
                                                             formatDateParts(note.updated_at).date.replace(/\./g,
                                                             '-')
                                                             }}</span>
-                                                        <span class="w-[1px] h-2 bg-slate-300 dark:bg-slate-600"></span>
+                                                        <span class="w-[1px] h-2 bg-slate-300 dark:bg-[#44475a]"></span>
                                                         <span>{{ note.content ? note.content.length : 0 }}
                                                             chars</span>
                                                     </div>
@@ -1606,11 +1607,11 @@
                                     </template>
                                     <!-- List View -->
                                     <div v-else
-                                        class="flex flex-col bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-lg overflow-hidden divide-y divide-slate-100 dark:divide-[#434C5E]">
+                                        class="flex flex-col bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg overflow-hidden divide-y divide-slate-100 dark:divide-[#44475a]">
                                         <div v-for="note in (currentFolderId === null ? sortedRootNotes : getSortedFolderNotes(currentFolderId)).filter(n => !n.is_pinned)"
                                             :key="note.id" @click="selectNote(note)" draggable="true"
                                             @dragstart="handleDragStart(note, $event)" :data-id="note.id"
-                                            class="note-item group draggable-touch touch-pan-y hover:bg-slate-50 dark:hover:bg-[#434C5E] transition-colors cursor-pointer px-3 py-1 flex items-center gap-3 relative">
+                                            class="note-item group draggable-touch touch-pan-y hover:bg-slate-50 dark:hover:bg-[#44475a] transition-colors cursor-pointer px-3 py-1 flex items-center gap-3 relative">
 
                                             <!-- Selection Checkbox -->
                                             <div v-if="isSelectionMode" @click.stop class="mr-1">
@@ -1621,16 +1622,16 @@
 
                                             <!-- Icon -->
                                             <span
-                                                class="material-symbols-rounded text-slate-400 dark:text-slate-500 text-[22px] shrink-0">description</span>
+                                                class="material-symbols-rounded text-slate-400 dark:text-[#cfcfe8] text-[22px] shrink-0">description</span>
 
                                             <!-- Content -->
                                             <div class="flex-1 min-w-0 flex items-center gap-2">
                                                 <h3
-                                                    class="text-[14px] font-medium text-slate-700 dark:text-[#ECEFF4] truncate max-w-[40%]">
+                                                    class="text-[14px] font-medium text-slate-700 dark:text-[#f8f8f2] truncate max-w-[40%]">
                                                     {{ note.title || 'Untitled' }}
                                                 </h3>
                                                 <span
-                                                    class="text-[12px] text-slate-400 dark:text-slate-500 truncate opacity-80 flex-1">
+                                                    class="text-[12px] text-slate-400 dark:text-[#cfcfe8] truncate opacity-80 flex-1">
                                                     {{ getPlainContent(note.content).substring(0, 100) }}
                                                 </span>
                                             </div>
@@ -1649,7 +1650,7 @@
                                                     class="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                                     <!-- Pin Toggle -->
                                                     <button @click.stop="togglePin(note)"
-                                                        class="p-1 text-slate-300 dark:text-slate-500 hover:text-orange-500 rounded hover:bg-slate-200 dark:hover:bg-[#4C566A]"
+                                                        class="p-1 text-slate-300 dark:text-[#cfcfe8] hover:text-orange-500 rounded hover:bg-slate-200 dark:hover:bg-[#6272a4]"
                                                         title="Pin">
                                                         <span
                                                             class="material-symbols-rounded text-[16px]">push_pin</span>
@@ -1657,7 +1658,7 @@
 
                                                     <!-- Delete -->
                                                     <button @click.stop="requestDelete(note.id, 'note')"
-                                                        class="p-1 hover:bg-slate-200 dark:hover:bg-[#4C566A] rounded text-slate-300 dark:text-slate-500 hover:text-red-500"
+                                                        class="p-1 hover:bg-slate-200 dark:hover:bg-[#6272a4] rounded text-slate-300 dark:text-[#cfcfe8] hover:text-red-500"
                                                         title="Delete">
                                                         <span class="material-symbols-rounded text-[16px]">delete</span>
                                                     </button>
@@ -1666,9 +1667,9 @@
 
                                             <!-- Inline Delete Confirmation (List) -->
                                             <div v-if="deleteConfirmation.id === note.id && deleteConfirmation.type === 'note'"
-                                                class="absolute inset-0 bg-red-50 dark:bg-red-900/90 flex items-center justify-end px-2 z-20 animate-fade-in"
+                                                class="absolute inset-0 bg-red-50 dark:bg-#3b1f2b/90 flex items-center justify-end px-2 z-20 animate-fade-in"
                                                 @click.stop>
-                                                <span class="text-xs font-bold text-red-600 dark:text-red-300 mr-3">
+                                                <span class="text-xs font-bold text-red-600 dark:text-[#ff6e6e] mr-3">
                                                     {{ currentFolderId === TRASH_FOLDER_ID ? 'Delete Permanently?' :
                                                     'Move to Trash?' }}
                                                 </span>
@@ -1676,7 +1677,7 @@
                                                     <button @click.stop="confirmDelete"
                                                         class="px-2 py-0.5 bg-red-600 text-white rounded text-xs font-bold hover:bg-red-700 transition-colors">Yes</button>
                                                     <button @click.stop="cancelDelete"
-                                                        class="px-2 py-0.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded text-xs font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">No</button>
+                                                        class="px-2 py-0.5 bg-slate-200 dark:bg-[#2f3242] text-slate-700 dark:text-[#f8f8f2] rounded text-xs font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">No</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -1704,7 +1705,7 @@
 
                     <!-- View: Editor (Existing Logic Wrapped) -->
                     <div v-if="rightPanelMode === 'edit'"
-                        class="flex-1 flex flex-col overflow-hidden bg-white dark:bg-[#2E3440]">
+                        class="flex-1 flex flex-col overflow-hidden bg-white dark:bg-[#2f3242]">
 
                         <!-- Safe Guard: Only render editor if a note is selected -->
                         <div v-if="selectedNote" class="flex-1 flex flex-col overflow-hidden">
@@ -1712,7 +1713,7 @@
                             <div class="flex-1 flex overflow-hidden split-container">
                                 <!-- Editor -->
                                 <div v-show="viewMode !== 'preview'"
-                                    class="flex-1 flex flex-col border-r border-slate-100 dark:border-[#434C5E] relative group"
+                                    class="flex-1 flex flex-col border-r border-slate-100 dark:border-[#44475a] relative group"
                                     :class="isDarkMode ? 'dark' : ''"
                                     :style="viewMode === 'split' ? { flex: `0 0 ${splitRatio}%` } : {}">
 
@@ -1748,64 +1749,64 @@
                                     </div>
 
                                     <!-- Title Input (Sticky Header Style H1) -->
-                                    <div class="flex-none p-4 pb-2 bg-white dark:bg-[#24292F] z-10">
+                                    <div class="flex-none p-4 pb-2 bg-white dark:bg-[#282a36] z-10">
                                         <input ref="titleInputRef" v-model="selectedNote.title" @input="debouncedUpdate"
                                             @focus="isEditModeActive = true" @blur="isEditModeActive = false"
                                             @keydown.tab.prevent="focusEditor" @keydown.enter.prevent="focusEditor"
-                                            class="w-full text-3xl font-extrabold text-[#2E3440] dark:text-[#ECEFF4] outline-none bg-transparent placeholder-slate-300 dark:placeholder-slate-600 leading-tight"
+                                            class="w-full text-3xl font-extrabold text-[#2f3242] dark:text-[#f8f8f2] outline-none bg-transparent placeholder-slate-300 dark:placeholder-slate-600 leading-tight"
                                             placeholder="Untitled Note">
                                         <div
-                                            class="flex items-center gap-3 mt-2 text-xs text-slate-400 dark:text-slate-500 font-medium">
+                                            class="flex items-center gap-3 mt-2 text-xs text-slate-400 dark:text-[#cfcfe8] font-medium">
                                             <span>{{ formatDateParts(selectedNote.updated_at).date.replace(/\./g,
                                                 '-') }} {{
                                                 formatDateParts(selectedNote.updated_at).time.substring(0, 5)
                                                 }}</span>
-                                            <span class="w-[1px] h-3 bg-slate-300 dark:bg-slate-600"></span>
+                                            <span class="w-[1px] h-3 bg-slate-300 dark:bg-[#44475a]"></span>
                                             <span>{{ selectedNote.content ? selectedNote.content.length : 0 }}
                                                 chars</span>
-                                            <span class="w-[1px] h-3 bg-slate-300 dark:bg-slate-600"></span>
+                                            <span class="w-[1px] h-3 bg-slate-300 dark:bg-[#44475a]"></span>
                                             <!-- Backlinks Dropdown -->
                                             <div class="relative">
                                                 <span @click.stop="showBacklinksMenu = !showBacklinksMenu"
-                                                    class="cursor-pointer hover:text-blue-500 dark:hover:text-blue-400 transition-colors flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700">
+                                                    class="cursor-pointer hover:text-blue-500 dark:hover:text-[#8be9fd] transition-colors flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700">
                                                     <span class="material-symbols-rounded text-[14px]">link</span>
                                                     <span class="font-medium">Backlinks ({{ currentNoteBacklinks.length
                                                         }})</span>
                                                 </span>
                                                 <!-- Backlinks Dropdown -->
                                                 <div v-if="showBacklinksMenu"
-                                                    class="absolute top-full right-0 mt-1 w-64 bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-lg shadow-xl py-1 z-50 animate-fade-in origin-top-right max-h-80 overflow-y-auto custom-scrollbar">
+                                                    class="absolute top-full right-0 mt-1 w-64 bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg shadow-xl py-1 z-50 animate-fade-in origin-top-right max-h-80 overflow-y-auto custom-scrollbar">
                                                     <!-- Overlay to close -->
                                                     <div @click.stop="showBacklinksMenu = false"
                                                         class="fixed inset-0 z-40 bg-transparent cursor-default">
                                                     </div>
                                                     <div class="relative z-50">
                                                         <div
-                                                            class="px-3 py-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-[#434C5E] flex items-center gap-1">
+                                                            class="px-3 py-1.5 text-[11px] font-medium text-slate-500 dark:text-[#cfcfe8] border-b border-slate-100 dark:border-[#44475a] flex items-center gap-1">
                                                             <span
                                                                 class="material-symbols-rounded text-[14px]">link</span>
                                                             Backlinks ({{ currentNoteBacklinks.length }})
                                                         </div>
                                                         <div v-if="currentNoteBacklinks.length === 0"
-                                                            class="px-3 py-4 text-center text-[12px] text-slate-400 dark:text-slate-500">
+                                                            class="px-3 py-4 text-center text-[12px] text-slate-400 dark:text-[#cfcfe8]">
                                                             No backlinks yet
                                                         </div>
                                                         <button v-for="note in currentNoteBacklinks" :key="note.id"
                                                             @click="onBacklinkClick(note.id)"
-                                                            class="w-full text-left px-3 py-2 text-[12px] hover:bg-blue-50 dark:hover:bg-blue-900/30 flex items-start gap-2 transition-colors border-b border-slate-50 dark:border-[#4C566A]/50 last:border-0">
+                                                            class="w-full text-left px-3 py-2 text-[12px] hover:bg-blue-50 dark:hover:bg-[#44475a] flex items-start gap-2 transition-colors border-b border-slate-50 dark:border-[#6272a4]/50 last:border-0">
                                                             <span
-                                                                class="material-symbols-rounded text-[16px] text-blue-500 dark:text-blue-400 mt-0.5 shrink-0">description</span>
+                                                                class="material-symbols-rounded text-[16px] text-blue-500 dark:text-[#8be9fd] mt-0.5 shrink-0">description</span>
                                                             <div class="min-w-0 flex-1">
                                                                 <div
-                                                                    class="font-medium text-slate-700 dark:text-slate-200 truncate">
+                                                                    class="font-medium text-slate-700 dark:text-[#f8f8f2] truncate">
                                                                     {{ note.title || 'Untitled' }}</div>
                                                                 <div
-                                                                    class="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1 mt-0.5">
+                                                                    class="text-[10px] text-slate-400 dark:text-[#cfcfe8] flex items-center gap-1 mt-0.5">
                                                                     <span>{{
                                                                         formatDateParts(note.updated_at).date.replace(/\./g,
                                                                         '-') }}</span>
                                                                     <span
-                                                                        class="w-[1px] h-2 bg-slate-300 dark:bg-slate-600"></span>
+                                                                        class="w-[1px] h-2 bg-slate-300 dark:bg-[#44475a]"></span>
                                                                     <span class="font-mono">{{ note.id.slice(0, 8)
                                                                         }}</span>
                                                                 </div>
@@ -1814,12 +1815,12 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <span class="w-[1px] h-3 bg-slate-300 dark:bg-slate-600"></span>
+                                            <span class="w-[1px] h-3 bg-slate-300 dark:bg-[#44475a]"></span>
                                             <div class="relative group">
                                                 <div @click.stop="toggleFolderSelectMenu"
-                                                    class="cursor-pointer px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[11px] flex items-center gap-1 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                                                    class="cursor-pointer px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#2f3242] text-slate-600 dark:text-[#f8f8f2] text-[11px] flex items-center gap-1 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
                                                     <span
-                                                        class="material-symbols-rounded text-[14px] text-slate-500 dark:text-slate-400">drive_file_move</span>
+                                                        class="material-symbols-rounded text-[14px] text-slate-500 dark:text-[#cfcfe8]">drive_file_move</span>
                                                     {{ selectedNote.folder_id ? (folders.find(f => f.id ===
                                                     selectedNote.folder_id)?.name ||
                                                     'Unknown') : 'Inbox' }}
@@ -1828,7 +1829,7 @@
                                                 </div>
                                                 <!-- Custom Dropdown -->
                                                 <div v-if="showFolderSelectMenu"
-                                                    class="absolute top-full right-0 mt-1 w-32 bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-lg shadow-xl py-1 z-50 animate-fade-in origin-top-right">
+                                                    class="absolute top-full right-0 mt-1 w-32 bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg shadow-xl py-1 z-50 animate-fade-in origin-top-right">
                                                     <!-- Overlay to close -->
                                                     <div @click="closeFolderSelectMenu"
                                                         class="fixed inset-0 z-40 bg-transparent cursor-default">
@@ -1838,16 +1839,16 @@
                                                         class="relative z-50 max-h-48 overflow-y-auto custom-scrollbar">
                                                         <button
                                                             @click.stop="moveSelectedNote(null); closeFolderSelectMenu()"
-                                                            class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-blue-900/30 flex items-center gap-2 transition-colors">
+                                                            class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-[#f8f8f2] hover:bg-blue-50 dark:hover:bg-[#44475a] flex items-center gap-2 transition-colors">
                                                             <span
                                                                 class="material-symbols-rounded text-[16px] text-blue-500">move_to_inbox</span>
                                                             Inbox
                                                         </button>
-                                                        <div class="h-[1px] bg-slate-100 dark:bg-[#434C5E] my-1"
+                                                        <div class="h-[1px] bg-slate-100 dark:bg-[#44475a] my-1"
                                                             v-if="sortedFolders.length > 0"></div>
                                                         <button v-for="folder in sortedFolders" :key="folder.id"
                                                             @click.stop="moveSelectedNote(folder.id); closeFolderSelectMenu()"
-                                                            class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-amber-900/30 flex items-center gap-2 transition-colors">
+                                                            class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-[#f8f8f2] hover:bg-amber-50 dark:hover:bg-#3b3a22/70 flex items-center gap-2 transition-colors">
                                                             <span
                                                                 class="material-symbols-rounded text-[16px] text-amber-500">drive_file_move</span>
                                                             <span class="truncate">{{ folder.name }}</span>
@@ -1865,11 +1866,11 @@
 
                                         <!-- Bottom Formatting Toolbar -->
                                         <div
-                                            class="absolute bottom-6 left-4 right-4 md:static md:bottom-auto md:left-auto md:right-auto h-12 md:h-10 rounded-2xl md:rounded-none shadow-xl md:shadow-none border border-slate-200 dark:border-[#434C5E] md:border-t md:border-x-0 md:border-b-0 bg-white/95 dark:bg-[#24292F]/95 md:bg-white md:dark:bg-[#24292F] backdrop-blur-md md:backdrop-blur-none px-4 flex items-center justify-between md:justify-start md:gap-4 flex-none z-20 transition-all duration-300">
+                                            class="absolute bottom-6 left-4 right-4 md:static md:bottom-auto md:left-auto md:right-auto h-12 md:h-10 rounded-2xl md:rounded-none shadow-xl md:shadow-none border border-slate-200 dark:border-[#44475a] md:border-t md:border-x-0 md:border-b-0 bg-white/95 dark:bg-[#282a36]/95 md:bg-white md:dark:bg-[#282a36] backdrop-blur-md md:backdrop-blur-none px-4 flex items-center justify-between md:justify-start md:gap-4 flex-none z-20 transition-all duration-300">
                                             <!-- Left: Search -->
                                             <div class="flex items-center gap-1">
                                                 <button @mousedown.prevent="triggerSearch()"
-                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors text-slate-500 dark:text-slate-400"
+                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#44475a] rounded transition-colors text-slate-500 dark:text-[#cfcfe8]"
                                                     title="Find (Cmd+F)">
                                                     <span class="material-symbols-rounded text-[20px]">search</span>
                                                 </button>
@@ -1879,80 +1880,80 @@
                                             <div
                                                 class="flex items-center gap-1 overflow-x-auto thin-scrollbar mask-gradient-right">
                                                 <button @mousedown.prevent="pasteContent()"
-                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#44475a] rounded transition-colors"
                                                     title="Paste">
                                                     <span
                                                         class="material-symbols-rounded text-[18px]">content_paste</span>
                                                 </button>
                                                 <button @mousedown.prevent="formatText('bold')"
-                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#44475a] rounded transition-colors"
                                                     title="Bold (Cmd+B)">
                                                     <span
                                                         class="material-symbols-rounded text-[18px]">format_bold</span>
                                                 </button>
                                                 <button @mousedown.prevent="formatText('italic')"
-                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#44475a] rounded transition-colors"
                                                     title="Italic (Cmd+I)">
                                                     <span
                                                         class="material-symbols-rounded text-[18px]">format_italic</span>
                                                 </button>
                                                 <button @mousedown.prevent="formatText('strike')"
-                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#44475a] rounded transition-colors"
                                                     title="Strikethrough">
                                                     <span
                                                         class="material-symbols-rounded text-[18px]">strikethrough_s</span>
                                                 </button>
                                                 <button @mousedown.prevent="toggleCode()"
-                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#44475a] rounded transition-colors"
                                                     title="Code (Inline/Block)">
                                                     <span class="material-symbols-rounded text-[18px]">code</span>
                                                 </button>
                                                 <button @mousedown.prevent="formatText('quote')"
-                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#44475a] rounded transition-colors"
                                                     title="Blockquote">
                                                     <span
                                                         class="material-symbols-rounded text-[18px]">format_quote</span>
                                                 </button>
                                                 <button @mousedown.prevent="formatText('dash')"
-                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#44475a] rounded transition-colors"
                                                     title="Bullet List">
                                                     <span
                                                         class="material-symbols-rounded text-[18px]">format_list_bulleted</span>
                                                 </button>
                                                 <button @mousedown.prevent="formatText('checkbox')"
-                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#44475a] rounded transition-colors"
                                                     title="Task List">
                                                     <span class="material-symbols-rounded text-[18px]">check_box</span>
                                                 </button>
                                                 <button @click="triggerTableEditor()"
-                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#44475a] rounded transition-colors"
                                                     title="Table (Create/Edit)">
                                                     <span
                                                         class="material-symbols-rounded text-[18px]">table_chart</span>
                                                 </button>
                                                 <div
-                                                    class="w-[1px] h-4 bg-slate-200 dark:bg-[#4C566A] mx-1 flex-shrink-0">
+                                                    class="w-[1px] h-4 bg-slate-200 dark:bg-[#6272a4] mx-1 flex-shrink-0">
                                                 </div>
                                                 <button @mousedown.prevent="formatText('link')"
-                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#44475a] rounded transition-colors"
                                                     title="Link (Cmd+K)">
                                                     <span class="material-symbols-rounded text-[18px]">link</span>
                                                 </button>
                                                 <div
-                                                    class="w-[1px] h-4 bg-slate-200 dark:bg-[#4C566A] mx-1 flex-shrink-0">
+                                                    class="w-[1px] h-4 bg-slate-200 dark:bg-[#6272a4] mx-1 flex-shrink-0">
                                                 </div>
                                                 <button @mousedown.prevent="formatText('h1')"
-                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#44475a] rounded transition-colors"
                                                     title="Heading 1">
                                                     <span class="material-symbols-rounded text-[18px]">format_h1</span>
                                                 </button>
                                                 <button @mousedown.prevent="formatText('h2')"
-                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#44475a] rounded transition-colors"
                                                     title="Heading 2">
                                                     <span class="material-symbols-rounded text-[18px]">format_h2</span>
                                                 </button>
                                                 <button @mousedown.prevent="formatText('h3')"
-                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#434C5E] rounded transition-colors"
+                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#44475a] rounded transition-colors"
                                                     title="Heading 3">
                                                     <span class="material-symbols-rounded text-[18px]">format_h3</span>
                                                 </button>
@@ -1963,71 +1964,71 @@
 
                                 <!-- Resize Handle -->
                                 <div v-if="viewMode === 'split'"
-                                    class="w-2 hover:bg-blue-500 cursor-col-resize z-10 hidden md:block transition-colors opacity-0 hover:opacity-100 dark:hover:bg-blue-400"
+                                    class="w-2 hover:bg-blue-500 cursor-col-resize z-10 hidden md:block transition-colors opacity-0 hover:opacity-100 dark:hover:bg-[#8be9fd]"
                                     :class="{ 'opacity-100 bg-blue-500': false }" @mousedown="startResize"></div>
 
                                 <!-- Preview Pane -->
-                                <div class="flex flex-col h-full bg-white dark:bg-[#2E3440] border-l border-slate-200 dark:border-[#3B4252] overflow-hidden transition-all duration-300 relative"
+                                <div class="flex flex-col h-full bg-white dark:bg-[#2f3242] border-l border-slate-200 dark:border-[#44475a] overflow-hidden transition-all duration-300 relative"
                                     :class="{ 'hidden': viewMode === 'edit', 'flex-1': viewMode === 'preview' }"
                                     :style="viewMode === 'split' ? { flex: `0 0 ${100 - splitRatio}%` } : {}">
                                     <!-- Preview Content -->
-                                    <div class="flex-none p-4 pb-2 bg-white dark:bg-[#2E3440] z-10 shrink-0">
+                                    <div class="flex-none p-4 pb-2 bg-white dark:bg-[#2f3242] z-10 shrink-0">
                                         <h1
-                                            class="w-full text-3xl font-extrabold text-[#2E3440] dark:text-[#ECEFF4] leading-tight break-words m-0">
+                                            class="w-full text-3xl font-extrabold text-[#2f3242] dark:text-[#f8f8f2] leading-tight break-words m-0">
                                             {{ selectedNote.title || 'Untitled Note' }}
                                         </h1>
                                         <div
-                                            class="flex items-center gap-3 mt-2 text-xs text-slate-400 dark:text-slate-500 font-medium">
+                                            class="flex items-center gap-3 mt-2 text-xs text-slate-400 dark:text-[#cfcfe8] font-medium">
                                             <span>{{ formatDateParts(selectedNote.updated_at).date.replace(/\./g,
                                                 '-') }} {{
                                                 formatDateParts(selectedNote.updated_at).time.substring(0, 5)
                                                 }}</span>
-                                            <span class="w-[1px] h-3 bg-slate-300 dark:bg-slate-600"></span>
+                                            <span class="w-[1px] h-3 bg-slate-300 dark:bg-[#44475a]"></span>
                                             <span>{{ selectedNote.content ? selectedNote.content.length : 0 }}
                                                 chars</span>
-                                            <span class="w-[1px] h-3 bg-slate-300 dark:bg-slate-600"></span>
+                                            <span class="w-[1px] h-3 bg-slate-300 dark:bg-[#44475a]"></span>
                                             <!-- Backlinks Dropdown -->
                                             <div class="relative">
                                                 <span @click.stop="showBacklinksMenu = !showBacklinksMenu"
-                                                    class="cursor-pointer hover:text-blue-500 dark:hover:text-blue-400 transition-colors flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700">
+                                                    class="cursor-pointer hover:text-blue-500 dark:hover:text-[#8be9fd] transition-colors flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700">
                                                     <span class="material-symbols-rounded text-[14px]">link</span>
                                                     <span class="font-medium">Backlinks ({{ currentNoteBacklinks.length
                                                         }})</span>
                                                 </span>
                                                 <!-- Backlinks Dropdown -->
                                                 <div v-if="showBacklinksMenu"
-                                                    class="absolute top-full right-0 mt-1 w-64 bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-lg shadow-xl py-1 z-50 animate-fade-in origin-top-right max-h-80 overflow-y-auto custom-scrollbar">
+                                                    class="absolute top-full right-0 mt-1 w-64 bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg shadow-xl py-1 z-50 animate-fade-in origin-top-right max-h-80 overflow-y-auto custom-scrollbar">
                                                     <!-- Overlay to close -->
                                                     <div @click.stop="showBacklinksMenu = false"
                                                         class="fixed inset-0 z-40 bg-transparent cursor-default">
                                                     </div>
                                                     <div class="relative z-50">
                                                         <div
-                                                            class="px-3 py-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-[#434C5E] flex items-center gap-1">
+                                                            class="px-3 py-1.5 text-[11px] font-medium text-slate-500 dark:text-[#cfcfe8] border-b border-slate-100 dark:border-[#44475a] flex items-center gap-1">
                                                             <span
                                                                 class="material-symbols-rounded text-[14px]">link</span>
                                                             Backlinks ({{ currentNoteBacklinks.length }})
                                                         </div>
                                                         <div v-if="currentNoteBacklinks.length === 0"
-                                                            class="px-3 py-4 text-center text-[12px] text-slate-400 dark:text-slate-500">
+                                                            class="px-3 py-4 text-center text-[12px] text-slate-400 dark:text-[#cfcfe8]">
                                                             No backlinks yet
                                                         </div>
                                                         <button v-for="note in currentNoteBacklinks" :key="note.id"
                                                             @click="onBacklinkClick(note.id)"
-                                                            class="w-full text-left px-3 py-2 text-[12px] hover:bg-blue-50 dark:hover:bg-blue-900/30 flex items-start gap-2 transition-colors border-b border-slate-50 dark:border-[#4C566A]/50 last:border-0">
+                                                            class="w-full text-left px-3 py-2 text-[12px] hover:bg-blue-50 dark:hover:bg-[#44475a] flex items-start gap-2 transition-colors border-b border-slate-50 dark:border-[#6272a4]/50 last:border-0">
                                                             <span
-                                                                class="material-symbols-rounded text-[16px] text-blue-500 dark:text-blue-400 mt-0.5 shrink-0">description</span>
+                                                                class="material-symbols-rounded text-[16px] text-blue-500 dark:text-[#8be9fd] mt-0.5 shrink-0">description</span>
                                                             <div class="min-w-0 flex-1">
                                                                 <div
-                                                                    class="font-medium text-slate-700 dark:text-slate-200 truncate">
+                                                                    class="font-medium text-slate-700 dark:text-[#f8f8f2] truncate">
                                                                     {{ note.title || 'Untitled' }}</div>
                                                                 <div
-                                                                    class="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1 mt-0.5">
+                                                                    class="text-[10px] text-slate-400 dark:text-[#cfcfe8] flex items-center gap-1 mt-0.5">
                                                                     <span>{{
                                                                         formatDateParts(note.updated_at).date.replace(/\./g,
                                                                         '-') }}</span>
                                                                     <span
-                                                                        class="w-[1px] h-2 bg-slate-300 dark:bg-slate-600"></span>
+                                                                        class="w-[1px] h-2 bg-slate-300 dark:bg-[#44475a]"></span>
                                                                     <span class="font-mono">{{ note.id.slice(0, 8)
                                                                         }}</span>
                                                                 </div>
@@ -2036,12 +2037,12 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <span class="w-[1px] h-3 bg-slate-300 dark:bg-slate-600"></span>
+                                            <span class="w-[1px] h-3 bg-slate-300 dark:bg-[#44475a]"></span>
                                             <div class="relative group">
                                                 <div @click.stop="toggleFolderSelectMenu"
-                                                    class="cursor-pointer px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[11px] flex items-center gap-1 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                                                    class="cursor-pointer px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#2f3242] text-slate-600 dark:text-[#f8f8f2] text-[11px] flex items-center gap-1 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
                                                     <span
-                                                        class="material-symbols-rounded text-[14px] text-slate-500 dark:text-slate-400">drive_file_move</span>
+                                                        class="material-symbols-rounded text-[14px] text-slate-500 dark:text-[#cfcfe8]">drive_file_move</span>
                                                     {{ selectedNote.folder_id ? (folders.find(f => f.id ===
                                                     selectedNote.folder_id)?.name ||
                                                     'Unknown') : 'Inbox' }}
@@ -2050,7 +2051,7 @@
                                                 </div>
                                                 <!-- Custom Dropdown -->
                                                 <div v-if="showFolderSelectMenu"
-                                                    class="absolute top-full right-0 mt-1 w-32 bg-white dark:bg-[#3B4252] border border-slate-200 dark:border-[#434C5E] rounded-lg shadow-xl py-1 z-50 animate-fade-in origin-top-right">
+                                                    class="absolute top-full right-0 mt-1 w-32 bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg shadow-xl py-1 z-50 animate-fade-in origin-top-right">
                                                     <!-- Overlay to close -->
                                                     <div @click="closeFolderSelectMenu"
                                                         class="fixed inset-0 z-40 bg-transparent cursor-default">
@@ -2060,16 +2061,16 @@
                                                         class="relative z-50 max-h-48 overflow-y-auto custom-scrollbar">
                                                         <button
                                                             @click.stop="moveSelectedNote(null); closeFolderSelectMenu()"
-                                                            class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-blue-900/30 flex items-center gap-2 transition-colors">
+                                                            class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-[#f8f8f2] hover:bg-blue-50 dark:hover:bg-[#44475a] flex items-center gap-2 transition-colors">
                                                             <span
                                                                 class="material-symbols-rounded text-[16px] text-blue-500">move_to_inbox</span>
                                                             Inbox
                                                         </button>
-                                                        <div class="h-[1px] bg-slate-100 dark:bg-[#434C5E] my-1"
+                                                        <div class="h-[1px] bg-slate-100 dark:bg-[#44475a] my-1"
                                                             v-if="sortedFolders.length > 0"></div>
                                                         <button v-for="folder in sortedFolders" :key="folder.id"
                                                             @click.stop="moveSelectedNote(folder.id); closeFolderSelectMenu()"
-                                                            class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-amber-900/30 flex items-center gap-2 transition-colors">
+                                                            class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-[#f8f8f2] hover:bg-amber-50 dark:hover:bg-#3b3a22/70 flex items-center gap-2 transition-colors">
                                                             <span
                                                                 class="material-symbols-rounded text-[16px] text-amber-500">drive_file_move</span>
                                                             <span class="truncate">{{ folder.name }}</span>
@@ -2083,7 +2084,7 @@
                                         <div ref="previewRef" @scroll="handleScroll"
                                             @dblclick="handlePreviewDoubleClick" v-html="previewContent"
                                             :style="'font-size: ' + fontSize + 'px !important;'"
-                                            class="markdown-body overflow-y-auto h-full bg-white dark:bg-[#2E3440] transition-colors">
+                                            class="markdown-body overflow-y-auto h-full bg-white dark:bg-[#2f3242] transition-colors">
                                         </div>
 
                                     </div>
@@ -2093,7 +2094,7 @@
 
                         <!-- Empty State in Editor Mode (No Note Selected) -->
                         <div v-else
-                            class="flex-1 flex flex-col items-center justify-center text-slate-300 dark:text-slate-600 select-none">
+                            class="flex-1 flex flex-col items-center justify-center text-slate-300 dark:text-[#cfcfe8] select-none">
                             <span class="material-symbols-rounded text-[64px] mb-4 opacity-50">description</span>
                             <p class="text-sm font-medium">No note selected</p>
                         </div>
@@ -2112,7 +2113,7 @@
                     <!-- Status Bar -->
                     <!-- Status Bar -->
                     <footer
-                        class="h-6 bg-slate-100 dark:bg-[#2E3440] border-t border-slate-200 dark:border-[#3B4252] flex items-center justify-between px-3 select-none shrink-0 z-50 transition-colors duration-300">
+                        class="h-6 bg-slate-100 dark:bg-[#2f3242] border-t border-slate-200 dark:border-[#44475a] flex items-center justify-between px-3 select-none shrink-0 z-50 transition-colors duration-300">
                         <!-- Left: Online Status (Pull Trigger) -->
                         <div class="flex items-center gap-2 cursor-pointer hover:opacity-80" @click="pullSync"
                             title="Click to Sync Now (Force Pull)">
@@ -2124,7 +2125,7 @@
                             </span>
                             <!-- User Status (Guest Mode or User Email) -->
                             <span class="text-[10px] font-medium flex items-center gap-1 px-1.5 py-0.25 rounded"
-                                :class="currentUserId === 'guest' ? 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30' : 'text-slate-600 dark:text-slate-400 bg-slate-200 dark:bg-slate-700'">
+                                :class="currentUserId === 'guest' ? 'text-amber-600 dark:text-#f1fa8c bg-amber-100 dark:bg-#3b3a22/65' : 'text-slate-600 dark:text-[#cfcfe8] bg-slate-200 dark:bg-[#2f3242]'">
                                 <span v-if="currentUserId === 'guest'">
                                     <span class="hidden sm:inline">Guest Mode</span>
                                     <span class="sm:hidden">Guest</span>
@@ -2152,7 +2153,7 @@
 
                             <!-- Sync Queue / Retry -->
                             <button v-if="syncQueueCount > 0" @click="manualSync"
-                                class="flex items-center gap-1 text-[10px] bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                                class="flex items-center gap-1 text-[10px] bg-blue-100 dark:bg-[#44475a] text-blue-600 dark:text-[#8be9fd] px-1.5 py-0.5 rounded hover:bg-blue-200 dark:hover:bg-[#44475a] transition-colors"
                                 title="Items pending sync. Click to retry immediately.">
                                 <span class="material-symbols-rounded text-[12px]"
                                     :class="isSyncing ? 'animate-spin' : ''">sync</span>
@@ -2160,22 +2161,22 @@
                             </button>
 
                             <span v-if="syncQueueCount > 0"
-                                class="w-[1px] h-2.5 bg-slate-300 dark:bg-slate-600 mx-1"></span>
+                                class="w-[1px] h-2.5 bg-slate-300 dark:bg-[#44475a] mx-1"></span>
 
                             <!-- Last Sync Time -->
                             <span v-if="lastSyncTime"
-                                class="text-[10px] text-slate-500 dark:text-slate-400 font-mono hidden sm:inline-block"
+                                class="text-[10px] text-slate-500 dark:text-[#cfcfe8] font-mono hidden sm:inline-block"
                                 title="Last Successful Sync">
                                 {{ formatDateParts(lastSyncTime).time }}
                             </span>
 
-                            <span class="w-[1px] h-2.5 bg-slate-300 dark:bg-slate-600 mx-1"></span>
+                            <span class="w-[1px] h-2.5 bg-slate-300 dark:bg-[#44475a] mx-1"></span>
 
                             <!-- Data Source Indicator (Global) -->
                             <span class="text-[10px] font-medium flex items-center gap-1.5" :class="{
                                 'text-purple-600 dark:text-purple-400': loadingState.source === 'IDB',
-                                'text-blue-600 dark:text-blue-400': loadingState.source === 'CLOUD' || loadingState.source === 'SYNC',
-                                'text-slate-400 dark:text-slate-500': loadingState.source === 'NONE'
+                                'text-blue-600 dark:text-[#8be9fd]': loadingState.source === 'CLOUD' || loadingState.source === 'SYNC',
+                                'text-slate-400 dark:text-[#cfcfe8]': loadingState.source === 'NONE'
                             }">
 
                                 <span v-if="loadingState.source === 'IDB'" class="material-symbols-rounded text-[14px]"
@@ -2197,7 +2198,7 @@
                 </div> <!-- Close flex-col -->
                 <!-- Signpost message -->
                 <div v-if="signpost.show" class="absolute top-8 left-1/2 -translate-x-1/2 pointer-events-none z-[9999]">
-                    <div class="bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-out text-sm font-medium"
+                    <div class="bg-blue-600 dark:bg-[#bd93f9] text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-out text-sm font-medium"
                         :style="{ opacity: signpost.opacity }">
                         <span v-html="signpost.text"></span>
                     </div>

@@ -15,7 +15,6 @@ const CRITICAL_ASSETS = [
 const EXTERNAL_ASSETS = [
 	'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css',
 	'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.8.1/github-markdown-light.min.css',
-	'https://unpkg.com/nord-highlightjs@0.1/dist/nord.css',
 	'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap',
 	'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0',
 
@@ -26,7 +25,7 @@ const EXTERNAL_ASSETS = [
 
 	// Missing Styles (Dark Mode & Syntax)
 	'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.8.1/github-markdown-dark.min.css',
-	'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css',
+	'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/dracula.min.css',
 	'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css',
 
 	// Local Vendor Bundle
