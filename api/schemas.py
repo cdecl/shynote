@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from typing import Optional, List
 
@@ -41,6 +41,20 @@ class TokenData(BaseModel):
 class AuthRequest(BaseModel):
     provider: str
     token: str
+
+
+# --- API Key & External Inbound ---
+
+
+class ApiKeyResponse(BaseModel):
+    api_key: Optional[str] = None
+
+
+class ExternalNoteCreate(BaseModel):
+    title: str = Field(alias="titile")
+    content: Optional[str] = None
+
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # --- App Schemas ---

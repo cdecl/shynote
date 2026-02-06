@@ -269,3 +269,33 @@ This document tracks the cumulative implementation details of the SHYNOTE projec
     - [x] Implemented `breaks: true` (GFM style breaks).
     - [x] Fixed List-item padding and double-spacing issues.
     - [x] Auto-clean of empty list markers (`- `) in preview.
+
+---
+
+## 13. 외부 공유 API (API Key)
+**Date**: 2026-02-06
+**Status**: Implemented
+
+### 백엔드 체크리스트
+- [x] **User API Key**: `users.api_key` nullable + unique index.
+- [x] **키 관리 엔드포인트**: `GET/POST/DELETE /api/api-key` 조회/생성/삭제.
+- [x] **외부 인바운드**: `POST /api/new` + `Authorization: Bearer <API_KEY>`.
+- [x] **Inbox 처리**: 외부 입력은 `folder_id = null`로 저장되어 Inbox에 표시.
+- [x] **요청 스키마**: `title`/`content` + `titile` alias 허용.
+
+### 프론트엔드 체크리스트
+- [x] **설정 UI**: API Key 생성/재생성/삭제/복사 UI 추가.
+- [x] **게스트 제한**: 비로그인 상태에서는 API Key 영역 숨김.
+
+### 클라이언트 유틸
+- [x] **CLI 스크립트**: `scripts/shynote_api_post.py` (env `SHYNOTE_API_KEY` 사용).
+
+---
+
+## 14. 노트 조회 정렬/수량 개선
+**Date**: 2026-02-06
+**Status**: Implemented
+
+### 백엔드 체크리스트
+- [x] **정렬 추가**: `/api/notes` 최신 업데이트 기준 내림차순 정렬.
+- [x] **limit 제거**: `/api/notes` 기본 limit 제한 제거(필요 시 쿼리로만 사용).

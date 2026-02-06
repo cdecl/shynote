@@ -2562,13 +2562,96 @@ export const App = {
 
 		// Settings Modal State
 		const isSettingsModalOpen = ref(false)
+		const apiKeyValue = ref(null)
+		const apiKeyError = ref('')
+		const apiKeyLoading = ref(false)
 
 		const openSettingsModal = () => {
 			isSettingsModalOpen.value = true;
+			loadApiKey()
 		}
 
 		const closeSettingsModal = () => {
 			isSettingsModalOpen.value = false;
+		}
+
+		const loadApiKey = async () => {
+			if (!currentUserId.value || currentUserId.value === 'guest') {
+				apiKeyValue.value = null
+				return
+			}
+			apiKeyLoading.value = true
+			apiKeyError.value = ''
+			try {
+				const response = await authenticatedFetch('/api/api-key')
+				if (response && response.ok) {
+					const data = await response.json()
+					apiKeyValue.value = data.api_key || null
+				} else {
+					apiKeyError.value = 'API Key를 불러오지 못했습니다.'
+				}
+			} catch (e) {
+				console.error('API Key load failed', e)
+				apiKeyError.value = 'API Key 요청 중 오류가 발생했습니다.'
+			} finally {
+				apiKeyLoading.value = false
+			}
+		}
+
+		const generateApiKey = async () => {
+			if (!currentUserId.value || currentUserId.value === 'guest') return
+			openModal('api-key-generate')
+		}
+
+		const generateApiKeyImpl = async () => {
+			apiKeyLoading.value = true
+			apiKeyError.value = ''
+			try {
+				const response = await authenticatedFetch('/api/api-key', { method: 'POST' })
+				if (response && response.ok) {
+					const data = await response.json()
+					apiKeyValue.value = data.api_key || null
+				} else {
+					apiKeyError.value = 'API Key 생성에 실패했습니다.'
+				}
+			} catch (e) {
+				console.error('API Key create failed', e)
+				apiKeyError.value = 'API Key 생성 중 오류가 발생했습니다.'
+			} finally {
+				apiKeyLoading.value = false
+			}
+		}
+
+		const deleteApiKey = async () => {
+			if (!currentUserId.value || currentUserId.value === 'guest' || !apiKeyValue.value) return
+			if (!confirm('API Key를 삭제할까요? 외부 공유 API는 동작하지 않습니다.')) return
+			apiKeyLoading.value = true
+			apiKeyError.value = ''
+			try {
+				const response = await authenticatedFetch('/api/api-key', { method: 'DELETE' })
+				if (response && response.ok) {
+					apiKeyValue.value = null
+				} else {
+					apiKeyError.value = 'API Key 삭제에 실패했습니다.'
+				}
+			} catch (e) {
+				console.error('API Key delete failed', e)
+				apiKeyError.value = 'API Key 삭제 중 오류가 발생했습니다.'
+			} finally {
+				apiKeyLoading.value = false
+			}
+		}
+
+		const copyApiKey = async () => {
+			if (!apiKeyValue.value) return
+			try {
+				await navigator.clipboard.writeText(apiKeyValue.value)
+				signpost.value = { show: true, text: 'API Key 복사 완료', opacity: 0.9 }
+				setTimeout(() => (signpost.value.show = false), 1200)
+			} catch (e) {
+				console.error('API Key copy failed', e)
+				apiKeyError.value = '클립보드 복사에 실패했습니다.'
+			}
 		}
 
 		const backupData = async () => {
@@ -2713,6 +2796,11 @@ export const App = {
 				modalState.value.title = 'File Info'
 				modalState.value.confirmText = null // No action button needed
 				modalState.value.cancelText = 'Close'
+			} else if (type === 'api-key-generate') {
+				modalState.value.title = 'API Key 생성'
+				modalState.value.message = '새 API Key를 생성할까요?\n기존 키는 즉시 폐기됩니다.'
+				modalState.value.confirmText = '생성'
+				modalState.value.cancelText = '취소'
 			}
 
 
@@ -2844,6 +2932,8 @@ export const App = {
 						alert('Reset failed: ' + (err.detail || 'Unknown error'));
 					}
 				} catch (e) { console.error(e); alert(e.message); }
+			} else if (type === 'api-key-generate') {
+				await generateApiKeyImpl()
 			}
 			closeModal()
 		}
@@ -5670,6 +5760,12 @@ export const App = {
 			isSettingsModalOpen,
 			openSettingsModal,
 			closeSettingsModal,
+			apiKeyValue,
+			apiKeyError,
+			apiKeyLoading,
+			generateApiKey,
+			deleteApiKey,
+			copyApiKey,
 			backupData,
 			restoreData,
 			clearLocalCache,

@@ -399,7 +399,7 @@
 
         <!-- Generic Modal -->
         <div v-if="modalState.isOpen"
-            class="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center backdrop-blur-sm"
+            class="fixed inset-0 bg-black/50 z-[90] flex items-center justify-center backdrop-blur-sm"
             @click.self="closeModal">
             <div
                 class="bg-white dark:bg-[#2f3242] p-6 rounded-lg shadow-2xl w-72 transform transition-all scale-100 border border-slate-200 dark:border-[#6272a4]">
@@ -481,7 +481,7 @@
                     <h3 class="text-xl font-bold text-slate-800 dark:text-[#f8f8f2] tracking-tight">SHYNOTE</h3>
                 </div>
 
-                <div class="space-y-16">
+                <div class="space-y-8">
                     <!-- About Section -->
                     <div>
                         <h4
@@ -505,6 +505,43 @@
                                 <span>Changelog</span>
                                 <span class="material-symbols-rounded text-[14px]">open_in_new</span>
                             </a>
+                        </div>
+                    </div>
+
+                    <!-- API Key -->
+                    <div>
+                        <h4
+                            class="text-[10px] font-bold text-slate-400 dark:text-[#cfcfe8] uppercase tracking-widest mb-3 flex items-center gap-1">
+                            <span class="material-symbols-rounded text-[14px]">vpn_key</span> API Key
+                        </h4>
+                        <div v-if="currentUserId === 'guest'" class="text-xs text-slate-500 dark:text-[#cfcfe8]">
+                            로그인 후 API Key를 생성할 수 있습니다.
+                        </div>
+                        <div v-else class="space-y-2">
+                            <div
+                                class="flex items-center gap-2 bg-slate-50 dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg px-2 py-1.5">
+                                <span class="material-symbols-rounded text-[16px] text-slate-400">key</span>
+                                <input type="text" class="flex-1 bg-transparent text-xs font-mono text-slate-700 dark:text-[#f8f8f2] outline-none"
+                                    :value="apiKeyValue || 'Not Generated'" readonly>
+                                <button @click="copyApiKey" :disabled="!apiKeyValue || apiKeyLoading"
+                                    class="px-2 py-1 text-[10px] font-semibold text-white bg-blue-600 disabled:bg-slate-300 disabled:text-slate-500 rounded-md transition-colors">
+                                    Copy
+                                </button>
+                            </div>
+                            <div class="flex gap-2">
+                                <button @click="generateApiKey" :disabled="apiKeyLoading"
+                                    class="flex-1 py-2 text-[11px] font-semibold text-slate-600 dark:text-[#cfcfe8] bg-slate-50 dark:bg-[#44475a] hover:bg-slate-100 dark:hover:bg-[#6272a4] rounded-lg transition-colors border border-slate-200 dark:border-[#44475a]">
+                                    {{ apiKeyValue ? 'Regenerate' : 'Generate' }}
+                                </button>
+                                <button @click="deleteApiKey" :disabled="!apiKeyValue || apiKeyLoading"
+                                    class="flex-1 py-2 text-[11px] font-semibold text-red-600 dark:text-[#ff5555] bg-red-50 dark:bg-#3b1f2b/50 hover:bg-red-100 dark:hover:bg-#3b1f2b/70 rounded-lg transition-colors border border-red-200/50 dark:border-#ff5555/40">
+                                    Delete
+                                </button>
+                            </div>
+                            <p v-if="apiKeyError" class="text-[10px] text-red-500">{{ apiKeyError }}</p>
+                            <p class="text-[10px] text-slate-400 dark:text-[#cfcfe8]">
+                                외부 공유 API에서 `Authorization: Bearer` 헤더로 사용합니다.
+                            </p>
                         </div>
                     </div>
 
@@ -540,14 +577,14 @@
                         </h4>
                         <div class="space-y-2">
                             <button @click="clearLocalCache"
-                                class="w-full py-2 text-xs font-semibold text-slate-600 dark:text-[#f8f8f2] bg-amber-50 dark:bg-#3b3a22/40 hover:bg-amber-100 dark:hover:bg-#3b3a22/60 rounded-lg transition-colors border border-amber-200/50 dark:border-#f1fa8c/30 flex items-center justify-center gap-2">
+                                class="w-full py-2 text-xs font-semibold text-red-600 dark:text-[#ffb3b3] bg-amber-50 dark:bg-#3b3a22/40 hover:bg-amber-100 dark:hover:bg-#3b3a22/60 rounded-lg transition-colors border border-amber-200/50 dark:border-#f1fa8c/30 flex items-center justify-center gap-2">
                                 <span
-                                    class="material-symbols-rounded text-[16px] text-amber-500">cleaning_services</span>
+                                    class="material-symbols-rounded text-[16px] text-red-500 dark:text-[#ffb3b3]">cleaning_services</span>
                                 Clear Local Cache
                             </button>
                             <button @click="factoryReset"
-                                class="w-full py-2 text-xs font-semibold text-red-600 dark:text-[#ff5555] bg-red-50 dark:bg-#3b1f2b/50 hover:bg-red-100 dark:hover:bg-#3b1f2b/70 rounded-lg transition-colors border border-red-200/50 dark:border-#ff5555/40 flex items-center justify-center gap-2">
-                                <span class="material-symbols-rounded text-[16px]">delete_forever</span>
+                                class="w-full py-2 text-xs font-semibold text-red-600 dark:text-[#ffb3b3] bg-red-50 dark:bg-#3b1f2b/50 hover:bg-red-100 dark:hover:bg-#3b1f2b/70 rounded-lg transition-colors border border-red-200/50 dark:border-#ff5555/40 flex items-center justify-center gap-2">
+                                <span class="material-symbols-rounded text-[16px] dark:text-[#ffb3b3]">delete_forever</span>
                                 Factory Reset (All Data)
                             </button>
                         </div>

@@ -13,6 +13,7 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     is_dark_mode = Column(Boolean, default=False)
     view_mode = Column(String, default="edit") # 'edit', 'split', 'preview'
+    api_key = Column(String, unique=True, nullable=True, index=True)
     
     folders = relationship("Folder", back_populates="user")
     notes = relationship("Note", back_populates="user")

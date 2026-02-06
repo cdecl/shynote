@@ -1,6 +1,7 @@
 import os
 import uuid
 import hashlib
+import secrets
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -261,6 +262,63 @@ def update_user_profile(
     return current_user
 
 
+def generate_unique_api_key(db: Session) -> str:
+    for _ in range(5):
+        candidate = f"shy_{secrets.token_urlsafe(32)}"
+        existing = db.query(models.User).filter(models.User.api_key == candidate).first()
+        if not existing:
+            return candidate
+    raise HTTPException(status_code=500, detail="Failed to generate unique API key")
+
+
+@app.get("/api/api-key", response_model=schemas.ApiKeyResponse)
+def read_api_key(
+    current_user: models.User = Depends(utils.get_current_user),
+):
+    return {"api_key": current_user.api_key}
+
+
+@app.post("/api/api-key", response_model=schemas.ApiKeyResponse)
+def create_api_key(
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(utils.get_current_user),
+):
+    current_user.api_key = generate_unique_api_key(db)
+    db.commit()
+    db.refresh(current_user)
+    return {"api_key": current_user.api_key}
+
+
+@app.delete("/api/api-key", response_model=schemas.ApiKeyResponse)
+def delete_api_key(
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(utils.get_current_user),
+):
+    current_user.api_key = None
+    db.commit()
+    db.refresh(current_user)
+    return {"api_key": None}
+
+
+@app.post("/api/new", response_model=schemas.Note)
+def create_note_via_api_key(
+    note: schemas.ExternalNoteCreate,
+    db: Session = Depends(database.get_db),
+    api_user: models.User = Depends(utils.get_api_key_user),
+):
+    db_note = models.Note(
+        id=str(uuid.uuid4()),
+        title=note.title,
+        content=note.content,
+        folder_id=None,
+        user_id=api_user.id,
+    )
+    db.add(db_note)
+    db.commit()
+    db.refresh(db_note)
+    return db_note
+
+
 # --- CRUD Operations (Protected) ---
 
 
@@ -418,16 +476,22 @@ def create_note(
 @app.get("/api/notes", response_model=List[schemas.Note])
 def read_notes(
     skip: int = 0,
-    limit: int = 100,
+    limit: int = None,
     folder_id: str = None,
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(utils.get_current_user),
 ):
-    query = db.query(models.Note).filter(models.Note.user_id == current_user.id)
+    query = (
+        db.query(models.Note)
+        .filter(models.Note.user_id == current_user.id)
+        .order_by(models.Note.updated_at.desc())
+    )
     if folder_id is not None:
         query = query.filter(models.Note.folder_id == folder_id)
 
-    notes = query.offset(skip).limit(limit).all()
+    if limit is not None:
+        query = query.limit(limit)
+    notes = query.offset(skip).all()
     return notes
 
 
