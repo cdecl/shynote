@@ -1,5 +1,5 @@
 ---
-name: shynote-api-client
+name: shynote
 description: SHYNOTE 외부 공유 API 호출 스킬
 ---
 
