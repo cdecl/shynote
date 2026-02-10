@@ -3,6 +3,16 @@ body {
     
 }
 
+/* Tabular numbers for consistent digit width */
+body,
+textarea,
+.cm-editor,
+.cm-content,
+.markdown-body {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+}
+
 /* Editor Font Settings */
 textarea {
     font-family: 'CloudSansCode', Consolas, monospace !important;
