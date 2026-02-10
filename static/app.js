@@ -107,7 +107,7 @@ const TableUtils = {
 
 	generate(rows, alignments = null) {
 		if (!rows || rows.length === 0) return '';
-		const headers = rows[0].map((_, i) => `Col ${i + 1}`);
+		const headers = rows[0];
 		let md = `| ${headers.join(' | ')} |\n`;
 		md += `| ${headers.map((_, i) => {
 			const a = alignments ? alignments[i] : 'c';
@@ -115,7 +115,7 @@ const TableUtils = {
 			if (a === 'r' || a === 'right') return '---:';
 			return ':---';
 		}).join(' | ')} |\n`;
-		for (const row of rows) {
+		for (const row of rows.slice(1)) {
 			md += `| ${row.join(' | ')} |\n`;
 		}
 		return md;
