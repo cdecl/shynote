@@ -238,6 +238,52 @@ export const fuzzyScore = (text, query) => {
 	return 0; // No match
 };
 
+export const normalizeRecentTabIds = (ids, maxCount = 10) => {
+	if (!Array.isArray(ids)) return [];
+	const seen = new Set();
+	const normalized = [];
+	for (const id of ids) {
+		if (id === null || id === undefined) continue;
+		const key = String(id);
+		if (seen.has(key)) continue;
+		seen.add(key);
+		normalized.push(key);
+		if (normalized.length >= maxCount) break;
+	}
+	return normalized;
+};
+
+export const upsertRecentTabIds = (ids, nextId, maxCount = 10) => {
+	if (nextId === null || nextId === undefined) return normalizeRecentTabIds(ids, maxCount);
+	const nextKey = String(nextId);
+	const base = normalizeRecentTabIds(ids, maxCount).filter(id => id !== nextKey);
+	return [nextKey, ...base].slice(0, maxCount);
+};
+
+export const closeRecentTab = (ids, activeId, closingId) => {
+	const normalized = normalizeRecentTabIds(ids, Number.MAX_SAFE_INTEGER);
+	const closingKey = closingId === null || closingId === undefined ? null : String(closingId);
+	if (!closingKey) {
+		return {
+			tabIds: normalized,
+			activeTabId: activeId === null || activeId === undefined ? null : String(activeId)
+		};
+	}
+
+	const activeKey = activeId === null || activeId === undefined ? null : String(activeId);
+	const closeIndex = normalized.indexOf(closingKey);
+	if (closeIndex === -1) {
+		return { tabIds: normalized, activeTabId: activeKey };
+	}
+
+	const nextTabs = normalized.filter(id => id !== closingKey);
+	let nextActive = activeKey;
+	if (activeKey === closingKey) {
+		nextActive = nextTabs[closeIndex] || nextTabs[closeIndex - 1] || nextTabs[0] || null;
+	}
+	return { tabIds: nextTabs, activeTabId: nextActive };
+};
+
 export const App = {
 	setup() {
 		const STORAGE_KEYS = {
@@ -253,9 +299,12 @@ export const App = {
 			LAST_FOLDER_ID: 'shynote_last_folder_id',
 			LAST_PANEL_MODE: 'shynote_last_panel_mode',
 			NOTE_USAGE_DATA: 'shynote_note_usage_v1',
-			SIDEBAR_WIDTH: 'shynote_sidebar_width'
+			SIDEBAR_WIDTH: 'shynote_sidebar_width',
+			RECENT_TAB_IDS: 'shynote_recent_tab_ids',
+			ACTIVE_TAB_ID: 'shynote_active_tab_id'
 		}
 
+		const MAX_RECENT_TABS = 10
 
 		const sidebarWidth = ref(320)
 		const isResizingSidebar = ref(false)
@@ -406,6 +455,95 @@ export const App = {
 		const pinnedNotes = ref([])
 		const folders = ref([])
 		const selectedNote = ref(null)
+		const openTabIds = ref([])
+		const activeTabId = ref(null)
+
+		const openTabs = computed(() => {
+			const map = new Map(notes.value.map(n => [String(n.id), n]));
+			return openTabIds.value
+				.map(id => {
+					const key = String(id);
+					const note = map.get(key);
+					return note ? { id: key, title: note.title || 'Untitled', note } : null;
+				})
+				.filter(Boolean);
+		})
+
+		const persistTabs = () => {
+			saveUserSetting(STORAGE_KEYS.RECENT_TAB_IDS, JSON.stringify(openTabIds.value));
+			saveUserSetting(STORAGE_KEYS.ACTIVE_TAB_ID, activeTabId.value || '');
+		}
+
+		const openOrActivateTab = (noteId) => {
+			if (noteId === null || noteId === undefined) return;
+			openTabIds.value = upsertRecentTabIds(openTabIds.value, noteId, MAX_RECENT_TABS);
+			activeTabId.value = String(noteId);
+			persistTabs();
+		}
+
+		const resolveSelectedNoteByTab = (tabId) => {
+			if (!tabId) {
+				selectedNote.value = null;
+				return;
+			}
+			const note = notes.value.find(n => String(n.id) === String(tabId));
+			selectedNote.value = note || null;
+		}
+
+		const activateTab = async (tabId) => {
+			if (tabId === null || tabId === undefined) return;
+			const note = notes.value.find(n => String(n.id) === String(tabId));
+			if (!note) return;
+			await selectNote(note);
+		}
+
+		const closeTab = (tabId) => {
+			const next = closeRecentTab(openTabIds.value, activeTabId.value, tabId);
+			openTabIds.value = next.tabIds;
+			activeTabId.value = next.activeTabId;
+			resolveSelectedNoteByTab(activeTabId.value);
+			if (!activeTabId.value) {
+				rightPanelMode.value = 'edit';
+				saveUserSetting(STORAGE_KEYS.LAST_PANEL_MODE, 'edit');
+			}
+			persistTabs();
+		}
+
+		const closeAllTabs = () => {
+			openTabIds.value = [];
+			activeTabId.value = null;
+			selectedNote.value = null;
+			rightPanelMode.value = 'edit';
+			saveUserSetting(STORAGE_KEYS.LAST_PANEL_MODE, 'edit');
+			persistTabs();
+		}
+
+		const pruneTabsWithNotes = () => {
+			const validIds = new Set(notes.value.map(n => String(n.id)));
+			const pruned = openTabIds.value.filter(id => validIds.has(String(id)));
+			const changedTabs = pruned.length !== openTabIds.value.length;
+			const prevActive = activeTabId.value;
+			if (changedTabs) {
+				openTabIds.value = pruned;
+			}
+
+			if (activeTabId.value && !validIds.has(String(activeTabId.value))) {
+				activeTabId.value = openTabIds.value[0] || null;
+			}
+
+			if (selectedNote.value && !validIds.has(String(selectedNote.value.id))) {
+				selectedNote.value = null;
+			}
+
+			if (!activeTabId.value && openTabIds.value.length === 0 && rightPanelMode.value === 'edit') {
+				selectedNote.value = null;
+			}
+
+			if (changedTabs || prevActive !== activeTabId.value) {
+				persistTabs();
+			}
+		}
+
 		const loading = ref(false)
 		const isSyncing = ref(false)
 		const lastSyncTime = ref(null)
@@ -3068,6 +3206,7 @@ export const App = {
 				await fetchUserProfile();
 				await fetchFolders();
 				await fetchNotes();
+				restoreState()
 				// autoSelectNote(); // Disabled: Default to Inbox list view
 			} else if (storedToken === 'guest' && !isGuestMode) {
 				logout();
@@ -3115,6 +3254,7 @@ export const App = {
 				await fetchUserProfile();
 				await fetchFolders();
 				await fetchNotes();
+				restoreState()
 			}
 		}
 
@@ -3124,8 +3264,10 @@ export const App = {
 				const savedFolderId = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.LAST_FOLDER_ID))
 				const savedNoteId = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.LAST_NOTE_ID))
 				const savedPanelMode = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.LAST_PANEL_MODE))
+				const savedTabIdsRaw = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.RECENT_TAB_IDS))
+				const savedActiveTabIdRaw = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.ACTIVE_TAB_ID))
 
-				console.log('[RestoreState] Restoring...', { savedFolderId, savedNoteId, savedPanelMode })
+				console.log('[RestoreState] Restoring...', { savedFolderId, savedNoteId, savedPanelMode, savedTabIdsRaw, savedActiveTabIdRaw })
 
 				if (savedFolderId && savedFolderId !== 'null') {
 					const fid = isNaN(savedFolderId) ? savedFolderId : Number(savedFolderId) // Handle string/number IDs
@@ -3139,23 +3281,45 @@ export const App = {
 					rightPanelMode.value = savedPanelMode
 				}
 
-				if (savedPanelMode === 'edit' && savedNoteId) {
-					const nid = isNaN(savedNoteId) ? savedNoteId : Number(savedNoteId)
-					const note = notes.value.find(n => n.id == nid)
-					if (note) {
-						selectedNote.value = JSON.parse(JSON.stringify(note))
+				let savedTabIds = []
+				try {
+					savedTabIds = normalizeRecentTabIds(JSON.parse(savedTabIdsRaw || '[]'), MAX_RECENT_TABS)
+				} catch (e) {
+					savedTabIds = []
+				}
+				const existingIds = new Set(notes.value.map(n => String(n.id)))
+				openTabIds.value = savedTabIds.filter(id => existingIds.has(String(id)))
 
-						// Sync folder ID just in case
+				if (openTabIds.value.length === 0 && savedPanelMode === 'edit' && savedNoteId) {
+					const nid = String(savedNoteId)
+					if (existingIds.has(nid)) {
+						openTabIds.value = [nid]
+					}
+				}
+
+				const savedActive = savedActiveTabIdRaw ? String(savedActiveTabIdRaw) : null
+				if (savedActive && openTabIds.value.includes(savedActive)) {
+					activeTabId.value = savedActive
+				} else if (savedNoteId && openTabIds.value.includes(String(savedNoteId))) {
+					activeTabId.value = String(savedNoteId)
+				} else {
+					activeTabId.value = openTabIds.value[0] || null
+				}
+
+				if (savedPanelMode === 'edit' && activeTabId.value) {
+					const note = notes.value.find(n => String(n.id) === String(activeTabId.value))
+					if (note) {
+						selectedNote.value = note
 						if (note.folder_id !== undefined) {
 							currentFolderId.value = note.folder_id
 						}
-
-						// Editor will be initialized by watch on selectedNote.value?.id
-					} else {
-						// Note not found? Fallback to list
-						rightPanelMode.value = 'list'
 					}
+				} else if (savedPanelMode === 'edit' && !activeTabId.value) {
+					selectedNote.value = null
 				}
+
+				pruneTabsWithNotes()
+				persistTabs()
 				// console.log('[RestoreState] Completed.')
 			} catch (e) {
 				console.error('[RestoreState] Failed', e)
@@ -4143,6 +4307,7 @@ export const App = {
 			if (conflictMap.value[note.id]) {
 				const { local, server } = conflictMap.value[note.id]
 				selectedNote.value = note;
+				openOrActivateTab(note.id)
 				enterConflictMode(local, server)
 				// Mobile Logic (sidebar close) handled below or by sidebar logic?
 				if (window.innerWidth < 768) {
@@ -4165,6 +4330,8 @@ export const App = {
 
 			// 1. Immediate selection for instant UI
 			selectedNote.value = note
+			activeTabId.value = String(note.id)
+			openOrActivateTab(note.id)
 			// Update sidebar folder selection to match note
 			if (note) {
 				currentFolderId.value = note.folder_id
@@ -4323,11 +4490,7 @@ export const App = {
 					}
 					// 2. Update UI
 					notes.value = notes.value.filter(n => n.id !== id)
-					if (selectedNote.value && selectedNote.value.id === id) {
-						selectedNote.value = null
-						// Return to list view
-						rightPanelMode.value = 'list'
-					}
+					closeTab(id)
 
 					// 3. Local-First Delete
 					if (hasIDB) {
@@ -4342,11 +4505,7 @@ export const App = {
 
 					// Update UI (Remove from current view if not Trash view)
 					if (currentFolderId.value !== TRASH_FOLDER_ID.value) {
-						if (selectedNote.value && selectedNote.value.id === id) {
-							selectedNote.value = null
-							// Return to list view
-							rightPanelMode.value = 'list'
-						}
+						closeTab(id)
 					}
 
 					if (hasIDB) {
@@ -4471,12 +4630,16 @@ export const App = {
 
 		const emptyTrash = async () => {
 			const trashNotes = notes.value.filter(n => n.folder_id === TRASH_FOLDER_ID.value)
+			const trashIds = new Set(trashNotes.map(n => String(n.id)))
 
 			// 1. Clear from UI
 			notes.value = notes.value.filter(n => n.folder_id !== TRASH_FOLDER_ID.value)
-			if (selectedNote.value && selectedNote.value.folder_id === TRASH_FOLDER_ID.value) {
-				selectedNote.value = null
+			openTabIds.value = openTabIds.value.filter(id => !trashIds.has(String(id)))
+			if (activeTabId.value && trashIds.has(String(activeTabId.value))) {
+				activeTabId.value = openTabIds.value[0] || null
+				resolveSelectedNoteByTab(activeTabId.value)
 			}
+			persistTabs()
 
 			// 2. Delete locally
 			if (hasIDB) {
@@ -5177,6 +5340,10 @@ export const App = {
 
 		// Watchers
 		// Watchers
+		watch(notes, () => {
+			pruneTabsWithNotes()
+		})
+
 		watch(() => selectedNote.value?.id, (newId) => {
 			if (newId) {
 				// Wait for v-if to render if needed
@@ -5465,6 +5632,12 @@ export const App = {
 			]
 
 			// Contextual Commands (Editor Mode Only)
+			if (rightPanelMode.value === 'edit' && openTabIds.value.length > 0) {
+				list.push(
+					{ id: 'tabs.closeAll', title: 'Close All Tabs', icon: 'tab_close', desc: '열린 탭 전체 닫기', handler: () => { closeAllTabs(); closeCommandPalette() } }
+				)
+			}
+
 			if (rightPanelMode.value === 'edit' && selectedNote.value) {
 				list.push(
 					{
@@ -5698,6 +5871,8 @@ export const App = {
 			notes,
 			folders,
 			selectedNote,
+			openTabs,
+			activeTabId,
 			// Palette State & Methods
 			showCommandPalette,
 			paletteMode,
@@ -5729,6 +5904,8 @@ export const App = {
 			createNoteInFolder,
 			selectNote,
 			selectNoteById,
+			activateTab,
+			closeTab,
 			onBacklinkClick,
 			deselectNote,
 			deleteNote,

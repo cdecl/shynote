@@ -70,6 +70,19 @@ The main panel switches between **List Mode** and **Editor Mode**.
 - **Tools (Right)**:
   - **Delete Note**: Button (Icon: `delete`) with inline confirmation.
 
+#### Open Tabs Bar (h-9/36px, between Header and Editor)
+- **Position**: Placed between the top toolbar and the editor main content area.
+- **Tabs**: Shows currently opened notes as horizontal tabs.
+- **Per-tab Close**: Each tab has an `X` close button.
+- **Empty State**: Shows `No open tabs` when no tabs are open.
+- **Behavior**:
+  - Click tab: activate and focus that note.
+  - Close active tab: automatically activates a neighboring tab.
+  - Close all tabs: keeps editor mode visible with an empty screen (no forced switch to list mode).
+- **Persistence**:
+  - Recent open tabs are stored in client `localStorage` (max 10).
+  - Last active tab is restored on load if the note still exists.
+
 #### Editor Content
 - **Title Input**: Header-style input with metadata (Date, Folder selector).
 - **Text Area**: CodeMirror 6 Editor / Markdown Preview Pane.
@@ -91,3 +104,5 @@ The main panel switches between **List Mode** and **Editor Mode**.
 
 - **Modes**: Commands, Notes, Folders.
 - **Logic**: Fuzzy matching, keyboard navigation (Arrow keys, Enter, Esc).
+- **Tab Command**:
+  - **Close All Tabs**: Closes all open tabs from the editor context.

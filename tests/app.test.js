@@ -5,7 +5,10 @@ import {
 	generateMarkdownTable,
 	formatMarkdownTable,
 	findTableBounds,
-	fuzzyScore
+	fuzzyScore,
+	normalizeRecentTabIds,
+	upsertRecentTabIds,
+	closeRecentTab
 } from '../static/app.js';
 
 describe('app.js Utilities', () => {
@@ -182,6 +185,41 @@ describe('app.js Utilities', () => {
 			const score1 = fuzzyScore('hello world', 'world');
 			const score2 = fuzzyScore('helloworld', 'world');
 			expect(score1).toBeGreaterThan(score2);
+		});
+	});
+
+	describe('recent tab helpers', () => {
+		it('normalizeRecentTabIds should deduplicate and cap length', () => {
+			const result = normalizeRecentTabIds(['a', 'b', 'a', 3, '4', '5'], 4);
+			expect(result).toEqual(['a', 'b', '3', '4']);
+		});
+
+		it('upsertRecentTabIds should move existing id to front', () => {
+			const result = upsertRecentTabIds(['1', '2', '3'], '2', 10);
+			expect(result).toEqual(['2', '1', '3']);
+		});
+
+		it('upsertRecentTabIds should insert new id and respect max count', () => {
+			const result = upsertRecentTabIds(['1', '2', '3'], '4', 3);
+			expect(result).toEqual(['4', '1', '2']);
+		});
+
+		it('closeRecentTab should keep active tab when closing inactive tab', () => {
+			const result = closeRecentTab(['a', 'b', 'c'], 'a', 'b');
+			expect(result.tabIds).toEqual(['a', 'c']);
+			expect(result.activeTabId).toBe('a');
+		});
+
+		it('closeRecentTab should select neighbor when closing active tab', () => {
+			const result = closeRecentTab(['a', 'b', 'c'], 'b', 'b');
+			expect(result.tabIds).toEqual(['a', 'c']);
+			expect(result.activeTabId).toBe('c');
+		});
+
+		it('closeRecentTab should clear active tab when last tab closes', () => {
+			const result = closeRecentTab(['a'], 'a', 'a');
+			expect(result.tabIds).toEqual([]);
+			expect(result.activeTabId).toBeNull();
 		});
 	});
 });
