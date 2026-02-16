@@ -4443,6 +4443,15 @@ export const App = {
 		const requestDelete = (id, type) => {
 			if (deleteConfirmation.value.id) cancelDelete() // Close existing if any
 
+			if (type === 'note') {
+				const note = notes.value.find(n => n.id === id)
+				// Outside Trash: delete immediately without ASK step.
+				if (note && note.folder_id !== TRASH_FOLDER_ID.value) {
+					deleteNote(id)
+					return
+				}
+			}
+
 			deleteConfirmation.value = { id, type }
 
 			// Add listener on next tick to avoid immediate trigger by the button click itself
@@ -5309,10 +5318,15 @@ export const App = {
 
 			if (offset < -SWIPE_THRESHOLD) {
 				// Swipe Left -> Delete
-				if (confirm('Delete this note?')) {
-					// find note by id and delete
-					const note = notes.value.find(n => n.id === noteId)
-					if (note) deleteNote(note.id) // Pass ID to deleteNote
+				const note = notes.value.find(n => n.id === noteId)
+				if (note) {
+					if (note.folder_id === TRASH_FOLDER_ID.value) {
+						if (confirm('Delete this note permanently?')) {
+							deleteNote(note.id)
+						}
+					} else {
+						deleteNote(note.id)
+					}
 				}
 			} else if (offset > SWIPE_THRESHOLD) {
 				// Swipe Right -> Pin
