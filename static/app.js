@@ -3739,6 +3739,10 @@ export const App = {
 			})
 		}
 
+		const sortFoldersByNameAsc = (items) => {
+			return [...items].sort((a, b) => (a.name || '').toLowerCase().localeCompare((b.name || '').toLowerCase()))
+		}
+
 
 
 		const fetchFolders = async (waitForRemote = true) => {
@@ -4194,7 +4198,7 @@ export const App = {
 
 			// Final fallback: first note in sorted order
 			// First check folders in sorted order
-			const allSortedFolders = sortItems(folders.value)
+			const allSortedFolders = sortedFolders.value
 			for (const folder of allSortedFolders) {
 				const folderNotes = getSortedFolderNotes(folder.id)
 				if (folderNotes.length > 0) {
@@ -5152,7 +5156,7 @@ export const App = {
 				if (f.name && f.name.toLowerCase() === 'trash') return false;
 				return true;
 			})
-			return sortItems(regularFolders)
+			return sortFoldersByNameAsc(regularFolders)
 		})
 
 
