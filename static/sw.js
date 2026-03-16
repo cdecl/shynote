@@ -1,4 +1,4 @@
-const CACHE_NAME = 'shynote-v208';
+const CACHE_NAME = 'shynote-v209';
 const CRITICAL_ASSETS = [
 	'/',
 	'/static/index.html',
