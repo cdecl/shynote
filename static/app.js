@@ -518,6 +518,16 @@ export const App = {
 			persistTabs();
 		}
 
+		const closeOtherTabs = () => {
+			if (!activeTabId.value) {
+				closeAllTabs();
+				return;
+			}
+			openTabIds.value = openTabIds.value.filter(id => String(id) === String(activeTabId.value));
+			resolveSelectedNoteByTab(activeTabId.value);
+			persistTabs();
+		}
+
 		const pruneTabsWithNotes = () => {
 			const validIds = new Set(notes.value.map(n => String(n.id)));
 			const pruned = openTabIds.value.filter(id => validIds.has(String(id)));
@@ -5652,7 +5662,8 @@ export const App = {
 			// Contextual Commands (Editor Mode Only)
 			if (rightPanelMode.value === 'edit' && openTabIds.value.length > 0) {
 				list.push(
-					{ id: 'tabs.closeAll', title: 'Close All Tabs', icon: 'tab_close', desc: '열린 탭 전체 닫기', handler: () => { closeAllTabs(); closeCommandPalette() } }
+					{ id: 'tabs.closeAll', title: 'Close All Tabs', icon: 'tab_close', desc: '열린 탭 전체 닫기', handler: () => { closeAllTabs(); closeCommandPalette() } },
+					{ id: 'tabs.closeOthers', title: 'Close Other Tabs', icon: 'tab_close', desc: '현재 탭 제외 전체 닫기', handler: () => { closeOtherTabs(); closeCommandPalette() } }
 				)
 			}
 
