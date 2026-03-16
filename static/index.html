@@ -521,7 +521,8 @@
                             <div
                                 class="flex items-center gap-2 bg-slate-50 dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg px-2 py-1.5">
                                 <span class="material-symbols-rounded text-[16px] text-slate-400">key</span>
-                                <input type="text" class="flex-1 bg-transparent text-xs font-mono text-slate-700 dark:text-[#f8f8f2] outline-none"
+                                <input type="text"
+                                    class="flex-1 bg-transparent text-xs font-mono text-slate-700 dark:text-[#f8f8f2] outline-none"
                                     :value="apiKeyValue || 'Not Generated'" readonly>
                                 <button @click="copyApiKey" :disabled="!apiKeyValue || apiKeyLoading"
                                     class="px-2 py-1 text-[10px] font-semibold text-white bg-blue-600 disabled:bg-slate-300 disabled:text-slate-500 rounded-md transition-colors">
@@ -584,7 +585,8 @@
                             </button>
                             <button @click="factoryReset"
                                 class="w-full py-2 text-xs font-semibold text-red-600 dark:text-[#ffb3b3] bg-red-50 dark:bg-#3b1f2b/50 hover:bg-red-100 dark:hover:bg-#3b1f2b/70 rounded-lg transition-colors border border-red-200/50 dark:border-#ff5555/40 flex items-center justify-center gap-2">
-                                <span class="material-symbols-rounded text-[16px] dark:text-[#ffb3b3]">delete_forever</span>
+                                <span
+                                    class="material-symbols-rounded text-[16px] dark:text-[#ffb3b3]">delete_forever</span>
                                 Factory Reset (All Data)
                             </button>
                         </div>
@@ -956,7 +958,8 @@
                                             <!-- Inline Delete Confirmation -->
                                             <div v-if="deleteConfirmation.id === folder.id && deleteConfirmation.type === 'folder'"
                                                 class="mx-3 mb-2 p-2 bg-red-50 dark:bg-#3b1f2b/65 border border-red-200 dark:border-#ff5555/50 rounded-lg text-xs flex flex-col gap-2 items-start animate-fade-in">
-                                                <span class="text-red-700 dark:text-[#ff6e6e] font-semibold w-full">Delete
+                                                <span
+                                                    class="text-red-700 dark:text-[#ff6e6e] font-semibold w-full">Delete
                                                     folder & move notes to Trash?</span>
                                                 <div class="flex items-center gap-2 self-end">
                                                     <button @click.stop="confirmDelete"
@@ -1133,82 +1136,57 @@
                             <span class="material-symbols-rounded text-[18px]">arrow_back_ios_new</span>
                         </button>
 
-                        <!-- View Mode Tabs (Moved to Header) -->
-                        <div class="flex bg-slate-100 dark:bg-[#44475a] rounded-lg p-0.5 gap-0.5 ml-1">
-                            <button @click="setViewMode('edit')"
-                                :class="viewMode === 'edit' ? 'bg-white dark:bg-[#6272a4] shadow-sm text-blue-600 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8] hover:text-slate-900 dark:hover:text-slate-300'"
-                                class="px-2 py-0.5 text-[10px] font-bold rounded-md transition-all flex items-center gap-1"
-                                title="Editor">
-                                <span class="material-symbols-rounded text-[14px]">edit</span>
-                                <span v-if="viewMode === 'edit'">Editor</span>
-                            </button>
-                            <button @click="setViewMode('preview')"
-                                :class="viewMode === 'preview' ? 'bg-white dark:bg-[#6272a4] shadow-sm text-blue-600 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8] hover:text-slate-900 dark:hover:text-slate-300'"
-                                class="px-2 py-0.5 text-[10px] font-bold rounded-md transition-all flex items-center gap-1"
-                                title="Preview">
-                                <span class="material-symbols-rounded text-[14px]">visibility</span>
-                                <span v-if="viewMode === 'preview'">Preview</span>
-                            </button>
-                            <button @click="setViewMode('split')"
-                                :class="viewMode === 'split' ? 'bg-white dark:bg-[#6272a4] shadow-sm text-blue-600 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8] hover:text-slate-900 dark:hover:text-slate-300'"
-                                class="px-2 py-0.5 text-[10px] font-bold rounded-md transition-all flex items-center gap-1"
-                                title="Split">
-                                <span class="material-symbols-rounded text-[14px]">view_column</span>
-                                <span v-if="viewMode === 'split'">Split</span>
-                            </button>
-                        </div>
 
-                        <!-- Separator -->
-                        <div class="w-[1px] h-6 bg-slate-200 dark:bg-[#44475a] mx-1"></div>
-
-                        <!-- Delete Note Button & Confirmation -->
-                        <div class="relative">
-                            <button @click.stop="requestDelete(selectedNote.id, 'note')"
-                                class="p-0.5 text-slate-400 dark:text-[#cfcfe8] hover:text-red-500 hover:bg-red-50 dark:hover:bg-#3b1f2b/70 rounded transition-all flex-shrink-0"
-                                title="Delete Note">
-                                <span class="material-symbols-rounded text-[18px]">delete</span>
-                            </button>
-
-                            <!-- Toolbar Confirmation Popup -->
-                            <teleport to="body">
-                                <div v-if="showToolbarDeleteConfirm"
-                                    class="fixed top-14 right-4 mt-2 w-48 bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg shadow-xl p-3 z-[9999] flex flex-col gap-2 animate-fade-in origin-top-right">
-                                    <span class="text-xs font-bold text-slate-700 dark:text-[#f8f8f2] text-center">
-                                        {{ deleteButtonLabel }}
-                                    </span>
-                                    <div class="flex gap-2 justify-center">
-                                        <button @click.stop="confirmDelete"
-                                            class="flex-1 px-2 py-1.5 bg-red-600 text-white rounded text-xs font-bold hover:bg-red-700 transition-colors">Yes</button>
-                                        <button @click.stop="cancelDelete"
-                                            class="flex-1 px-2 py-1.5 bg-slate-200 dark:bg-[#2f3242] text-slate-700 dark:text-[#f8f8f2] rounded text-xs font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">No</button>
-                                    </div>
-                                </div>
-                            </teleport>
-                        </div>
                     </div>
 
                     <div class="flex items-center gap-2 flex-shrink-0">
-                        <!-- Font Size Selector -->
-                        <div class="relative group flex items-center gap-1.5 p-1 rounded bg-transparent">
-                            <span
-                                class="material-symbols-rounded text-slate-400 dark:text-[#cfcfe8] text-[20px] hidden sm:inline-block">text_fields</span>
-                            <div class="relative">
-                                <select :value="fontSize" @change="setFontSize($event.target.value)"
-                                    class="appearance-none bg-slate-100 dark:bg-[#44475a] text-slate-600 dark:text-[#cfcfe8] text-xs font-bold py-1 pl-2 pr-6 rounded-lg cursor-pointer outline-none hover:bg-slate-200 dark:hover:bg-[#6272a4] transition-colors h-[26px]">
-                                    <option value="12">12 px</option>
-                                    <option value="14">14 px</option>
-                                    <option value="16">16 px</option>
-                                    <option value="18">18 px</option>
-                                    <option value="20">20 px</option>
-                                </select>
-                                <div
-                                    class="pointer-events-none absolute right-0 top-0 bottom-0 flex items-center px-1 text-slate-500 dark:text-[#cfcfe8]">
-                                    <span class="material-symbols-rounded text-[16px]">expand_more</span>
+                        <!-- Font Size Selector and View Mode Tabs Container -->
+                        <div class="flex items-center gap-0">
+                            <!-- Font Size Selector -->
+                            <div class="relative group flex items-center gap-1.5 p-1 rounded bg-transparent pr-2">
+                                <div class="relative">
+                                    <select :value="fontSize" @change="setFontSize($event.target.value)"
+                                        class="appearance-none bg-slate-100 dark:bg-[#44475a] text-slate-600 dark:text-[#cfcfe8] text-xs font-bold py-1 pl-2 pr-6 rounded-lg cursor-pointer outline-none hover:bg-slate-200 dark:hover:bg-[#6272a4] transition-colors h-[26px]">
+                                        <option value="12">12 px</option>
+                                        <option value="14">14 px</option>
+                                        <option value="16">16 px</option>
+                                        <option value="18">18 px</option>
+                                        <option value="20">20 px</option>
+                                    </select>
+                                    <div
+                                        class="pointer-events-none absolute right-0 top-0 bottom-0 flex items-center px-1 text-slate-500 dark:text-[#cfcfe8]">
+                                        <span class="material-symbols-rounded text-[16px]">expand_more</span>
+                                    </div>
                                 </div>
+                            </div>
+
+                            <!-- View Mode Tabs (Moved from left side) -->
+                            <div class="flex bg-slate-100 dark:bg-[#44475a] rounded-lg p-0.5 gap-0.5">
+                                <button @click="setViewMode('edit')"
+                                    :class="viewMode === 'edit' ? 'bg-white dark:bg-[#6272a4] shadow-sm text-blue-600 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8] hover:text-slate-900 dark:hover:text-slate-300'"
+                                    class="px-2 py-0.5 text-[10px] font-bold rounded-md transition-all flex items-center gap-1"
+                                    title="Editor">
+                                    <span class="material-symbols-rounded text-[14px]">edit</span>
+                                    <span v-if="viewMode === 'edit'">Editor</span>
+                                </button>
+                                <button @click="setViewMode('preview')"
+                                    :class="viewMode === 'preview' ? 'bg-white dark:bg-[#6272a4] shadow-sm text-blue-600 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8] hover:text-slate-900 dark:hover:text-slate-300'"
+                                    class="px-2 py-0.5 text-[10px] font-bold rounded-md transition-all flex items-center gap-1"
+                                    title="Preview">
+                                    <span class="material-symbols-rounded text-[14px]">visibility</span>
+                                    <span v-if="viewMode === 'preview'">Preview</span>
+                                </button>
+                                <button @click="setViewMode('split')"
+                                    :class="viewMode === 'split' ? 'bg-white dark:bg-[#6272a4] shadow-sm text-blue-600 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8] hover:text-slate-900 dark:hover:text-slate-300'"
+                                    class="px-2 py-0.5 text-[10px] font-bold rounded-md transition-all flex items-center gap-1"
+                                    title="Split">
+                                    <span class="material-symbols-rounded text-[14px]">view_column</span>
+                                    <span v-if="viewMode === 'split'">Split</span>
+                                </button>
                             </div>
                         </div>
 
-                        <div class="w-[1px] h-4 bg-slate-200 dark:bg-[#44475a] mx-1 hidden sm:block"></div>
+                        <!-- <div class="w-[1px] h-4 bg-slate-200 dark:bg-[#44475a] mx-1 hidden sm:block"></div> -->
 
                         <button @click="toggleShare" :disabled="isSharing" :class="selectedNote.is_shared 
                                 ? 'text-blue-600 bg-blue-100 dark:bg-[#bd93f9] dark:text-[#f8f8f2] ring-1 ring-blue-300 dark:ring-[#6272a4]' 
@@ -1229,7 +1207,7 @@
                                 isSharing ? 'Sharing...' : 'Share' }}</span>
                         </button>
                         <!-- Settings/About Removed -->
-                        <div class="w-[1px] h-4 bg-slate-200 dark:bg-[#44475a] mx-1 hidden sm:block"></div>
+                        <!-- <div class="w-[1px] h-4 bg-slate-200 dark:bg-[#44475a] mx-1 hidden sm:block"></div> -->
                         <div class="hidden sm:flex flex-col items-end justify-center select-none text-right">
                             <!-- Moved to Status Bar -->
                         </div>
@@ -1441,7 +1419,8 @@
                                                 <div v-if="deleteConfirmation.id === note.id && deleteConfirmation.type === 'note'"
                                                     class="absolute inset-x-0 bottom-0 top-auto bg-red-50 dark:bg-#3b1f2b/90 p-2 flex items-center justify-between rounded-b-xl z-20 animate-fade-in border-t border-red-200 dark:border-#ff5555/50"
                                                     @click.stop>
-                                                    <span class="text-[10px] font-bold text-red-600 dark:text-[#ff6e6e]">
+                                                    <span
+                                                        class="text-[10px] font-bold text-red-600 dark:text-[#ff6e6e]">
                                                         {{ currentFolderId === TRASH_FOLDER_ID ? 'Delete?' :
                                                         'Trash?' }}
                                                     </span>
@@ -1629,7 +1608,8 @@
                                                 <div v-if="deleteConfirmation.id === note.id && deleteConfirmation.type === 'note'"
                                                     class="absolute inset-x-0 bottom-0 top-auto bg-red-50 dark:bg-#3b1f2b/90 p-2 flex items-center justify-between rounded-b-xl z-20 animate-fade-in border-t border-red-200 dark:border-#ff5555/50"
                                                     @click.stop>
-                                                    <span class="text-[10px] font-bold text-red-600 dark:text-[#ff6e6e]">
+                                                    <span
+                                                        class="text-[10px] font-bold text-red-600 dark:text-[#ff6e6e]">
                                                         {{ currentFolderId === TRASH_FOLDER_ID ? 'Delete?' :
                                                         'Trash?' }}
                                                     </span>
@@ -1919,6 +1899,32 @@
                                                     </div>
                                                 </div>
                                             </div>
+
+                                            <span class="w-[1px] h-3 bg-slate-300 dark:bg-[#44475a]"></span>
+                                            <!-- Delete Note Button & Confirmation (Moved from Top Toolbar) -->
+                                            <div class="relative group">
+                                                <div @click.stop="requestDelete(selectedNote.id, 'note')"
+                                                    class="cursor-pointer px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#2f3242] text-slate-600 dark:text-[#f8f8f2] hover:text-red-500 hover:bg-red-50 dark:hover:bg-#3b1f2b/70 transition-colors text-[11px] flex items-center gap-1">
+                                                    <span class="material-symbols-rounded text-[14px]">delete</span>
+                                                    Delete
+                                                </div>
+
+                                                <!-- Inline Confirmation Popup -->
+                                                <div v-if="showToolbarDeleteConfirm"
+                                                    class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg shadow-xl p-3 z-[50] flex flex-col gap-2 animate-fade-in origin-top-left cursor-default"
+                                                    @click.stop>
+                                                    <span
+                                                        class="text-xs font-bold text-slate-700 dark:text-[#f8f8f2] text-center">
+                                                        {{ deleteButtonLabel }}
+                                                    </span>
+                                                    <div class="flex gap-2 justify-center">
+                                                        <button @click.stop="confirmDelete"
+                                                            class="flex-1 px-2 py-1.5 bg-red-600 text-white rounded text-xs font-bold hover:bg-red-700 transition-colors">Yes</button>
+                                                        <button @click.stop="cancelDelete"
+                                                            class="flex-1 px-2 py-1.5 bg-slate-200 dark:bg-[#2f3242] text-slate-700 dark:text-[#f8f8f2] rounded text-xs font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">No</button>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -2138,6 +2144,32 @@
                                                                 class="material-symbols-rounded text-[16px] text-amber-500">drive_file_move</span>
                                                             <span class="truncate">{{ folder.name }}</span>
                                                         </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <span class="w-[1px] h-3 bg-slate-300 dark:bg-[#44475a]"></span>
+                                            <!-- Delete Note Button & Confirmation (Moved from Top Toolbar) -->
+                                            <div class="relative group">
+                                                <div @click.stop="requestDelete(selectedNote.id, 'note')"
+                                                    class="cursor-pointer px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#2f3242] text-slate-600 dark:text-[#f8f8f2] hover:text-red-500 hover:bg-red-50 dark:hover:bg-#3b1f2b/70 transition-colors text-[11px] flex items-center gap-1">
+                                                    <span class="material-symbols-rounded text-[14px]">delete</span>
+                                                    Delete
+                                                </div>
+
+                                                <!-- Inline Confirmation Popup -->
+                                                <div v-if="showToolbarDeleteConfirm"
+                                                    class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg shadow-xl p-3 z-[50] flex flex-col gap-2 animate-fade-in origin-top-left cursor-default"
+                                                    @click.stop>
+                                                    <span
+                                                        class="text-xs font-bold text-slate-700 dark:text-[#f8f8f2] text-center">
+                                                        {{ deleteButtonLabel }}
+                                                    </span>
+                                                    <div class="flex gap-2 justify-center">
+                                                        <button @click.stop="confirmDelete"
+                                                            class="flex-1 px-2 py-1.5 bg-red-600 text-white rounded text-xs font-bold hover:bg-red-700 transition-colors">Yes</button>
+                                                        <button @click.stop="cancelDelete"
+                                                            class="flex-1 px-2 py-1.5 bg-slate-200 dark:bg-[#2f3242] text-slate-700 dark:text-[#f8f8f2] rounded text-xs font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">No</button>
                                                     </div>
                                                 </div>
                                             </div>
