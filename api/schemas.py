@@ -57,6 +57,18 @@ class ExternalNoteCreate(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
 
+class ExternalNoteUpdate(BaseModel):
+    title: Optional[str] = Field(default=None, alias="titile")
+    content: Optional[str] = None
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class ExternalNoteTitle(BaseModel):
+    id: str
+    title: str
+
+
 # --- App Schemas ---
 
 

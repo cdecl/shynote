@@ -6,7 +6,9 @@ description: SHYNOTE 외부 공유 API 호출 스킬
 # SHYNOTE 외부 공유 API 호출
 
 ## 목적
-- 환경변수 `SHYNOTE_API_KEY`를 사용해 `/api/new`로 노트를 전송한다.
+- 환경변수 `SHYNOTE_API_KEY`를 사용해 외부 공유용 API를 호출한다.
+- `/api/new`로 노트 생성, `/api/update/{note_id}`로 수정, `/api/view/{note_id}`로 보기,
+  `/api/search?q=...`로 제목 검색, `/api/list`로 제목 목록 조회를 제공한다.
 - 요청 헤더는 `Authorization: Bearer <API_KEY>` 형식을 사용한다.
 
 ## 기본 사용법 (curl)
@@ -16,6 +18,38 @@ curl -sS -X POST "https://shynote.vercel.app/api/new" \
   -H "Authorization: Bearer ${SHYNOTE_API_KEY}" \
   -H "Content-Type: application/json" \
   -d '{"title":"External Note","content":"# Hello"}'
+```
+
+## 보기 (curl)
+```bash
+export SHYNOTE_API_KEY="발급받은키"
+NOTE_ID="노트ID"
+curl -sS -X GET "https://shynote.vercel.app/api/view/${NOTE_ID}" \
+  -H "Authorization: Bearer ${SHYNOTE_API_KEY}"
+```
+
+## 수정 (curl)
+```bash
+export SHYNOTE_API_KEY="발급받은키"
+NOTE_ID="노트ID"
+curl -sS -X PUT "https://shynote.vercel.app/api/update/${NOTE_ID}" \
+  -H "Authorization: Bearer ${SHYNOTE_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Updated Title","content":"Updated content"}'
+```
+
+## 제목 검색 (curl)
+```bash
+export SHYNOTE_API_KEY="발급받은키"
+curl -sS -X GET "https://shynote.vercel.app/api/search?q=meeting" \
+  -H "Authorization: Bearer ${SHYNOTE_API_KEY}"
+```
+
+## 제목 목록 (curl)
+```bash
+export SHYNOTE_API_KEY="발급받은키"
+curl -sS -X GET "https://shynote.vercel.app/api/list?limit=50&skip=0" \
+  -H "Authorization: Bearer ${SHYNOTE_API_KEY}"
 ```
 
 ## stdin 사용 예시 (curl)

@@ -319,6 +319,94 @@ def create_note_via_api_key(
     return db_note
 
 
+@app.get("/api/view/{note_id}", response_model=schemas.Note)
+def read_note_via_api_key(
+    note_id: str,
+    db: Session = Depends(database.get_db),
+    api_user: models.User = Depends(utils.get_api_key_user),
+):
+    db_note = (
+        db.query(models.Note)
+        .filter(models.Note.id == note_id, models.Note.user_id == api_user.id)
+        .first()
+    )
+    if db_note is None:
+        raise HTTPException(status_code=404, detail="Note not found")
+    return db_note
+
+
+@app.put("/api/update/{note_id}", response_model=schemas.Note)
+def update_note_via_api_key(
+    note_id: str,
+    note: schemas.ExternalNoteUpdate,
+    db: Session = Depends(database.get_db),
+    api_user: models.User = Depends(utils.get_api_key_user),
+):
+    db_note = (
+        db.query(models.Note)
+        .filter(models.Note.id == note_id, models.Note.user_id == api_user.id)
+        .first()
+    )
+    if db_note is None:
+        raise HTTPException(status_code=404, detail="Note not found")
+
+    update_data = note.dict(exclude_unset=True, by_alias=False)
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No fields to update")
+
+    if "title" in update_data:
+        db_note.title = update_data["title"]
+    if "content" in update_data:
+        db_note.content = update_data["content"]
+
+    db_note.version += 1
+    db.commit()
+    db.refresh(db_note)
+    return db_note
+
+
+@app.get("/api/search", response_model=List[schemas.ExternalNoteTitle])
+def search_notes_via_api_key(
+    q: str,
+    skip: int = 0,
+    limit: int = 20,
+    db: Session = Depends(database.get_db),
+    api_user: models.User = Depends(utils.get_api_key_user),
+):
+    if not q:
+        raise HTTPException(status_code=400, detail="Missing search query")
+
+    pattern = f"%{q}%"
+    notes = (
+        db.query(models.Note)
+        .filter(models.Note.user_id == api_user.id)
+        .filter(models.Note.title.ilike(pattern))
+        .order_by(models.Note.updated_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+    return [{"id": n.id, "title": n.title} for n in notes]
+
+
+@app.get("/api/list", response_model=List[schemas.ExternalNoteTitle])
+def list_notes_via_api_key(
+    skip: int = 0,
+    limit: int = 50,
+    db: Session = Depends(database.get_db),
+    api_user: models.User = Depends(utils.get_api_key_user),
+):
+    notes = (
+        db.query(models.Note)
+        .filter(models.Note.user_id == api_user.id)
+        .order_by(models.Note.updated_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+    return [{"id": n.id, "title": n.title} for n in notes]
+
+
 # --- CRUD Operations (Protected) ---
 
 
