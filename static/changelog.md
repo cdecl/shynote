@@ -1,3 +1,10 @@
+## [0.7.10] - 2026-03-20
+### ✨ Skills 외부 공유 API 확장
+- API Key 기반 외부 공유 API에 **보기/수정/검색/목록** 기능 추가
+- Skills 문서 및 `docs/skills_api.md` 문서 추가
+
+---
+
 ## [0.7.9] - 2026-03-16
 ### 🛠 탭 관리 개선
 - **현재 탭 제외 전체 닫기**: Command Palette에 `Close Other Tabs` 추가
