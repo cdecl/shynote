@@ -15,6 +15,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Post a new SHYNOTE note via API key.")
     parser.add_argument("--title", required=True, help="Note title")
     parser.add_argument("--content", help="Markdown content (if omitted, stdin is used)")
+    parser.add_argument("--id", help="Optional note ID (UUID)")
     parser.add_argument(
         "--base-url",
         default=os.getenv("SHYNOTE_BASE_URL", "http://localhost:8000"),
@@ -29,10 +30,12 @@ def main() -> int:
 
     content = args.content if args.content is not None else read_stdin()
     payload = {"title": args.title, "content": content}
+    if args.id:
+        payload["id"] = args.id
     body = json.dumps(payload).encode("utf-8")
 
     request = urllib.request.Request(
-        f"{args.base_url}/api/new",
+        f"{args.base_url}/api/notes",
         data=body,
         headers={
             "Authorization": f"Bearer {api_key}",

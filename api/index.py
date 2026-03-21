@@ -6,7 +6,7 @@ from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from . import models, schemas, database
 from .auth import manager, utils
 from .storage import storage_service
@@ -300,113 +300,6 @@ def delete_api_key(
     return {"api_key": None}
 
 
-@app.post("/api/new", response_model=schemas.Note)
-def create_note_via_api_key(
-    note: schemas.ExternalNoteCreate,
-    db: Session = Depends(database.get_db),
-    api_user: models.User = Depends(utils.get_api_key_user),
-):
-    db_note = models.Note(
-        id=str(uuid.uuid4()),
-        title=note.title,
-        content=note.content,
-        folder_id=None,
-        user_id=api_user.id,
-    )
-    db.add(db_note)
-    db.commit()
-    db.refresh(db_note)
-    return db_note
-
-
-@app.get("/api/view/{note_id}", response_model=schemas.Note)
-def read_note_via_api_key(
-    note_id: str,
-    db: Session = Depends(database.get_db),
-    api_user: models.User = Depends(utils.get_api_key_user),
-):
-    db_note = (
-        db.query(models.Note)
-        .filter(models.Note.id == note_id, models.Note.user_id == api_user.id)
-        .first()
-    )
-    if db_note is None:
-        raise HTTPException(status_code=404, detail="Note not found")
-    return db_note
-
-
-@app.put("/api/update/{note_id}", response_model=schemas.Note)
-def update_note_via_api_key(
-    note_id: str,
-    note: schemas.ExternalNoteUpdate,
-    db: Session = Depends(database.get_db),
-    api_user: models.User = Depends(utils.get_api_key_user),
-):
-    db_note = (
-        db.query(models.Note)
-        .filter(models.Note.id == note_id, models.Note.user_id == api_user.id)
-        .first()
-    )
-    if db_note is None:
-        raise HTTPException(status_code=404, detail="Note not found")
-
-    update_data = note.dict(exclude_unset=True, by_alias=False)
-    if not update_data:
-        raise HTTPException(status_code=400, detail="No fields to update")
-
-    if "title" in update_data:
-        db_note.title = update_data["title"]
-    if "content" in update_data:
-        db_note.content = update_data["content"]
-
-    db_note.version += 1
-    db.commit()
-    db.refresh(db_note)
-    return db_note
-
-
-@app.get("/api/search", response_model=List[schemas.ExternalNoteTitle])
-def search_notes_via_api_key(
-    q: str,
-    skip: int = 0,
-    limit: int = 20,
-    db: Session = Depends(database.get_db),
-    api_user: models.User = Depends(utils.get_api_key_user),
-):
-    if not q:
-        raise HTTPException(status_code=400, detail="Missing search query")
-
-    pattern = f"%{q}%"
-    notes = (
-        db.query(models.Note)
-        .filter(models.Note.user_id == api_user.id)
-        .filter(models.Note.title.ilike(pattern))
-        .order_by(models.Note.updated_at.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
-    return [{"id": n.id, "title": n.title} for n in notes]
-
-
-@app.get("/api/list", response_model=List[schemas.ExternalNoteTitle])
-def list_notes_via_api_key(
-    skip: int = 0,
-    limit: int = 50,
-    db: Session = Depends(database.get_db),
-    api_user: models.User = Depends(utils.get_api_key_user),
-):
-    notes = (
-        db.query(models.Note)
-        .filter(models.Note.user_id == api_user.id)
-        .order_by(models.Note.updated_at.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
-    return [{"id": n.id, "title": n.title} for n in notes]
-
-
 # --- CRUD Operations (Protected) ---
 
 
@@ -505,7 +398,7 @@ def update_folder(
 def create_note(
     note: schemas.NoteCreate,
     db: Session = Depends(database.get_db),
-    current_user: models.User = Depends(utils.get_current_user),
+    current_user: models.User = Depends(utils.get_any_user),
 ):
     # Verify folder belongs to user if folder_id is provided
     if note.folder_id:
@@ -520,9 +413,12 @@ def create_note(
         if not folder:
             raise HTTPException(status_code=404, detail="Folder not found")
 
+    # Generate ID if not provided (e.g., API key clients)
+    note_id = note.id or utils.uuid7()
+
     # UPSERT: Check if note already exists
     # Check by ID only first to detect collisions even if user_id doesn't match
-    existing_note = db.query(models.Note).filter(models.Note.id == note.id).first()
+    existing_note = db.query(models.Note).filter(models.Note.id == note_id).first()
 
     if existing_note:
         if existing_note.user_id != current_user.id:
@@ -548,7 +444,7 @@ def create_note(
     else:
         # INSERT: Create new note
         db_note = models.Note(
-            id=note.id,
+            id=note_id,
             title=note.title,
             content=note.content,
             folder_id=note.folder_id,
@@ -566,8 +462,9 @@ def read_notes(
     skip: int = 0,
     limit: int = None,
     folder_id: str = None,
+    q: Optional[str] = None,
     db: Session = Depends(database.get_db),
-    current_user: models.User = Depends(utils.get_current_user),
+    current_user: models.User = Depends(utils.get_any_user),
 ):
     query = (
         db.query(models.Note)
@@ -576,6 +473,9 @@ def read_notes(
     )
     if folder_id is not None:
         query = query.filter(models.Note.folder_id == folder_id)
+    if q:
+        pattern = f"%{q}%"
+        query = query.filter(models.Note.title.ilike(pattern))
 
     if limit is not None:
         query = query.limit(limit)
@@ -587,7 +487,7 @@ def read_notes(
 def read_note(
     note_id: str,
     db: Session = Depends(database.get_db),
-    current_user: models.User = Depends(utils.get_current_user),
+    current_user: models.User = Depends(utils.get_any_user),
 ):
     db_note = (
         db.query(models.Note)
@@ -604,7 +504,7 @@ def update_note(
     note_id: str,
     note: schemas.NoteUpdate,
     db: Session = Depends(database.get_db),
-    current_user: models.User = Depends(utils.get_current_user),
+    current_user: models.User = Depends(utils.get_any_user),
 ):
     # Check if note exists
     db_note = (
@@ -686,7 +586,7 @@ def update_note(
 def delete_note(
     note_id: str,
     db: Session = Depends(database.get_db),
-    current_user: models.User = Depends(utils.get_current_user),
+    current_user: models.User = Depends(utils.get_any_user),
 ):
     db_note = (
         db.query(models.Note)
@@ -861,7 +761,7 @@ def reset_account(
 def share_note_toggle(
     note_id: str,
     db: Session = Depends(database.get_db),
-    current_user: models.User = Depends(utils.get_current_user),
+    current_user: models.User = Depends(utils.get_any_user),
 ):
     db_note = (
         db.query(models.Note)

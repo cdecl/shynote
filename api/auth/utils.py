@@ -91,3 +91,45 @@ def get_api_key_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
     return user
+
+
+def get_any_user(
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(database.get_db),
+):
+    if not authorization:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    scheme, _, token = authorization.partition(" ")
+    if scheme.lower() != "bearer" or not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authorization header",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # 1) Try JWT (regular user auth)
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id:
+            user = db.query(models.User).filter(models.User.id == user_id).first()
+            if user is not None:
+                return user
+    except JWTError:
+        pass
+
+    # 2) Fallback to API key
+    user = db.query(models.User).filter(models.User.api_key == token).first()
+    if user is not None:
+        return user
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )

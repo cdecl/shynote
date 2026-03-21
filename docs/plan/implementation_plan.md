@@ -279,7 +279,7 @@ This document tracks the cumulative implementation details of the SHYNOTE projec
 ### 백엔드 체크리스트
 - [x] **User API Key**: `users.api_key` nullable + unique index.
 - [x] **키 관리 엔드포인트**: `GET/POST/DELETE /api/api-key` 조회/생성/삭제.
-- [x] **외부 인바운드**: `POST /api/new` + `Authorization: Bearer <API_KEY>`.
+- [x] **외부 인바운드**: `POST /api/notes` + `Authorization: Bearer <API_KEY>`.
 - [x] **Inbox 처리**: 외부 입력은 `folder_id = null`로 저장되어 Inbox에 표시.
 - [x] **요청 스키마**: `title`/`content` + `titile` alias 허용.
 

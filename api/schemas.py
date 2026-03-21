@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional, List
 
@@ -43,30 +43,11 @@ class AuthRequest(BaseModel):
     token: str
 
 
-# --- API Key & External Inbound ---
+# --- API Key ---
 
 
 class ApiKeyResponse(BaseModel):
     api_key: Optional[str] = None
-
-
-class ExternalNoteCreate(BaseModel):
-    title: str = Field(alias="titile")
-    content: Optional[str] = None
-
-    model_config = ConfigDict(populate_by_name=True)
-
-
-class ExternalNoteUpdate(BaseModel):
-    title: Optional[str] = Field(default=None, alias="titile")
-    content: Optional[str] = None
-
-    model_config = ConfigDict(populate_by_name=True)
-
-
-class ExternalNoteTitle(BaseModel):
-    id: str
-    title: str
 
 
 # --- App Schemas ---
@@ -79,7 +60,7 @@ class NoteBase(BaseModel):
 
 
 class NoteCreate(NoteBase):
-    id: str  # Client generated UUID
+    id: Optional[str] = None  # Optional client-generated UUID
 
 
 class NoteUpdate(BaseModel):
