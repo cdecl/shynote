@@ -14,12 +14,12 @@
 ### 2.1 빌드 시스템 도입 (Build System)
 - **도구**: `Vite` (Library Mode)
 - **설정 파일**: `vite.config.js`
-- **목적**: `src/vendor.js`를 진입점으로 하여 모든 외부 라이브러리(Vue, CodeMirror 등)를 `static/dist/vendor.js`로 번들링합니다.
+- **목적**: `src/vendor.js`를 진입점으로 하여 모든 외부 라이브러리(Vue, Draftly 등)를 `static/dist/vendor.js`로 번들링합니다.
 
 ### 2.2 의존성 관리 (Dependency Management)
 - **`package.json`**: 모든 외부 라이브러리를 NPM 패키지로 관리합니다.
 - **`src/vendor.js`**: `app.js`에서 사용하는 라이브러리들을 모아서 re-export 합니다.
-- **`src/codemirror-deps.js`**: 복잡한 CodeMirror 모듈들을 별도로 관리합니다.
+- **`src/codemirror-deps.js`**: Draftly에서 사용하는 CodeMirror 모듈들을 별도로 관리합니다.
 
 ### 2.3 소스 코드 변경 (Source Code)
 - **`static/app.js`**:

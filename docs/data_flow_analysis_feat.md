@@ -319,7 +319,7 @@ User:
   email (String, unique)
   provider (String)  # "google"
   is_dark_mode (Boolean)
-  view_mode (String)  # "edit", "split", "preview"
+  view_mode (String)  # "live", "view"
 
 Folder:
   id (String, PK)

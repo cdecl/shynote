@@ -30,10 +30,9 @@
 | `shynote_last_note_id` | 마지막으로 열었던 노트 ID | `42` |
 | `shynote_font_size` | 에디터 폰트 크기 | `16` (px) |
 | `shynote_word_wrap` | 자동 줄바꿈 사용 여부 | `true` |
-| `shynote_split_ratio` | 화면 분할 비율 | `50` (%) |
 | `shynote_sort_field` | 정렬 기준 필드 | `updated_at` |
 | `shynote_sort_direction` | 정렬 방향 | `desc` |
-| `shynote_view_mode` | 에디터 보기 모드 | `edit`, `preview`, `split` |
+| `shynote_view_mode` | 에디터 보기 모드 | `live`, `view` |
 | `shynote_list_view_mode` | 목록 보기 모드 (그리드/리스트) | `grid`, `list` |
 | `shynote_note_usage_v1` | 노트 사용 통계 (최근 작업 노트용) | `{"id": {"count": 1, "lastUsed": 123}}` |
 

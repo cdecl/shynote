@@ -75,11 +75,11 @@ The main panel switches between **List Mode** and **Editor Mode**.
 - **Tools (Right)** — grouped in a flex container:
   - **Font Size Selector + View Mode Tabs Container** (`gap-0` — no gap between them):
     - **Font Size Selector**: Dropdown (12px, 14px, 16px, 18px, 20px). Styled as `h-[26px]`.
-    - **View Mode Tabs**: Segmented Control — `edit` (`edit` icon), `preview` (`visibility` icon), `split` (`view_column` icon). Active tab label text is shown only for the active tab.
+    - **View Mode Tabs**: Segmented Control — `live` (`edit` icon), `view` (`visibility` icon). Active tab label text is shown only for the active tab.
   - **Share Button (`ios_share`)**: Shows spinner when sharing. Shows \"Share\" text label (hidden on mobile). Active state when note is shared.
 
 #### Open Tabs Bar (h-6/24px, between Header and Editor)
-- **Position**: Placed between the top toolbar and the editor main content area. Shown only in `edit` mode.
+- **Position**: Placed between the top toolbar and the editor main content area. Shown only in `live` mode.
 - **Tabs**: Shows currently opened notes as horizontal tabs (`w-36` fixed width).
 - **Per-tab Close**: Each tab has an `X` (`close`) close button.
 - **Empty State**: Shows `No open tabs` when no tabs are open.
@@ -99,16 +99,12 @@ The main panel switches between **List Mode** and **Editor Mode**.
   - **Backlinks Dropdown** (`link` icon): Shows backlink count. Clicking opens a dropdown list of notes that link to the current note.
   - **Folder Selector** (`drive_file_move` icon): Inline dropdown button showing current folder name. Click opens a dropdown to move the note to Inbox or another folder.
   - **Delete Button** (`delete` icon + \"Delete\" label): Opens an inline confirmation popup (Yes/No) below the button.
-- **Text Area**: CodeMirror 6 Editor (when `viewMode !== 'preview'`) / Markdown Preview Pane.
+- **Text Area**: Draftly Editor (when `viewMode !== 'view'`) / Markdown Preview Pane.
 - **Conflict Banner**: Shown above title when a sync conflict is detected. Offers \"Keep My Version\" / \"Use Server Version\" actions.
 
-#### Split View
-- **Resize Handle**: A draggable column divider between editor and preview panes (PC only, `view_column` mode).
-- **Preview Pane**: Shows rendered Markdown. Double-click to switch to edit mode. Title and metadata displayed at the top of preview pane as well (read-only).
-
 #### Editor Bottom Toolbar (Floating on Mobile / Static on PC)
-- **Search (`search`)**: Triggers CodeMirror Find Panel.
-- **Formatting Buttons**: Paste, Bold, Italic, Strikethrough, Code (Inline/Block toggle), Blockquote, Bullet List, Task List, Table (Edit/Create), Link.
+- **Search (`search`)**: Triggers Draftly Find Panel.
+- **Formatting Buttons**: Paste, Bold, Italic, Strikethrough, Code (Inline/Block toggle), Blockquote, Bullet List, Task List, Link.
 - **Heading Buttons**: H1, H2, H3.
 
 #### Status Bar (Bottom Footer, h-6)

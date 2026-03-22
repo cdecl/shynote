@@ -16,11 +16,11 @@ SHYNOTE는 복잡한 설정 없이 사용자가 온전히 글쓰기에만 몰입
 - **스마트 검색 이력**: 최근 검색어 10개를 저장하고, 화살표 키나 드롭다운으로 빠르게 재사용합니다.
 - **자동 업데이트**: 배포 즉시 브라우저가 새 버전을 감지하여 자동으로 최신화합니다.
 ### 1. 강력한 편집 경험 (Advanced Editor)
-- **CodeMirror 6 엔진**: 최신 에디터 엔진을 탑재하여 대용량 문서에서도 고성능을 보장합니다.
+- **Draftly 엔진 (CodeMirror 6 기반)**: 최신 에디터 엔진을 탑재하여 대용량 문서에서도 고성능을 보장합니다.
 - **VS Code 스타일 편집**: 다중 커서, 줄 이동(`Alt+↑/↓`), 박스 선택(`Shift+Alt+드래그`) 등 전문 개발 도구급 편집 기능을 지원합니다.
 - **상세 가이드**: 전체 단축키 및 마우스 활용법은 **[단축키 및 마우스 가이드](docs/keyboard_mouse_guide.md)**를 참고하세요.
 - **슬래시 커맨드 (/) & 자동 완성**: `/table`, `/datetime` 등 단축 명령어로 반복 작업을 자동화합니다.
-- **Ultra-thin Table Editor**: 마크다운 표를 팝업 창에서 엑셀처럼 직관적으로 편집할 수 있습니다.
+- **Draftly 테이블 렌더링**: 마크다운 표를 Draftly 위젯으로 렌더링하고 인라인 상호작용을 지원합니다.
 
 ### 2. 데이터 안정성 및 동기화 (Local-first)
 - **로컬 우선 아키텍처**: 모든 작업은 IndexedDB에 즉시 저장되어 오프라인에서도 완벽하게 작동합니다.
@@ -43,7 +43,7 @@ SHYNOTE는 복잡한 설정 없이 사용자가 온전히 글쓰기에만 몰입
 ## 🛠 SHYNOTE의 기술적 기반 (Tech Stack)
 
 사용자의 몰입을 뒷받침하는 기술 스택은 다음과 같습니다.
-- **Frontend**: Vue.js 3, TailwindCSS, CodeMirror 6
+- **Frontend**: Vue.js 3, TailwindCSS, Draftly (CodeMirror 6 기반)
 - **Backend**: FastAPI, PostgreSQL (SQLAlchemy 기반)
 - **Storage**: IndexedDB (로컬), PostgreSQL (서버)
 - **Feature**: PWA (Installable Web App)
