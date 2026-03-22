@@ -36,10 +36,12 @@
 
 ### 3.1 평소 개발 (Daily Development)
 - **빌드 불필요**: `app.js`, `style.css`, `index.html` 수정 시에는 빌드가 필요 없습니다.
+- **Draftly 즉시 반영**: `static/draftly/**` 수정은 빌드 없이 즉시 반영됩니다.
 - 그냥 브라우저 새로고침만 하면 됩니다. (Vite 개발 서버가 아닌, 기존 방식 그대로 사용)
 
 ### 3.2 라이브러리 추가/변경 시 (Dependency Changes)
 `package.json`에 새로운 라이브러리를 추가하거나 `src/vendor.js`를 수정했을 때만 빌드가 필요합니다.
+Draftly는 `static/draftly/`에 고정된 내부 모듈로 취급합니다.
 
 ```bash
 # 1. 의존성 설치

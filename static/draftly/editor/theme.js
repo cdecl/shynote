@@ -1,17 +1,11 @@
 import { EditorView } from "@codemirror/view";
-
-/**
- * Base theme for draftly styling
- * Note: Layout styles are scoped under .cm-draftly which is added by the view plugin
- */
-export const draftlyBaseTheme = EditorView.theme({
+const draftlyBaseTheme = EditorView.theme({
   // Container styles - only apply when view plugin is enabled
   "&.cm-draftly": {
     fontSize: "inherit",
     lineHeight: "inherit",
-    backgroundColor: "transparent !important",
+    backgroundColor: "transparent !important"
   },
-
   "&.cm-draftly .cm-content": {
     width: "100%",
     maxWidth: "inherit",
@@ -19,25 +13,17 @@ export const draftlyBaseTheme = EditorView.theme({
     margin: "0",
     fontFamily: "inherit",
     fontSize: "inherit",
-    lineHeight: "inherit",
+    lineHeight: "inherit"
   },
-
   "&.cm-draftly .cm-content .cm-line": {
-    paddingInline: 0,
+    paddingInline: 0
   },
-
   "&.cm-draftly .cm-content .cm-widgetBuffer": {
-    display: "none !important",
-  },
+    display: "none !important"
+  }
 });
-
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { tags as t } from "@lezer/highlight";
-
-/**
- * Reset syntax highlighting for markdown elements
- * Used to disable theme colors for markdown syntax
- */
 const markdownResetStyle = HighlightStyle.define([
   {
     tag: [
@@ -51,13 +37,16 @@ const markdownResetStyle = HighlightStyle.define([
       t.list,
       t.meta,
       t.contentSeparator,
-      t.labelName,
+      t.labelName
     ],
     color: "inherit",
     fontWeight: "inherit",
     fontStyle: "inherit",
-    textDecoration: "none",
-  },
+    textDecoration: "none"
+  }
 ]);
-
-export const markdownResetExtension = syntaxHighlighting(markdownResetStyle, { fallback: false });
+const markdownResetExtension = syntaxHighlighting(markdownResetStyle, { fallback: false });
+export {
+  draftlyBaseTheme,
+  markdownResetExtension
+};

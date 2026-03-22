@@ -1,4 +1,5 @@
-import { Vue, CodeMirror, draftly, allPlugins, ThemeEnum, openDB, marked, hljs, mermaid, polyfill, scrollBehaviourDragImageTranslateOverride, jsyaml, sha256 } from './dist/vendor.js';
+import { Vue, CodeMirror, openDB, marked, hljs, mermaid, polyfill, scrollBehaviourDragImageTranslateOverride, jsyaml, sha256 } from './dist/vendor.js';
+import { draftly, allPlugins, ThemeEnum } from './draftly/index.js';
 import { LocalDB } from "./local_db.js";
 
 const { createApp, ref, computed, watch, nextTick, onMounted, onUnmounted, onBeforeUnmount } = Vue;
@@ -2018,7 +2019,13 @@ export const App = {
 				// Respect font size set on the editor container
 				"&": { fontSize: "inherit" },
 				"&.cm-draftly": { fontSize: "inherit !important" },
-				"&.cm-draftly .cm-content": { fontSize: "inherit !important" },
+				"&.cm-draftly .cm-content": {
+					fontSize: "inherit !important",
+					width: "100% !important",
+					maxWidth: "none !important",
+					margin: "0 !important",
+					padding: "16px !important"
+				},
 				// Draftly widgets (table/cell/etc.) should follow editor font size
 				"&.cm-draftly .cm-draftly-table-widget": { fontSize: "inherit !important" },
 				"&.cm-draftly .cm-draftly-table": { fontSize: "inherit !important" },
@@ -2026,7 +2033,10 @@ export const App = {
 				".cm-scroller": { fontFamily: "'Pretendard', monospace" },
 				".cm-content": {
 					fontFamily: "'Pretendard', monospace",
-					padding: "5px 10px !important"
+					width: "100%",
+					maxWidth: "none",
+					margin: "0",
+					padding: "16px !important"
 				},
 				// Autocomplete Tooltip Font
 				".cm-tooltip, .cm-tooltip-autocomplete": {

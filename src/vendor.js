@@ -8,7 +8,6 @@ import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scro
 import jsyaml from 'js-yaml';
 import sha256 from 'crypto-js/sha256';
 import { markdownTable } from 'markdown-table';
-import { draftly, allPlugins, ThemeEnum } from 'draftly/src';
 
 import * as CodeMirror from './codemirror-deps.js';
 
@@ -23,8 +22,5 @@ export {
 	jsyaml,
 	sha256,
 	markdownTable,
-	CodeMirror,
-	draftly,
-	allPlugins,
-	ThemeEnum
+	CodeMirror
 };
