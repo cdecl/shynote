@@ -3,6 +3,7 @@ import { openDB } from 'idb';
 import { marked } from 'marked';
 import hljs from 'highlight.js';
 import mermaid from 'mermaid';
+import katex from 'katex';
 import { polyfill } from 'mobile-drag-drop';
 import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scroll-behaviour';
 import jsyaml from 'js-yaml';
@@ -17,6 +18,7 @@ export {
 	marked,
 	hljs,
 	mermaid,
+	katex,
 	polyfill,
 	scrollBehaviourDragImageTranslateOverride,
 	jsyaml,
