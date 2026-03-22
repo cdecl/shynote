@@ -136,7 +136,7 @@ The main panel switches between **List Mode** and **Editor Mode**.
 - Used for confirmations and folder creation.
 - Supports: delete confirmation, create folder, file info, share note (copy link / stop sharing).
 
-### Table Editor Modal
-- **Spreadsheet Grid**: Editable header and body cells.
-- **Column Alignment**: Left / Center / Right per column.
-- **Row/Col Management**: Add Row, Add Col, Delete Row, Delete Col.
+### Table Editor (Draftly Inline)
+- **Inline Rendering**: Tables are rendered as Draftly widgets directly in the editor.
+- **Inline Editing**: Click on cells to edit content directly.
+- **Row/Col Management**: Add/Delete rows and columns via toolbar buttons.
