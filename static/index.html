@@ -595,107 +595,6 @@
             </div>
         </div>
 
-        <!-- Table Editor Modal -->
-        <div v-if="tableEditorState.isOpen"
-            class="fixed inset-0 bg-black/50 z-[1001] flex items-center justify-center backdrop-blur-sm"
-            @click.self="closeTableEditor">
-            <div
-                class="bg-white dark:bg-[#2f3242] rounded-lg shadow-2xl w-[90vw] max-w-lg max-h-[80vh] flex flex-col border border-slate-300 dark:border-[#6272a4]">
-                <!-- Header -->
-                <div
-                    class="flex items-center justify-between px-4 py-1 border-b border-slate-200 dark:border-[#6272a4] bg-slate-50/50 dark:bg-[#2f3242]">
-                    <h3 class="text-xs font-semibold text-slate-500 dark:text-[#cfcfe8] uppercase tracking-wider">Edit
-                        Table</h3>
-                    <button @click="closeTableEditor"
-                        class="p-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-[#6272a4] transition-colors">
-                        <span class="material-symbols-rounded text-slate-400 text-[18px]">close</span>
-                    </button>
-                </div>
-                <!-- Spreadsheet Grid -->
-                <div class="flex-1 overflow-auto p-1 bg-white dark:bg-[#2f3242]">
-                    <table class="w-full border-collapse">
-                        <thead>
-                            <tr>
-                                <th v-for="(col, cIdx) in tableEditorState.colCount" :key="'header-'+cIdx"
-                                    class="border border-slate-300 dark:border-[#6272a4] bg-slate-100/80 dark:bg-[#44475a] p-0 min-w-[80px]">
-                                    <div class="flex flex-col">
-                                        <input v-model="tableEditorState.tableData[0][cIdx]"
-                                            @focus="tableEditorState.activeCol = cIdx; tableEditorState.activeRow = 0"
-                                            class="w-full bg-transparent text-center text-[11px] font-bold text-slate-700 dark:text-[#f8f8f2] outline-none px-1.5 py-1"
-                                            :style="{ textAlign: tableEditorState.alignments[cIdx] === 'c' ? 'center' : (tableEditorState.alignments[cIdx] === 'r' ? 'right' : 'left') }">
-                                        <div class="flex justify-center gap-1 pb-1 transition-opacity">
-                                            <button @click="setColumnAlignment(cIdx, 'l')"
-                                                class="hover:text-blue-500 transition-colors"
-                                                :class="tableEditorState.alignments[cIdx] === 'l' ? 'text-blue-500' : 'text-slate-400'">
-                                                <span
-                                                    class="material-symbols-rounded text-[14px]">format_align_left</span>
-                                            </button>
-                                            <button @click="setColumnAlignment(cIdx, 'c')"
-                                                class="hover:text-blue-500 transition-colors"
-                                                :class="tableEditorState.alignments[cIdx] === 'c' ? 'text-blue-500' : 'text-slate-400'">
-                                                <span
-                                                    class="material-symbols-rounded text-[14px]">format_align_center</span>
-                                            </button>
-                                            <button @click="setColumnAlignment(cIdx, 'r')"
-                                                class="hover:text-blue-500 transition-colors"
-                                                :class="tableEditorState.alignments[cIdx] === 'r' ? 'text-blue-500' : 'text-slate-400'">
-                                                <span
-                                                    class="material-symbols-rounded text-[14px]">format_align_right</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="(row, rIdx) in tableEditorState.tableData.slice(1)" :key="'row-'+rIdx">
-                                <td v-for="(cell, cIdx) in row" :key="'cell-'+rIdx+'-'+cIdx"
-                                    class="border border-slate-300 dark:border-[#6272a4] p-0">
-                                    <input v-model="tableEditorState.tableData[rIdx + 1][cIdx]"
-                                        @focus="tableEditorState.activeCol = cIdx; tableEditorState.activeRow = rIdx + 1"
-                                        :style="{ textAlign: tableEditorState.alignments[cIdx] === 'c' ? 'center' : (tableEditorState.alignments[cIdx] === 'r' ? 'right' : 'left') }"
-                                        class="w-full bg-transparent text-[11px] text-slate-700 dark:text-[#cfcfe8] outline-none px-1.5 py-1.5"
-                                        @change="tableEditorState.tableData[rIdx + 1][cIdx] = $event.target.value">
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <!-- Footer -->
-                <div
-                    class="flex items-center justify-between px-4 py-1 border-t border-slate-100 dark:border-[#44475a]/50 bg-white dark:bg-[#2f3242]">
-                    <div class="flex gap-1">
-                        <button @click="addTableRow"
-                            class="px-1.5 py-0.5 text-[10px] font-medium text-slate-400 dark:text-[#cfcfe8] bg-white dark:bg-[#2f3242] border border-slate-200/60 dark:border-[#6272a4]/40 rounded hover:bg-slate-50 dark:hover:bg-[#6272a4]/20 transition-colors">
-                            + Row
-                        </button>
-                        <button @click="addTableCol"
-                            class="px-1.5 py-0.5 text-[10px] font-medium text-slate-400 dark:text-[#cfcfe8] bg-white dark:bg-[#2f3242] border border-slate-200/60 dark:border-[#6272a4]/40 rounded hover:bg-slate-50 dark:hover:bg-[#6272a4]/20 transition-colors">
-                            + Col
-                        </button>
-                        <button @click="deleteActiveRow"
-                            class="px-1.5 py-0.5 text-[10px] font-medium text-red-300/70 border border-slate-200/60 dark:border-[#6272a4]/40 rounded hover:bg-red-50 dark:hover:bg-#3b1f2b/60 transition-colors">
-                            - Row
-                        </button>
-                        <button @click="deleteActiveCol"
-                            class="px-1.5 py-0.5 text-[10px] font-medium text-red-300/70 border border-slate-200/60 dark:border-[#6272a4]/40 rounded hover:bg-red-50 dark:hover:bg-#3b1f2b/60 transition-colors">
-                            - Col
-                        </button>
-                    </div>
-                    <div class="flex gap-2">
-                        <button @click="closeTableEditor"
-                            class="px-2 py-1 text-[11px] font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
-                            Cancel
-                        </button>
-                        <button @click="saveTableEditor(tableEditorState.tableData)"
-                            class="px-2.5 py-0.5 text-[11px] font-medium text-white bg-blue-500/80 hover:bg-blue-600/80 rounded transition-colors shadow-sm">
-                            Save
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Sidebar -->
         <!-- Sidebar -->
 
@@ -1162,26 +1061,19 @@
 
                             <!-- View Mode Tabs (Moved from left side) -->
                             <div class="flex bg-slate-100 dark:bg-[#44475a] rounded-lg p-0.5 gap-0.5">
-                                <button @click="setViewMode('edit')"
-                                    :class="viewMode === 'edit' ? 'bg-white dark:bg-[#6272a4] shadow-sm text-blue-600 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8] hover:text-slate-900 dark:hover:text-slate-300'"
+                                <button @click="setViewMode(viewMode === 'live' ? 'view' : 'live')"
+                                    :class="viewMode === 'live' ? 'bg-white dark:bg-[#6272a4] shadow-sm text-blue-600 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8] hover:text-slate-900 dark:hover:text-slate-300'"
                                     class="px-2 py-0.5 text-[10px] font-bold rounded-md transition-all flex items-center gap-1"
-                                    title="Editor">
+                                    title="Live">
                                     <span class="material-symbols-rounded text-[14px]">edit</span>
-                                    <span v-if="viewMode === 'edit'">Editor</span>
+                                    <span>Live</span>
                                 </button>
-                                <button @click="setViewMode('preview')"
-                                    :class="viewMode === 'preview' ? 'bg-white dark:bg-[#6272a4] shadow-sm text-blue-600 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8] hover:text-slate-900 dark:hover:text-slate-300'"
+                                <button @click="setViewMode(viewMode === 'view' ? 'live' : 'view')"
+                                    :class="viewMode === 'view' ? 'bg-white dark:bg-[#6272a4] shadow-sm text-blue-600 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8] hover:text-slate-900 dark:hover:text-slate-300'"
                                     class="px-2 py-0.5 text-[10px] font-bold rounded-md transition-all flex items-center gap-1"
-                                    title="Preview">
+                                    title="View">
                                     <span class="material-symbols-rounded text-[14px]">visibility</span>
-                                    <span v-if="viewMode === 'preview'">Preview</span>
-                                </button>
-                                <button @click="setViewMode('split')"
-                                    :class="viewMode === 'split' ? 'bg-white dark:bg-[#6272a4] shadow-sm text-blue-600 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8] hover:text-slate-900 dark:hover:text-slate-300'"
-                                    class="px-2 py-0.5 text-[10px] font-bold rounded-md transition-all flex items-center gap-1"
-                                    title="Split">
-                                    <span class="material-symbols-rounded text-[14px]">view_column</span>
-                                    <span v-if="viewMode === 'split'">Split</span>
+                                    <span>View</span>
                                 </button>
                             </div>
                         </div>
@@ -1752,13 +1644,12 @@
 
                         <!-- Safe Guard: Only render editor if a note is selected -->
                         <div v-if="selectedNote" class="flex-1 flex flex-col overflow-hidden">
-                            <!-- Split Columns -->
-                            <div class="flex-1 flex overflow-hidden split-container">
+                            <!-- Live / View -->
+                            <div class="flex-1 flex overflow-hidden">
                                 <!-- Editor -->
-                                <div v-show="viewMode !== 'preview'"
+                                <div v-show="viewMode !== 'view'"
                                     class="flex-1 flex flex-col border-r border-slate-100 dark:border-[#44475a] relative group"
-                                    :class="isDarkMode ? 'dark' : ''"
-                                    :style="viewMode === 'split' ? { flex: `0 0 ${splitRatio}%` } : {}">
+                                    :class="isDarkMode ? 'dark' : ''">
 
                                     <!-- Conflict Banner -->
                                     <div v-if="conflictState.isConflict"
@@ -1994,12 +1885,6 @@
                                                     title="Task List">
                                                     <span class="material-symbols-rounded text-[18px]">check_box</span>
                                                 </button>
-                                                <button @click="triggerTableEditor()"
-                                                    class="p-1 hover:bg-slate-100 dark:hover:bg-[#44475a] rounded transition-colors"
-                                                    title="Table (Create/Edit)">
-                                                    <span
-                                                        class="material-symbols-rounded text-[18px]">table_chart</span>
-                                                </button>
                                                 <div
                                                     class="w-[1px] h-4 bg-slate-200 dark:bg-[#6272a4] mx-1 flex-shrink-0">
                                                 </div>
@@ -2031,15 +1916,9 @@
                                     </div>
                                 </div>
 
-                                <!-- Resize Handle -->
-                                <div v-if="viewMode === 'split'"
-                                    class="w-2 hover:bg-blue-500 cursor-col-resize z-10 hidden md:block transition-colors opacity-0 hover:opacity-100 dark:hover:bg-[#8be9fd]"
-                                    :class="{ 'opacity-100 bg-blue-500': false }" @mousedown="startResize"></div>
-
                                 <!-- Preview Pane -->
                                 <div class="flex flex-col h-full bg-white dark:bg-[#2f3242] border-l border-slate-200 dark:border-[#44475a] overflow-hidden transition-all duration-300 relative"
-                                    :class="{ 'hidden': viewMode === 'edit', 'flex-1': viewMode === 'preview' }"
-                                    :style="viewMode === 'split' ? { flex: `0 0 ${100 - splitRatio}%` } : {}">
+                                    :class="{ 'hidden': viewMode === 'live', 'flex-1': viewMode === 'view' }">
                                     <!-- Preview Content -->
                                     <div class="flex-none p-4 pb-2 bg-white dark:bg-[#2f3242] z-10 shrink-0">
                                         <h1

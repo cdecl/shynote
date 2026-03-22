@@ -297,13 +297,13 @@ html, body { min-height: 100%; height: 100%; }
 .thin-scrollbar:hover::-webkit-scrollbar-thumb { background-color: #cbd5e1; }
 .dark .thin-scrollbar:hover::-webkit-scrollbar-thumb { background-color: #44475a; }
 
-.cm-scroller::-webkit-scrollbar, .split-container .markdown-body::-webkit-scrollbar,
+.cm-scroller::-webkit-scrollbar,
 .layout-container .sidebar::-webkit-scrollbar, .notes-list::-webkit-scrollbar { width: 10px; height: 10px; }
-.cm-scroller::-webkit-scrollbar-thumb, .split-container .markdown-body::-webkit-scrollbar-thumb,
+.cm-scroller::-webkit-scrollbar-thumb,
 .layout-container .sidebar::-webkit-scrollbar-thumb, .notes-list::-webkit-scrollbar-thumb {
     background-color: rgba(0, 0, 0, 0.1); border: 3px solid transparent; background-clip: content-box; border-radius: 99px;
 }
-.dark .cm-scroller::-webkit-scrollbar-thumb, .dark .split-container .markdown-body::-webkit-scrollbar-thumb,
+.dark .cm-scroller::-webkit-scrollbar-thumb,
 .dark .layout-container .sidebar::-webkit-scrollbar-thumb, .dark .notes-list::-webkit-scrollbar-thumb {
     background-color: rgba(255, 255, 255, 0.1);
 }

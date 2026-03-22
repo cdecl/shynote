@@ -1,20 +1,19 @@
-import { Vue, CodeMirror, openDB, marked, hljs, mermaid, polyfill, scrollBehaviourDragImageTranslateOverride, jsyaml, sha256, markdownTable } from './dist/vendor.js';
+import { Vue, CodeMirror, draftly, allPlugins, ThemeEnum, openDB, marked, hljs, mermaid, polyfill, scrollBehaviourDragImageTranslateOverride, jsyaml, sha256 } from './dist/vendor.js';
 import { LocalDB } from "./local_db.js";
 
 const { createApp, ref, computed, watch, nextTick, onMounted, onUnmounted, onBeforeUnmount } = Vue;
 
-const { EditorView, keymap, highlightSpecialChars, drawSelection, dropCursor, crosshairCursor, lineNumbers, highlightActiveLineGutter, placeholder, rectangularSelection, Decoration, ViewPlugin, StateField } = CodeMirror;
+const { EditorView, keymap, placeholder, Decoration, ViewPlugin } = CodeMirror;
 const { EditorState, Compartment, EditorSelection } = CodeMirror;
 const { markdown, markdownLanguage } = CodeMirror;
-const { languages } = CodeMirror;
-const { defaultKeymap, history, historyKeymap } = CodeMirror;
-const { vscodeKeymap } = CodeMirror;
-const { search, searchKeymap, highlightSelectionMatches, setSearchQuery, SearchQuery, findNext, findPrevious, openSearchPanel, closeSearchPanel } = CodeMirror;
+const { search, searchKeymap, openSearchPanel, closeSearchPanel } = CodeMirror;
 const { githubLight } = CodeMirror;
 const { dracula, nord } = CodeMirror;
-const { syntaxHighlighting, defaultHighlightStyle, bracketMatching } = CodeMirror;
-const { closeBrackets, closeBracketsKeymap, autocompletion, snippet } = CodeMirror;
+const { snippet } = CodeMirror;
 const { MergeView } = CodeMirror;
+
+// Draftly integration toggle (experimental)
+const useDraftly = true;
 
 
 // UUID v7 Generator (Time-ordered)
@@ -41,108 +40,15 @@ export const uuidv7 = () => {
 		.replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/, '$1-$2-$3-$4-$5');
 };
 
-// Table Editor Utilities
-const TableUtils = {
-	parse(markdownText) {
-		if (!markdownText) return null;
-		const lines = markdownText.trim().split('\n').filter(line => line.includes('|'));
-		if (lines.length < 2) return null;
-
-		const allRows = lines.map(line => line.split('|').slice(1, -1).map(cell => cell.trim()));
-		const separatorRowIndex = allRows.findIndex(row => row.every(cell => /^[:\-\s]+$/.test(cell)));
-		let alignments = [];
-
-		if (separatorRowIndex !== -1) {
-			alignments = allRows[separatorRowIndex].map(cell => {
-				const hasLeft = cell.startsWith(':');
-				const hasRight = cell.endsWith(':');
-				if (hasLeft && hasRight) return 'c';
-				return hasRight ? 'r' : (hasLeft ? 'l' : 'c');
-			});
-		}
-
-		const dataRows = allRows.filter((_, idx) => idx !== separatorRowIndex);
-		if (dataRows.length === 0) return null;
-		if (alignments.length === 0) alignments = dataRows[0].map(() => 'c');
-
-		return { rows: dataRows, alignments };
-	},
-
-	format(markdownText, forcedAlignments = null) {
-		const parsed = TableUtils.parse(markdownText);
-		if (!parsed) return markdownText;
-
-		const { rows: dataRows, alignments: originalAlignments } = parsed;
-		const alignments = forcedAlignments || originalAlignments;
-
-		// Calculate max width for each column
-		const colWidths = dataRows[0].map((_, c) => {
-			return Math.max(3, ...dataRows.map(row => (row[c] ? row[c].length : 0)));
-		});
-
-		// Format data rows
-		const formattedDataLines = dataRows.map(row => {
-			const cells = row.map((cell, c) => {
-				const w = colWidths[c];
-				const align = alignments[c];
-				if (align === 'c') {
-					const left = Math.floor((w - cell.length) / 2);
-					return ' '.repeat(left) + cell + ' '.repeat(w - cell.length - left);
-				}
-				return align === 'r' ? cell.padStart(w, ' ') : cell.padEnd(w, ' ');
-			});
-			return '| ' + cells.join(' | ') + ' |';
-		});
-
-		// Format separator row
-		const sepCells = colWidths.map((w, c) => {
-			const align = alignments[c];
-			if (align === 'c') return ':' + '-'.repeat(w - 2) + ':';
-			return align === 'r' ? '-'.repeat(w - 1) + ':' : ':' + '-'.repeat(w - 1);
-		});
-		const sepLine = '| ' + sepCells.join(' | ') + ' |';
-
-		return [formattedDataLines[0], sepLine, ...formattedDataLines.slice(1)].join('\n');
-	},
-
-	generate(rows, alignments = null) {
-		if (!rows || rows.length === 0) return '';
-		const headers = rows[0];
-		let md = `| ${headers.join(' | ')} |\n`;
-		md += `| ${headers.map((_, i) => {
-			const a = alignments ? alignments[i] : 'c';
-			if (a === 'c' || a === 'center') return ':---:';
-			if (a === 'r' || a === 'right') return '---:';
-			return ':---';
-		}).join(' | ')} |\n`;
-		for (const row of rows.slice(1)) {
-			md += `| ${row.join(' | ')} |\n`;
-		}
-		return md;
-	},
-
-	findBounds(doc, position) {
-		const text = doc.toString();
-		const lines = text.split('\n');
-		const lineNo = doc.lineAt(position).number;
-
-		if (!lines[lineNo - 1].includes('|')) return null;
-
-		let start = lineNo, end = lineNo;
-		while (start > 1 && lines[start - 2].includes('|')) start--;
-		while (end < lines.length && lines[end].includes('|')) end++;
-
-		const from = doc.line(start).from;
-		const to = doc.line(end).to;
-		return { from, to, text: text.substring(from, to) };
-	}
+// View mode helpers (Live/View)
+export const normalizeViewMode = (mode) => {
+	return mode === 'view' || mode === 'preview' ? 'view' : 'live';
 };
 
-// Compatibility Exports
-export const parseMarkdownTable = TableUtils.parse;
-export const generateMarkdownTable = TableUtils.generate;
-export const formatMarkdownTable = TableUtils.format;
-export const findTableBounds = TableUtils.findBounds;
+export const toggleViewMode = (mode) => {
+	return normalizeViewMode(mode) === 'live' ? 'view' : 'live';
+};
+
 
 // Search & Highlight Utilities
 const SearchUtils = {
@@ -294,8 +200,6 @@ export const App = {
 			SORT_DIRECTION: 'shynote_sort_direction',
 			LAST_NOTE_ID: 'shynote_last_note_id',
 			USER_ID: 'shynote_user_id',
-
-			SPLIT_RATIO: 'shynote_split_ratio',
 			LAST_FOLDER_ID: 'shynote_last_folder_id',
 			LAST_PANEL_MODE: 'shynote_last_panel_mode',
 			NOTE_USAGE_DATA: 'shynote_note_usage_v1',
@@ -319,7 +223,6 @@ export const App = {
 		const searchQuery = ref('')
 		const searchOptions = ref({ caseSensitive: false, useRegex: false })
 		const isSearchOpen = ref(false)
-		const splitRatio = ref(50)
 		const isDarkMode = ref(true) // Initialized from localStorage later or below
 		const isAuthenticated = ref(false)
 		const fontSize = ref('14')
@@ -337,17 +240,6 @@ export const App = {
 			confirmText: 'Confirm',
 			cancelText: 'Cancel',
 			data: null
-		})
-		const tableEditorState = ref({
-			isOpen: false,
-			tableData: [],
-			alignments: [],
-			tableFrom: 0,
-			tableTo: 0,
-			rowCount: 0,
-			colCount: 0,
-			activeRow: 0,
-			activeCol: 0
 		})
 		const hasIDB = typeof window !== 'undefined' && 'indexedDB' in window
 
@@ -424,9 +316,6 @@ export const App = {
 			const field = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.SORT_FIELD)) || 'title'
 			const dir = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.SORT_DIRECTION)) || 'asc'
 			sortOption.value = { field, direction: dir }
-
-			const ratio = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.SPLIT_RATIO))
-			splitRatio.value = Number(ratio) || 50
 
 			const sWidth = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.SIDEBAR_WIDTH))
 			sidebarWidth.value = Number(sWidth) || 320
@@ -608,7 +497,7 @@ export const App = {
 		// Multi-Select State
 		const isSelectionMode = ref(false)
 		const selectedNoteIds = ref(new Set())
-		const viewMode = ref(localStorage.getItem('shynote_view_mode') || 'edit')
+		const viewMode = ref(normalizeViewMode(localStorage.getItem('shynote_view_mode')))
 		watch(viewMode, (newVal) => {
 			localStorage.setItem('shynote_view_mode', newVal)
 		})
@@ -959,18 +848,6 @@ export const App = {
 		// New UI States
 
 
-		// Split Resize Logic
-		const { start: startResize } = UIUtils.createResizeHandler({
-			onResize: (e) => {
-				const container = document.querySelector('.split-container')
-				if (!container) return
-				const containerRect = container.getBoundingClientRect()
-				const newRatio = ((e.clientX - containerRect.left) / containerRect.width) * 100
-				if (newRatio > 20 && newRatio < 80) splitRatio.value = newRatio
-			},
-			onStop: () => saveUserSetting(STORAGE_KEYS.SPLIT_RATIO, splitRatio.value)
-		})
-
 		const { start: startSidebarResize } = UIUtils.createResizeHandler({
 			onResize: (e) => {
 				const newWidth = e.clientX
@@ -984,7 +861,7 @@ export const App = {
 
 		// Guest Store (InMemory DB) - Defined Early for authenticatedFetch
 		const guestStore = {
-			user: { id: 'guest', email: 'guest@shynote.app', is_dark_mode: true, view_mode: 'split' },
+			user: { id: 'guest', email: 'guest@shynote.app', is_dark_mode: true, view_mode: 'live' },
 			notes: [
 				{ id: 999, title: 'Welcome to Guest Mode', content: '# Guest Mode\n\nChanges here are **temporary** (in-memory) and will be lost on refresh unless we added localStorage persistence (not implemented yet).\n\nTry creating folders and notes!', folder_id: null, user_id: 'guest', updated_at: new Date().toISOString(), created_at: new Date().toISOString() }
 			],
@@ -1871,6 +1748,21 @@ export const App = {
 		}
 
 		const themeCompartment = new Compartment()
+		const draftlyCompartment = new Compartment()
+
+		const buildDraftlyExtensions = (isDark) => {
+			return draftly({
+				theme: isDark ? ThemeEnum.DARK : ThemeEnum.LIGHT,
+				plugins: allPlugins,
+				// Enable Draftly's built-in styles so widgets/marks render as intended
+				baseStyles: true,
+				defaultKeybindings: true,
+				history: true,
+				indentWithTab: true,
+				highlightActiveLine: true,
+				lineWrapping: true
+			});
+		}
 		const wordWrapCompartment = new Compartment()
 
 		const initEditor = () => { // Gemini was here
@@ -1949,13 +1841,6 @@ export const App = {
 							detail: "Code Block",
 							apply: snippet("```${1:lang}\n${2:code}\n```")
 						},
-						{
-							label: "/table-new",
-							detail: "Create New Table",
-							apply: (view, completion, from, to) => {
-								triggerTableEditor();
-							}
-						}
 					]
 				}
 			}
@@ -2058,31 +1943,25 @@ export const App = {
 
 
 
+			const draftlyExtensions = buildDraftlyExtensions(isDarkMode.value);
+
 			const startState = EditorState.create({
 				doc: selectedNote.value ? (selectedNote.value.content || '') : '',
 				extensions: [
-					history(),
-					rectangularSelection(),
-					crosshairCursor(),
-					drawSelection(),
+					// Draftly core
+					draftlyCompartment.of(draftlyExtensions),
+
+					// Optional UX helpers
 					search({ top: true }), // Move to Top
-					dropCursor(),
-					EditorState.allowMultipleSelections.of(true),
-					markdown({ base: markdownLanguage, codeLanguages: languages }), // Markdown logic
-					// syntaxHighlighting(defaultHighlightStyle, { fallback: true }), // Removed to favor Theme's highlighting
-					bracketMatching(),
-					closeBrackets(),
-					autocompletion({ override: [variableCompletion, backlinkCompletion] }),
+
+					// App-specific plugins
 					backlinkPlugin,
-					highlightActiveLineGutter(),
-					highlightSpecialChars(),
 					placeholder('Start typing...'),
+
 					// Base Theme Compartment (Nord for Dark / GitHub Light)
 					themeCompartment.of(isDarkMode.value ? getDarkTheme() : githubLight),
 					// Custom Theme Compartment (Colors, Fonts, Overrides)
 					customThemeCompartment.of(getCustomTheme(isDarkMode.value)),
-					// Word Wrap Compartment
-					wordWrapCompartment.of(EditorView.lineWrapping),
 
 					// Update Listener (Sync)
 					EditorView.updateListener.of((update) => {
@@ -2104,7 +1983,6 @@ export const App = {
 						drop: (event, view) => handleEditorDrop(event, view),
 						focus: () => { isEditModeActive.value = true },
 						blur: () => { isEditModeActive.value = false },
-						dblclick: (event, view) => handleEditorDoubleClick(view, event),
 						// Tap handler for mobile - treat as double-click after delay
 						tap: (event, view) => {
 							// Let single tap pass through for text selection
@@ -2120,11 +1998,7 @@ export const App = {
 						{ key: "Mod-k", run: () => { formatText('link'); return true } },
 						{ key: "Mod-f", run: () => { openSearchPanel(editorView.value); return true } }
 					]),
-					keymap.of(vscodeKeymap.filter(k => !k.key?.startsWith("Mod-k"))), // VS Code Keymap Priority
-					keymap.of(closeBracketsKeymap),
-					keymap.of(historyKeymap),
-					keymap.of(searchKeymap),
-					keymap.of(defaultKeymap)
+					keymap.of(searchKeymap)
 				]
 			})
 
@@ -2132,7 +2006,6 @@ export const App = {
 				state: startState,
 				parent: editorRef.value
 			})
-			window.tableEditorView = editorView.value
 		}
 
 		// --- Theme Logic ---
@@ -2142,7 +2015,14 @@ export const App = {
 
 		const getCustomTheme = (isDark) => {
 			return EditorView.theme({
+				// Respect font size set on the editor container
 				"&": { fontSize: "inherit" },
+				"&.cm-draftly": { fontSize: "inherit !important" },
+				"&.cm-draftly .cm-content": { fontSize: "inherit !important" },
+				// Draftly widgets (table/cell/etc.) should follow editor font size
+				"&.cm-draftly .cm-draftly-table-widget": { fontSize: "inherit !important" },
+				"&.cm-draftly .cm-draftly-table": { fontSize: "inherit !important" },
+				"&.cm-draftly .cm-draftly-table td, &.cm-draftly .cm-draftly-table th": { fontSize: "inherit !important" },
 				".cm-scroller": { fontFamily: "'Pretendard', monospace" },
 				".cm-content": {
 					fontFamily: "'Pretendard', monospace",
@@ -2342,7 +2222,8 @@ export const App = {
 				editorView.value.dispatch({
 					effects: [
 						themeCompartment.reconfigure(newVal ? getDarkTheme() : githubLight),
-						customThemeCompartment.reconfigure(getCustomTheme(newVal))
+						customThemeCompartment.reconfigure(getCustomTheme(newVal)),
+						...(useDraftly ? [draftlyCompartment.reconfigure(buildDraftlyExtensions(newVal))] : [])
 					]
 				})
 			}
@@ -2631,7 +2512,7 @@ export const App = {
 			const source = e.target
 			if (!source) return
 
-			if (previewRef.value && viewMode.value !== 'edit') {
+			if (previewRef.value && viewMode.value !== 'live') {
 				if (source === scrollDOM || (source.classList && source.classList.contains('cm-scroller'))) {
 					// CM -> Preview
 					const percentage = source.scrollTop / (source.scrollHeight - source.clientHeight)
@@ -3086,124 +2967,6 @@ export const App = {
 			closeModal()
 		}
 
-		// Table Editor Methods
-		const openTableEditor = (tableData, alignments, from, to) => {
-			tableEditorState.value = {
-				isOpen: true,
-				tableData: tableData,
-				alignments: alignments,
-				tableFrom: from,
-				tableTo: to,
-				rowCount: tableData.length,
-				colCount: tableData[0] ? tableData[0].length : 0,
-				activeRow: 0,
-				activeCol: 0
-			}
-		}
-
-		const closeTableEditor = () => {
-			tableEditorState.value.isOpen = false
-		}
-
-		const saveTableEditor = (editedData) => {
-			if (typeof window.tableEditorView !== 'undefined' && window.tableEditorView) {
-				// Pass alignments to TableUtils.format to ensure markers are generated
-				const markdown = TableUtils.format(TableUtils.generate(editedData, tableEditorState.value.alignments), tableEditorState.value.alignments)
-				window.tableEditorView.dispatch({
-					changes: {
-						from: tableEditorState.value.tableFrom,
-						to: tableEditorState.value.tableTo,
-						insert: markdown
-					}
-				})
-			}
-			closeTableEditor()
-		}
-
-		const deleteTableRow = (rowIndex) => {
-			if (tableEditorState.value.tableData.length <= 2) {
-				alert('Cannot delete: table must have at least one data row')
-				return
-			}
-			tableEditorState.value.tableData.splice(rowIndex, 1)
-			tableEditorState.value.rowCount--
-			tableEditorState.value.activeRow = Math.min(tableEditorState.value.activeRow, tableEditorState.value.tableData.length - 1)
-		}
-
-		const deleteTableCol = (colIndex) => {
-			if (tableEditorState.value.colCount <= 1) {
-				alert('Cannot delete: table must have at least one column')
-				return
-			}
-			tableEditorState.value.tableData.forEach(row => row.splice(colIndex, 1))
-			tableEditorState.value.alignments.splice(colIndex, 1)
-			tableEditorState.value.colCount--
-			tableEditorState.value.activeCol = Math.min(tableEditorState.value.activeCol, tableEditorState.value.colCount - 1)
-		}
-
-		const setColumnAlignment = (colIndex, align) => {
-			if (tableEditorState.value.alignments) {
-				tableEditorState.value.alignments[colIndex] = align
-			}
-		}
-
-		const deleteActiveRow = () => {
-			deleteTableRow(tableEditorState.value.activeRow)
-		}
-
-		const addTableRow = () => {
-			tableEditorState.value.tableData.push(new Array(tableEditorState.value.colCount).fill(''))
-			tableEditorState.value.rowCount++
-		}
-
-		const addTableCol = () => {
-			tableEditorState.value.colCount++
-			tableEditorState.value.tableData.forEach(row => row.push(''))
-			tableEditorState.value.alignments.push('l')
-		}
-
-		const deleteActiveCol = () => {
-			deleteTableCol(tableEditorState.value.activeCol)
-		}
-
-		const triggerTableEditor = () => {
-			const view = editorView.value;
-			if (!view) return;
-
-			const pos = view.state.selection.main.head;
-			const bounds = TableUtils.findBounds(view.state.doc, pos);
-			if (bounds && bounds.text) {
-				const parsed = TableUtils.parse(bounds.text);
-				if (parsed) {
-					openTableEditor(parsed.rows, parsed.alignments, bounds.from, bounds.to);
-					return;
-				}
-			}
-
-			// Fallback to New Table
-			const emptyTable = [
-				['Header 1', 'Header 2'],
-				['Value 1', 'Value 2']
-			];
-			openTableEditor(emptyTable, ['c', 'c'], pos, pos);
-		};
-
-		const handleEditorDoubleClick = (view, event) => {
-			const position = view.posAtDOM(event.target)
-			if (position === null) return
-
-			const { from, to, text } = TableUtils.findBounds(view.state.doc, position)
-			if (text) {
-				const parsedTable = TableUtils.parse(text)
-				if (parsedTable) {
-					openTableEditor(parsedTable.rows, parsedTable.alignments, from, to)
-					return true
-				}
-			}
-			return false
-		}
-
-
 		const checkAuth = async () => {
 			const urlParams = new URLSearchParams(window.location.search);
 			const isGuestMode = urlParams.get('mode') === 'guest';
@@ -3389,15 +3152,11 @@ export const App = {
 					switch (e.key) {
 						case '1':
 							e.preventDefault()
-							setViewMode('edit')
+							setViewMode('live')
 							break
 						case '2':
 							e.preventDefault()
-							setViewMode('preview')
-							break
-						case '3':
-							e.preventDefault()
-							setViewMode('split')
+							setViewMode('view')
 							break
 						case 'p': // Cmd+P for Command Palette
 							e.preventDefault()
@@ -3661,7 +3420,8 @@ export const App = {
 				editorView.value.dispatch({
 					effects: [
 						themeCompartment.reconfigure(isDarkMode.value ? getDarkTheme() : githubLight),
-						customThemeCompartment.reconfigure(getCustomTheme(isDarkMode.value))
+						customThemeCompartment.reconfigure(getCustomTheme(isDarkMode.value)),
+						...(useDraftly ? [draftlyCompartment.reconfigure(buildDraftlyExtensions(isDarkMode.value))] : [])
 					]
 				})
 			}
@@ -3676,23 +3436,20 @@ export const App = {
 		}
 
 		const cycleViewMode = () => {
-			if (viewMode.value === 'split') viewMode.value = 'edit'
-			else if (viewMode.value === 'edit') viewMode.value = 'preview'
-			else viewMode.value = 'split'
-
+			viewMode.value = toggleViewMode(viewMode.value)
 			updateUserProfile({ view_mode: viewMode.value })
 		}
 
 		const setViewMode = (mode) => {
-			viewMode.value = mode
-			updateUserProfile({ view_mode: mode })
+			viewMode.value = normalizeViewMode(mode)
+			updateUserProfile({ view_mode: viewMode.value })
 
 		}
 
 		const handlePreviewDoubleClick = (event) => {
-			// Only switch to editor mode if currently in preview mode
-			if (viewMode.value === 'preview') {
-				setViewMode('edit')
+			// Only switch to live mode if currently in view mode
+			if (viewMode.value === 'view') {
+				setViewMode('live')
 				// Focus the editor after switching
 				nextTick(() => {
 					const editorViewInstance = editorView.value
@@ -4147,7 +3904,7 @@ export const App = {
 
 				// Switch to Edit Mode (New Layout)
 				rightPanelMode.value = 'edit'
-				viewMode.value = 'edit' // Reset to Editor Tab
+				viewMode.value = 'live' // Reset to Live Tab
 
 				// Close sidebar on mobile for better UX
 				if (window.innerWidth < 768) {
@@ -5408,7 +5165,10 @@ export const App = {
 		watch(isDarkMode, (val) => {
 			if (editorView.value) {
 				editorView.value.dispatch({
-					effects: themeCompartment.reconfigure(val ? getDarkTheme() : [])
+					effects: [
+						themeCompartment.reconfigure(val ? getDarkTheme() : []),
+						...(useDraftly ? [draftlyCompartment.reconfigure(buildDraftlyExtensions(val))] : [])
+					]
 				})
 			}
 		})
@@ -5682,13 +5442,7 @@ export const App = {
 					},
 					{ id: 'note.move', title: 'Move Note', icon: 'drive_file_move', desc: '폴더 이동', handler: () => setPaletteMode('move-dest') },
 					{ id: 'note.delete', title: 'Delete Note', icon: 'delete', desc: '파일 삭제', handler: () => { requestDelete(selectedNote.value.id, 'note'); closeCommandPalette() }, shortcut: 'Cmd+Backspace' },
-					{ id: 'view.mode', title: 'Switch View Mode', icon: 'view_agenda', desc: '보기 모드 전환 (Split / Edit / Preview)', handler: () => { cycleViewMode(); closeCommandPalette() } },
-					{
-						id: 'note.editTable', title: 'Edit Table', icon: 'table_chart', desc: '현재 표 편집 또는 신규 생성', handler: () => {
-							triggerTableEditor();
-							closeCommandPalette();
-						}
-					},
+					{ id: 'view.mode', title: 'Switch View Mode', icon: 'view_agenda', desc: '보기 모드 전환 (Live / View)', handler: () => { cycleViewMode(); closeCommandPalette() } },
 					{ id: 'sys.info', title: 'Show File Info', icon: 'info', desc: '글자수, 수정일 등 상세 정보', handler: () => { closeCommandPalette(); setTimeout(() => showFileInfo(), 100) } }
 				)
 			}
@@ -6016,18 +5770,6 @@ export const App = {
 			modalState,
 			closeModal,
 			confirmAction,
-			tableEditorState,
-			openTableEditor,
-			closeTableEditor,
-			saveTableEditor,
-			deleteTableRow,
-			deleteTableCol,
-			deleteActiveRow,
-			deleteActiveCol,
-			addTableRow,
-			addTableCol,
-			setColumnAlignment,
-			handleEditorDoubleClick,
 			handlePreviewDoubleClick,
 			showSignpost,
 			signpost,
@@ -6091,10 +5833,8 @@ export const App = {
 			getPlainContent,
 			guestMode: computed(() => !isAuthenticated.value),
 			// Config
-			splitRatio,
 			sidebarWidth,
 			startSidebarResize,
-			startResize,
 			hasIDB,
 			isSyncing,
 			conflictState,
@@ -6136,8 +5876,7 @@ export const App = {
 			handleNoteTouchEnd,
 			isMobile,
 			isEditModeActive,
-			conflictMap,
-			triggerTableEditor
+			conflictMap
 		}
 	}
 };

@@ -25,6 +25,7 @@
 		"@uiw/codemirror-theme-github": "^4.23.0",
 		"@uiw/codemirror-theme-nord": "^4.23.0",
 		"crypto-js": "^4.2.0",
+		"draftly": "file:vendor/draftly",
 		"highlight.js": "^11.9.0",
 		"idb": "^7.1.1",
 		"js-yaml": "^4.1.0",
