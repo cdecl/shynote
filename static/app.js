@@ -4,7 +4,7 @@ import { LocalDB } from "./local_db.js";
 
 const { createApp, ref, computed, watch, nextTick, onMounted, onUnmounted, onBeforeUnmount } = Vue;
 
-const { EditorView, keymap, placeholder, Decoration, ViewPlugin } = CodeMirror;
+const { EditorView, keymap, placeholder, Decoration, ViewPlugin, rectangularSelection, crosshairCursor } = CodeMirror;
 const { EditorState, Compartment, EditorSelection } = CodeMirror;
 const { markdown, markdownLanguage } = CodeMirror;
 const { search, searchKeymap, openSearchPanel, closeSearchPanel } = CodeMirror;
@@ -1999,7 +1999,11 @@ export const App = {
 						{ key: "Mod-k", run: () => { formatText('link'); return true } },
 						{ key: "Mod-f", run: () => { openSearchPanel(editorView.value); return true } }
 					]),
-					keymap.of(searchKeymap)
+					keymap.of(searchKeymap),
+					rectangularSelection({
+						eventFilter: (event) => event.altKey && event.shiftKey
+					}),
+					crosshairCursor({ key: "Alt" })
 				]
 			})
 
@@ -2055,7 +2059,7 @@ export const App = {
 				".cm-cursor, .cm-dropCursor": { borderLeftColor: isDark ? "#8be9fd" : "#0969da" },
 				"&.cm-focused .cm-cursor": { borderLeftColor: isDark ? "#8be9fd" : "#0969da" },
 				"&.cm-focused .cm-selectionBackground, ::selection": {
-					backgroundColor: isDark ? "rgba(68, 71, 90, 0.6) !important" : "#b6e3ff !important" // Dracula selection for Dark
+					backgroundColor: isDark ? "rgba(139, 233, 253, 0.28) !important" : "#b6e3ff !important"
 				},
 
 				// Search Match Colors (Dracula)

@@ -308,7 +308,7 @@ html, body { min-height: 100%; height: 100%; }
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-.dark .cm-editor .cm-selectionBackground, .dark .cm-editor ::selection { background-color: rgba(68, 71, 90, 0.6) !important; }
+.dark .cm-editor .cm-selectionBackground, .dark .cm-editor ::selection { background-color: rgba(139, 233, 253, 0.28) !important; }
 .search-highlight { background-color: rgba(255, 235, 59, 0.5); border-radius: 2px; }
 .dark .search-highlight { background-color: rgba(241, 250, 140, 0.45); color: #282a36; }
 
