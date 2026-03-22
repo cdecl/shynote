@@ -1059,22 +1059,16 @@
                                 </div>
                             </div>
 
-                            <!-- View Mode Tabs (Moved from left side) -->
-                            <div class="flex bg-slate-100 dark:bg-[#44475a] rounded-lg p-0.5 gap-0.5">
-                                <button @click="setViewMode(viewMode === 'live' ? 'view' : 'live')"
-                                    :class="viewMode === 'live' ? 'bg-white dark:bg-[#6272a4] shadow-sm text-blue-600 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8] hover:text-slate-900 dark:hover:text-slate-300'"
-                                    class="px-2 py-0.5 text-[10px] font-bold rounded-md transition-all flex items-center gap-1"
-                                    title="Live">
-                                    <span class="material-symbols-rounded text-[14px]">edit</span>
-                                    <span>Live</span>
-                                </button>
-                                <button @click="setViewMode(viewMode === 'view' ? 'live' : 'view')"
-                                    :class="viewMode === 'view' ? 'bg-white dark:bg-[#6272a4] shadow-sm text-blue-600 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8] hover:text-slate-900 dark:hover:text-slate-300'"
-                                    class="px-2 py-0.5 text-[10px] font-bold rounded-md transition-all flex items-center gap-1"
-                                    title="View">
-                                    <span class="material-symbols-rounded text-[14px]">visibility</span>
-                                    <span>View</span>
-                                </button>
+                            <div class="relative">
+                                <select :value="viewMode" @change="setViewMode($event.target.value)"
+                                    class="appearance-none bg-slate-100 dark:bg-[#44475a] text-slate-600 dark:text-[#cfcfe8] text-[11px] font-bold py-1 pl-2 pr-6 rounded-lg cursor-pointer outline-none hover:bg-slate-200 dark:hover:bg-[#6272a4] transition-colors h-[26px]">
+                                    <option value="live">Live</option>
+                                    <option value="view">View</option>
+                                    <option value="code">Code</option>
+                                </select>
+                                <div class="pointer-events-none absolute right-0 top-0 bottom-0 flex items-center px-1 text-slate-500 dark:text-[#cfcfe8]">
+                                    <span class="material-symbols-rounded text-[14px]">expand_more</span>
+                                </div>
                             </div>
                         </div>
 
@@ -1918,7 +1912,7 @@
 
                                 <!-- Preview Pane -->
                                 <div class="flex flex-col h-full bg-white dark:bg-[#2f3242] border-l border-slate-200 dark:border-[#44475a] overflow-hidden transition-all duration-300 relative"
-                                    :class="{ 'hidden': viewMode === 'live', 'flex-1': viewMode === 'view' }">
+                                    :class="{ 'hidden': viewMode !== 'view', 'flex-1': viewMode === 'view' }">
                                     <!-- Preview Content -->
                                     <div class="flex-none p-4 pb-2 bg-white dark:bg-[#2f3242] z-10 shrink-0">
                                         <h1

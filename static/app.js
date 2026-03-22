@@ -41,9 +41,10 @@ export const uuidv7 = () => {
 		.replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/, '$1-$2-$3-$4-$5');
 };
 
-// View mode helpers (Live/View)
 export const normalizeViewMode = (mode) => {
-	return mode === 'view' || mode === 'preview' ? 'view' : 'live';
+	if (mode === 'view' || mode === 'preview') return 'view';
+	if (mode === 'code') return 'code';
+	return 'live';
 };
 
 export const toggleViewMode = (mode) => {
@@ -1751,17 +1752,17 @@ export const App = {
 		const themeCompartment = new Compartment()
 		const draftlyCompartment = new Compartment()
 
-		const buildDraftlyExtensions = (isDark) => {
+		const buildDraftlyExtensions = (isDark, disableViewPlugin = false) => {
 			return draftly({
 				theme: isDark ? ThemeEnum.DARK : ThemeEnum.LIGHT,
 				plugins: allPlugins,
-				// Enable Draftly's built-in styles so widgets/marks render as intended
-				baseStyles: true,
+				baseStyles: !disableViewPlugin,
 				defaultKeybindings: true,
 				history: true,
 				indentWithTab: true,
 				highlightActiveLine: true,
-				lineWrapping: true
+				lineWrapping: true,
+				disableViewPlugin
 			});
 		}
 		const wordWrapCompartment = new Compartment()
@@ -2246,7 +2247,17 @@ export const App = {
 					effects: [
 						themeCompartment.reconfigure(newVal ? getDarkTheme() : githubLight),
 						customThemeCompartment.reconfigure(getCustomTheme(newVal)),
-						...(useDraftly ? [draftlyCompartment.reconfigure(buildDraftlyExtensions(newVal))] : [])
+						...(useDraftly ? [draftlyCompartment.reconfigure(buildDraftlyExtensions(newVal, viewMode.value === 'code'))] : [])
+					]
+				})
+			}
+		})
+
+		watch(viewMode, (newVal) => {
+			if (editorView.value && useDraftly) {
+				editorView.value.dispatch({
+					effects: [
+						draftlyCompartment.reconfigure(buildDraftlyExtensions(isDarkMode.value, newVal === 'code'))
 					]
 				})
 			}
@@ -3168,7 +3179,6 @@ export const App = {
 		onMounted(async () => {
 			// PC View Mode Shortcuts (Cmd+1, 2, 3)
 			window.addEventListener('keydown', (e) => {
-				// Ignore if modal is open (except global shortcuts if needed)
 				if (modalState.value.isOpen || showCommandPalette.value) return
 
 				if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey) {
@@ -3181,7 +3191,11 @@ export const App = {
 							e.preventDefault()
 							setViewMode('view')
 							break
-						case 'p': // Cmd+P for Command Palette
+						case '3':
+							e.preventDefault()
+							setViewMode('code')
+							break
+						case 'p':
 							e.preventDefault()
 							openCommandPalette()
 							break
@@ -3444,7 +3458,7 @@ export const App = {
 					effects: [
 						themeCompartment.reconfigure(isDarkMode.value ? getDarkTheme() : githubLight),
 						customThemeCompartment.reconfigure(getCustomTheme(isDarkMode.value)),
-						...(useDraftly ? [draftlyCompartment.reconfigure(buildDraftlyExtensions(isDarkMode.value))] : [])
+						...(useDraftly ? [draftlyCompartment.reconfigure(buildDraftlyExtensions(isDarkMode.value, viewMode.value === 'code'))] : [])
 					]
 				})
 			}
@@ -5190,7 +5204,7 @@ export const App = {
 				editorView.value.dispatch({
 					effects: [
 						themeCompartment.reconfigure(val ? getDarkTheme() : []),
-						...(useDraftly ? [draftlyCompartment.reconfigure(buildDraftlyExtensions(val))] : [])
+						...(useDraftly ? [draftlyCompartment.reconfigure(buildDraftlyExtensions(val, viewMode.value === 'code'))] : [])
 					]
 				})
 			}
