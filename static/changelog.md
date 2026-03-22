@@ -1,3 +1,15 @@
+## [0.8.0] - 2026-03-22
+### ✨ Draftly 에디터 전환
+- Draftly(CodeMirror 6 기반) 에디터 통합 및 Live/View 모드 전환 도입
+- 테이블 렌더링 Draftly 위젯 적용, 모달 기반 테이블 편집기 제거
+- 에디터 폰트/플러그인 폰트가 상위 설정을 상속하도록 정렬
+
+### 🛠 버전 갱신
+- 버전 정보 동기화(`static/version.json`, `pyproject.toml`, `uv.lock`) 업데이트
+- 서비스워커 캐시 버전 상향(`static/sw.js`)
+
+---
+
 ## [0.7.11] - 2026-03-21
 ### 🛠 버전 갱신
 - 버전 정보 동기화(`static/version.json`, `pyproject.toml`, `uv.lock`) 업데이트
