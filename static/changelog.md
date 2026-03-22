@@ -1,3 +1,10 @@
+## [0.8.1] - 2026-03-22
+### 🛠 버전 갱신
+- 버전 정보 동기화(`static/version.json`, `pyproject.toml`, `uv.lock`) 업데이트
+- 서비스워커 캐시 버전 상향(`static/sw.js`)
+
+---
+
 ## [0.8.0] - 2026-03-22
 ### ✨ Draftly 에디터 전환
 - Draftly(CodeMirror 6 기반) 에디터 통합 및 Live/View 모드 전환 도입
