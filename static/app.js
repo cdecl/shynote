@@ -10,7 +10,7 @@ const { markdown, markdownLanguage } = CodeMirror;
 const { search, searchKeymap, openSearchPanel, closeSearchPanel } = CodeMirror;
 const { githubLight } = CodeMirror;
 const { dracula, nord } = CodeMirror;
-const { snippet } = CodeMirror;
+const { snippet, autocompletion } = CodeMirror;
 const { MergeView } = CodeMirror;
 
 // Draftly integration toggle (experimental)
@@ -1842,6 +1842,14 @@ export const App = {
 							detail: "Code Block",
 							apply: snippet("```${1:lang}\n${2:code}\n```")
 						},
+						{
+							label: "/table-new",
+							detail: "Create New Table",
+							apply: (view, completion, from, to) => {
+								const table = "| Column 1 | Column 2 |\n| --- | --- |\n|  |  |\n"
+								view.dispatch({ changes: { from, to, insert: table } })
+							}
+						}
 					]
 				}
 			}
@@ -1956,6 +1964,7 @@ export const App = {
 					search({ top: true }), // Move to Top
 
 					// App-specific plugins
+					autocompletion({ override: [variableCompletion, backlinkCompletion] }),
 					backlinkPlugin,
 					placeholder('Start typing...'),
 
