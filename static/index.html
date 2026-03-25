@@ -1923,7 +1923,7 @@
                                             {{ selectedNote.title || 'Untitled Note' }}
                                         </h1>
                                     </div>
-                                    <div class="flex-1 overflow-hidden relative">
+                                    <div class="flex-1 relative overflow-hidden flex flex-col">
                                         <div ref="previewRef" @scroll="handleScroll"
                                             @dblclick="handlePreviewDoubleClick" v-html="previewContent"
                                             :style="'font-size: ' + fontSize + 'px !important;'"
@@ -2237,7 +2237,7 @@
             }
         }
     </script>
-    <script src="/static/app.js?v=40" type="module"></script>
+    <script src="/static/app.js?v=41" type="module"></script>
 </body>
 
 </html>
