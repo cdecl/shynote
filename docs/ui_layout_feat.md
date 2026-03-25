@@ -92,18 +92,21 @@ The main panel switches between **List Mode** and **Editor Mode**.
   - Last active tab is restored on load if the note still exists.
 
 #### Editor Content
-- **Title Input**: Full-width `text-3xl` header-style input (`placeholder: \"Untitled Note\"`).
-- **Metadata Row** (below title, `text-xs`):
+- **Title Input**: Full-width `text-3xl` header-style input (`placeholder: "Untitled Note"`).
+- **Text Area**: CodeMirror 6 Editor (when `viewMode !== 'view'`) / Markdown Preview Pane.
+- **Conflict Banner**: Shown above title when a sync conflict is detected. Offers "Keep My Version" / "Use Server Version" actions.
+
+#### Editor Meta Bar (Fixed at Bottom, above Toolbar)
+- **Position**: Absolute/fixed above the formatting toolbar in Editor mode, and fixed at the bottom in Preview mode.
+- **Components**:
   - **Date & Time**: `updated_at` formatted.
   - **Char Count**: Character count of content.
   - **Backlinks Dropdown** (`link` icon): Shows backlink count. Clicking opens a dropdown list of notes that link to the current note.
   - **Folder Selector** (`drive_file_move` icon): Inline dropdown button showing current folder name. Click opens a dropdown to move the note to Inbox or another folder.
-  - **Delete Button** (`delete` icon + \"Delete\" label): Opens an inline confirmation popup (Yes/No) below the button.
-- **Text Area**: Draftly Editor (when `viewMode !== 'view'`) / Markdown Preview Pane.
-- **Conflict Banner**: Shown above title when a sync conflict is detected. Offers \"Keep My Version\" / \"Use Server Version\" actions.
+  - **Delete Button** (`delete` icon + "Delete" label): Opens an inline confirmation popup (Yes/No) below the button.
 
 #### Editor Bottom Toolbar (Floating on Mobile / Static on PC)
-- **Search (`search`)**: Triggers Draftly Find Panel.
+- **Search (`search`)**: Triggers CodeMirror Find Panel.
 - **Formatting Buttons**: Paste, Bold, Italic, Strikethrough, Code (Inline/Block toggle), Blockquote, Bullet List, Task List, Link.
 - **Heading Buttons**: H1, H2, H3.
 

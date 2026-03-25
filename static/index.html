@@ -801,8 +801,8 @@
                                             @dragleave.prevent="handleDragLeave('inbox')"
                                             class="relative flex items-center justify-between px-3 h-9 cursor-pointer active:bg-blue-200 dark:active:bg-blue-600/30 transition-all duration-200 group rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 mx-2"
                                             :class="[dropTargetId === 'inbox' ? 'translate-x-1 bg-blue-50 dark:bg-[#44475a] ring-1 ring-blue-200 dark:ring-[#6272a4]' : '', currentFolderId === null ? 'bg-blue-100 dark:bg-[#44475a] shadow-sm' : '']">
-                                            <div class="flex items-center gap-3 flex-1 min-w-0">
-                                                <span class="material-symbols-rounded text-[22px] transition-colors"
+                                            <div class="flex items-center gap-1 flex-1 min-w-0">
+                                                <span class="material-symbols-rounded text-[18px] transition-colors"
                                                     :class="[dropTargetId === 'inbox' || currentFolderId === null ? 'text-blue-500' : 'text-slate-400 dark:text-[#cfcfe8]']"
                                                     style="font-variation-settings: 'FILL' 1">home</span>
                                                 <span
@@ -810,7 +810,7 @@
                                                     :class="currentFolderId === null ? 'text-slate-800 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8]'">INBOX</span>
                                             </div>
                                             <span
-                                                class="text-slate-500 dark:text-[#cfcfe8] font-medium text-[12px] bg-slate-200 dark:bg-[#6272a4] px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{{
+                                                class="text-slate-500 dark:text-[#cfcfe8] font-medium text-[10px] bg-slate-200 dark:bg-[#6272a4] px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{{
                                                 sortedRootNotes.length }}</span>
                                         </div>
                                         <!-- Folder Items -->
@@ -827,8 +827,8 @@
                                                     @click.stop @blur="saveRename" @keyup.enter="saveRename"
                                                     class="flex-1 bg-white dark:bg-[#2f3242] border border-blue-400 rounded px-2 py-1 text-sm font-medium text-slate-800 dark:text-[#f8f8f2] outline-none shadow-sm">
                                                 <div v-else @dblclick.stop="startRename(folder, 'folder')"
-                                                    class="flex items-center gap-3 flex-1 min-w-0">
-                                                    <span class="material-symbols-rounded text-[22px] transition-colors"
+                                                    class="flex items-center gap-1 flex-1 min-w-0">
+                                                    <span class="material-symbols-rounded text-[16px] transition-colors"
                                                         :class="[dropTargetId === folder.id ? 'text-blue-500' : 'text-slate-400 dark:text-[#cfcfe8]', currentFolderId === folder.id ? 'text-blue-500 dark:text-[#8be9fd]' : 'text-slate-400 dark:text-[#cfcfe8]']"
                                                         style="font-variation-settings: 'FILL' 1">{{ dropTargetId ===
                                                         folder.id ? 'folder_open' : 'folder' }}</span>
@@ -850,7 +850,7 @@
                                                                 style="font-variation-settings: 'FILL' 1">delete</span></button>
                                                     </div>
                                                     <span
-                                                        class="text-slate-500 dark:text-[#cfcfe8] font-medium text-[12px] bg-slate-200 dark:bg-[#6272a4] px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{{
+                                                        class="text-slate-500 dark:text-[#cfcfe8] font-medium text-[10px] bg-slate-200 dark:bg-[#6272a4] px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{{
                                                         getSortedFolderNotes(folder.id).length }}</span>
                                                 </div>
                                             </div>
@@ -1066,7 +1066,8 @@
                                     <option value="view">View</option>
                                     <option value="code">Code</option>
                                 </select>
-                                <div class="pointer-events-none absolute right-0 top-0 bottom-0 flex items-center px-1 text-slate-500 dark:text-[#cfcfe8]">
+                                <div
+                                    class="pointer-events-none absolute right-0 top-0 bottom-0 flex items-center px-1 text-slate-500 dark:text-[#cfcfe8]">
                                     <span class="material-symbols-rounded text-[14px]">expand_more</span>
                                 </div>
                             </div>
@@ -1677,14 +1678,22 @@
                                     </div>
 
                                     <!-- Title Input (Sticky Header Style H1) -->
-                                    <div class="flex-none p-4 pb-2 bg-white dark:bg-[#282a36] z-10">
+                                    <div class="flex-none p-4 pb-0 bg-white dark:bg-[#282a36] z-10">
                                         <input ref="titleInputRef" v-model="selectedNote.title" @input="debouncedUpdate"
                                             @focus="isEditModeActive = true" @blur="isEditModeActive = false"
                                             @keydown.tab.prevent="focusEditor" @keydown.enter.prevent="focusEditor"
                                             class="w-full text-3xl font-extrabold text-[#2f3242] dark:text-[#f8f8f2] outline-none bg-transparent placeholder-slate-300 dark:placeholder-slate-600 leading-tight"
                                             placeholder="Untitled Note">
+                                    </div>
+
+                                    <div class="flex-1 relative overflow-hidden flex flex-col">
+                                        <!-- CodeMirror 6 Container -->
+                                        <div ref="editorRef" class="w-full flex-1 overflow-hidden pb-32 md:pb-0"
+                                            :style="{ fontSize: fontSize + 'px' }"></div>
+
+                                        <!-- Note Meta Bar (Moved from Top) -->
                                         <div
-                                            class="flex items-center gap-3 mt-2 text-xs text-slate-400 dark:text-[#cfcfe8] font-medium">
+                                            class="flex items-center gap-1 px-2 py-2 text-xs text-slate-400 dark:text-[#cfcfe8] font-medium border-t border-slate-100 dark:border-[#44475a] bg-white/95 dark:bg-[#282a36]/95 backdrop-blur-md md:backdrop-blur-none z-20 absolute bottom-20 left-4 right-4 rounded-xl shadow-lg md:static md:bottom-auto md:left-auto md:right-auto md:rounded-none md:shadow-none md:border-x-0 md:border-b-0">
                                             <span>{{ formatDateParts(selectedNote.updated_at).date.replace(/\./g,
                                                 '-') }} {{
                                                 formatDateParts(selectedNote.updated_at).time.substring(0, 5)
@@ -1703,7 +1712,7 @@
                                                 </span>
                                                 <!-- Backlinks Dropdown -->
                                                 <div v-if="showBacklinksMenu"
-                                                    class="absolute top-full right-0 mt-1 w-64 bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg shadow-xl py-1 z-50 animate-fade-in origin-top-right max-h-80 overflow-y-auto custom-scrollbar">
+                                                    class="absolute bottom-full right-0 mb-1 w-64 bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg shadow-xl py-1 z-50 animate-fade-in origin-bottom-right max-h-80 overflow-y-auto custom-scrollbar">
                                                     <!-- Overlay to close -->
                                                     <div @click.stop="showBacklinksMenu = false"
                                                         class="fixed inset-0 z-40 bg-transparent cursor-default">
@@ -1757,7 +1766,7 @@
                                                 </div>
                                                 <!-- Custom Dropdown -->
                                                 <div v-if="showFolderSelectMenu"
-                                                    class="absolute top-full right-0 mt-1 w-32 bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg shadow-xl py-1 z-50 animate-fade-in origin-top-right">
+                                                    class="absolute bottom-full right-0 mb-1 w-32 bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg shadow-xl py-1 z-50 animate-fade-in origin-bottom-right">
                                                     <!-- Overlay to close -->
                                                     <div @click="closeFolderSelectMenu"
                                                         class="fixed inset-0 z-40 bg-transparent cursor-default">
@@ -1786,7 +1795,7 @@
                                             </div>
 
                                             <span class="w-[1px] h-3 bg-slate-300 dark:bg-[#44475a]"></span>
-                                            <!-- Delete Note Button & Confirmation (Moved from Top Toolbar) -->
+                                            <!-- Delete Note Button & Confirmation -->
                                             <div class="relative group">
                                                 <div @click.stop="requestDelete(selectedNote.id, 'note')"
                                                     class="cursor-pointer px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#2f3242] text-slate-600 dark:text-[#f8f8f2] hover:text-red-500 hover:bg-red-50 dark:hover:bg-#3b1f2b/70 transition-colors text-[11px] flex items-center gap-1">
@@ -1796,7 +1805,7 @@
 
                                                 <!-- Inline Confirmation Popup -->
                                                 <div v-if="showToolbarDeleteConfirm"
-                                                    class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg shadow-xl p-3 z-[50] flex flex-col gap-2 animate-fade-in origin-top-left cursor-default"
+                                                    class="absolute bottom-full left-0 mb-1 w-48 bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg shadow-xl p-3 z-[50] flex flex-col gap-2 animate-fade-in origin-bottom-left cursor-default"
                                                     @click.stop>
                                                     <span
                                                         class="text-xs font-bold text-slate-700 dark:text-[#f8f8f2] text-center">
@@ -1811,12 +1820,6 @@
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-
-                                    <div class="flex-1 relative overflow-hidden flex flex-col">
-                                        <!-- CodeMirror 6 Container -->
-                                        <div ref="editorRef" class="w-full flex-1 overflow-hidden pb-20 md:pb-0"
-                                            :style="{ fontSize: fontSize + 'px' }"></div>
 
                                         <!-- Bottom Formatting Toolbar -->
                                         <div
@@ -1919,8 +1922,17 @@
                                             class="w-full text-3xl font-extrabold text-[#2f3242] dark:text-[#f8f8f2] leading-tight break-words m-0">
                                             {{ selectedNote.title || 'Untitled Note' }}
                                         </h1>
+                                    </div>
+                                    <div class="flex-1 overflow-hidden relative">
+                                        <div ref="previewRef" @scroll="handleScroll"
+                                            @dblclick="handlePreviewDoubleClick" v-html="previewContent"
+                                            :style="'font-size: ' + fontSize + 'px !important;'"
+                                            class="markdown-body overflow-y-auto flex-1 bg-white dark:bg-[#2f3242] transition-colors pb-20 md:pb-0">
+                                        </div>
+
+                                        <!-- Note Meta Bar (Moved for Preview Consistency) -->
                                         <div
-                                            class="flex items-center gap-3 mt-2 text-xs text-slate-400 dark:text-[#cfcfe8] font-medium">
+                                            class="flex items-center gap-1 px-2 py-2 text-xs text-slate-400 dark:text-[#cfcfe8] font-medium border-t border-slate-100 dark:border-[#44475a] bg-white/95 dark:bg-[#282a36]/95 backdrop-blur-md md:backdrop-blur-none z-20 absolute bottom-6 left-4 right-4 rounded-xl shadow-lg md:static md:bottom-auto md:left-auto md:right-auto md:rounded-none md:shadow-none md:border-x-0 md:border-b-0">
                                             <span>{{ formatDateParts(selectedNote.updated_at).date.replace(/\./g,
                                                 '-') }} {{
                                                 formatDateParts(selectedNote.updated_at).time.substring(0, 5)
@@ -1939,7 +1951,7 @@
                                                 </span>
                                                 <!-- Backlinks Dropdown -->
                                                 <div v-if="showBacklinksMenu"
-                                                    class="absolute top-full right-0 mt-1 w-64 bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg shadow-xl py-1 z-50 animate-fade-in origin-top-right max-h-80 overflow-y-auto custom-scrollbar">
+                                                    class="absolute bottom-full right-0 mb-1 w-64 bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg shadow-xl py-1 z-50 animate-fade-in origin-bottom-right max-h-80 overflow-y-auto custom-scrollbar">
                                                     <!-- Overlay to close -->
                                                     <div @click.stop="showBacklinksMenu = false"
                                                         class="fixed inset-0 z-40 bg-transparent cursor-default">
@@ -1993,7 +2005,7 @@
                                                 </div>
                                                 <!-- Custom Dropdown -->
                                                 <div v-if="showFolderSelectMenu"
-                                                    class="absolute top-full right-0 mt-1 w-32 bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg shadow-xl py-1 z-50 animate-fade-in origin-top-right">
+                                                    class="absolute bottom-full right-0 mb-1 w-32 bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg shadow-xl py-1 z-50 animate-fade-in origin-bottom-right">
                                                     <!-- Overlay to close -->
                                                     <div @click="closeFolderSelectMenu"
                                                         class="fixed inset-0 z-40 bg-transparent cursor-default">
@@ -2022,7 +2034,7 @@
                                             </div>
 
                                             <span class="w-[1px] h-3 bg-slate-300 dark:bg-[#44475a]"></span>
-                                            <!-- Delete Note Button & Confirmation (Moved from Top Toolbar) -->
+                                            <!-- Delete Note Button & Confirmation -->
                                             <div class="relative group">
                                                 <div @click.stop="requestDelete(selectedNote.id, 'note')"
                                                     class="cursor-pointer px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#2f3242] text-slate-600 dark:text-[#f8f8f2] hover:text-red-500 hover:bg-red-50 dark:hover:bg-#3b1f2b/70 transition-colors text-[11px] flex items-center gap-1">
@@ -2032,7 +2044,7 @@
 
                                                 <!-- Inline Confirmation Popup -->
                                                 <div v-if="showToolbarDeleteConfirm"
-                                                    class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg shadow-xl p-3 z-[50] flex flex-col gap-2 animate-fade-in origin-top-left cursor-default"
+                                                    class="absolute bottom-full left-0 mb-1 w-48 bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg shadow-xl p-3 z-[50] flex flex-col gap-2 animate-fade-in origin-bottom-left cursor-default"
                                                     @click.stop>
                                                     <span
                                                         class="text-xs font-bold text-slate-700 dark:text-[#f8f8f2] text-center">
@@ -2046,13 +2058,6 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                    <div class="flex-1 overflow-hidden relative">
-                                        <div ref="previewRef" @scroll="handleScroll"
-                                            @dblclick="handlePreviewDoubleClick" v-html="previewContent"
-                                            :style="'font-size: ' + fontSize + 'px !important;'"
-                                            class="markdown-body overflow-y-auto h-full bg-white dark:bg-[#2f3242] transition-colors">
                                         </div>
 
                                     </div>
