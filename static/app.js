@@ -1752,7 +1752,7 @@ export const App = {
 		const themeCompartment = new Compartment()
 		const draftlyCompartment = new Compartment()
 
-		const buildDraftlyExtensions = (isDark, disableViewPlugin = false) => {
+		const buildDraftlyExtensions = (isDark, disableViewPlugin = false, skipTableNormalizationOnViewReady = false) => {
 			return draftly({
 				theme: isDark ? ThemeEnum.DARK : ThemeEnum.LIGHT,
 				plugins: allPlugins,
@@ -1762,7 +1762,8 @@ export const App = {
 				indentWithTab: true,
 				highlightActiveLine: true,
 				lineWrapping: true,
-				disableViewPlugin
+				disableViewPlugin,
+				skipTableNormalizationOnViewReady
 			});
 		}
 		const wordWrapCompartment = new Compartment()
@@ -2253,11 +2254,15 @@ export const App = {
 			}
 		})
 
-		watch(viewMode, (newVal) => {
+		watch(viewMode, (newVal, oldVal) => {
 			if (editorView.value && useDraftly) {
 				editorView.value.dispatch({
 					effects: [
-						draftlyCompartment.reconfigure(buildDraftlyExtensions(isDarkMode.value, newVal === 'code'))
+						draftlyCompartment.reconfigure(buildDraftlyExtensions(
+							isDarkMode.value,
+							newVal === 'code',
+							oldVal === 'code' && newVal === 'live'
+						))
 					]
 				})
 			}

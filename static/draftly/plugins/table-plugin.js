@@ -215,10 +215,10 @@ function padCell(text, width, alignment) {
 function delimiterCell(width, alignment) {
   const hyphenCount = Math.max(width, 3);
   if (alignment === "center") {
-    return ":" + "-".repeat(Math.max(1, hyphenCount - 2)) + ":";
+    return ":" + "-".repeat(hyphenCount) + ":";
   }
   if (alignment === "right") {
-    return "-".repeat(Math.max(2, hyphenCount - 1)) + ":";
+    return "-".repeat(hyphenCount) + ":";
   }
   return "-".repeat(hyphenCount);
 }
@@ -585,6 +585,9 @@ class TablePlugin extends DecorationPlugin {
   }
   /** Schedules an initial normalization pass once the view is ready. */
   onViewReady(view) {
+    if (this.draftlyConfig?.skipTableNormalizationOnViewReady) {
+      return;
+    }
     this.scheduleNormalization(view);
   }
   /** Re-schedules normalization after user-driven document changes. */
