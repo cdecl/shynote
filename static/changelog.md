@@ -1,3 +1,14 @@
+## [0.8.5] - 2026-03-28
+### 🛠 버전 갱신
+- 버전 정보 동기화(`static/version.json`, `pyproject.toml`, `uv.lock`) 업데이트
+- 서비스워커 캐시 버전 상향(`static/sw.js`)
+
+### ✨ 편집기 개선
+- Command Palette에 `Format Markdown Document` 항목 추가
+- 테이블 delimiter 및 live 모드 정규화 규칙 정리
+
+---
+
 ## [0.8.4] - 2026-03-25
 ### 🐛 버그 수정
 - 미리보기(View) 모드에서 하단 메타 정보 바가 잘리거나 스크롤이 되지 않는 레이아웃 이슈 수정
