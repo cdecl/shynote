@@ -1029,6 +1029,11 @@
                 <div v-if="rightPanelMode !== 'list' && selectedNote"
                     class="h-7 safe-area-top border-b border-slate-100 dark:border-[#44475a] bg-white/80 dark:bg-[#282a36]/80 backdrop-blur-sm flex justify-between items-center pl-1 pr-2 flex-shrink-0 transition-colors duration-300 relative z-10 md:z-40">
                     <div class="flex items-center gap-2">
+                        <button @click="openSidebarFromMainPanel"
+                            class="p-0.5 text-slate-400 dark:text-[#cfcfe8] hover:text-slate-600 dark:hover:text-[#f8f8f2] hover:bg-slate-100 dark:hover:bg-[#6272a4] rounded transition-all flex-shrink-0"
+                            :title="isSidebarOpen ? 'Hide Sidebar' : 'Show Sidebar'">
+                            <span class="material-symbols-rounded text-[18px]">{{ getSidebarToggleIcon() }}</span>
+                        </button>
                         <button @click="toggleRightPanelMode()"
                             class="p-0.5 text-slate-400 dark:text-[#cfcfe8] hover:text-slate-600 dark:hover:text-[#f8f8f2] hover:bg-slate-100 dark:hover:bg-[#6272a4] rounded transition-all flex-shrink-0"
                             title="Back to List">
@@ -1142,6 +1147,11 @@
                         <div
                             class="h-7 safe-area-top border-b border-slate-200 dark:border-[#44475a] flex items-center justify-between px-2 bg-white dark:bg-[#2f3242] z-10 shrink-0">
                             <div class="flex items-center gap-2">
+                                <button @click="openSidebarFromMainPanel"
+                                    class="p-0.5 text-slate-400 dark:text-[#cfcfe8] hover:text-slate-600 dark:hover:text-[#f8f8f2] hover:bg-slate-100 dark:hover:bg-[#6272a4] rounded transition-all"
+                                    :title="isSidebarOpen ? 'Hide Sidebar' : 'Show Sidebar'">
+                                    <span class="material-symbols-rounded text-[18px]">{{ getSidebarToggleIcon() }}</span>
+                                </button>
                                 <button @click="toggleRightPanelMode()" :disabled="!selectedNote"
                                     class="p-0.5 text-slate-400 dark:text-[#cfcfe8] hover:text-slate-600 dark:hover:text-[#f8f8f2] hover:bg-slate-100 dark:hover:bg-[#6272a4] rounded transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-400"
                                     title="Return to Editor">

@@ -3436,6 +3436,18 @@ export const App = {
 			isSidebarOpen.value = !isSidebarOpen.value
 		}
 
+		const openSidebarFromMainPanel = () => {
+			if (isMobile.value) {
+				setSidebarPanelMode('explorer')
+				return
+			}
+			toggleSidebar()
+		}
+
+		const getSidebarToggleIcon = () => {
+			return isSidebarOpen.value ? 'left_panel_close' : 'left_panel_open'
+		}
+
 		const applyTheme = () => {
 			const themeLink = document.getElementById('github-theme')
 			const highlightLink = document.getElementById('highlight-theme')
@@ -5886,6 +5898,8 @@ export const App = {
 			setSidebarViewMode,
 			sidebarPanelMode,
 			setSidebarPanelMode,
+			openSidebarFromMainPanel,
+			getSidebarToggleIcon,
 			showNewItemMenu,
 			toggleNewItemMenu,
 			closeNewItemMenu,
