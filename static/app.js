@@ -5057,6 +5057,13 @@ export const App = {
 				Object.assign(allUsage, JSON.parse(dataStr));
 			} catch (e) { }
 
+			const resolveFolderName = (note) => {
+				if (!note || note.folder_id === null || note.folder_id === undefined) return 'INBOX'
+				if (note.folder_id === TRASH_FOLDER_ID.value) return 'TRASH'
+				const folder = folders.value.find(f => f.id == note.folder_id)
+				return folder ? folder.name : 'Folder'
+			}
+
 			return notes.value
 				.filter(note => {
 					const usage = allUsage[note.id];
@@ -5064,11 +5071,12 @@ export const App = {
 				})
 				.map(note => ({
 					...note,
+					folderName: resolveFolderName(note),
 					lastUsed: allUsage[note.id].lastUsed,
 					count: allUsage[note.id].count
 				}))
 				.sort((a, b) => b.lastUsed - a.lastUsed)
-				.slice(0, 5);
+				.slice(0, 10);
 		});
 
 		const showBacklinksMenu = ref(false);

@@ -921,8 +921,12 @@
                                             :class="selectedNote?.id === note.id ? 'bg-blue-50 dark:bg-[#44475a]' : ''">
                                             <span
                                                 class="material-symbols-rounded text-[18px] text-slate-400 shrink-0">description</span>
-                                            <span class="flex-1 text-sm truncate text-slate-700 dark:text-[#f8f8f2]">{{
-                                                note.title || 'Untitled' }}</span>
+                                            <span class="flex-1 min-w-0 flex items-center gap-1">
+                                                <span class="text-sm truncate text-slate-700 dark:text-[#f8f8f2]">{{
+                                                    note.title || 'Untitled' }}</span>
+                                                <span class="text-[10px] truncate text-slate-400 dark:text-[#cfcfe8]">· {{
+                                                    note.folderName }}</span>
+                                            </span>
                                         </div>
                                     </div>
                                 </div>

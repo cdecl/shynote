@@ -1,15 +1,7 @@
+// @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import * as Vue from 'vue';
+import { mount } from '@vue/test-utils';
 import { App } from '../static/app.js';
-
-let mount = null;
-try {
-	const dynamicImport = new Function('path', 'return import(path)');
-	const mod = await dynamicImport('@vue/test-utils');
-	mount = mod.mount;
-} catch (e) {
-	mount = null;
-}
 
 // Mock vendor.js imports
 vi.mock('../static/dist/vendor.js', async () => {
@@ -90,9 +82,7 @@ describe('App.js UI Module Functions', () => {
 		vi.stubGlobal('localStorage', localStorageMock);
 	});
 
-	const maybeIt = mount ? it : it.skip;
-
-	maybeIt('should expose core UI functions in setup()', async () => {
+	it('should expose core UI functions in setup()', async () => {
 		// App contains setup() which returns an object with all reactive variables and functions
 		// We can test the setup logic directly or mount it.
 		// Since app.js is a large single file, we mount carefully.
@@ -109,7 +99,7 @@ describe('App.js UI Module Functions', () => {
 		expect(vm.isSidebarOpen).toBe(true);
 	});
 
-	maybeIt('should toggle sidebar state', async () => {
+	it('should toggle sidebar state', async () => {
 		const wrapper = mount(App);
 		const vm = wrapper.vm;
 
@@ -124,12 +114,79 @@ describe('App.js UI Module Functions', () => {
 		expect(vm.isSidebarOpen).toBe(true);
 	});
 
-	maybeIt('should handle search query updates and results', async () => {
+	it('should handle search query updates and results', async () => {
 		const wrapper = mount(App);
 		const vm = wrapper.vm;
 
 		vm.searchQuery = 'test';
 		// searchResults is a computed property
 		expect(vm.searchResults).toBeDefined();
+	});
+
+	it('should toggle sidebar from main panel in desktop mode', async () => {
+		const wrapper = mount(App);
+		const vm = wrapper.vm;
+
+		vm.isMobile = false;
+		vm.isSidebarOpen = true;
+		vm.openSidebarFromMainPanel();
+		expect(vm.isSidebarOpen).toBe(false);
+
+		vm.openSidebarFromMainPanel();
+		expect(vm.isSidebarOpen).toBe(true);
+	});
+
+	it('should open explorer sidebar from main panel in mobile mode', async () => {
+		const wrapper = mount(App);
+		const vm = wrapper.vm;
+
+		vm.isMobile = true;
+		vm.isSidebarOpen = false;
+		vm.sidebarPanelMode = 'search';
+
+		vm.openSidebarFromMainPanel();
+
+		expect(vm.isSidebarOpen).toBe(true);
+		expect(vm.sidebarPanelMode).toBe('explorer');
+	});
+
+	it('should return sidebar toggle icon based on open state', async () => {
+		const wrapper = mount(App);
+		const vm = wrapper.vm;
+
+		vm.isSidebarOpen = true;
+		expect(vm.getSidebarToggleIcon()).toBe('left_panel_close');
+
+		vm.isSidebarOpen = false;
+		expect(vm.getSidebarToggleIcon()).toBe('left_panel_open');
+	});
+
+	it('should keep recent notes up to 10 and include folder names', async () => {
+		const wrapper = mount(App);
+		const vm = wrapper.vm;
+
+		const usage = {};
+		for (let i = 1; i <= 12; i++) {
+			usage[`n${i}`] = { count: i, lastUsed: i };
+		}
+		localStorage.setItem('guest_shynote_note_usage_v1', JSON.stringify(usage));
+
+		vm.folders = [{ id: 'f1', name: 'Work' }];
+		vm.notes = Array.from({ length: 12 }, (_, idx) => {
+			const n = idx + 1;
+			let folder_id = null;
+			if (n === 11) folder_id = 'f1';
+			if (n === 10) folder_id = 'trash-guest';
+			if (n === 9) folder_id = 'unknown-folder';
+			return { id: `n${n}`, title: `Note ${n}`, folder_id };
+		});
+
+		const recent = vm.recentNotes;
+		expect(recent.length).toBe(10);
+		expect(recent[0].id).toBe('n12');
+		expect(recent[0].folderName).toBe('INBOX');
+		expect(recent.find(n => n.id === 'n11')?.folderName).toBe('Work');
+		expect(recent.find(n => n.id === 'n10')?.folderName).toBe('TRASH');
+		expect(recent.find(n => n.id === 'n9')?.folderName).toBe('Folder');
 	});
 });

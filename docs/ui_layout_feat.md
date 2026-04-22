@@ -26,7 +26,7 @@ The sidebar is now a dual-layered navigation hub consisting of the **Activity Ba
   - **Inbox**: Special folder for root notes (Icon: `home`).
   - **User Folders**: List of folders with rename/delete actions (`edit_square`, `delete`) and item count. Supports drag-and-drop.
 - **Trash**: Fixed at the bottom of the list (Icon: `delete` / `delete_outline`). Has empty trash button.
-- **Recent Notes**: List of recently accessed notes (up to 5).
+- **Recent Notes**: List of recently accessed notes (up to 10), showing note title with folder name.
 
 ### Search Panel (`sidebarPanelMode === 'search'`)
 *Dedicated search interface.*
@@ -51,6 +51,10 @@ The main panel switches between **List Mode** and **Editor Mode**.
 
 #### Header (h-7/28px)
 - **Navigation (Left)**:
+  - **Sidebar Toggle (`left_panel_open` / `left_panel_close`)**: Button.
+    - On Desktop: toggles sidebar visibility (`isSidebarOpen`).
+    - On Mobile: opens Explorer sidebar panel (`setSidebarPanelMode('explorer')`).
+    - Icon switches by current sidebar state (`open` -> `left_panel_close`, `closed` -> `left_panel_open`).
   - **Back to Editor (`edit_note`)**: Button - *Enabled only when a note is active; disabled otherwise.*
 - **Controls (Center/Right)**:
   - **Grid/List Toggle**: Button (Icon: `grid_view` / `view_list`)
@@ -71,6 +75,10 @@ The main panel switches between **List Mode** and **Editor Mode**.
 #### Top Toolbar (h-7/28px)
 *Conditionally shown when `rightPanelMode !== 'list'` and a note is selected.*
 - **Navigation (Left)**:
+  - **Sidebar Toggle (`left_panel_open` / `left_panel_close`)**: Button.
+    - On Desktop: toggles sidebar visibility (`isSidebarOpen`).
+    - On Mobile: opens Explorer sidebar panel (`setSidebarPanelMode('explorer')`).
+    - Icon switches by current sidebar state (`open` -> `left_panel_close`, `closed` -> `left_panel_open`).
   - **Back to List (`arrow_back_ios_new`)**: Button.
 - **Tools (Right)** — grouped in a flex container:
   - **Font Size Selector + View Mode Tabs Container** (`gap-0` — no gap between them):

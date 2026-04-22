@@ -5,19 +5,27 @@ I have added a Document Listing Mode to the Main Panel and implemented a toggle 
 ## Changes
 
 ### 1. Main Panel Toolbar (Editor Mode)
-The "Back to Notes" button has been upgraded to a "Return to Folder View" button.
-- **Icon**: `drive_folder_upload` (Parent Folder)
-- **Behavior**: Switches the main view to the Document List, showing the parent folder of the current note.
+The left navigation area now provides two actions in order.
+- **Sidebar Toggle Icon**: `left_panel_open` / `left_panel_close`
+- **Back to List Icon**: `arrow_back_ios_new`
+- **Behavior**:
+  - Sidebar toggle opens Explorer on mobile and toggles sidebar visibility on desktop.
+  - Back to List switches the main view to the document list.
 
 ### 2. Main Panel Header (List Mode)
 A new "Return to Editor" button appears in the List View header when a note is active.
-- **Icon**: `edit_note` (Edit)
-- **Condition**: Only visible if you have a note selected.
-- **Behavior**: Instantly switches back to the Editor for the active note.
+- **Icons**:
+  - Sidebar Toggle: `left_panel_open` / `left_panel_close`
+  - Return to Editor: `edit_note`
+- **Condition**: The Return to Editor button remains visible but is disabled when no note is selected.
+- **Behavior**: Return to Editor switches back to the active note editor.
 
 ### 3. Logic (`app.js`)
 - **State Persistence**: The application now remembers your last view mode (`list` or `edit`) via `localStorage`.
-- **Toggle Logic**: Robust switching ensures you don't lose context. If no note is selected, the "Edit" toggle is hidden (since there's nothing to edit).
+- **Toggle Logic**: `openSidebarFromMainPanel()` handles responsive behavior.
+  - Mobile: `setSidebarPanelMode('explorer')`
+  - Desktop: `toggleSidebar()`
+- **Edit Button Guard**: If no note is selected, the "Edit" button is disabled to prevent invalid transitions.
 
 ### 4. Layout Toggle (New)
 A new toggle in the Document List header allows switching between **Grid** (Card) and **List** (Row) layouts.

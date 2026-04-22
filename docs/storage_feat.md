@@ -25,15 +25,19 @@
 | :--- | :--- | :--- |
 | `access_token` | JWT 인증 토큰 | `eyJhbGciOi...` |
 | `shynote_dark_mode` | 다크 모드 활성화 여부 | `true` / `false` |
-| `shynote_sidebar_pinned` | 사이드바 고정 상태 | `true` (Fixed) / `false` (Overlay) |
-| `shynote_collapsed_folders` | 폴더별 접힘 상태 (JSON) | `{"1": true, "3": false}` |
+| `shynote_sidebar_width` | 사이드바 너비 (Desktop) | `320` |
+| `shynote_sidebar_view_mode` | 사이드바 뷰 모드 | `simple` |
 | `shynote_last_note_id` | 마지막으로 열었던 노트 ID | `42` |
+| `shynote_last_folder_id` | 마지막으로 선택한 폴더 ID | `null`, `folder-uuid` |
+| `shynote_last_panel_mode` | 마지막 메인 패널 모드 | `list`, `edit` |
 | `shynote_font_size` | 에디터 폰트 크기 | `16` (px) |
-| `shynote_word_wrap` | 자동 줄바꿈 사용 여부 | `true` |
 | `shynote_sort_field` | 정렬 기준 필드 | `updated_at` |
 | `shynote_sort_direction` | 정렬 방향 | `desc` |
 | `shynote_view_mode` | 에디터 보기 모드 | `live`, `view` |
 | `shynote_list_view_mode` | 목록 보기 모드 (그리드/리스트) | `grid`, `list` |
+| `shynote_recent_tab_ids` | 최근 탭 ID 배열(JSON) | `["id1","id2"]` |
+| `shynote_active_tab_id` | 현재 활성 탭 ID | `id2` |
+| `shynote_search_history` | 검색 히스토리 배열(JSON) | `["sync", "tag"]` |
 | `shynote_note_usage_v1` | 노트 사용 통계 (최근 작업 노트용) | `{"id": {"count": 1, "lastUsed": 123}}` |
 
 ---
@@ -47,6 +51,8 @@
   - **Dynamic Calculation**: 백링크 정보는 DB에 별도로 저장되지 않으며, 현재 메모리에 로드된 전체 노트 내용을 정규표현식으로 스캔하여 실시간으로 계산됩니다.
   - **Wiki-links Parsing**: `[[제목]]` 또는 `[[제목|id:UUID]]` 패턴을 분석하여 연결을 식별합니다.
 - **최근 작업 노트 (Recent Notes)**:
+  - **Display Rule**: 마지막 접근 시각 기준으로 최근 노트 10개를 정렬해 표시합니다.
+  - **Context Label**: 각 항목은 노트명과 함께 폴더명을 표시합니다.
   - **Local Persistence**: 사용자의 노트 접근 이력은 `localStorage`에 즉시 기록됩니다.
   - **Per-User Isolation**: 로그인한 사용자의 고유 ID를 키에 포함하여 멀티 계정 환경에서도 개별적인 사용 이력을 유지합니다.
 
