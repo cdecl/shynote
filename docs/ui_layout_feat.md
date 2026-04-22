@@ -65,8 +65,8 @@ The main panel switches between **List Mode** and **Editor Mode**.
 - **Folder Header**: Icon + Name.
 - **Item Count & Select**: Count of items + **Multi-Select Toggle** (`Select` / `Cancel` button).
 - **Notes Grid/List**: Cards or rows grouped by **Pinned** (📌) and **Regular** (📄) sections.
-  - **Grid Cards** (`h-36`): Title, content preview, date, char count, Delete button. Pin button (top-right).
-  - **List Rows**: Icon, title, content snippet, date, Pin toggle, Delete button.
+  - **Grid Cards**: 제목 중심 카드. 본문 미리보기 텍스트는 제외. `minmax(220px, 1fr)` 기반의 최소 너비를 보장해 제목 가독성을 유지.
+  - **List Rows**: 아이콘 + 제목 중심 행 레이아웃. 본문 미리보기 텍스트는 제외.
   - **Inline Delete Confirmation**: Overlay within card/row (Yes/No).
 - **FAB**: Floating Action Button (`add`) - *Create New Note*
 

@@ -1277,11 +1277,12 @@
                                     <!-- Grid View -->
                                     <template v-if="listViewMode === 'grid'">
                                         <div
-                                            class="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+                                            class="grid gap-4"
+                                            style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));">
                                             <div v-for="note in (currentFolderId === null ? sortedRootNotes : getSortedFolderNotes(currentFolderId)).filter(n => n.is_pinned)"
                                                 :key="note.id" @click="selectNote(note)" draggable="true"
                                                 @dragstart="handleDragStart(note, $event)" :data-id="note.id"
-                                                class="note-item group draggable-touch bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer p-3 flex flex-col relative h-36">
+                                                class="note-item group draggable-touch bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer px-3 pt-2.5 pb-1.5 flex flex-col relative min-h-[88px] h-auto">
 
                                                 <!-- Selection Checkbox -->
                                                 <div v-if="isSelectionMode"
@@ -1303,18 +1304,13 @@
                                                         :style="note.is_pinned ? 'font-variation-settings: \'FILL\' 1' : ''">push_pin</span>
                                                 </button>
 
-                                                <div class="flex justify-between items-start mb-1.5 w-full pr-8">
+                                                <div class="flex justify-between items-start mb-0.5 w-full pr-8">
                                                     <div class="flex items-center gap-2 min-w-0">
                                                         <h3
-                                                            class="font-bold text-slate-700 dark:text-[#f8f8f2] truncate text-sm">
+                                                            class="font-semibold text-slate-700 dark:text-[#f8f8f2] line-clamp-2 leading-tight text-[14px]">
                                                             {{ note.title || 'Untitled' }}</h3>
                                                     </div>
                                                 </div>
-
-                                                <p
-                                                    class="text-xs text-slate-500 dark:text-[#cfcfe8] line-clamp-3 mb-auto leading-relaxed">
-                                                    {{ getPlainContent(note.content) || 'No content' }}
-                                                </p>
 
                                                 <!-- Delete Confirmation Overlay -->
                                                 <div v-if="deleteConfirmation.id === note.id && deleteConfirmation.type === 'note'"
@@ -1335,7 +1331,7 @@
 
                                                 <!-- Normal Footer -->
                                                 <div v-else
-                                                    class="text-[10px] text-slate-400 mt-2 flex justify-between items-end border-t border-slate-100 dark:border-[#44475a] pt-1.5">
+                                                    class="text-[10px] text-slate-400 mt-0.5 flex justify-between items-end border-t border-slate-100 dark:border-[#44475a] pt-0.5">
                                                     <div class="flex items-center gap-2 font-medium">
                                                         <span>{{
                                                             formatDateParts(note.updated_at).date.replace(/\./g,
@@ -1380,15 +1376,11 @@
                                                 class="material-symbols-rounded text-slate-400 dark:text-[#cfcfe8] text-[22px] shrink-0">description</span>
 
                                             <!-- Content -->
-                                            <div class="flex-1 min-w-0 flex items-center gap-2">
+                                            <div class="flex-1 min-w-0 flex items-center">
                                                 <h3
-                                                    class="text-[14px] font-medium text-slate-700 dark:text-[#f8f8f2] truncate max-w-[40%]">
+                                                    class="text-[14px] font-medium text-slate-700 dark:text-[#f8f8f2] truncate flex-1">
                                                     {{ note.title || 'Untitled' }}
                                                 </h3>
-                                                <span
-                                                    class="text-[12px] text-slate-400 dark:text-[#cfcfe8] truncate opacity-80 flex-1">
-                                                    {{ getPlainContent(note.content).substring(0, 100) }}
-                                                </span>
                                             </div>
 
                                             <!-- Date & Actions -->
@@ -1466,11 +1458,12 @@
                                     <!-- Grid View -->
                                     <template v-if="listViewMode === 'grid'">
                                         <div
-                                            class="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+                                            class="grid gap-4"
+                                            style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));">
                                             <div v-for="note in (currentFolderId === null ? sortedRootNotes : getSortedFolderNotes(currentFolderId)).filter(n => !n.is_pinned)"
                                                 :key="note.id" @click="selectNote(note)" draggable="true"
                                                 @dragstart="handleDragStart(note, $event)" :data-id="note.id"
-                                                class="note-item group draggable-touch touch-pan-y bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer p-3 flex flex-col relative h-36">
+                                                class="note-item group draggable-touch touch-pan-y bg-white dark:bg-[#44475a] border border-slate-200 dark:border-[#44475a] rounded-lg hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer px-3 pt-2.5 pb-1.5 flex flex-col relative min-h-[88px] h-auto">
 
                                                 <!-- Selection Checkbox -->
                                                 <div v-if="isSelectionMode"
@@ -1492,18 +1485,13 @@
                                                         :style="note.is_pinned ? 'font-variation-settings: \'FILL\' 1' : ''">push_pin</span>
                                                 </button>
 
-                                                <div class="flex justify-between items-start mb-1.5 w-full pr-8">
+                                                <div class="flex justify-between items-start mb-0.5 w-full pr-8">
                                                     <div class="flex items-center gap-2 min-w-0">
                                                         <h3
-                                                            class="font-bold text-slate-700 dark:text-[#f8f8f2] truncate text-sm">
+                                                            class="font-semibold text-slate-700 dark:text-[#f8f8f2] line-clamp-2 leading-tight text-[14px]">
                                                             {{ note.title || 'Untitled' }}</h3>
                                                     </div>
                                                 </div>
-
-                                                <p
-                                                    class="text-xs text-slate-500 dark:text-[#cfcfe8] line-clamp-3 mb-auto leading-relaxed">
-                                                    {{ getPlainContent(note.content) || 'No content' }}
-                                                </p>
 
                                                 <!-- Delete Confirmation Overlay -->
                                                 <div v-if="deleteConfirmation.id === note.id && deleteConfirmation.type === 'note'"
@@ -1524,7 +1512,7 @@
 
                                                 <!-- Normal Footer -->
                                                 <div v-else
-                                                    class="text-[10px] text-slate-400 mt-2 flex justify-between items-end border-t border-slate-100 dark:border-[#44475a] pt-1.5">
+                                                    class="text-[10px] text-slate-400 mt-0.5 flex justify-between items-end border-t border-slate-100 dark:border-[#44475a] pt-0.5">
                                                     <div class="flex items-center gap-2 font-medium">
                                                         <span>{{
                                                             formatDateParts(note.updated_at).date.replace(/\./g,
@@ -1569,15 +1557,11 @@
                                                 class="material-symbols-rounded text-slate-400 dark:text-[#cfcfe8] text-[22px] shrink-0">description</span>
 
                                             <!-- Content -->
-                                            <div class="flex-1 min-w-0 flex items-center gap-2">
+                                            <div class="flex-1 min-w-0 flex items-center">
                                                 <h3
-                                                    class="text-[14px] font-medium text-slate-700 dark:text-[#f8f8f2] truncate max-w-[40%]">
+                                                    class="text-[14px] font-medium text-slate-700 dark:text-[#f8f8f2] truncate flex-1">
                                                     {{ note.title || 'Untitled' }}
                                                 </h3>
-                                                <span
-                                                    class="text-[12px] text-slate-400 dark:text-[#cfcfe8] truncate opacity-80 flex-1">
-                                                    {{ getPlainContent(note.content).substring(0, 100) }}
-                                                </span>
                                             </div>
 
                                             <!-- Date & Actions -->

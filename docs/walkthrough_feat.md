@@ -28,12 +28,12 @@ A new "Return to Editor" button appears in the List View header when a note is a
 - **Edit Button Guard**: If no note is selected, the "Edit" button is disabled to prevent invalid transitions.
 
 ### 4. Layout Toggle (New)
-A new toggle in the Document List header allows switching between **Grid** (Card) and **List** (Row) layouts.
+문서 리스트 헤더의 토글로 **Grid**(Card)와 **List**(Row) 레이아웃을 전환할 수 있습니다.
 - **Icon**: `grid_view` / `view_list`
-- **Preference**: Your choice is remembered via `localStorage`.
+- **Preference**: 선택값은 `localStorage`에 저장됩니다.
 - **Design**:
-    - **Grid**: classic card view with previews.
-    - **List**: compact rows with truncated previews, perfect for scanning many files.
+    - **Grid**: 미리보기 본문 없이 제목 중심 카드 레이아웃. 카드 최소 너비를 보장해 제목 가독성을 확보.
+    - **List**: 미리보기 본문 없이 제목 중심의 컴팩트 행 레이아웃.
 
 ### 5. Content Header (New)
 Moved the folder information from the sticky toolbar to the content area for a unified "File Explorer" feel.
