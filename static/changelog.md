@@ -1,3 +1,18 @@
+## [0.9.0] - 2026-04-22
+### ✨ UI 개선
+- 메인 패널 헤더(리스트/에디터)에 사이드바 토글 버튼 추가
+- 사이드바 토글 아이콘을 상태 기반(`left_panel_open` / `left_panel_close`)으로 전환
+
+### ✨ Recent Notes 개선
+- Recent Notes 표시 개수를 5개에서 10개로 확대
+- 각 Recent Notes 항목에 노트명과 함께 폴더명 표시
+
+### 🛠 버전 갱신
+- 버전 정보 동기화(`static/version.json`, `pyproject.toml`, `uv.lock`) 업데이트
+- 서비스워커 캐시 버전 상향(`static/sw.js`)
+
+---
+
 ## [0.8.5] - 2026-03-28
 ### 🛠 버전 갱신
 - 버전 정보 동기화(`static/version.json`, `pyproject.toml`, `uv.lock`) 업데이트
