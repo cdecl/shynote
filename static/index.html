@@ -603,7 +603,7 @@
         <div id="app-sidebar" :class="[
                 'relative flex-shrink-0 transition-all duration-300 ease-in-out md:overflow-visible overflow-hidden z-20',
                 isSidebarOpen && isMobile ? 'w-full' : ''
-            ]" :style="{ width: isSidebarOpen ? (isMobile ? '100%' : sidebarWidth + 'px') : '44px' }">
+            ]" :style="{ width: isSidebarOpen ? (isMobile ? '100%' : sidebarWidth + 'px') : (isMobile ? '0px' : '44px') }">
 
             <div
                 class="w-full h-full flex transition-all duration-300 ease-in-out group/sidebar shadow-xl md:shadow-none bg-[#F2F0EA] dark:bg-[#282a36] border-r border-[#E6E4DD] dark:border-[#44475a]">
