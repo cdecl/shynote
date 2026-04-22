@@ -3006,69 +3006,75 @@ export const App = {
 			closeModal()
 		}
 
-		const checkAuth = async () => {
-			const urlParams = new URLSearchParams(window.location.search);
-			const isGuestMode = urlParams.get('mode') === 'guest';
-			const storedToken = localStorage.getItem(STORAGE_KEYS.TOKEN);
+			const checkAuth = async () => {
+				const urlParams = new URLSearchParams(window.location.search);
+				const isGuestMode = urlParams.get('mode') === 'guest';
+				const storedToken = localStorage.getItem(STORAGE_KEYS.TOKEN);
 
-			if (isGuestMode) {
-				localStorage.setItem(STORAGE_KEYS.TOKEN, 'guest');
-				isAuthenticated.value = true;
-				currentUserId.value = 'guest';
-				await fetchUserProfile();
-				await fetchFolders();
-				await fetchNotes();
-				restoreState()
-				// autoSelectNote(); // Disabled: Default to Inbox list view
-			} else if (storedToken === 'guest' && !isGuestMode) {
-				logout();
-			} else if (storedToken) {
-				isAuthenticated.value = true;
+				if (isGuestMode) {
+					localStorage.setItem(STORAGE_KEYS.TOKEN, 'guest');
+					isAuthenticated.value = true;
+					currentUserId.value = 'guest';
+					await Promise.all([fetchUserProfile(), fetchFolders(false), fetchNotes(false)]);
+					restoreState()
+					// autoSelectNote(); // Disabled: Default to Inbox list view
+				} else if (storedToken === 'guest' && !isGuestMode) {
+					logout();
+				} else if (storedToken) {
+					isAuthenticated.value = true;
 
-				// Optimistic Load (Instant UI)
-				const cachedId = localStorage.getItem(STORAGE_KEYS.USER_ID)
-				let didOptimisticLoad = false
-				if (cachedId) {
-					currentUserId.value = cachedId // Keep as string for UUIDv7
-					// Fire fetches immediately (parallel)
-					await pullSync()
-					didOptimisticLoad = true
-					restoreState() // Instant UI Restore
-				}
+					// Optimistic Load (Instant UI)
+					const cachedId = localStorage.getItem(STORAGE_KEYS.USER_ID)
+					if (cachedId) {
+						currentUserId.value = cachedId // Keep as string for UUIDv7
+						// Fast path: render from local cache first, sync in background.
+						await Promise.all([fetchFolders(false), fetchNotes(false)]);
+						restoreState() // Instant UI Restore
+						void (async () => {
+							try {
+								const oldId = currentUserId.value
+								await fetchUserProfile(); // Source of truth from server
 
-				const oldId = currentUserId.value
-				await fetchUserProfile(); // Fetches and sets currentUserId from server (Source of Truth)
+								console.log('[CheckAuth] Cache ID:', oldId, typeof oldId)
+								console.log('[CheckAuth] DB ID:', currentUserId.value, typeof currentUserId.value)
+								console.log('[CheckAuth] ID Compare:', { oldId, newId: currentUserId.value, match: oldId === currentUserId.value })
 
-				console.log('[CheckAuth] Cache ID:', oldId, typeof oldId)
-				console.log('[CheckAuth] DB ID:', currentUserId.value, typeof currentUserId.value)
+								if (currentUserId.value !== oldId) {
+									loadUserSettings()
+									await pullSync()
+									restoreState()
+									return
+								}
 
-				console.log('[CheckAuth] ID Compare:', { oldId, newId: currentUserId.value, match: oldId === currentUserId.value })
+								await pullSync()
+							} catch (e) {
+								console.error('[CheckAuth] Background reconcile failed', e)
+							}
+						})()
+						return
+					}
 
-				// If user ID changed (or was null), refetch correct data
-				// If user ID changed (or was null), refetch correct data
-				if (currentUserId.value !== oldId) {
-					// console.log('User ID changed, refetching data...')
-					loadUserSettings() // Ensure settings are loaded for new ID
+					const oldId = currentUserId.value
+					await fetchUserProfile(); // Fetches and sets currentUserId from server (Source of Truth)
+
+					console.log('[CheckAuth] Cache ID:', oldId, typeof oldId)
+					console.log('[CheckAuth] DB ID:', currentUserId.value, typeof currentUserId.value)
+
+					console.log('[CheckAuth] ID Compare:', { oldId, newId: currentUserId.value, match: oldId === currentUserId.value })
+
 					await pullSync()
 					restoreState()
-				} else if (!didOptimisticLoad) {
-					// If we didn't do optimistic load (no cached ID), fetch now
-					await pullSync()
+
+					// autoSelectNote(); // Disabled: Default to Inbox list view
+				} else {
+					// Auto-create guest session when no token is present
+					localStorage.setItem(STORAGE_KEYS.TOKEN, 'guest');
+					isAuthenticated.value = true;
+					currentUserId.value = 'guest';
+					await Promise.all([fetchUserProfile(), fetchFolders(false), fetchNotes(false)]);
 					restoreState()
 				}
-
-				// autoSelectNote(); // Disabled: Default to Inbox list view
-			} else {
-				// Auto-create guest session when no token is present
-				localStorage.setItem(STORAGE_KEYS.TOKEN, 'guest');
-				isAuthenticated.value = true;
-				currentUserId.value = 'guest';
-				await fetchUserProfile();
-				await fetchFolders();
-				await fetchNotes();
-				restoreState()
 			}
-		}
 
 		const restoreState = () => {
 			try {
@@ -3216,7 +3222,7 @@ export const App = {
 				return;
 			}
 
-			await checkAuth()
+			const authPromise = checkAuth()
 			fetchAppConfig()
 			fetchChangelog()
 
@@ -3231,6 +3237,7 @@ export const App = {
 			applyTheme()
 
 			initGoogleAuth()
+			await authPromise
 
 			// Global Esc Key Listener for Modals
 			window.addEventListener('keydown', (e) => {
