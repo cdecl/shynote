@@ -1696,7 +1696,7 @@
                                         <input ref="titleInputRef" v-model="selectedNote.title" @input="debouncedUpdate"
                                             @focus="isEditModeActive = true" @blur="isEditModeActive = false"
                                             @keydown.tab.prevent="focusEditor" @keydown.enter.prevent="focusEditor"
-                                            class="w-full text-3xl font-extrabold text-[#2f3242] dark:text-[#f8f8f2] outline-none bg-transparent placeholder-slate-300 dark:placeholder-slate-600 leading-tight"
+                                            class="w-full text-2xl font-extrabold text-[#2f3242] dark:text-[#f8f8f2] outline-none bg-transparent placeholder-slate-300 dark:placeholder-slate-600 leading-tight"
                                             placeholder="Untitled Note">
                                     </div>
 
@@ -1933,7 +1933,7 @@
                                     <!-- Preview Content -->
                                     <div class="flex-none p-4 pb-2 bg-white dark:bg-[#2f3242] z-10 shrink-0">
                                         <h1
-                                            class="w-full text-3xl font-extrabold text-[#2f3242] dark:text-[#f8f8f2] leading-tight break-words m-0">
+                                            class="w-full text-2xl font-extrabold text-[#2f3242] dark:text-[#f8f8f2] leading-tight break-words m-0">
                                             {{ selectedNote.title || 'Untitled Note' }}
                                         </h1>
                                     </div>
