@@ -536,7 +536,7 @@ export const App = {
 				dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
 				holdToDrag: 500,
 				startThreshold: 15,
-				ignoreSelector: 'input, textarea, .cm-content, .cm-scroller, .cm-editor',
+				ignoreSelector: 'input, textarea, .cm-content, .cm-scroller, .cm-editor, .note-item',
 				dragStartClass: 'drag-starting',
 				elementDragClass: 'element-dragging'
 			};
