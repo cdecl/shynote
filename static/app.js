@@ -1782,11 +1782,11 @@ export const App = {
 				editorView.value = new MergeView({
 					a: {
 						doc: localNote.content || '',
-						extensions: [markdown({ base: markdownLanguage }), EditorView.editable.of(false), EditorView.lineWrapping]
+						extensions: [EditorView.editable.of(false), EditorView.lineWrapping]
 					},
 					b: {
 						doc: serverNote.content || '',
-						extensions: [markdown({ base: markdownLanguage }), EditorView.editable.of(false), EditorView.lineWrapping]
+						extensions: [EditorView.editable.of(false), EditorView.lineWrapping]
 					},
 					parent: editorRef.value,
 					orientation: "a-b", // Left: Local, Right: Server
@@ -1967,7 +1967,7 @@ export const App = {
 
 					// App-specific plugins
 					autocompletion({ override: [variableCompletion, backlinkCompletion] }),
-					backlinkPlugin,
+					// backlinkPlugin, // Disabled to prevent Decoration error
 					placeholder('Start typing...'),
 
 					// Base Theme Compartment (Nord for Dark / GitHub Light)
@@ -4146,8 +4146,13 @@ export const App = {
 					isSidebarOpen.value = false
 				}
 				// Don't continue to load from IDB/Server if conflict
-				return;
+				// allow entry even with conflict - continue to load
 			}
+
+// Skip remaining processing if in Conflict mode
+if (conflictState.value.isConflict && conflictState.value.localNote?.id === note.id) {
+  return;
+}
 
 			// Track Usage
 			if (note && note.id) trackNoteUsage(note.id);
