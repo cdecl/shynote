@@ -3209,15 +3209,17 @@ export const App = {
 			if (Math.abs(deltaY) > Math.abs(deltaX)) return
 
 			if (deltaX > minSwipeDistance) {
+				// SWIPE RIGHT: Open sidebar if closed, OR go back to list if in editor
 				if (rightPanelMode.value === 'edit' && selectedNote.value) {
 					backToList()
 					if (navigator.vibrate && isMobile.value) {
 						navigator.vibrate(50)
 					}
-				} else if (rightPanelMode.value === 'list' && !isSidebarOpen.value) {
+				} else if (!isSidebarOpen.value) {
 					toggleSidebar()
 				}
 			} else if (deltaX < -minSwipeDistance) {
+				// SWIPE LEFT: Close sidebar if open
 				if (isSidebarOpen.value) {
 					toggleSidebar()
 				}
@@ -4014,11 +4016,7 @@ export const App = {
 				selectNote(newNote)
 
 				// --- NEW: Ensure folder is expanded when note is created ---
-				if (folderId) {
-					expandedFolders.value.add(folderId);
-				} else {
-					expandedFolders.value.add('inbox');
-				}
+				ensureFolderExpanded(folderId);
 
 				// Switch to Edit Mode (New Layout)
 				rightPanelMode.value = 'edit'
@@ -4044,6 +4042,14 @@ export const App = {
 
 			} catch (e) {
 				console.error("Failed to create note", e)
+			}
+		}
+
+		const ensureFolderExpanded = (folderId) => {
+			if (folderId) {
+				expandedFolders.value.add(folderId);
+			} else {
+				expandedFolders.value.add('inbox');
 			}
 		}
 
@@ -4119,7 +4125,12 @@ export const App = {
 
 		// Navigation Logic (Refactored)
 		const backToList = () => {
-			rightPanelMode.value = 'list'
+			// rightPanelMode.value = 'list'
+			// saveUserSetting(STORAGE_KEYS.LAST_PANEL_MODE, 'list')
+			// Now converted to: Just clear selectedNote to show blank/empty state
+			selectedNote.value = null
+			activeTabId.value = null
+			openTabIds.value = []
 			saveUserSetting(STORAGE_KEYS.LAST_PANEL_MODE, 'list')
 		}
 
@@ -4129,12 +4140,11 @@ export const App = {
 					rightPanelMode.value = 'edit'
 					saveUserSetting(STORAGE_KEYS.LAST_PANEL_MODE, 'edit')
 				} else {
-					// Optional: Shake or warn if no note selected?
 					console.warn('Cannot switch to edit mode: No note selected')
 				}
 			} else {
-				rightPanelMode.value = 'list'
-				saveUserSetting(STORAGE_KEYS.LAST_PANEL_MODE, 'list')
+				// Instead of switching to 'list' mode, we just clear the selection
+				backToList()
 			}
 		}
 
@@ -4219,11 +4229,7 @@ if (conflictState.value.isConflict && conflictState.value.localNote?.id === note
 				saveUserSetting(STORAGE_KEYS.LAST_FOLDER_ID, note.folder_id === null ? 'null' : note.folder_id)
 				
 				// --- NEW: Ensure folder is expanded when note is selected (e.g., from Recent Notes) ---
-				if (note.folder_id) {
-					expandedFolders.value.add(note.folder_id);
-				} else {
-					expandedFolders.value.add('inbox');
-				}
+				ensureFolderExpanded(note.folder_id);
 			}
 
 			if (note && note.id) {
