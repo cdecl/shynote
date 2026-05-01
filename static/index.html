@@ -820,6 +820,12 @@
                                                         :class="currentFolderId === null ? 'text-slate-800 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8]'">Inbox</span>
                                                 </div>
                                                 <div class="flex items-center gap-1 ml-2">
+                                                    <button @click.stop="createNoteInCurrentFolder"
+                                                        class="p-1 text-slate-400 hover:text-blue-600 rounded transition-colors"
+                                                        title="Add Note to Inbox">
+                                                        <span class="material-symbols-rounded text-[16px]"
+                                                            style="font-variation-settings: 'FILL' 1">add_circle</span>
+                                                    </button>
                                                     <span
                                                         class="text-slate-500 dark:text-[#cfcfe8] font-medium text-[10px] bg-slate-200 dark:bg-[#6272a4] px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{{
                                                         sortedRootNotes.length }}</span>
@@ -880,6 +886,12 @@
                                                 <div class="flex items-center gap-1 ml-2">
                                                     <div
                                                         class="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center gap-0.5 transition-opacity">
+                                                        <button @click.stop="createNoteInCurrentFolder"
+                                                            class="p-1 text-slate-400 hover:text-blue-600 rounded transition-colors"
+                                                            title="Add Note to this Folder">
+                                                            <span class="material-symbols-rounded text-[16px]"
+                                                                style="font-variation-settings: 'FILL' 1">add_circle</span>
+                                                        </button>
                                                         <button @click.stop="startRename(folder, 'folder')"
                                                             class="p-1 text-slate-400 hover:text-blue-600 rounded transition-colors"><span
                                                                 class="material-symbols-rounded text-[16px]"

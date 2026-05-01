@@ -3862,11 +3862,19 @@ export const App = {
 								}
 
 								if (isDirty) {
-									// Use Version Check for Optimistic Locking OR Content Check if version is same but data differs
-									const versionMismatch = serverNote.version !== ln.version
-									const contentMismatch = serverNote.content !== localContent
+									// Grace period check: New notes created within the last 3 minutes should ignore sync conflicts to allow initial push.
+									const createdDate = new Date(ln.created_at || 0);
+									const now = new Date();
+									const diffMinutes = (now - createdDate) / (1000 * 60);
+									const isNewNote = diffMinutes < 3;
 
-									if (versionMismatch || contentMismatch) {
+									// Pre-calculate mismatches for the 'else' block
+									const versionMismatch = serverNote.version !== ln.version;
+									const contentMismatch = serverNote.content !== localContent;
+
+									if (isNewNote) {
+										console.log(`[Sync] New note ${ln.id} in grace period (${Math.round(diffMinutes)}m). Skipping conflict check.`);
+									} else if (versionMismatch || contentMismatch) {
 										console.log(`[Sync Info] Conflict Detected: ${ln.title} (Reason: ${versionMismatch ? 'Version' : 'Content'})`)
 
 										// Add to Conflict Map (Use Memory Content if it was newer)
@@ -3963,9 +3971,11 @@ export const App = {
 			}
 		}
 
-		const createNote = async () => {
-			createNoteInFolder(null)
+		const createNoteInCurrentFolder = async () => {
+			const targetFolderId = currentFolderId.value === 'root' || !currentFolderId.value ? null : currentFolderId.value;
+			await createNoteInFolder(targetFolderId);
 		}
+
 
 		const createNoteInFolder = async (folderId) => {
 			try {
@@ -3975,7 +3985,7 @@ export const App = {
 				const now = nowObj.toISOString()
 
 				const pad = (n) => String(n).padStart(2, '0')
-				const initialTitle = `Draft ${nowObj.getFullYear()}-${pad(nowObj.getMonth() + 1)}-${pad(nowObj.getDate())} ${pad(nowObj.getHours())}:${pad(nowObj.getMinutes())}`
+				const initialTitle = `Draft ${nowObj.getFullYear()}-${pad(nowObj.getMonth() + 1)}-${pad(nowObj.getDate())} ${pad(nowObj.getHours() || 0).toString().padStart(2, '0')}:${(nowObj.getMinutes() || 0).toString().padStart(2, '0')}`
 				const initialContent = ''
 
 				// Calculate Hash
@@ -3986,7 +3996,7 @@ export const App = {
 					id: tempId,
 					title: initialTitle,
 					content: initialContent,
-					content_hash: initialHash, // ✅ Add Hash
+					content_hash: initialHash,
 					folder_id: folderId,
 					user_id: currentUserId.value || 'guest',
 					created_at: now,
@@ -4001,11 +4011,18 @@ export const App = {
 
 				// 3. Update UI
 				notes.value.unshift(newNote)
-				selectNote(newNote) // Use the unified selectNote function
+				selectNote(newNote)
+
+				// --- NEW: Ensure folder is expanded when note is created ---
+				if (folderId) {
+					expandedFolders.value.add(folderId);
+				} else {
+					expandedFolders.value.add('inbox');
+				}
 
 				// Switch to Edit Mode (New Layout)
 				rightPanelMode.value = 'edit'
-				viewMode.value = 'live' // Reset to Live Tab
+				viewMode.value = 'live'
 
 				// Close sidebar on mobile for better UX
 				if (window.innerWidth < 768) {
@@ -4019,7 +4036,6 @@ export const App = {
 						titleInputRef.value.select()
 					}
 				})
-
 
 				// Enter rename mode
 				nextTick(() => {
@@ -4201,6 +4217,13 @@ if (conflictState.value.isConflict && conflictState.value.localNote?.id === note
 			if (note) {
 				currentFolderId.value = note.folder_id
 				saveUserSetting(STORAGE_KEYS.LAST_FOLDER_ID, note.folder_id === null ? 'null' : note.folder_id)
+				
+				// --- NEW: Ensure folder is expanded when note is selected (e.g., from Recent Notes) ---
+				if (note.folder_id) {
+					expandedFolders.value.add(note.folder_id);
+				} else {
+					expandedFolders.value.add('inbox');
+				}
 			}
 
 			if (note && note.id) {
@@ -5785,7 +5808,7 @@ if (conflictState.value.isConflict && conflictState.value.localNote?.id === note
 			shortLoadingMessage,
 			loadingState, // NEW
 			createFolder,
-			createNote,
+			createNoteInCurrentFolder,
 			createNoteInFolder,
 			selectNote,
 			selectNoteById,
