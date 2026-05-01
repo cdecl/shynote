@@ -229,6 +229,30 @@ export const App = {
 		const isAuthenticated = ref(false)
 		const fontSize = ref('14')
 		const sortOption = ref({ field: 'title', direction: 'asc' })
+		const sortField = computed(() => sortOption.value.field)
+		const sortDirection = computed(() => sortOption.value.direction)
+
+		const toggleSort = () => {
+			const { field, direction } = sortOption.value;
+
+			if (field === 'title') {
+				if (direction === 'asc') {
+					sortOption.value.direction = 'desc';
+				} else {
+					sortOption.value.field = 'date';
+					sortOption.value.direction = 'desc';
+				}
+			} else {
+				if (direction === 'desc') {
+					sortOption.value.direction = 'asc';
+				} else {
+					sortOption.value.field = 'title';
+					sortOption.value.direction = 'asc';
+				}
+			}
+			saveUserSetting(STORAGE_KEYS.SORT_FIELD, sortOption.value.field);
+			saveUserSetting(STORAGE_KEYS.SORT_DIRECTION, sortOption.value.direction);
+		}
 		const appVersion = ref('')
 		const changelogContent = ref('')
 		const modalState = ref({
@@ -3557,27 +3581,30 @@ export const App = {
 		}
 
 		const sortItems = (items) => {
+			if (!items) return [];
+			const { field, direction } = sortOption.value;
+
 			return [...items].sort((a, b) => {
-				// 1. Pinning Priority
-				if (a.is_pinned && !b.is_pinned) return -1
-				if (!a.is_pinned && b.is_pinned) return 1
+				// 1. Pinning Priority: Pinned notes always come first
+				if (a.is_pinned && !b.is_pinned) return -1;
+				if (!a.is_pinned && b.is_pinned) return 1;
 
-				// 2. Normal Sort
-				let fieldA, fieldB
+				// 2. Normal Sort based on current sortOption
+				let fieldA, fieldB;
 
-				if (sortOption.value.field === 'title' || sortOption.value.field === 'name') {
-					// Handle title/name difference
-					fieldA = (a.title || a.name || '').toLowerCase()
-					fieldB = (b.title || b.name || '').toLowerCase()
+				if (field === 'title' || field === 'name') {
+					fieldA = (a.title || a.name || '').toLowerCase();
+					fieldB = (b.title || b.name || '').toLowerCase();
 				} else {
-					fieldA = a[sortOption.value.field]
-					fieldB = b[sortOption.value.field]
+					// field === 'date' (updated_at)
+					fieldA = a.updated_at || '';
+					fieldB = b.updated_at || '';
 				}
 
-				if (fieldA < fieldB) return sortOption.value.direction === 'asc' ? -1 : 1
-				if (fieldA > fieldB) return sortOption.value.direction === 'asc' ? 1 : -1
-				return 0
-			})
+				if (fieldA < fieldB) return direction === 'asc' ? -1 : 1;
+				if (fieldA > fieldB) return direction === 'asc' ? 1 : -1;
+				return 0;
+			});
 		}
 
 		const sortFoldersByNameAsc = (items) => {
@@ -4007,6 +4034,17 @@ export const App = {
 		const autoSelectNote = () => {
 			if (notes.value.length === 0) return
 
+			// 1. RECENT NOTE priority: Select the most recently used note
+			const recent = recentNotes.value;
+			if (recent && recent.length > 0) {
+				const latestNote = recent[0].note || recent[0];
+				if (latestNote) {
+					selectNote(latestNote);
+					return;
+				}
+			}
+
+			// 2. Fallback: Last noted ID from storage
 			const lastNoteId = localStorage.getItem(getUserStorageKey(STORAGE_KEYS.LAST_NOTE_ID))
 			if (lastNoteId) {
 				const lastNote = notes.value.find(n => String(n.id) === String(lastNoteId))
@@ -4016,29 +4054,7 @@ export const App = {
 				}
 			}
 
-			// Fallback: Select note with best usage score (frequency + recency)
-			let bestNote = null
-			let bestScore = -1
-
-			for (const note of notes.value) {
-				const usage = getNoteUsage(note.id)
-				// Score = frequency * 100 + recency bonus (max 1000 points for recent usage)
-				const recencyBonus = usage.lastUsed > 0 ? Math.max(0, 1000 - (Date.now() - usage.lastUsed) / 86400000) : 0
-				const score = usage.count * 100 + recencyBonus
-
-				if (score > bestScore) {
-					bestScore = score
-					bestNote = note
-				}
-			}
-
-			if (bestNote) {
-				selectNote(bestNote)
-				return
-			}
-
-			// Final fallback: first note in sorted order
-			// First check folders in sorted order
+			// 3. Fallback: First note in sorted order
 			const allSortedFolders = sortedFolders.value
 			for (const folder of allSortedFolders) {
 				const folderNotes = getSortedFolderNotes(folder.id)
@@ -4047,9 +4063,8 @@ export const App = {
 					return
 				}
 			}
-			// Then check root notes in sorted order
-			const rootNotes = sortItems(notes.value.filter(n => !n.folder_id))
-			if (rootNotes.length > 0) {
+			const rootNotes = sortedRootNotes.value
+			if (rootNotes && rootNotes.length > 0) {
 				selectNote(rootNotes[0])
 			}
 		}
@@ -5862,6 +5877,8 @@ if (conflictState.value.isConflict && conflictState.value.localNote?.id === note
 			signpost,
 			// Sort exports
 			sortOption,
+			sortField,
+			sortDirection,
 			setSortOption,
 			sortedRootNotes,
 			sortedFolders,
@@ -5872,6 +5889,7 @@ if (conflictState.value.isConflict && conflictState.value.localNote?.id === note
 			showSortMenu,
 			toggleSortMenu,
 			closeSortMenu,
+			toggleSort,
 			sortLabel,
 			fontSize,
 			setFontSize,

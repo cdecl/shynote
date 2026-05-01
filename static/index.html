@@ -793,6 +793,14 @@
                                                     class="material-symbols-rounded text-[20px]">create_new_folder</span>
                                             </button>
                                         </div>
+                                        <button @click.stop="toggleSort" 
+             class="flex items-center gap-1 px-2 py-0.5 rounded hover:bg-slate-200 dark:hover:bg-[#44475a] transition-colors text-slate-400 dark:text-[#cfcfe8]"
+             title="Toggle Sort (Title/Date)">
+             <span class="text-[10px] font-bold uppercase">{{ sortField === 'title' ? 'Title' : 'Date' }}</span>
+             <span class="material-symbols-rounded text-[16px]">
+                {{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+             </span>
+         </button>
                                     </div>
                                     <div class="space-y-0.5">
                                         <!-- Inbox Section -->
@@ -824,7 +832,10 @@
                                                     @click.stop="selectNote(note)"
                                                     class="flex items-center gap-2 px-3 h-8 cursor-pointer rounded-r-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-all group"
                                                     :class="selectedNote?.id === note.id ? 'bg-blue-50 dark:bg-[#44475a] text-blue-600 dark:text-[#8be9fd]' : 'text-slate-600 dark:text-[#cfcfe8]'">
-                                                    <span class="material-symbols-rounded text-[14px] text-slate-400 dark:text-[#cfcfe8]">description</span>
+                                                    <span @click.stop="togglePin(note)" class="material-symbols-rounded text-[14px] cursor-pointer hover:text-amber-500 transition-colors"
+                                                          :class="note.is_pinned ? 'text-amber-500' : 'text-slate-400 dark:text-[#cfcfe8]'">
+                                                        {{ note.is_pinned ? 'push_pin' : 'description' }}
+                                                    </span>
                                                     <span class="text-[13px] truncate">{{ note.title || 'Untitled' }}</span>
                                                 </div>
                                             </div>
@@ -848,6 +859,20 @@
                                                         style="font-variation-settings: 'FILL' 1">{{ dropTargetId ===
                                                         folder.id ? 'folder_open' : 'folder' }}</span>
                                                     <span
+                                                        v-if="renameState.id === folder.id && renameState.type === 'folder'"
+                                                        class="text-[14px] font-medium truncate"
+                                                        :class="currentFolderId === folder.id ? 'text-slate-800 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8]'">
+                                                        <input 
+                                                            :id="`rename-input-folder-${folder.id}`"
+                                                            v-model="renameState.name" 
+                                                            @blur="saveRename" 
+                                                            @keyup.enter="saveRename" 
+                                                            @keyup.esc="renameState = { id: null, type: null, name: '' }"
+                                                            class="bg-transparent border-b border-blue-500 outline-none w-full"
+                                                        />
+                                                    </span>
+                                                    <span
+                                                        v-else
                                                         class="text-[14px] font-medium truncate transition-colors duration-200"
                                                         :class="currentFolderId === folder.id ? 'text-slate-800 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8]'">{{
                                                         folder.name }}</span>
@@ -876,7 +901,10 @@
                                                     @click.stop="selectNote(note)"
                                                     class="flex items-center gap-2 px-3 h-8 cursor-pointer rounded-r-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-all group"
                                                     :class="selectedNote?.id === note.id ? 'bg-blue-50 dark:bg-[#44475a] text-blue-600 dark:text-[#8be9fd]' : 'text-slate-600 dark:text-[#cfcfe8]'">
-                                                    <span class="material-symbols-rounded text-[14px] text-slate-400 dark:text-[#cfcfe8]">description</span>
+                                                    <span @click.stop="togglePin(note)" class="material-symbols-rounded text-[14px] cursor-pointer hover:text-amber-500 transition-colors"
+                                                          :class="note.is_pinned ? 'text-amber-500' : 'text-slate-400 dark:text-[#cfcfe8]'">
+                                                        {{ note.is_pinned ? 'push_pin' : 'description' }}
+                                                    </span>
                                                     <span class="text-[13px] truncate">{{ note.title || 'Untitled' }}</span>
                                                 </div>
                                             </div>
@@ -1065,13 +1093,6 @@
                             :title="isSidebarOpen ? 'Hide Sidebar' : 'Show Sidebar'">
                             <span class="material-symbols-rounded text-[18px]">{{ getSidebarToggleIcon() }}</span>
                         </button>
-                        <button @click="toggleRightPanelMode()"
-                            class="p-0.5 text-slate-400 dark:text-[#cfcfe8] hover:text-slate-600 dark:hover:text-[#f8f8f2] hover:bg-slate-100 dark:hover:bg-[#6272a4] rounded transition-all flex-shrink-0"
-                            title="Back to List">
-                            <span class="material-symbols-rounded text-[18px]">arrow_back_ios_new</span>
-                        </button>
-
-
                     </div>
 
                     <div class="flex items-center gap-2 flex-shrink-0">
@@ -1136,34 +1157,6 @@
                         </div>
                     </div>
                 </div>
-
-	                <!-- Open Note Tabs -->
-	                <div v-if="rightPanelMode === 'edit' && !isMobile"
-	                    class="h-6 border-b border-slate-100 dark:border-[#44475a] bg-white dark:bg-[#282a36] flex items-center px-1 overflow-hidden">
-	                    <div class="flex-1 overflow-hidden">
-	                        <div class="flex w-full">
-	                            <div class="flex items-center gap-1 min-w-max pr-2">
-	                            <div v-for="tab in openTabs" :key="tab.id" @click="activateTab(tab.id)"
-	                                class="group flex flex-none items-center gap-1 h-5 w-36 px-1.5 rounded-md border text-[10px] font-medium cursor-pointer select-none transition-colors"
-	                                :class="activeTabId === tab.id
-	                                    ? 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-[#44475a] dark:border-[#6272a4] dark:text-[#f8f8f2]'
-	                                    : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 dark:bg-[#2f3242] dark:border-[#44475a] dark:text-[#cfcfe8] dark:hover:bg-[#44475a]'">
-	                                <span class="material-symbols-rounded text-[12px] shrink-0">description</span>
-	                                <span class="min-w-0 flex-1 truncate">{{ tab.title }}</span>
-	                                <button @click.stop="closeTab(tab.id)"
-	                                    class="w-3.5 h-3.5 flex items-center justify-center rounded hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
-	                                    title="Close tab">
-	                                    <span class="material-symbols-rounded text-[11px]">close</span>
-	                                </button>
-	                            </div>
-	                            <div v-if="openTabs.length === 0"
-	                                class="text-[10px] text-slate-400 dark:text-[#cfcfe8] px-2 select-none">
-	                                No open tabs
-	                            </div>
-	                            </div>
-	                        </div>
-	                    </div>
-	                </div>
 
                 <!-- Main Layout -->
                 <div class="flex-1 flex flex-col overflow-hidden relative">
