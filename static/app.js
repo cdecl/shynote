@@ -3209,13 +3209,8 @@ export const App = {
 			if (Math.abs(deltaY) > Math.abs(deltaX)) return
 
 			if (deltaX > minSwipeDistance) {
-				// SWIPE RIGHT: Open sidebar if closed, OR go back to list if in editor
-				if (rightPanelMode.value === 'edit' && selectedNote.value) {
-					backToList()
-					if (navigator.vibrate && isMobile.value) {
-						navigator.vibrate(50)
-					}
-				} else if (!isSidebarOpen.value) {
+				// SWIPE RIGHT: Open sidebar if closed
+				if (!isSidebarOpen.value) {
 					toggleSidebar()
 				}
 			} else if (deltaX < -minSwipeDistance) {
