@@ -215,6 +215,7 @@ textarea {
 
 .dark .markdown-body {
     color-scheme: dark;
+    color: #f8f8f2 !important;
     --color-canvas-default: #282a36;
     --color-canvas-subtle: #2f3242;
     --color-border-default: #44475a;

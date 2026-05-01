@@ -795,39 +795,54 @@
                                         </div>
                                     </div>
                                     <div class="space-y-0.5">
-                                        <!-- Inbox -->
-                                        <div @click.stop="selectFolder(null)" @drop="handleDrop(null, $event)"
-                                            @dragover.prevent @dragenter.prevent="handleDragEnter('inbox')"
-                                            @dragleave.prevent="handleDragLeave('inbox')"
-                                            class="relative flex items-center justify-between px-3 h-9 cursor-pointer active:bg-blue-200 dark:active:bg-blue-600/30 transition-all duration-200 group rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 mx-2"
-                                            :class="[dropTargetId === 'inbox' ? 'translate-x-1 bg-blue-50 dark:bg-[#44475a] ring-1 ring-blue-200 dark:ring-[#6272a4]' : '', currentFolderId === null ? 'bg-blue-100 dark:bg-[#44475a] shadow-sm' : '']">
-                                            <div class="flex items-center gap-1 flex-1 min-w-0">
-                                                <span class="material-symbols-rounded text-[18px] transition-colors"
-                                                    :class="[dropTargetId === 'inbox' || currentFolderId === null ? 'text-blue-500' : 'text-slate-400 dark:text-[#cfcfe8]']"
-                                                    style="font-variation-settings: 'FILL' 1">home</span>
-                                                <span
-                                                    class="text-[14px] font-medium truncate transition-colors duration-200"
-                                                    :class="currentFolderId === null ? 'text-slate-800 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8]'">INBOX</span>
+                                        <!-- Inbox Section -->
+                                        <div class="space-y-0.5">
+                                            <div @click.stop="toggleFolderExpansion('inbox')"
+                                                class="relative flex items-center justify-between px-3 h-9 cursor-pointer active:bg-blue-200 dark:active:bg-blue-600/30 transition-all duration-200 group rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 mx-2"
+                                                :class="[dropTargetId === 'inbox' ? 'translate-x-1 bg-blue-50 dark:bg-[#44475a] ring-1 ring-blue-200 dark:ring-[#6272a4]' : '', currentFolderId === null ? 'bg-blue-100 dark:bg-[#44475a] shadow-sm' : '']">
+                                                <div class="flex items-center gap-1 flex-1 min-w-0">
+                                                    <span class="material-symbols-rounded text-[18px] transition-colors"
+                                                        :class="isFolderExpanded('inbox') ? 'rotate-90' : ''"
+                                                        style="font-size: 18px;">chevron_right</span>
+                                                    <span class="material-symbols-rounded text-[16px] transition-colors"
+                                                        :class="[dropTargetId === 'inbox' ? 'text-blue-500' : 'text-slate-400 dark:text-[#cfcfe8]', currentFolderId === null ? 'text-blue-500 dark:text-[#8be9fd]' : 'text-slate-400 dark:text-[#cfcfe8]']"
+                                                        style="font-variation-settings: 'FILL' 1">inbox</span>
+                                                    <span
+                                                        class="text-[14px] font-medium truncate transition-colors duration-200"
+                                                        :class="currentFolderId === null ? 'text-slate-800 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8]'">Inbox</span>
+                                                </div>
+                                                <div class="flex items-center gap-1 ml-2">
+                                                    <span
+                                                        class="text-slate-500 dark:text-[#cfcfe8] font-medium text-[10px] bg-slate-200 dark:bg-[#6272a4] px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{{
+                                                        sortedRootNotes.length }}</span>
+                                                </div>
                                             </div>
-                                            <span
-                                                class="text-slate-500 dark:text-[#cfcfe8] font-medium text-[10px] bg-slate-200 dark:bg-[#6272a4] px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{{
-                                                sortedRootNotes.length }}</span>
+                                            
+                                            <!-- Nested Inbox Notes -->
+                                            <div v-if="isFolderExpanded('inbox')" class="ml-6 space-y-0.5 border-l border-slate-200 dark:border-[#44475a]">
+                                                <div v-for="note in sortedRootNotes" :key="note.id"
+                                                    @click.stop="selectNote(note)"
+                                                    class="flex items-center gap-2 px-3 h-8 cursor-pointer rounded-r-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-all group"
+                                                    :class="selectedNote?.id === note.id ? 'bg-blue-50 dark:bg-[#44475a] text-blue-600 dark:text-[#8be9fd]' : 'text-slate-600 dark:text-[#cfcfe8]'">
+                                                    <span class="material-symbols-rounded text-[14px] text-slate-400 dark:text-[#cfcfe8]">description</span>
+                                                    <span class="text-[13px] truncate">{{ note.title || 'Untitled' }}</span>
+                                                </div>
+                                            </div>
                                         </div>
+
                                         <!-- Folder Items -->
                                         <div v-for="folder in sortedFolders" :key="folder.id" @dragover.prevent
                                             @dragenter.prevent="handleDragEnter(folder.id)"
                                             @dragleave.prevent="handleDragLeave(folder.id)"
-                                            @drop="handleDrop(folder.id, $event)">
-                                            <div @click.stop="selectFolder(folder.id)"
+                                            @drop="handleDrop(folder.id, $event)"
+                                            class="space-y-0.5">
+                                            <div @click.stop="toggleFolderExpansion(folder.id)"
                                                 class="relative flex items-center justify-between px-3 h-9 cursor-pointer active:bg-blue-200 dark:active:bg-blue-600/30 transition-all duration-200 group rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 mx-2"
                                                 :class="[dropTargetId === folder.id ? 'translate-x-1 bg-blue-50 dark:bg-[#44475a] ring-1 ring-blue-200 dark:ring-[#6272a4]' : '', currentFolderId === folder.id ? 'bg-blue-100 dark:bg-[#44475a] shadow-sm' : '']">
-                                                <input
-                                                    v-if="renameState.id === folder.id && renameState.type === 'folder'"
-                                                    :id="'rename-input-folder-' + folder.id" v-model="renameState.name"
-                                                    @click.stop @blur="saveRename" @keyup.enter="saveRename"
-                                                    class="flex-1 bg-white dark:bg-[#2f3242] border border-blue-400 rounded px-2 py-1 text-sm font-medium text-slate-800 dark:text-[#f8f8f2] outline-none shadow-sm">
-                                                <div v-else @dblclick.stop="startRename(folder, 'folder')"
-                                                    class="flex items-center gap-1 flex-1 min-w-0">
+                                                <div class="flex items-center gap-1 flex-1 min-w-0">
+                                                    <span class="material-symbols-rounded text-[18px] transition-colors"
+                                                        :class="isFolderExpanded(folder.id) ? 'rotate-90' : ''"
+                                                        style="font-size: 18px;">chevron_right</span>
                                                     <span class="material-symbols-rounded text-[16px] transition-colors"
                                                         :class="[dropTargetId === folder.id ? 'text-blue-500' : 'text-slate-400 dark:text-[#cfcfe8]', currentFolderId === folder.id ? 'text-blue-500 dark:text-[#8be9fd]' : 'text-slate-400 dark:text-[#cfcfe8]']"
                                                         style="font-variation-settings: 'FILL' 1">{{ dropTargetId ===
@@ -854,6 +869,18 @@
                                                         getSortedFolderNotes(folder.id).length }}</span>
                                                 </div>
                                             </div>
+                                            
+                                            <!-- Nested Notes -->
+                                            <div v-if="isFolderExpanded(folder.id)" class="ml-6 space-y-0.5 border-l border-slate-200 dark:border-[#44475a]">
+                                                <div v-for="note in getSortedFolderNotes(folder.id)" :key="note.id"
+                                                    @click.stop="selectNote(note)"
+                                                    class="flex items-center gap-2 px-3 h-8 cursor-pointer rounded-r-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-all group"
+                                                    :class="selectedNote?.id === note.id ? 'bg-blue-50 dark:bg-[#44475a] text-blue-600 dark:text-[#8be9fd]' : 'text-slate-600 dark:text-[#cfcfe8]'">
+                                                    <span class="material-symbols-rounded text-[14px] text-slate-400 dark:text-[#cfcfe8]">description</span>
+                                                    <span class="text-[13px] truncate">{{ note.title || 'Untitled' }}</span>
+                                                </div>
+                                            </div>
+
                                             <!-- Inline Delete Confirmation -->
                                             <div v-if="deleteConfirmation.id === folder.id && deleteConfirmation.type === 'folder'"
                                                 class="mx-3 mb-2 p-2 bg-red-50 dark:bg-#3b1f2b/65 border border-red-200 dark:border-#ff5555/50 rounded-lg text-xs flex flex-col gap-2 items-start animate-fade-in">

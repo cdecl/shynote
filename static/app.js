@@ -345,6 +345,7 @@ export const App = {
 		});
 		const pinnedNotes = ref([])
 		const folders = ref([])
+		const expandedFolders = ref(new Set())
 		const selectedNote = ref(null)
 		const openTabIds = ref([])
 		const activeTabId = ref(null)
@@ -418,6 +419,18 @@ export const App = {
 			resolveSelectedNoteByTab(activeTabId.value);
 			persistTabs();
 		}
+
+		const toggleFolderExpansion = (folderId) => {
+			if (expandedFolders.value.has(folderId)) {
+				expandedFolders.value.delete(folderId);
+			} else {
+				expandedFolders.value.add(folderId);
+			}
+		};
+
+		const isFolderExpanded = (folderId) => {
+			return expandedFolders.value.has(folderId);
+		};
 
 		const pruneTabsWithNotes = () => {
 			const validIds = new Set(notes.value.map(n => String(n.id)));
@@ -5875,6 +5888,9 @@ if (conflictState.value.isConflict && conflictState.value.localNote?.id === note
 			showFolderSelectMenu,
 			toggleFolderSelectMenu,
 			closeFolderSelectMenu,
+
+			toggleFolderExpansion,
+			isFolderExpanded,
 
 			focusEditor,
 
