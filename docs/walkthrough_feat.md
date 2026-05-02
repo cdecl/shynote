@@ -5,20 +5,18 @@ I have added a Document Listing Mode to the Main Panel and implemented a toggle 
 ## Changes
 
 ### 1. Main Panel Toolbar (Editor Mode)
-The left navigation area now provides two actions in order.
+The left navigation area now provides a single action:
 - **Sidebar Toggle Icon**: `left_panel_open` / `left_panel_close`
-- **Back to List Icon**: `arrow_back_ios_new`
 - **Behavior**:
   - Sidebar toggle opens Explorer on mobile and toggles sidebar visibility on desktop.
-  - Back to List switches the main view to the document list.
+- *Note: The "Back to List" button was removed to streamline navigation; switching to the list now occurs by deselecting the note or using the sidebar.*
 
 ### 2. Main Panel Header (List Mode)
-A new "Return to Editor" button appears in the List View header when a note is active.
+The List View header provides navigation and control actions.
 - **Icons**:
   - Sidebar Toggle: `left_panel_open` / `left_panel_close`
-  - Return to Editor: `edit_note`
-- **Condition**: The Return to Editor button remains visible but is disabled when no note is selected.
-- **Behavior**: Return to Editor switches back to the active note editor.
+- **Behavior**: Sidebar toggle opens Explorer on mobile and toggles sidebar visibility on desktop.
+- *Note: The "Return to Editor" button was removed to simplify the header layout.*
 
 ### 3. Logic (`app.js`)
 - **State Persistence**: The application now remembers your last view mode (`list` or `edit`) via `localStorage`.

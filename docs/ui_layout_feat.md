@@ -13,18 +13,29 @@ The sidebar is now a dual-layered navigation hub consisting of the **Activity Ba
 - **Search (`search`)**: Toggles the Search Content Panel (auto-focuses search input).
 - **Menu (`menu_open`)**: Triggers the Command Palette (`Cmd+P`).
 - **Quick Note (`note_add`)**: Instantly creates a new note in the Inbox.
+- **Pull Sync (`sync`)**: Manually triggers a synchronization to fetch latest changes from the cloud.
 - **Controls (Bottom)**:
   - **Theme Toggle**: Switch between Light/Dark mode.
   - **Settings (`settings`)**: Opens the Settings Modal.
   - **Profile/Auth**: User avatar or Login/Logout action.
 
 ### Explorer Panel (`sidebarPanelMode === 'explorer'`)
-*The primary navigation pane.*
+*The primary navigation pane. Supports a hierarchical tree view.*
 - **Header**: \"EXPLORER\" label + App Version.
+- **Sort Toggle**: Button to switch sorting between Title and Date (with ascending/descending direction).
 - **Library Section**:
   - **New Folder Button (`create_new_folder`)**: Creates a new folder.
-  - **Inbox**: Special folder for root notes (Icon: `home`).
-  - **User Folders**: List of folders with rename/delete actions (`edit_square`, `delete`) and item count. Supports drag-and-drop.
+  - **Inbox**: 
+    - Collapsible section (Icon: `inbox`).
+    - Expand/Collapse toggle: Shows/hides root notes.
+    - Quick Add: `add_circle` button to instantly create a note in Inbox.
+    - Note List: Displayed when expanded, showing note title and pin status.
+  - **User Folders**: 
+    - Collapsible folders with rename/delete actions and item count.
+    - Expand/Collapse toggle: Shows/hides notes within the folder.
+    - Quick Add: `add_circle` button to create a note specifically in that folder.
+    - Note List: Displayed when expanded, showing note title and pin status.
+    - Supports drag-and-drop for organizing notes and folders.
 - **Trash**: Fixed at the bottom of the list (Icon: `delete` / `delete_outline`). Has empty trash button.
 - **Recent Notes**: List of recently accessed notes (up to 10), showing note title with folder name.
 
@@ -55,7 +66,6 @@ The main panel switches between **List Mode** and **Editor Mode**.
     - On Desktop: toggles sidebar visibility (`isSidebarOpen`).
     - On Mobile: opens Explorer sidebar panel (`setSidebarPanelMode('explorer')`).
     - Icon switches by current sidebar state (`open` -> `left_panel_close`, `closed` -> `left_panel_open`).
-  - **Back to Editor (`edit_note`)**: Button - *Enabled only when a note is active; disabled otherwise.*
 - **Controls (Center/Right)**:
   - **Grid/List Toggle**: Button (Icon: `grid_view` / `view_list`)
   - **Sort Controls**: Field (Title/Date) segmented control, Direction toggle (`arrow_upward` / `arrow_downward`).
@@ -79,7 +89,6 @@ The main panel switches between **List Mode** and **Editor Mode**.
     - On Desktop: toggles sidebar visibility (`isSidebarOpen`).
     - On Mobile: opens Explorer sidebar panel (`setSidebarPanelMode('explorer')`).
     - Icon switches by current sidebar state (`open` -> `left_panel_close`, `closed` -> `left_panel_open`).
-  - **Back to List (`arrow_back_ios_new`)**: Button.
 - **Tools (Right)** — grouped in a flex container:
   - **Font Size Selector + View Mode Tabs Container** (`gap-0` — no gap between them):
     - **Font Size Selector**: Dropdown (12px, 14px, 16px, 18px, 20px). Styled as `h-[26px]`.
@@ -88,6 +97,7 @@ The main panel switches between **List Mode** and **Editor Mode**.
 
 #### Open Tabs Bar (h-6/24px, between Header and Editor)
 - **Position**: Placed between the top toolbar and the editor main content area. Shown only in `live` mode.
+- **Visibility**: *Hidden on mobile devices for better screen real estate.*
 - **Tabs**: Shows currently opened notes as horizontal tabs (`w-36` fixed width).
 - **Per-tab Close**: Each tab has an `X` (`close`) close button.
 - **Empty State**: Shows `No open tabs` when no tabs are open.
