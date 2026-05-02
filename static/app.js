@@ -4866,6 +4866,9 @@ if (conflictState.value.isConflict && conflictState.value.localNote?.id === note
 					note.content_hash = hash
 					await LocalDB.saveNote({ ...note }, 'UPDATE')
 				}
+				// Force immediate UI refresh of the notes list to reflect the move
+				await fetchNotes(false);
+				await fetchFolders(false);
 			} catch (e) {
 				console.error("Move failed", e)
 				note.folder_id = originalFolderId
