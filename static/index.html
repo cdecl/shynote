@@ -345,11 +345,11 @@
 </head>
 
 <body
-    class="bg-gray-100 dark:bg-[#1D1D20] h-screen overflow-hidden overscroll-none text-gray-800 dark:text-[#c9d1d9] font-sans transition-colors duration-300"
+    class="bg-[#F3F0E9 dark:bg-[#1D1D20] h-screen overflow-hidden overscroll-none text-gray-800 dark:text-[#c9d1d9] font-sans transition-colors duration-300"
     style="height: calc(var(--vh, 1vh) * 100);">
     <div id="app" class="flex h-full">
         <!-- Splash Screen (Auto-removed when Vue mounts) -->
-        <div class="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gray-100 dark:bg-[#1D1D20]"
+        <div class="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#F3F0E9] dark:bg-[#1D1D20]"
             v-if="loading && notes.length === 0">
             <img src="/static/logo.png" class="w-24 h-24 rounded-full shadow-2xl animate-pulse mb-4" alt="SHYNOTE">
 
@@ -606,11 +606,11 @@
             ]" :style="{ width: isSidebarOpen ? (isMobile ? '100%' : sidebarWidth + 'px') : (isMobile ? '0px' : '44px') }">
 
             <div
-                class="w-full h-full flex transition-all duration-300 ease-in-out group/sidebar shadow-xl md:shadow-none bg-[#F2F0EA] dark:bg-[#1D1D20] border-r border-[#E6E4DD] dark:border-[#30363d]">
+                class="w-full h-full flex transition-all duration-300 ease-in-out group/sidebar shadow-xl md:shadow-none bg-[#F3F0E9] dark:bg-[#1D1D20] border-r border-[#E6E4DD] dark:border-[#30363d]">
 
                 <!-- Activity Bar (Narrow fixed icon bar) - ALWAYS VISIBLE -->
                 <div
-                    class="w-11 flex-shrink-0 flex flex-col bg-[#F2F0EA] dark:bg-[#1D1D20] border-r border-[#E6E4DD] dark:border-[#30363d] z-30 transition-all duration-300">
+                    class="w-11 flex-shrink-0 flex flex-col bg-[#F3F0E9] dark:bg-[#1D1D20] border-r border-[#E6E4DD] dark:border-[#30363d] z-30 transition-all duration-300">
 
                     <!-- Top: Logo -->
                     <div class="h-11 flex items-center justify-center border-b border-transparent">
@@ -1098,14 +1098,14 @@
         </div>
 
         <!-- Main Editor -->
-        <main class="flex-1 flex flex-col bg-white dark:bg-[#282a36] overflow-hidden relative"
+        <main class="flex-1 flex flex-col bg-[#FDFCF8] dark:bg-[#1D1D20] overflow-hidden relative"
             :class="(isSidebarOpen && isMobile) ? 'hidden' : 'flex'">
 
 
             <div class="flex flex-col h-full">
                 <!-- Toolbar -->
                 <div v-if="rightPanelMode !== 'list' && selectedNote"
-                    class="h-7 safe-area-top border-b border-slate-100 dark:border-[#44475a] bg-white/80 dark:bg-[#282a36]/80 backdrop-blur-sm flex justify-between items-center pl-1 pr-2 flex-shrink-0 transition-colors duration-300 relative z-10 md:z-40">
+                    class="h-7 safe-area-top border-b border-slate-100 dark:border-[#44475a] bg-[#FDFCF8]/80 dark:bg-[#1D1D20]/80 backdrop-blur-sm flex justify-between items-center pl-1 pr-2 flex-shrink-0 transition-colors duration-300 relative z-10 md:z-40">
                     <div class="flex items-center gap-2">
                         <button @click="openSidebarFromMainPanel"
                             class="p-0.5 text-slate-400 dark:text-[#cfcfe8] hover:text-slate-600 dark:hover:text-[#f8f8f2] hover:bg-slate-100 dark:hover:bg-[#6272a4] rounded transition-all flex-shrink-0"
@@ -1260,8 +1260,13 @@
 
                         <!-- Content Grid/List -->
                         <div class="flex-1 overflow-y-auto p-4 lg:p-6" @mousedown.self="!isMobile && startDragSelection">
-                            <!-- New Folder Header -->
-                            <div class="mb-8 mt-4 flex items-center gap-3">
+                            <!-- Empty State: No Note Selected -->
+                            <div v-if="!selectedNote" class="h-full flex flex-col items-center justify-center text-slate-400 dark:text-[#6272a4] opacity-60">
+                                <span class="material-symbols-rounded text-6xl mb-4">description</span>
+                                <p class="text-sm font-medium">Select a note to start editing</p>
+                            </div>
+                            <!-- Folder/Note Content (Only if a note is selected or we are in list mode) -->
+                            <div v-else-if="rightPanelMode === 'list'">
                                 <!-- Icon -->
                                 <span v-if="currentFolderId === null"
                                     class="material-symbols-rounded text-blue-500 text-[22px]">home</span>
@@ -1953,10 +1958,10 @@
                                 </div>
 
                                 <!-- Preview Pane -->
-                                <div class="flex flex-col h-full bg-white dark:bg-[#1D1D20] border-l border-slate-200 dark:border-[#30363d] overflow-hidden transition-all duration-300 relative"
+                                <div class="flex flex-col h-full bg-[#FDFCF8] dark:bg-[#1D1D20] border-l border-slate-200 dark:border-[#30363d] overflow-hidden transition-all duration-300 relative"
                                     :class="{ 'hidden': viewMode !== 'view', 'flex-1': viewMode === 'view' }">
                                     <!-- Preview Content -->
-                                    <div class="flex-none p-4 pb-2 bg-white dark:bg-[#1D1D20] z-10 shrink-0">
+                                    <div class="flex-none p-4 pb-2 bg-[#FDFCF8] dark:bg-[#1D1D20] z-10 shrink-0">
                                         <h1
                                             class="w-full text-2xl font-extrabold text-[#2f3242] dark:text-[#f8f8f2] leading-tight break-words m-0">
                                             {{ selectedNote.title || 'Untitled Note' }}
@@ -1966,12 +1971,12 @@
                                         <div ref="previewRef" @scroll="handleScroll"
                                             @dblclick="handlePreviewDoubleClick" v-html="previewContent"
                                             :style="'font-size: ' + fontSize + 'px !important;'"
-                                            class="markdown-body overflow-y-auto flex-1 bg-white dark:bg-[#1D1D20] transition-colors pb-20 md:pb-0">
+                                            class="markdown-body overflow-y-auto flex-1 bg-[#FDFCF8] dark:bg-[#1D1D20] transition-colors pb-20 md:pb-0">
                                         </div>
 
                                         <!-- Note Meta Bar (Moved for Preview Consistency) -->
                                         <div
-                                            class="flex items-center gap-1 px-2 py-2 text-xs text-slate-400 dark:text-[#cfcfe8] font-medium border-t border-slate-100 dark:border-[#30363d] bg-white/95 dark:bg-[#1D1D20]/95 backdrop-blur-blur-md md:backdrop-blur-none z-20 absolute bottom-0 left-0 right-0 rounded-none shadow-lg md:static md:bottom-auto md:left-auto md:right-auto md:rounded-none md:shadow-none md:border-x-0 md:border-b-0">
+             class="flex items-center gap-1 px-2 py-2 text-xs text-slate-400 dark:text-[#cfcfe8] font-medium border-t border-slate-100 dark:border-[#30363d] bg-[#F3F0E9]/95 dark:bg-[#1D1D20]/95 backdrop-blur-md md:backdrop-blur-none z-20 absolute bottom-0 left-0 right-0 rounded-none shadow-lg md:static md:bottom-auto md:left-auto md:right-auto md:rounded-none md:shadow-none md:border-x-0 md:border-b-0">
                                             <span>{{ formatDateParts(selectedNote.updated_at).date.replace(/\./g,
                                                 '-') }} {{
                                                 formatDateParts(selectedNote.updated_at).time.substring(0, 5)

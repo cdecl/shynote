@@ -29,6 +29,9 @@ textarea {
 }
 
 /* CodeMirror Background Override */
+.cm-editor {
+    background-color: #FDFCF8 !important;
+}
 .dark .cm-editor {
     background-color: #1D1D20 !important;
 }
