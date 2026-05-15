@@ -812,7 +812,7 @@
                                     <div class="space-y-0.5">
                                         <!-- Inbox Section -->
                                         <div class="space-y-0.5">
-                                            <div @click.stop="toggleFolderExpansion('inbox')"
+                                            <div @click.stop="toggleFolderExpansion('inbox')" @contextmenu.prevent.stop="openInboxMenu($event)"
                                                 class="relative flex items-center justify-between px-3 h-9 cursor-pointer active:bg-blue-200 dark:active:bg-blue-600/30 transition-all duration-200 group rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 mx-2"
                                                 :class="[dropTargetId === 'inbox' ? 'translate-x-1 bg-blue-50 dark:bg-[#44475a] ring-1 ring-blue-200 dark:ring-[#6272a4]' : '', currentFolderId === null ? 'bg-blue-100 dark:bg-[#44475a] shadow-sm' : '']">
                                                 <div class="flex items-center gap-1 flex-1 min-w-0">
@@ -827,7 +827,7 @@
                                                         :class="currentFolderId === null ? 'text-slate-800 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8]'">Inbox</span>
                                                 </div>
                                                 <div class="flex items-center gap-1 ml-2">
-                                                    <button @click.stop="createNoteInCurrentFolder"
+                                                    <button @click.stop="createNoteInFolder(null)"
                                                         class="p-1 text-slate-400 hover:text-blue-600 rounded transition-colors"
                                                         title="Add Note to Inbox">
                                                         <span class="material-symbols-rounded text-[16px]"
@@ -843,6 +843,7 @@
                                             <div v-if="isFolderExpanded('inbox')" class="ml-6 space-y-0.5 border-l border-slate-200 dark:border-[#44475a]">
                                                 <div v-for="note in sortedRootNotes" :key="note.id"
                                                     @click.stop="selectNote(note)"
+                                                    @contextmenu.prevent.stop="openNoteMenu($event, note)"
                                                     class="flex items-center gap-2 px-3 h-8 cursor-pointer rounded-r-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-all group"
                                                     :class="selectedNote?.id === note.id ? 'bg-blue-50 dark:bg-[#44475a] text-blue-600 dark:text-[#8be9fd]' : 'text-slate-600 dark:text-[#cfcfe8]'">
                                                     <span @click.stop="togglePin(note)" class="material-symbols-rounded text-[14px] cursor-pointer hover:text-amber-500 transition-colors"
@@ -860,7 +861,7 @@
                                             @dragleave.prevent="handleDragLeave(folder.id)"
                                             @drop="handleDrop(folder.id, $event)"
                                             class="space-y-0.5">
-                                            <div @click.stop="toggleFolderExpansion(folder.id)"
+                                            <div @click.stop="toggleFolderExpansion(folder.id)" @contextmenu.stop="openFolderMenu($event, folder)"
                                                 class="relative flex items-center justify-between px-3 h-9 cursor-pointer active:bg-blue-200 dark:active:bg-blue-600/30 transition-all duration-200 group rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 mx-2"
                                                 :class="[dropTargetId === folder.id ? 'translate-x-1 bg-blue-50 dark:bg-[#44475a] ring-1 ring-blue-200 dark:ring-[#6272a4]' : '', currentFolderId === folder.id ? 'bg-blue-100 dark:bg-[#44475a] shadow-sm' : '']">
                                                 <div class="flex items-center gap-1 flex-1 min-w-0">
@@ -918,6 +919,7 @@
                                             <div v-if="isFolderExpanded(folder.id)" class="ml-6 space-y-0.5 border-l border-slate-200 dark:border-[#44475a]">
                                                 <div v-for="note in getSortedFolderNotes(folder.id)" :key="note.id"
                                                     @click.stop="selectNote(note)"
+                                                    @contextmenu.prevent.stop="openNoteMenu($event, note)"
                                                     class="flex items-center gap-2 px-3 h-8 cursor-pointer rounded-r-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-all group"
                                                     :class="selectedNote?.id === note.id ? 'bg-blue-50 dark:bg-[#44475a] text-blue-600 dark:text-[#8be9fd]' : 'text-slate-600 dark:text-[#cfcfe8]'">
                                                     <span @click.stop="togglePin(note)" class="material-symbols-rounded text-[14px] cursor-pointer hover:text-amber-500 transition-colors"
@@ -946,19 +948,22 @@
                                 </div>
                                 <!-- Trash Section -->
                                 <div class="mt-4 pt-2 border-t border-slate-200 dark:border-[#44475a]">
-                                    <div @click.stop="selectFolder(TRASH_FOLDER_ID)"
+                                    <div @click.stop="toggleFolderExpansion(TRASH_FOLDER_ID)"
                                         @drop="handleDrop(TRASH_FOLDER_ID, $event)" @dragover.prevent
                                         @dragenter.prevent="handleDragEnter(TRASH_FOLDER_ID)"
                                         @dragleave.prevent="handleDragLeave(TRASH_FOLDER_ID)"
-                                        class="relative flex items-center justify-between px-3 h-9 cursor-pointer transition-all duration-200 group rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 mx-2"
+                                        class="relative flex items-center justify-between px-3 h-9 cursor-pointer active:bg-blue-200 dark:active:bg-blue-600/30 transition-all duration-200 group rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 mx-2"
                                         :class="[dropTargetId === TRASH_FOLDER_ID ? 'translate-x-1 bg-red-50 dark:bg-#3b1f2b/65 ring-1 ring-red-200 dark:ring-#ff5555/50' : '', currentFolderId === TRASH_FOLDER_ID ? 'bg-blue-100 dark:bg-[#44475a] shadow-sm' : '']">
-                                        <div class="flex items-center gap-3">
-                                            <span class="material-symbols-rounded text-[22px]"
-                                                :class="dropTargetId === TRASH_FOLDER_ID ? 'text-red-500' : 'text-slate-400'"
-                                                style="font-variation-settings: 'FILL' 1">{{ trashNotesCount > 0 ?
-                                                'delete' : 'delete_outline' }}</span>
+                                        <div class="flex items-center gap-1 flex-1 min-w-0">
+                                            <span class="material-symbols-rounded text-[18px] transition-colors cursor-pointer"
+                                                  @click.stop="toggleFolderExpansion(TRASH_FOLDER_ID)"
+                                                  :class="isFolderExpanded(TRASH_FOLDER_ID) ? 'rotate-90' : ''"
+                                                  style="font-size:18px;">chevron_right</span>
+                                            <span class="material-symbols-rounded text-[16px] transition-colors"
+                                                  :class="[dropTargetId === TRASH_FOLDER_ID ? 'text-red-500' : 'text-slate-400 dark:text-[#cfcfe8]']"
+                                                  style="font-variation-settings: 'FILL' 1">{{ trashNotesCount > 0 ? 'delete' : 'delete_outline' }}</span>
                                             <span class="text-[14px] font-medium"
-                                                :class="currentFolderId === TRASH_FOLDER_ID ? 'text-slate-800 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8]'">TRASH</span>
+                                                  :class="currentFolderId === TRASH_FOLDER_ID ? 'text-slate-800 dark:text-[#f8f8f2]' : 'text-slate-600 dark:text-[#cfcfe8]'">TRASH</span>
                                         </div>
                                         <div class="flex items-center gap-2">
                                             <button v-if="trashNotesCount > 0"
@@ -982,7 +987,21 @@
                                             </div>
                                         </div>
                                     </div>
+                                <!-- Trash Notes List -->
+                                <div v-if="isFolderExpanded(TRASH_FOLDER_ID) && getSortedFolderNotes(TRASH_FOLDER_ID).length > 0" class="ml-6 space-y-0.5 border-l border-slate-200 dark:border-[#44475a]">
+                                    <div v-for="note in getSortedFolderNotes(TRASH_FOLDER_ID)" :key="note.id"
+                                        @click.stop="selectNote(note)"
+                                        @contextmenu.prevent.stop="openNoteMenu($event, note)"
+                                        class="flex items-center gap-2 px-3 h-8 cursor-pointer rounded-r-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-all group"
+                                        :class="selectedNote?.id === note.id ? 'bg-blue-50 dark:bg-[#44475a] text-blue-600 dark:text-[#8be9fd]' : 'text-slate-600 dark:text-[#cfcfe8]'">
+                                        <span @click.stop="togglePin(note)" class="material-symbols-rounded text-[14px] cursor-pointer hover:text-amber-500 transition-colors"
+                                              :class="note.is_pinned ? 'text-amber-500' : 'text-slate-400 dark:text-[#cfcfe8]'">
+                                            {{ note.is_pinned ? 'push_pin' : 'description' }}
+                                        </span>
+                                        <span class="text-[13px] truncate">{{ note.title || 'Untitled' }}</span>
+                                    </div>
                                 </div>
+                            </div> <!-- Close Trash Section Wrapper -->
                                 <!-- Recent Notes Section -->
                                 <div v-if="recentNotes.length > 0" class="px-3 pb-2">
                                     <h3
@@ -1259,7 +1278,7 @@
                         </div>
 
                         <!-- Content Grid/List -->
-                        <div class="flex-1 overflow-y-auto p-4 lg:p-6" @mousedown.self="!isMobile && startDragSelection">
+                        <div class="flex-1 overflow-y-auto p-4 lg:p-6" @mousedown.self="!isMobile && startDragSelection" style="display:none;">
                             <!-- Empty State: No Note Selected -->
                             <div v-if="!selectedNote" class="h-full flex flex-col items-center justify-center text-slate-400 dark:text-[#6272a4] opacity-60">
                                 <span class="material-symbols-rounded text-6xl mb-4">description</span>
@@ -2221,6 +2240,28 @@
                     </div>
                 </div>
         </main>
+    
+        <!-- Global Context Menu -->
+        <div v-if="contextMenu.visible"
+             class="context-menu fixed bg-white dark:bg-[#282a36] border border-slate-200 dark:border-[#44475a] rounded shadow-lg z-[9999]"
+             :style="{ top: contextMenu.top + 'px', left: contextMenu.left + 'px' }">
+            <template v-if="contextMenu.type === 'folder'">
+                <button @click.stop="handleMenuAction('addNote')" class="w-full text-left px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-[#44475a] text-sm">
+                    Add note to {{ contextMenu.target.name }}
+                </button>
+                <button v-if="contextMenu.target.id !== 'inbox'" @click.stop="handleMenuAction('rename')" class="w-full text-left px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-[#44475a] text-sm">
+                    Rename
+                </button>
+            </template>
+            <template v-else-if="contextMenu.type === 'note'">
+                <button @click.stop="handleMenuAction('delete')" class="w-full text-left px-3 py-1.5 hover:bg-red-50 dark:hover:bg-[#44475a] text-sm">
+                    Delete note
+                </button>
+                <button @click.stop="handleMenuAction('removeFolder')" class="w-full text-left px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-[#44475a] text-sm">
+                    Remove folder
+                </button>
+            </template>
+        </div>
     </div> <!-- Close #app -->
 
     <script>

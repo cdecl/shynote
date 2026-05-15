@@ -2,7 +2,7 @@ import { Vue, CodeMirror, openDB, marked, hljs, mermaid, polyfill, scrollBehavio
 import { draftly, allPlugins, ThemeEnum } from './draftly/index.js';
 import { LocalDB } from "./local_db.js";
 
-const { createApp, ref, computed, watch, nextTick, onMounted, onUnmounted, onBeforeUnmount } = Vue;
+const { createApp, ref, reactive, computed, watch, nextTick, onMounted, onUnmounted, onBeforeUnmount } = Vue;
 
 const { EditorView, keymap, placeholder, Decoration, ViewPlugin, rectangularSelection, crosshairCursor } = CodeMirror;
 const { EditorState, Compartment, EditorSelection } = CodeMirror;
@@ -360,6 +360,8 @@ export const App = {
 		});
 		const notes = ref([])
 		const trashNotesCount = computed(() => {
+            // count of notes currently in Trash
+
 			if (!notes.value) return 0;
 			const tid = TRASH_FOLDER_ID.value;
 			return notes.value.filter(n =>
@@ -4103,6 +4105,80 @@ export const App = {
 
 		// New Item Menu
 		const showNewItemMenu = ref(false)
+
+		// Context menu state for folders and notes
+		const contextMenu = reactive({
+			visible: false,
+			top: 0,
+			left: 0,
+			target: null, // folder object or note object
+			type: '' // 'folder' or 'note'
+		});
+
+		const openFolderMenu = (event, folder) => {
+            console.log('openFolderMenu triggered', folder.id);
+			event.preventDefault();
+			contextMenu.visible = true;
+			contextMenu.top = event.clientY;
+			contextMenu.left = event.clientX;
+			contextMenu.target = folder;
+			contextMenu.type = 'folder';
+			document.addEventListener('click', closeContextMenu);
+		};
+
+		const openNoteMenu = (event, note) => {
+			event.preventDefault();
+			contextMenu.visible = true;
+			contextMenu.top = event.clientY;
+			contextMenu.left = event.clientX;
+			contextMenu.target = note;
+			contextMenu.type = 'note';
+			document.addEventListener('click', closeContextMenu);
+		};
+
+		// Inbox context menu (same as folder but id = 'inbox')
+		const openInboxMenu = (event) => {
+			event.preventDefault();
+			contextMenu.visible = true;
+			contextMenu.top = event.clientY;
+			contextMenu.left = event.clientX;
+			contextMenu.target = { id: 'inbox', name: 'Inbox' };
+			contextMenu.type = 'folder';
+			document.addEventListener('click', closeContextMenu);
+		};
+
+		const closeContextMenu = (e) => {
+			// if click is inside menu, ignore
+			if (e.target.closest && e.target.closest('.context-menu')) return;
+			contextMenu.visible = false;
+			contextMenu.target = null;
+			document.removeEventListener('click', closeContextMenu);
+		};
+
+		const handleMenuAction = async (action) => {
+			if (!contextMenu.target) return;
+			if (contextMenu.type === 'folder') {
+					if (action === 'addNote') {
+						// Inbox uses null folderId; other folders use their id
+						const folderId = contextMenu.target.id === 'inbox' ? null : contextMenu.target.id;
+				await createNoteInFolder(folderId);
+					} else if (action === 'rename') {
+						await startRename(contextMenu.target, 'folder');
+					}
+				} else if (contextMenu.type === 'note') {
+					if (action === 'delete') {
+						await deleteNote(contextMenu.target.id);
+					} else if (action === 'removeFolder') {
+						if (contextMenu.target.folder_id) {
+                        await deleteFolderImpl(contextMenu.target.folder_id);
+                    } else {
+                        console.warn('removeFolder: note has no folder_id (probably Inbox)');
+                    }
+					}
+				}
+				closeContextMenu({target:{}});
+			};
+
 		const toggleNewItemMenu = () => {
 			showNewItemMenu.value = !showNewItemMenu.value
 			// Close sort menu if open
@@ -5982,6 +6058,13 @@ if (conflictState.value.isConflict && conflictState.value.localNote?.id === note
 			openSidebarFromMainPanel,
 			getSidebarToggleIcon,
 			showNewItemMenu,
+			// expose context menu state
+			contextMenu,
+			// expose context menu utilities
+			openFolderMenu,
+			openNoteMenu,
+			openInboxMenu,
+			handleMenuAction,
 			toggleNewItemMenu,
 			closeNewItemMenu,
 			isSharing,
