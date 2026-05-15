@@ -1040,38 +1040,39 @@ export const App = {
 
 		let debounceTimer = null
 
-		const updateNote = async () => {
-			if (!selectedNote.value || !selectedNote.value.id) return
-
-			selectedNote.value.updated_at = new Date().toISOString()
-			statusMessage.value = 'Saving...'
-
+		const moveNoteToFolder = async (noteId, folderId) => {
 			try {
-				const response = await authenticatedFetch(`/api/notes/${selectedNote.value.id}`, {
+				const note = notes.value.find(n => String(n.id) === String(noteId));
+				if (!note) return;
+
+				note.folder_id = folderId;
+				note.updated_at = new Date().toISOString();
+				
+				// Update local save
+				if (hasIDB) {
+					await LocalDB.saveNote(JSON.parse(JSON.stringify(note)));
+				}
+
+				// Server sync
+				const response = await authenticatedFetch(`/api/notes/${noteId}`, {
 					method: 'PUT',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({
-						title: selectedNote.value.title,
-						content: selectedNote.value.content,
-						folder_id: selectedNote.value.folder_id
+						folder_id: folderId
 					})
-				})
+				});
 
-				if (response && response.ok) {
-					statusMessage.value = 'Saved'
-					// Update local list
-					const idx = notes.value.findIndex(n => n.id === selectedNote.value.id)
-					if (idx !== -1) {
-						notes.value[idx] = { ...selectedNote.value }
-					}
-				} else {
-					statusMessage.value = 'Error saving'
+				if (!response || !response.ok) {
+					console.error('Failed to move note to folder on server');
 				}
+				
+				statusMessage.value = 'Moved';
+				setTimeout(() => statusMessage.value = 'Ready', 2000);
 			} catch (e) {
-				console.error("Save failed", e)
-				statusMessage.value = 'Error saving'
+				console.error('Error moving note:', e);
 			}
-		}
+		};
+
 
 
 
@@ -1931,7 +1932,7 @@ export const App = {
 
 			// Backlink Decorator for Editor Highlighting
 			const backlinkPlugin = (() => {
-				const backlinkRegex = /\[\[([^\]]*)\]\]/g;
+				const backlinkRegex = /\[\[([^\]\n]*)\]\]/g;
 
 				return ViewPlugin.fromClass(class {
 					constructor(view) {
@@ -4148,12 +4149,30 @@ export const App = {
 		};
 
 		const closeContextMenu = (e) => {
-			// if click is inside menu, ignore
-			if (e.target.closest && e.target.closest('.context-menu')) return;
-			contextMenu.visible = false;
-			contextMenu.target = null;
-			document.removeEventListener('click', closeContextMenu);
-		};
+            // Allow being called without an event (e.g., from template) or with a KeyboardEvent or null
+            if (!e || e.type === 'keydown') {
+                contextMenu.visible = false;
+                contextMenu.target = null;
+                document.removeEventListener('click', closeContextMenu);
+                document.removeEventListener('keydown', escCloseHandler);
+                return;
+            }
+            // if click is inside menu, ignore
+            if (e.target && e.target.closest && e.target.closest('.context-menu')) return;
+            contextMenu.visible = false;
+            contextMenu.target = null;
+            document.removeEventListener('click', closeContextMenu);
+            document.removeEventListener('keydown', escCloseHandler);
+        };
+
+        // ESC key handler for context menu
+        const escCloseHandler = (e) => {
+            if (e.key === 'Escape') {
+                closeContextMenu();
+            }
+        };
+        // Register global ESC listener
+        document.addEventListener('keydown', escCloseHandler);
 
 		const handleMenuAction = async (action) => {
 			if (!contextMenu.target) return;
@@ -4168,12 +4187,12 @@ export const App = {
 				} else if (contextMenu.type === 'note') {
 					if (action === 'delete') {
 						await deleteNote(contextMenu.target.id);
-					} else if (action === 'removeFolder') {
+					} else if (action === 'moveFolder') {
 						if (contextMenu.target.folder_id) {
-                        await deleteFolderImpl(contextMenu.target.folder_id);
-                    } else {
-                        console.warn('removeFolder: note has no folder_id (probably Inbox)');
-                    }
+                            await moveNoteToFolder(contextMenu.target.id, contextMenu.target.folder_id);
+                        } else {
+                            console.warn('moveFolder: note has no folder_id');
+                        }
 					}
 				}
 				closeContextMenu({target:{}});
@@ -6067,6 +6086,7 @@ if (conflictState.value.isConflict && conflictState.value.localNote?.id === note
 			handleMenuAction,
 			toggleNewItemMenu,
 			closeNewItemMenu,
+			moveNoteToFolder,
 			isSharing,
 			isSortMenuOpen,
 			// Search
