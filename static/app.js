@@ -4225,6 +4225,9 @@ export const App = {
 				if (!contextMenu.target) return;
 				if (contextMenu.type === 'folder') {
 				if (action === 'addNote') {
+					if (contextMenu.target.id === TRASH_FOLDER_ID.value) {
+						return;
+					}
 					// Inbox uses null folderId; other folders use their id
 					const folderId = contextMenu.target.id === 'inbox' ? null : contextMenu.target.id;
 					await createNoteInFolder(folderId);

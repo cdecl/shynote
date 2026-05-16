@@ -80,6 +80,20 @@ describe('App.js UI Module Functions', () => {
 			};
 		})();
 		vi.stubGlobal('localStorage', localStorageMock);
+
+		vi.stubGlobal('fetch', vi.fn(async (url) => {
+			if (typeof url !== 'string') url = url.toString();
+			if (url.includes('/static/version.json')) {
+				return { ok: true, json: async () => ({ version: '0.0.0' }) };
+			}
+			if (url.includes('/static/changelog.md')) {
+				return { ok: true, text: async () => '# Changelog' };
+			}
+			if (url.includes('/auth/config')) {
+				return { ok: true, json: async () => ({ db_type: 'sqlite' }) };
+			}
+			return { ok: false, status: 404 };
+		}));
 	});
 
 	it('should expose core UI functions in setup()', async () => {
@@ -188,5 +202,56 @@ describe('App.js UI Module Functions', () => {
 		expect(recent.find(n => n.id === 'n11')?.folderName).toBe('Work');
 		expect(recent.find(n => n.id === 'n10')?.folderName).toBe('TRASH');
 		expect(recent.find(n => n.id === 'n9')?.folderName).toBe('Folder');
+	});
+
+	it('should prevent Add note action for Trash folder and expose Empty Trash state', async () => {
+		const wrapper = mount(App);
+		const vm = wrapper.vm;
+
+		const fakeEvent = {
+			preventDefault: vi.fn(),
+			currentTarget: {
+				getBoundingClientRect: () => ({ left: 20, bottom: 60, width: 20, height: 20 }),
+				querySelectorAll: () => []
+			},
+			clientX: 20,
+			clientY: 60
+		};
+
+		vm.openFolderMenu(fakeEvent, { id: vm.TRASH_FOLDER_ID, name: 'Trash' });
+		await vm.$nextTick();
+
+		const createNoteSpy = vi.spyOn(vm, 'createNoteInFolder');
+		await vm.handleMenuAction('addNote');
+
+		expect(vm.contextMenu.target.id).toBe(vm.TRASH_FOLDER_ID);
+		expect(vm.contextMenu.type).toBe('folder');
+		expect(createNoteSpy).not.toHaveBeenCalled();
+		expect(vm.deleteConfirmation.type).toBeNull();
+	});
+
+	it('should trigger trash delete confirmation when emptyTrash action is handled', async () => {
+		const wrapper = mount(App);
+		const vm = wrapper.vm;
+
+		const fakeEvent = {
+			preventDefault: vi.fn(),
+			currentTarget: {
+				getBoundingClientRect: () => ({ left: 20, bottom: 60, width: 20, height: 20 }),
+				querySelectorAll: () => []
+			},
+			clientX: 20,
+			clientY: 60
+		};
+
+		vm.openFolderMenu(fakeEvent, { id: vm.TRASH_FOLDER_ID, name: 'Trash' });
+		await vm.$nextTick();
+
+		await vm.handleMenuAction('emptyTrash');
+		await vm.$nextTick();
+
+		expect(vm.deleteConfirmation.type).toBe('trash');
+		expect(vm.deleteConfirmation.id).toBe(vm.TRASH_FOLDER_ID);
+		expect(vm.contextMenu.visible).toBe(false);
 	});
 });
