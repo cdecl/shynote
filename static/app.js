@@ -4116,37 +4116,91 @@ export const App = {
 			type: '' // 'folder' or 'note'
 		});
 
-		const openFolderMenu = (event, folder) => {
-            console.log('openFolderMenu triggered', folder.id);
-			event.preventDefault();
-			contextMenu.visible = true;
-			contextMenu.top = event.clientY;
-			contextMenu.left = event.clientX;
-			contextMenu.target = folder;
-			contextMenu.type = 'folder';
-			document.addEventListener('click', closeContextMenu);
-		};
+			const openFolderMenu = (event, folder) => {
+				event.preventDefault();
+				contextMenu.visible = true;
+				// Position menu between the chevron and folder icon when possible
+				try {
+					const el = event.currentTarget || event.target;
+					let rect = null;
+					if (el && el.getBoundingClientRect) {
+						const iconSpans = el.querySelectorAll && el.querySelectorAll('span.material-symbols-rounded');
+						const chevron = iconSpans && iconSpans.length > 0 ? iconSpans[0] : null;
+						const folderIcon = iconSpans && iconSpans.length > 1 ? iconSpans[1] : null;
+						if (chevron && chevron.getBoundingClientRect) {
+							const chevronRect = chevron.getBoundingClientRect();
+							contextMenu.left = Math.max(8, Math.round(chevronRect.left + chevronRect.width / 2));
+							contextMenu.top = chevronRect.bottom;
+							rect = chevronRect;
+						} else {
+							rect = el.getBoundingClientRect();
+						}
+					}
+					if (rect && contextMenu.left === 0) {
+						contextMenu.left = Math.max(8, rect.left);
+						contextMenu.top = rect.bottom;
+					} else if (!rect) {
+						contextMenu.top = event.clientY;
+						contextMenu.left = event.clientX;
+					}
+				} catch (err) {
+					contextMenu.top = event.clientY;
+					contextMenu.left = event.clientX;
+				}
+				contextMenu.target = folder;
+				contextMenu.type = 'folder';
+				document.addEventListener('click', closeContextMenu);
+				document.addEventListener('keydown', escCloseHandler);
+			};
 
-		const openNoteMenu = (event, note) => {
-			event.preventDefault();
-			contextMenu.visible = true;
-			contextMenu.top = event.clientY;
-			contextMenu.left = event.clientX;
-			contextMenu.target = note;
-			contextMenu.type = 'note';
-			document.addEventListener('click', closeContextMenu);
-		};
+			const openNoteMenu = (event, note) => {
+				event.preventDefault();
+				contextMenu.visible = true;
+				// Position menu from the left-bottom of the note element when possible
+				try {
+					const el = event.currentTarget || event.target;
+					const rect = el && el.getBoundingClientRect ? el.getBoundingClientRect() : null;
+					if (rect) {
+						contextMenu.left = Math.max(8, rect.left);
+						contextMenu.top = rect.bottom;
+					} else {
+						contextMenu.top = event.clientY;
+						contextMenu.left = event.clientX;
+					}
+				} catch (err) {
+					contextMenu.top = event.clientY;
+					contextMenu.left = event.clientX;
+				}
+				contextMenu.target = note;
+				contextMenu.type = 'note';
+				document.addEventListener('click', closeContextMenu);
+				document.addEventListener('keydown', escCloseHandler);
+			};
 
-		// Inbox context menu (same as folder but id = 'inbox')
-		const openInboxMenu = (event) => {
-			event.preventDefault();
-			contextMenu.visible = true;
-			contextMenu.top = event.clientY;
-			contextMenu.left = event.clientX;
-			contextMenu.target = { id: 'inbox', name: 'Inbox' };
-			contextMenu.type = 'folder';
-			document.addEventListener('click', closeContextMenu);
-		};
+			// Inbox context menu (same as folder but id = 'inbox')
+			const openInboxMenu = (event) => {
+				event.preventDefault();
+				contextMenu.visible = true;
+				// Position inbox menu from the triggering element's left-bottom when possible
+				try {
+					const el = event.currentTarget || event.target;
+					const rect = el && el.getBoundingClientRect ? el.getBoundingClientRect() : null;
+					if (rect) {
+						contextMenu.left = Math.max(8, rect.left);
+						contextMenu.top = rect.bottom;
+					} else {
+						contextMenu.top = event.clientY;
+						contextMenu.left = event.clientX;
+					}
+				} catch (err) {
+					contextMenu.top = event.clientY;
+					contextMenu.left = event.clientX;
+				}
+				contextMenu.target = { id: 'inbox', name: 'Inbox' };
+				contextMenu.type = 'folder';
+				document.addEventListener('click', closeContextMenu);
+				document.addEventListener('keydown', escCloseHandler);
+			};
 
 		const closeContextMenu = (e) => {
             // Allow being called without an event (e.g., from template) or with a KeyboardEvent or null
@@ -4165,19 +4219,17 @@ export const App = {
             document.removeEventListener('keydown', escCloseHandler);
         };
 
-        // ESC key handler for context menu
-        const escCloseHandler = (e) => {
-            if (e.key === 'Escape') {
-                closeContextMenu();
-            }
-        };
-        // Register global ESC listener
-        document.addEventListener('keydown', escCloseHandler);
+	        // ESC key handler for context menu
+	        const escCloseHandler = (e) => {
+	            if (e.key === 'Escape') {
+	                closeContextMenu();
+	            }
+	        };
 
-		const handleMenuAction = async (action) => {
-			if (!contextMenu.target) return;
-			if (contextMenu.type === 'folder') {
-					if (action === 'addNote') {
+			const handleMenuAction = async (action) => {
+				if (!contextMenu.target) return;
+				if (contextMenu.type === 'folder') {
+						if (action === 'addNote') {
 						// Inbox uses null folderId; other folders use their id
 						const folderId = contextMenu.target.id === 'inbox' ? null : contextMenu.target.id;
 				await createNoteInFolder(folderId);
@@ -4190,13 +4242,13 @@ export const App = {
 					} else if (action === 'moveFolder') {
 						if (contextMenu.target.folder_id) {
                             await moveNoteToFolder(contextMenu.target.id, contextMenu.target.folder_id);
-                        } else {
-                            console.warn('moveFolder: note has no folder_id');
-                        }
+	                        } else {
+	                            console.warn('moveFolder: note has no folder_id');
+	                        }
+						}
 					}
-				}
-				closeContextMenu({target:{}});
-			};
+					closeContextMenu();
+				};
 
 		const toggleNewItemMenu = () => {
 			showNewItemMenu.value = !showNewItemMenu.value
