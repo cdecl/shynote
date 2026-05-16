@@ -36,7 +36,7 @@ The sidebar is now a dual-layered navigation hub consisting of the **Activity Ba
     - Quick Add: `add_circle` button to create a note specifically in that folder.
     - Note List: Displayed when expanded, showing note title and pin status.
     - Supports drag-and-drop for organizing notes and folders.
-- **Trash**: Fixed at the bottom of the list (Icon: `delete` / `delete_outline`). Has empty trash button.
+- **Trash**: Fixed at the bottom of the list (Icon: `delete` / `delete_outline`). Has an empty trash button and a folder context menu for permanent deletion. Creating new notes is disabled in Trash.
 - **Recent Notes**: List of recently accessed notes (up to 10), showing note title with folder name.
 
 ### Search Panel (`sidebarPanelMode === 'search'`)
