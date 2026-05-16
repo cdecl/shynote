@@ -4224,14 +4224,16 @@ export const App = {
 			const handleMenuAction = async (action) => {
 				if (!contextMenu.target) return;
 				if (contextMenu.type === 'folder') {
-						if (action === 'addNote') {
-						// Inbox uses null folderId; other folders use their id
-						const folderId = contextMenu.target.id === 'inbox' ? null : contextMenu.target.id;
-				await createNoteInFolder(folderId);
-					} else if (action === 'rename') {
-						await startRename(contextMenu.target, 'folder');
-					}
-				} else if (contextMenu.type === 'note') {
+				if (action === 'addNote') {
+					// Inbox uses null folderId; other folders use their id
+					const folderId = contextMenu.target.id === 'inbox' ? null : contextMenu.target.id;
+					await createNoteInFolder(folderId);
+				} else if (action === 'rename') {
+					await startRename(contextMenu.target, 'folder');
+				} else if (action === 'emptyTrash') {
+					requestDelete(contextMenu.target.id, 'trash');
+				}
+			} else if (contextMenu.type === 'note') {
 					if (action === 'delete') {
 						await deleteNote(contextMenu.target.id);
 					} else if (action === 'moveFolder') {

@@ -949,6 +949,7 @@
                                 <!-- Trash Section -->
                                 <div class="mt-4 pt-2 border-t border-slate-200 dark:border-[#44475a]">
                                     <div @click.stop="toggleFolderExpansion(TRASH_FOLDER_ID)"
+                                        @contextmenu.prevent.stop="openFolderMenu($event, { id: TRASH_FOLDER_ID, name: 'Trash' })"
                                         @drop="handleDrop(TRASH_FOLDER_ID, $event)" @dragover.prevent
                                         @dragenter.prevent="handleDragEnter(TRASH_FOLDER_ID)"
                                         @dragleave.prevent="handleDragLeave(TRASH_FOLDER_ID)"
@@ -2249,10 +2250,13 @@
 	            <div class="fixed inset-0 z-[-1] bg-transparent cursor-default"></div>
 	                        <div class="relative z-50 max-h-64 overflow-y-auto custom-scrollbar">
                 <template v-if="contextMenu.type === 'folder'">
-                    <button @click.stop="handleMenuAction('addNote')" class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-[#f8f8f2] hover:bg-blue-50 dark:hover:bg-[#44475a] flex items-center gap-2 transition-colors">
+                    <button v-if="contextMenu.target.id !== TRASH_FOLDER_ID" @click.stop="handleMenuAction('addNote')" class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-[#f8f8f2] hover:bg-blue-50 dark:hover:bg-[#44475a] flex items-center gap-2 transition-colors">
                         <span class="material-symbols-rounded text-[16px] text-blue-500">note_add</span> Add note
                     </button>
-                    <button v-if="contextMenu.target.id !== 'inbox'" @click.stop="handleMenuAction('rename')" class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-[#f8f8f2] hover:bg-blue-50 dark:hover:bg-[#44475a] flex items-center gap-2 transition-colors">
+                    <button v-if="contextMenu.target.id === TRASH_FOLDER_ID" @click.stop="handleMenuAction('emptyTrash')" class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-[#f8f8f2] hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-colors">
+                        <span class="material-symbols-rounded text-[16px] text-red-500">delete_forever</span> Empty Trash
+                    </button>
+                    <button v-if="contextMenu.target.id !== 'inbox' && contextMenu.target.id !== TRASH_FOLDER_ID" @click.stop="handleMenuAction('rename')" class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-[#f8f8f2] hover:bg-blue-50 dark:hover:bg-[#44475a] flex items-center gap-2 transition-colors">
                         <span class="material-symbols-rounded text-[16px] text-blue-500">edit</span> Rename
                     </button>
                 </template>
