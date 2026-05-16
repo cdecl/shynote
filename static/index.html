@@ -2241,13 +2241,13 @@
                 </div>
         </main>
     
-        <!-- Global Context Menu -->
-        <div v-if="contextMenu.visible"
-             tabindex="0"
-             class="absolute bg-white dark:bg-[#2f3242] border border-slate-200 dark:border-[#444475a] rounded-lg shadow-xl py-1 z-[9999] animate-fade-in origin-bottom-right w-32"
-             :style="{ top: contextMenu.top + 'px', left: contextMenu.left + 'px' }">
-            <div class="fixed inset-0 z-[-1] bg-transparent cursor-default"></div>
-                        <div class="relative z-50 max-h-64 overflow-y-auto custom-scrollbar">
+	        <!-- Global Context Menu -->
+	        <div v-if="contextMenu.visible"
+	             tabindex="0"
+	             class="context-menu absolute bg-[#FDFCF8]/95 dark:bg-[#252529]/95 rounded-xl shadow-xl py-1 z-[9999] animate-fade-in origin-bottom-right w-40 backdrop-blur-md"
+	             :style="{ top: contextMenu.top + 'px', left: contextMenu.left + 'px' }">
+	            <div class="fixed inset-0 z-[-1] bg-transparent cursor-default"></div>
+	                        <div class="relative z-50 max-h-64 overflow-y-auto custom-scrollbar">
                 <template v-if="contextMenu.type === 'folder'">
                     <button @click.stop="handleMenuAction('addNote')" class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-[#f8f8f2] hover:bg-blue-50 dark:hover:bg-[#44475a] flex items-center gap-2 transition-colors">
                         <span class="material-symbols-rounded text-[16px] text-blue-500">note_add</span> Add note
@@ -2257,13 +2257,13 @@
                     </button>
                 </template>
                 <template v-else-if="contextMenu.type === 'note'">
-                    <button @click.stop="handleMenuAction('delete')" class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-[#f8f8f2] hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-colors">
-                        <span class="material-symbols-rounded text-[16px] text-red-500">delete</span> Delete note
-                    </button>
-                    <div class="h-[1px] bg-slate-100 dark:bg-[#44475a] my-1"></div>
-                    <button @click.stop="moveNoteToFolder(contextMenu.target.id, null)" class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-[#f8f8f2] hover:bg-amber-50 dark:hover:bg-amber-900/20 flex items-center gap-2 transition-colors">
-                        <span class="material-symbols-rounded text-[16px] text-amber-500">move_to_inbox</span> Inbox
-                    </button>
+	                    <button @click.stop="handleMenuAction('delete')" class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-[#f8f8f2] hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-colors">
+	                        <span class="material-symbols-rounded text-[16px] text-red-500">delete</span> Delete note
+	                    </button>
+	                    <div class="h-px bg-slate-200/60 dark:bg-white/10 my-1"></div>
+	                    <button @click.stop="moveNoteToFolder(contextMenu.target.id, null)" class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-[#f8f8f2] hover:bg-amber-50 dark:hover:bg-amber-900/20 flex items-center gap-2 transition-colors">
+	                        <span class="material-symbols-rounded text-[16px] text-amber-500">move_to_inbox</span> Inbox
+	                    </button>
                     <button v-for="folder in sortedFolders" :key="folder.id" @click.stop="moveNoteToFolder(contextMenu.target.id, folder.id)" 
                         class="w-full text-left px-3 py-1.5 text-[12px] text-slate-700 dark:text-[#f8f8f2] hover:bg-amber-50 dark:hover:bg-amber-900/20 flex items-center gap-2 transition-colors">
                         <span class="material-symbols-rounded text-[16px] text-amber-500">drive_file_move</span>
