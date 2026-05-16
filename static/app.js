@@ -3862,12 +3862,7 @@ export const App = {
 								}
 
 								if (isDirty) {
-									// Grace period check: New notes created within the last 3 minutes should ignore sync conflicts to allow initial push.
-									const createdDate = new Date(ln.created_at || 0);
-									const now = new Date();
-									const diffMinutes = (now - createdDate) / (1000 * 60);
-									const isNewNote = diffMinutes < 3;
-
+						// Grace period check: New notes created within the last 10 minutes should ignore sync conflicts to allow initial push.
 									// Pre-calculate mismatches for the 'else' block
 									const versionMismatch = serverNote.version !== ln.version;
 									const contentMismatch = serverNote.content !== localContent;
