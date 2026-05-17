@@ -564,7 +564,11 @@ export const App = {
 		const isEditModeActive = ref(false)
 
 		const handleWindowResize = () => {
+			const wasMobile = isMobile.value
 			isMobile.value = window.innerWidth < 768
+			if (!wasMobile && isMobile.value && isSidebarOpen.value) {
+				isSidebarOpen.value = false
+			}
 		}
 
 
@@ -3251,7 +3255,7 @@ export const App = {
 				}
 			})
 
-			isSidebarOpen.value = true // Force sidebar open on startup
+			isSidebarOpen.value = !isMobile.value // Desktop: open, Mobile: closed
 
 			// OAuth callback check
 			if (window.location.search.includes('code=')) {
